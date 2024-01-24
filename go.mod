@@ -9,9 +9,7 @@ replace daoc => ../daoc/
 require (
 	afr_auth_center v0.0.0-00010101000000-000000000000
 	daoc v0.0.0-00010101000000-000000000000
-	github.com/google/uuid v1.5.0
 	github.com/gorilla/mux v1.8.1
-	github.com/jftuga/geodist v1.0.0
 	github.com/kardianos/service v1.2.2
 	github.com/prometheus/client_golang v1.18.0
 	github.com/rs/cors v1.10.1
@@ -31,6 +29,7 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
+	github.com/google/uuid v1.5.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/klauspost/compress v1.17.4 // indirect
 	github.com/kr/fs v0.1.0 // indirect
