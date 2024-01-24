@@ -94,6 +94,7 @@ func (uc *UserControl) LoadDefaultValues() {
 		}
 		Map_DefaultValues.Put(defaultValues.Key, defaultValues)
 	}
+	uc.Credit_Limit_Scheme_LoadDefaultValues()
 }
 
 // ///////////////////////////////////////////////////////
@@ -291,4 +292,405 @@ func (Uc *UserControl) Credit_Limit_Scheme_Delete(Key string) (err error) {
 	}
 	Map_Credit_Limit_Scheme.Delete(Key)
 	return nil
+}
+
+func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues() {
+	log.Println("Loading credit limit scheme default values")
+	//
+	request := Credit_Limit_Scheme_Add_Request{
+		Key:                 "50_100_3_6",
+		Scheme_Id:           0,
+		ARPU_From:           50,
+		ARPU_Till:           100,
+		AON_From:            3,
+		AON_Till:            6,
+		Credit_limit_Amount: 10,
+	}
+	_, err := uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "50_100_6_12",
+		Scheme_Id:           0,
+		ARPU_From:           50,
+		ARPU_Till:           100,
+		AON_From:            6,
+		AON_Till:            12,
+		Credit_limit_Amount: 10,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "50_100_12_24",
+		Scheme_Id:           0,
+		ARPU_From:           50,
+		ARPU_Till:           100,
+		AON_From:            12,
+		AON_Till:            24,
+		Credit_limit_Amount: 20,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "50_100_24_1200",
+		Scheme_Id:           0,
+		ARPU_From:           50,
+		ARPU_Till:           100,
+		AON_From:            24,
+		AON_Till:            1200,
+		Credit_limit_Amount: 20,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	//
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "100_200_3_6",
+		Scheme_Id:           0,
+		ARPU_From:           100,
+		ARPU_Till:           200,
+		AON_From:            3,
+		AON_Till:            6,
+		Credit_limit_Amount: 20,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "100_200_6_12",
+		Scheme_Id:           0,
+		ARPU_From:           100,
+		ARPU_Till:           200,
+		AON_From:            6,
+		AON_Till:            12,
+		Credit_limit_Amount: 20,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "100_200_12_24",
+		Scheme_Id:           0,
+		ARPU_From:           100,
+		ARPU_Till:           200,
+		AON_From:            12,
+		AON_Till:            24,
+		Credit_limit_Amount: 30,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "100_200_24_1200",
+		Scheme_Id:           0,
+		ARPU_From:           100,
+		ARPU_Till:           200,
+		AON_From:            24,
+		AON_Till:            1200,
+		Credit_limit_Amount: 40,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	//
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "200_400_3_6",
+		Scheme_Id:           0,
+		ARPU_From:           200,
+		ARPU_Till:           400,
+		AON_From:            3,
+		AON_Till:            6,
+		Credit_limit_Amount: 30,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "200_400_6_12",
+		Scheme_Id:           0,
+		ARPU_From:           200,
+		ARPU_Till:           400,
+		AON_From:            6,
+		AON_Till:            12,
+		Credit_limit_Amount: 30,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "200_400_12_24",
+		Scheme_Id:           0,
+		ARPU_From:           200,
+		ARPU_Till:           400,
+		AON_From:            12,
+		AON_Till:            24,
+		Credit_limit_Amount: 50,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "200_400_24_1200",
+		Scheme_Id:           0,
+		ARPU_From:           200,
+		ARPU_Till:           400,
+		AON_From:            24,
+		AON_Till:            1200,
+		Credit_limit_Amount: 60,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+	//
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "400_800_3_6",
+		Scheme_Id:           0,
+		ARPU_From:           400,
+		ARPU_Till:           800,
+		AON_From:            3,
+		AON_Till:            6,
+		Credit_limit_Amount: 40,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "400_800_6_12",
+		Scheme_Id:           0,
+		ARPU_From:           400,
+		ARPU_Till:           800,
+		AON_From:            6,
+		AON_Till:            12,
+		Credit_limit_Amount: 40,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "400_800_12_24",
+		Scheme_Id:           0,
+		ARPU_From:           400,
+		ARPU_Till:           800,
+		AON_From:            12,
+		AON_Till:            24,
+		Credit_limit_Amount: 60,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "400_800_24_1200",
+		Scheme_Id:           0,
+		ARPU_From:           400,
+		ARPU_Till:           800,
+		AON_From:            24,
+		AON_Till:            1200,
+		Credit_limit_Amount: 100,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	//
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "800_1600_3_6",
+		Scheme_Id:           0,
+		ARPU_From:           800,
+		ARPU_Till:           1600,
+		AON_From:            3,
+		AON_Till:            6,
+		Credit_limit_Amount: 80,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "800_1600_6_12",
+		Scheme_Id:           0,
+		ARPU_From:           800,
+		ARPU_Till:           1600,
+		AON_From:            6,
+		AON_Till:            12,
+		Credit_limit_Amount: 100,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "800_1600_12_24",
+		Scheme_Id:           0,
+		ARPU_From:           800,
+		ARPU_Till:           1600,
+		AON_From:            12,
+		AON_Till:            24,
+		Credit_limit_Amount: 150,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "800_1600_24_1200",
+		Scheme_Id:           0,
+		ARPU_From:           800,
+		ARPU_Till:           1600,
+		AON_From:            24,
+		AON_Till:            1200,
+		Credit_limit_Amount: 200,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	//
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "1600_3000_3_6",
+		Scheme_Id:           0,
+		ARPU_From:           1600,
+		ARPU_Till:           3000,
+		AON_From:            3,
+		AON_Till:            6,
+		Credit_limit_Amount: 150,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "1600_3000_6_12",
+		Scheme_Id:           0,
+		ARPU_From:           1600,
+		ARPU_Till:           3000,
+		AON_From:            6,
+		AON_Till:            12,
+		Credit_limit_Amount: 200,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "1600_3000_12_24",
+		Scheme_Id:           0,
+		ARPU_From:           1600,
+		ARPU_Till:           3000,
+		AON_From:            12,
+		AON_Till:            24,
+		Credit_limit_Amount: 250,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "1600_3000_24_1200",
+		Scheme_Id:           0,
+		ARPU_From:           1600,
+		ARPU_Till:           3000,
+		AON_From:            24,
+		AON_Till:            1200,
+		Credit_limit_Amount: 300,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	//
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "3000_9999999_3_6",
+		Scheme_Id:           0,
+		ARPU_From:           3000,
+		ARPU_Till:           9999999,
+		AON_From:            3,
+		AON_Till:            6,
+		Credit_limit_Amount: 200,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "3000_9999999_6_12",
+		Scheme_Id:           0,
+		ARPU_From:           3000,
+		ARPU_Till:           9999999,
+		AON_From:            6,
+		AON_Till:            12,
+		Credit_limit_Amount: 300,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "3000_9999999_12_24",
+		Scheme_Id:           0,
+		ARPU_From:           3000,
+		ARPU_Till:           9999999,
+		AON_From:            12,
+		AON_Till:            24,
+		Credit_limit_Amount: 400,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "3000_9999999_24_1200",
+		Scheme_Id:           0,
+		ARPU_From:           3000,
+		ARPU_Till:           9999999,
+		AON_From:            24,
+		AON_Till:            1200,
+		Credit_limit_Amount: 500,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
 }
