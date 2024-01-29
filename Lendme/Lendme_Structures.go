@@ -36,9 +36,11 @@ type Event_Log struct {
 }
 
 type Subscriber struct {
-	Key string `bson:"Key" json:"Key"` //MSISDN
+	Key           string `bson:"Key" json:"Key"` //MSISDN
+	Subscriber_Id int64  `bson:"Subscriber_Id" json:"Subscriber_Id"`
 
-	Joining_Date        time.Time `bson:"Joining_Date" json:"Joining_Date"`
+	COS                 string    `bson:"COS" json:"COS"`
+	FirstUse_date       time.Time `bson:"FirstUse_date" json:"FirstUse_date"`
 	ARPU                float64   `bson:"ARPU" json:"ARPU"`
 	ARPU_date           time.Time `bson:"ARPU_date" json:"ARPU_date"`
 	IsLendmeEligible    bool      `bson:"IsLendmeEligible" json:"IsLendmeEligible"`
@@ -54,13 +56,14 @@ type Subscriber struct {
 }
 
 type Subscriber_Add_Request struct {
-	Key      string `bson:"Key" json:"Key"` //Login
-	Agent_Id int64  `bson:"Agent_Id" json:"Agent_Id"`
+	Key           string `bson:"Key" json:"Key"` //MSISDN
+	Subscriber_Id int64  `bson:"Subscriber_Id" json:"Subscriber_Id"`
 }
 
 type Subscriber_Edit_Request struct {
-	Key      string `bson:"Key" json:"Key"` //Login
-	Agent_Id int64  `bson:"Agent_Id" json:"Agent_Id"`
+	Key           string `bson:"Key" json:"Key"` //MSISDN
+	NewKey        string `bson:"NewKey" json:"NewKey"`
+	Subscriber_Id int64  `bson:"Subscriber_Id" json:"Subscriber_Id"`
 }
 
 type Credit_Limit_Scheme struct {

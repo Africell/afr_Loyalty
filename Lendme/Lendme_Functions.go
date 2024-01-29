@@ -171,7 +171,7 @@ func (Uc *UserControl) Credit_Limit_Scheme_Edit(Login string, request Credit_Lim
 		Event_Time:         time.Now(),
 		Event_Type:         "edit",
 		Event_Description:  "edit entry",
-		Event_Entry_Before: scheme,
+		Event_Entry_Before: current_scheme,
 		Event_Entry_After:  nil,
 	}
 	scheme.Event_Logs = append(scheme.Event_Logs, log)
@@ -191,7 +191,7 @@ func (Uc *UserControl) Credit_Limit_Scheme_Edit(Login string, request Credit_Lim
 func (Uc *UserControl) Credit_Limit_Scheme_Get(Key string) (schemes []Credit_Limit_Scheme, err error) {
 	if Key == "" {
 		schemes_na := Map_Credit_Limit_Scheme.ConvertToArray()
-		if len(schemes) > 0 {
+		if len(schemes_na) > 0 {
 			for _, entry := range schemes_na {
 				scheme, ok := entry.(Credit_Limit_Scheme)
 				if !ok {
@@ -693,4 +693,204 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues() {
 	if err != nil {
 		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
 	}
+}
+
+// ///////////////////////////////////////////////////////
+// Subscriber
+// ///////////////////////////////////////////////////////
+func (Uc *UserControl) Subscriber_Add(Login string, request Subscriber_Add_Request) (Id int64, err error) {
+	//check key if filled and if already used
+	if request.Key == "" {
+		err = errors.New("msisdn cannot be empty")
+		return Id, err
+	}
+	//check if key already used
+	exits := Map_Subscribers.Check(request.Key)
+	if !exits {
+		err = errors.New("msisdn already exist")
+		return Id, err
+	}
+
+	//check if exists on IN and get details
+	IN_Response, err := Uc.IN.INClient.GetAccountDetails("", "", request.Key)
+	if err != nil {
+		err = errors.New("error getting account detail: " + err.Error())
+		return Id, err
+	}
+	//to do: get ARPU
+
+	//Prepare new entry
+	var NewEntry Subscriber
+	NewEntry.Subscriber_Id = Map_AutoIncrement.GetNextAI("Subscriber-Id")
+	Id = NewEntry.Subscriber_Id
+	NewEntry.Key = request.Key
+	NewEntry.COS = IN_Response.COS
+	//NewEntry.FirstUse_date   = IN_Response.FirstUse
+
+	log := Event_Log{
+		Event_User:         Login,
+		Event_Time:         time.Now(),
+		Event_Type:         "add",
+		Event_Description:  "create new entry",
+		Event_Entry_Before: nil,
+		Event_Entry_After:  nil,
+	}
+	NewEntry.Event_Logs = append(NewEntry.Event_Logs, log)
+	//add to cache and DB
+	Map_Credit_Limit_Scheme.Put(NewEntry.Key, NewEntry)
+	return Id, nil
+}
+
+func (Uc *UserControl) Subscriber_Edit(Login string, request Subscriber_Edit_Request) (Id int64, err error) {
+	//check and validate outlet
+	if request.Key == "" {
+		err = errors.New("msisdn cannot be empty")
+		return Id, err
+	}
+	subscriber_na, exits := Map_Subscribers.CheckThenGet(request.Key)
+	if !exits {
+		err = errors.New("msisdn is not created")
+		return Id, err
+	}
+	subscriber, ok := subscriber_na.(Subscriber)
+	if !ok {
+		return Id, errors.New("error in subscriber type assertion")
+	}
+	if subscriber.Subscriber_Id != request.Subscriber_Id {
+		return Id, errors.New("id is not matching")
+	}
+	//take log for current values without the log trail
+	current_subscriber := subscriber
+	current_subscriber.Event_Logs = nil
+
+	//Prepare new entry
+	subscriber.Key = request.Key
+	//add fields here
+
+	log := Event_Log{
+		Event_User:         Login,
+		Event_Time:         time.Now(),
+		Event_Type:         "edit",
+		Event_Description:  "edit entry",
+		Event_Entry_Before: current_subscriber,
+		Event_Entry_After:  nil,
+	}
+	subscriber.Event_Logs = append(subscriber.Event_Logs, log)
+	if request.NewKey != "" {
+		if request.NewKey != request.Key {
+			//delete old
+			Map_Subscribers.Delete(request.Key)
+			//update key
+			subscriber.Key = request.NewKey
+		}
+	}
+	//add to cache and DB
+	Map_Subscribers.Put(subscriber.Key, subscriber)
+	return Id, nil
+}
+
+func (Uc *UserControl) Subscriber_Get(Key string) (subscribers []Subscriber, err error) {
+	if Key == "" {
+		subscriber_na := Map_Subscribers.ConvertToArray()
+		if len(subscriber_na) > 0 {
+			for _, entry := range subscriber_na {
+				subscriber, ok := entry.(Subscriber)
+				if !ok {
+					err = errors.New("error in subscriber type assertion")
+					return subscribers, err
+				} else {
+					subscribers = append(subscribers, subscriber)
+				}
+			}
+		}
+		return subscribers, nil
+	} else {
+		subscriber_na, exits := Map_Subscribers.CheckThenGet(Key)
+		if !exits {
+			err = errors.New("subscriber does not exist")
+			return subscribers, err
+		}
+		subscriber, ok := subscriber_na.(Subscriber)
+		if !ok {
+			err = errors.New("error in subcriber type assertion")
+			return subscribers, err
+		}
+		subscribers = append(subscribers, subscriber)
+		return subscribers, nil
+	}
+}
+
+func (Uc *UserControl) Subscriber_GetPaginated(Key string, Page, Limit int64) (subscribers []Subscriber, err error) {
+	if Page < 1 {
+		return subscribers, errors.New("invalid page")
+	}
+	if Limit < 1 || Limit > 50000 {
+		return subscribers, errors.New("invalid limit (accept value between 1 and 50000)")
+	}
+	if Key == "" {
+		var findparams daoc.DAOFindParams
+		//var array []daoc.DAOFindCriteria
+		// if Outlet_Key != "" {
+		// 	//restrict access for records that belong to this user
+		// 	var criteria daoc.DAOFindCriteria = daoc.DAOFindCriteria{
+		// 		Field:    "Outlet_Key",
+		// 		Value:    Outlet_Key,
+		// 		Operator: "EQUAL",
+		// 	}
+		// 	array = append(array, criteria)
+		// }
+		// if Agent_Key != "" {
+		// 	//restrict access for records that belong to this user
+		// 	var criteria daoc.DAOFindCriteria = daoc.DAOFindCriteria{
+		// 		Field:    "Agent_Key",
+		// 		Value:    Agent_Key,
+		// 		Operator: "EQUAL",
+		// 	}
+		// 	array = append(array, criteria)
+		// }
+		// if len(array) > 0 {
+		// 	findparams.FindCriteria = array
+		// }
+		var paginationparams daoc.DAOPaginate
+		paginationparams.Limit = Limit
+		paginationparams.Page = Page
+		findResult, err := DAO_Subscribers.FindPaginate(findparams, paginationparams)
+		if err != nil {
+			return subscribers, err
+		}
+		if len(findResult) > 0 {
+			for _, findres := range findResult {
+				InterfaceValue := reflect.ValueOf(findres).Elem().Interface().(Subscriber)
+				subscribers = append(subscribers, InterfaceValue)
+			}
+		}
+		return subscribers, nil
+	} else {
+		subscriber_na, exits := Map_Subscribers.CheckThenGet(Key)
+		if !exits {
+			err = errors.New("subscriber does not exist")
+			return subscribers, err
+		}
+		subscriber, ok := subscriber_na.(Subscriber)
+		if !ok {
+			err = errors.New("error in subscriber type assertion")
+			return subscribers, err
+		}
+		subscribers = append(subscribers, subscriber)
+		return subscribers, nil
+	}
+}
+
+func (Uc *UserControl) Subscriber_Delete(Key string) (err error) {
+	if Key == "" {
+		err = errors.New("msisdn cannot be empty")
+		return err
+	}
+	exits := Map_Subscribers.Check(Key)
+	if !exits {
+		err = errors.New("msisdn does not exist")
+		return err
+	}
+	Map_Subscribers.Delete(Key)
+	return nil
 }

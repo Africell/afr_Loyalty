@@ -6,8 +6,11 @@ replace afr_auth_center => ../afr_auth_center/
 
 replace daoc => ../daoc/
 
+replace afr_sb_in => ../afr_sb_in/
+
 require (
 	afr_auth_center v0.0.0-00010101000000-000000000000
+	afr_sb_in v0.0.0-00010101000000-000000000000
 	daoc v0.0.0-00010101000000-000000000000
 	github.com/gorilla/mux v1.8.1
 	github.com/kardianos/service v1.2.2

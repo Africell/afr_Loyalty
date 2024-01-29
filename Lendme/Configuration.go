@@ -59,6 +59,22 @@ type ConfigType struct {
 		HostIP_4   string
 		HostPort_4 string
 	}
+
+	IN struct {
+		IP                    string
+		Port                  string
+		WS_SOAP_Endpoint      string
+		WS_XMLNS_SOAP_Env     string
+		WS_XMLNS_Web          string
+		WS_EVC_SOAP_Endpoint  string
+		WS_EVC_XMLNS_SOAP_Env string
+		WS_EVC_XMLNS_Web      string
+		Default_OpId          string
+		Default_OpPwd         string
+		Is_OpPwd_Required     bool
+		Timeout               time.Duration
+		PrintLogs             bool
+	}
 }
 
 func GetDefaultConfiguration() (err error) {
@@ -118,6 +134,22 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 	Configuration.MongoDB.HostPort_3 = ""
 	Configuration.MongoDB.HostIP_4 = ""
 	Configuration.MongoDB.HostPort_4 = ""
+
+	Configuration.IN.IP = "10.10.51.51"
+	Configuration.IN.Port = "8080"
+	Configuration.IN.WS_SOAP_Endpoint = "/axis2/services/WebService.WebServiceHttpSoap12Endpoint/"
+	Configuration.IN.WS_XMLNS_SOAP_Env = "http://schemas.xmlsoap.org/soap/envelope/"
+	Configuration.IN.WS_XMLNS_Web = "http://webservice.CSI.omvia.convergys.com"
+
+	Configuration.IN.WS_EVC_SOAP_Endpoint = "/axis2/services/ERechargeWebService.ERechargeWebServiceHttpSoap11Endpoint/"
+	Configuration.IN.WS_EVC_XMLNS_SOAP_Env = "http://schemas.xmlsoap.org/soap/envelope/"
+	Configuration.IN.WS_EVC_XMLNS_Web = "http://webservice.CSI.omvia.convergys.com"
+
+	Configuration.IN.Default_OpId = "cap"
+	Configuration.IN.Default_OpPwd = "c@p@1235"
+	Configuration.IN.Is_OpPwd_Required = true
+	Configuration.IN.Timeout = 5
+	Configuration.IN.PrintLogs = true
 
 	return
 }

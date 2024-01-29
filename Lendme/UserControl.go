@@ -2,6 +2,7 @@ package Lendme
 
 import (
 	AuthCenterClient "afr_auth_center/AuthCenterClient"
+	INClient "afr_sb_in"
 	"daoc"
 )
 
@@ -10,6 +11,7 @@ type UserControl struct {
 	CacheDir *daoc.CacheRegistry
 	AppAUC   *AuthCenterClient.AUC
 	OKAPIAUC *AuthCenterClient.AUC
+	IN       *INClient.IN
 }
 
 func NewUserControl() *UserControl {
@@ -43,12 +45,26 @@ func NewUserControl() *UserControl {
 		Configuration.OKAPI_AUC.S2S_Username,
 		Configuration.OKAPI_AUC.S2S_Password,
 		Configuration.OKAPI_AUC.Timeout_After)
+	INHostConfig := INClient.InitHostConfig(Configuration.IN.IP,
+		Configuration.IN.Port,
+		Configuration.IN.WS_SOAP_Endpoint,
+		Configuration.IN.WS_XMLNS_SOAP_Env,
+		Configuration.IN.WS_XMLNS_Web,
+		Configuration.IN.WS_EVC_SOAP_Endpoint,
+		Configuration.IN.WS_EVC_XMLNS_SOAP_Env,
+		Configuration.IN.WS_EVC_XMLNS_Web,
+		Configuration.IN.Default_OpId,
+		Configuration.IN.Default_OpPwd,
+		Configuration.IN.Is_OpPwd_Required,
+		Configuration.IN.Timeout,
+		Configuration.IN.PrintLogs)
 
 	UC := &UserControl{
 		MongoDB:  daoc.NewMongoDBClient(MongoHostConfig),
 		AppAUC:   AuthCenterClient.NewAUCClient(App_AUCHostConfig),
 		OKAPIAUC: AuthCenterClient.NewAUCClient(OKAPI_AUCHostConfig),
 		CacheDir: daoc.NewCacheRegistry(),
+		IN:       INClient.NewINClient(INHostConfig),
 	}
 	return UC
 }
