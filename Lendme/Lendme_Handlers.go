@@ -189,3 +189,169 @@ func (Uc *UserControl) HTTP_Credit_Limit_Scheme(w http.ResponseWriter, r *http.R
 	sr.ErrorDescription = ""
 	Uc.HTTP_API_Standard_response(w, r, sr, true)
 }
+
+func (Uc *UserControl) HTTP_Subscriber(w http.ResponseWriter, r *http.Request) {
+	var sr API_Standard_response
+	//**fill response source detail
+	SourceIp, _ := GetRequestIP(r)
+	sr.SourceIP = SourceIp
+	sr.Login = r.Header.Get("Login")
+	sr.SourceApp = r.Header.Get("SourceApp")
+	sr.AccessKey = r.URL.Path
+	sr.AccessMethod = r.Method
+	sr.HostId = Configuration.HostId
+	sr.ReceiveDate = time.Now()
+
+	method := r.Method
+	switch method {
+	case "GET":
+		sr.TransactionType = "Subscriber - Read"
+		key := r.URL.Query().Get("Key")
+		LimitStr := r.URL.Query().Get("Limit")
+		PageStr := r.URL.Query().Get("Page")
+
+		if LimitStr != "" || PageStr != "" {
+			Limit, limiterr := strconv.ParseInt(LimitStr, 10, 64)
+			if limiterr != nil {
+				sr.Status = "failed"
+				sr.StatusCode = http.StatusBadRequest
+				sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+				sr.ErrorDescription = limiterr.Error()
+				Uc.HTTP_API_Standard_response(w, r, sr, false)
+				return
+			}
+			Page, pageerr := strconv.ParseInt(PageStr, 10, 64)
+			if pageerr != nil {
+				sr.Status = "failed"
+				sr.StatusCode = http.StatusBadRequest
+				sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+				sr.ErrorDescription = pageerr.Error()
+				Uc.HTTP_API_Standard_response(w, r, sr, false)
+				return
+			}
+			subscriber, err := Uc.Subscriber_GetPaginated(key, Page, Limit)
+			if err != nil {
+				sr.Status = "failed"
+				sr.StatusCode = http.StatusBadRequest
+				sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+				sr.ErrorDescription = err.Error()
+				Uc.HTTP_API_Standard_response(w, r, sr, false)
+				return
+			}
+			sr.Data = subscriber
+		} else {
+			subscriber, err := Uc.Subscriber_Get(key)
+			if err != nil {
+				sr.Status = "failed"
+				sr.StatusCode = http.StatusBadRequest
+				sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+				sr.ErrorDescription = err.Error()
+				Uc.HTTP_API_Standard_response(w, r, sr, false)
+				return
+			}
+			sr.Data = subscriber
+		}
+	case "POST":
+		sr.TransactionType = "Subscriber - Add"
+		//parse body
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to read request body"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		var request Subscriber_Add_Request
+		err = json.Unmarshal(body, &request)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to Unmarshal body"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		Id, err := Uc.Subscriber_Add(sr.Login, request)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to add request"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, true)
+			return
+		}
+		request.Subscriber_Id = Id
+		sr.Data = request
+
+	case "PUT":
+		sr.TransactionType = "Subscriber - Edit"
+		//parse body
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to read request body"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		var request Subscriber_Edit_Request
+		err = json.Unmarshal(body, &request)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to Unmarshal body"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		// if request.Key == "" {
+		// 	sr.Status = "failed"
+		// 	sr.StatusCode = http.StatusBadRequest
+		// 	sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": key cannot be empty"
+		// 	sr.ErrorDescription = "key cannot be empty"
+		// 	Uc.HTTP_API_Standard_response(w, r, sr, false)
+		// 	return
+		// }
+		id, err := Uc.Subscriber_Edit(sr.Login, request)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to edit"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, true)
+			return
+		}
+		request.Subscriber_Id = id
+		sr.Data = request
+	case "DELETE":
+		sr.TransactionType = "Subscriber - Delete"
+		vars := mux.Vars(r)
+		KeyDelete := vars["KeyDelete"]
+		if KeyDelete == "" {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": key is empty"
+			sr.ErrorDescription = "key is empty"
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		err := Uc.Subscriber_Delete(KeyDelete)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to delete"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+	}
+	//successful response
+	sr.Status = "successful"
+	sr.StatusCode = http.StatusOK
+	sr.StatusDescription = ""
+	sr.ErrorDescription = ""
+	Uc.HTTP_API_Standard_response(w, r, sr, true)
+}

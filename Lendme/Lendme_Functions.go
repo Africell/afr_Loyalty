@@ -766,6 +766,8 @@ func (Uc *UserControl) Subscriber_Add(Login string, request Subscriber_Add_Reque
 	NewEntry.Credit_Limit_Scheme = Uc.Credit_Limit_Scheme_Selection(NewEntry.ARPU, NewEntry.FirstUse_date)
 	if NewEntry.Credit_Limit_Scheme != "" {
 		NewEntry.IsLendmeEligible = true
+	} else {
+		NewEntry.IsLendmeEligible = false
 	}
 
 	log := Event_Log{
@@ -804,9 +806,40 @@ func (Uc *UserControl) Subscriber_Edit(Login string, request Subscriber_Edit_Req
 	current_subscriber := subscriber
 	current_subscriber.Event_Logs = nil
 
+	//check if exists on IN and get details
+	IN_Response, err := Uc.IN.INClient.GetAccountDetails("", "", request.Key)
+	if err != nil {
+		err = errors.New("error getting account detail: " + err.Error())
+		return Id, err
+	}
+
+	//to do: get ARPU
+	var ARPU float64
+	ARPU = 200
+
 	//Prepare new entry
 	subscriber.Key = request.Key
-	//add fields here
+	subscriber.COS = IN_Response.COS
+	if len(IN_Response.FirstUse) > 10 { //"FirstUse": "2016-06-20T17:51:00.000+00:00"
+		First_Use := IN_Response.FirstUse[0:10]
+		First_Use_Date, err := time.Parse("2006-01-02", First_Use)
+		if err != nil {
+			err = errors.New("error parsing FirstUse date: " + err.Error())
+			return Id, err
+		}
+		subscriber.FirstUse_date = First_Use_Date
+	} else {
+		err = errors.New("error getting account detail: FirstUse date not defined")
+		return Id, err
+	}
+	subscriber.ARPU = ARPU
+	subscriber.ARPU_date = time.Now()
+	subscriber.Credit_Limit_Scheme = Uc.Credit_Limit_Scheme_Selection(subscriber.ARPU, subscriber.FirstUse_date)
+	if subscriber.Credit_Limit_Scheme != "" {
+		subscriber.IsLendmeEligible = true
+	} else {
+		subscriber.IsLendmeEligible = false
+	}
 
 	log := Event_Log{
 		Event_User:         Login,
