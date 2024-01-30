@@ -71,8 +71,8 @@ type Credit_Limit_Scheme struct {
 	Scheme_Id           int64       `bson:"Scheme_Id" json:"Scheme_Id"`
 	ARPU_From           float64     `bson:"ARPU_From" json:"ARPU_From"`
 	ARPU_Till           float64     `bson:"ARPU_Till" json:"ARPU_Till"`
-	AON_From            int         `bson:"AON_From" json:"AON_From"` //months
-	AON_Till            int         `bson:"AON_Till" json:"AON_Till"` //months
+	AON_From            float64     `bson:"AON_From" json:"AON_From"` //months
+	AON_Till            float64     `bson:"AON_Till" json:"AON_Till"` //months
 	Credit_limit_Amount float64     `bson:"Credit_limit_Amount" json:"Credit_limit_Amount"`
 	Event_Logs          []Event_Log `bson:"Event_Logs" json:"Event_Logs"`
 }
@@ -82,8 +82,8 @@ type Credit_Limit_Scheme_Add_Request struct {
 	Scheme_Id           int64   `bson:"Scheme_Id" json:"Scheme_Id"`
 	ARPU_From           float64 `bson:"ARPU_From" json:"ARPU_From"`
 	ARPU_Till           float64 `bson:"ARPU_Till" json:"ARPU_Till"`
-	AON_From            int     `bson:"AON_From" json:"AON_From"` //months
-	AON_Till            int     `bson:"AON_Till" json:"AON_Till"` //months
+	AON_From            float64 `bson:"AON_From" json:"AON_From"` //months
+	AON_Till            float64 `bson:"AON_Till" json:"AON_Till"` //months
 	Credit_limit_Amount float64 `bson:"Credit_limit_Amount" json:"Credit_limit_Amount"`
 }
 
@@ -93,8 +93,8 @@ type Credit_Limit_Scheme_Edit_Request struct {
 	Scheme_Id           int64   `bson:"Scheme_Id" json:"Scheme_Id"`
 	ARPU_From           float64 `bson:"ARPU_From" json:"ARPU_From"`
 	ARPU_Till           float64 `bson:"ARPU_Till" json:"ARPU_Till"`
-	AON_From            int     `bson:"AON_From" json:"AON_From"` //months
-	AON_Till            int     `bson:"AON_Till" json:"AON_Till"` //months
+	AON_From            float64 `bson:"AON_From" json:"AON_From"` //months
+	AON_Till            float64 `bson:"AON_Till" json:"AON_Till"` //months
 	Credit_limit_Amount float64 `bson:"Credit_limit_Amount" json:"Credit_limit_Amount"`
 }
 

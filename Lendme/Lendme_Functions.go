@@ -695,6 +695,27 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues() {
 	}
 }
 
+func (Uc *UserControl) Credit_Limit_Scheme_Selection(ARPU float64, FirstUse_date time.Time) (scheme_name string) {
+	Schemes_na := Map_Credit_Limit_Scheme.ConvertToArray()
+	if len(Schemes_na) > 0 {
+		for _, scheme_na := range Schemes_na {
+			scheme, ok := scheme_na.(Credit_Limit_Scheme)
+			if !ok {
+				log.Println("error in Credit_Limit_Scheme_Selection Credit_Limit_Scheme type assertion")
+				continue
+			}
+			if scheme.ARPU_From < ARPU && scheme.ARPU_Till >= ARPU {
+				AON_Hours := time.Now().Sub(FirstUse_date).Hours()
+				AON_Months := (AON_Hours / 24) / 30
+				if scheme.AON_From < AON_Months && scheme.AON_Till >= AON_Months {
+					return scheme.Key
+				}
+			}
+		}
+	}
+	return
+}
+
 // ///////////////////////////////////////////////////////
 // Subscriber
 // ///////////////////////////////////////////////////////
@@ -717,7 +738,10 @@ func (Uc *UserControl) Subscriber_Add(Login string, request Subscriber_Add_Reque
 		err = errors.New("error getting account detail: " + err.Error())
 		return Id, err
 	}
+
 	//to do: get ARPU
+	var ARPU float64
+	ARPU = 200
 
 	//Prepare new entry
 	var NewEntry Subscriber
@@ -725,7 +749,24 @@ func (Uc *UserControl) Subscriber_Add(Login string, request Subscriber_Add_Reque
 	Id = NewEntry.Subscriber_Id
 	NewEntry.Key = request.Key
 	NewEntry.COS = IN_Response.COS
-	//NewEntry.FirstUse_date   = IN_Response.FirstUse
+	if len(IN_Response.FirstUse) > 10 { //"FirstUse": "2016-06-20T17:51:00.000+00:00"
+		First_Use := IN_Response.FirstUse[0:10]
+		First_Use_Date, err := time.Parse("2006-01-02", First_Use)
+		if err != nil {
+			err = errors.New("error parsing FirstUse date: " + err.Error())
+			return Id, err
+		}
+		NewEntry.FirstUse_date = First_Use_Date
+	} else {
+		err = errors.New("error getting account detail: FirstUse date not defined")
+		return Id, err
+	}
+	NewEntry.ARPU = ARPU
+	NewEntry.ARPU_date = time.Now()
+	NewEntry.Credit_Limit_Scheme = Uc.Credit_Limit_Scheme_Selection(NewEntry.ARPU, NewEntry.FirstUse_date)
+	if NewEntry.Credit_Limit_Scheme != "" {
+		NewEntry.IsLendmeEligible = true
+	}
 
 	log := Event_Log{
 		Event_User:         Login,
@@ -737,7 +778,7 @@ func (Uc *UserControl) Subscriber_Add(Login string, request Subscriber_Add_Reque
 	}
 	NewEntry.Event_Logs = append(NewEntry.Event_Logs, log)
 	//add to cache and DB
-	Map_Credit_Limit_Scheme.Put(NewEntry.Key, NewEntry)
+	Map_Subscribers.Put(NewEntry.Key, NewEntry)
 	return Id, nil
 }
 
