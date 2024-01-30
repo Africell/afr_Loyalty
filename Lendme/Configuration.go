@@ -22,6 +22,9 @@ type ConfigType struct {
 	Min_Allowed_Amnt float64
 	Service_FeePerc  float64
 
+	Min_Allowed_Balance float64
+	Max_Allowed_Balance float64
+
 	App_AUC struct {
 		Description   string
 		Protocol      string
@@ -101,6 +104,8 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 	Configuration.IsProduction = false
 	Configuration.Min_Allowed_Amnt = 10
 	Configuration.Service_FeePerc = 0.1
+	Configuration.Min_Allowed_Balance = 0
+	Configuration.Max_Allowed_Balance = 1000
 
 	Configuration.App_AUC.Description = "App AUC service"
 	Configuration.App_AUC.Protocol = "https"

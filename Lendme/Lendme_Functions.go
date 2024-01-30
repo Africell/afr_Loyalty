@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log"
 	"reflect"
+	"strconv"
 	"time"
 )
 
@@ -967,4 +968,92 @@ func (Uc *UserControl) Subscriber_Delete(Key string) (err error) {
 	}
 	Map_Subscribers.Delete(Key)
 	return nil
+}
+
+// ///////////////////////////////////////////////////////
+// Lendme
+// ///////////////////////////////////////////////////////
+func (Uc *UserControl) Lendme_Request(MSISDN string, Amount float64) (err error) {
+	// check if subscriber exist, auto add if not
+	exist := Map_Subscribers.Check(MSISDN)
+	if !exist {
+		var addRequest Subscriber_Add_Request
+		addRequest.Key = MSISDN
+		_, err := Uc.Subscriber_Add("Lendme Request", addRequest)
+		if err != nil {
+			return err
+		}
+	}
+	subscriber_na := Map_Subscribers.Get(MSISDN)
+	subscriber, ok := subscriber_na.(Subscriber)
+	if !ok {
+		err = errors.New("error in subscriber type assertion")
+		return err
+	}
+	if !subscriber.IsLendmeEligible {
+		err = errors.New("subscriber is not eligible")
+		return err
+	}
+	//check if exists on IN and get details
+	IN_Response, err := Uc.IN.INClient.GetAccountDetails("", "", MSISDN)
+	if err != nil {
+		err = errors.New("error getting account detail: " + err.Error())
+		return err
+	}
+	//check balance min and max
+	if IN_Response.Balance < Configuration.Min_Allowed_Balance {
+		err = errors.New("balance must be greater than " + strconv.FormatFloat(Round(Configuration.Min_Allowed_Balance, 1, 0), 'f', -1, 64))
+		return err
+	}
+	if IN_Response.Balance > Configuration.Max_Allowed_Balance {
+		err = errors.New("balance must be less than " + strconv.FormatFloat(Round(Configuration.Max_Allowed_Balance, 1, 0), 'f', -1, 64))
+		return err
+	}
+	//check if recharged in the past 60 days
+	if len(IN_Response.LastCredited) > 10 {
+
+	}
+	LastCredited := IN_Response.LastCredited[0:10]
+	LastCredited_Date, err := time.Parse("2006-01-02", LastCredited)
+	if err != nil {
+		err = errors.New("error parsing LastCredited date: " + err.Error())
+		return err
+	}
+	//check last credited (should be in more than 60 days)
+	durationSinceLastCredited := (time.Now().Sub(LastCredited_Date).Hours() / 24)
+	if durationSinceLastCredited < 60 {
+		err = errors.New("subscriber must have recharged at least once in a 60-day period")
+		return err
+	}
+	//check if SOS is active
+	if IN_Response.LoyaltyStatus == "Y" {
+		//todo: opt out from service
+	}
+
+	//check the amount
+	if Amount <= 0 {
+		err = errors.New("amount must be positive")
+		return err
+	}
+	scheme_na, scheme_exist := Map_Credit_Limit_Scheme.CheckThenGet(subscriber.Credit_Limit_Scheme)
+	if !scheme_exist {
+		err = errors.New("credit limit schema does not exist")
+		return err
+	}
+	scheme, ok := scheme_na.(Credit_Limit_Scheme)
+	if !ok {
+		err = errors.New("error in credit limit schema type assertion")
+		return err
+	}
+	if Amount > scheme.Credit_limit_Amount {
+		err = errors.New("amount is not allowed")
+		return err
+	}
+	//
+	return nil
+}
+
+func (Uc *UserControl) Lendme_PayBack(MSISDN string, Amount float64) (err error) {
+
+	return
 }

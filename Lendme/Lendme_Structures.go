@@ -46,6 +46,10 @@ type Subscriber struct {
 	IsLendmeEligible    bool      `bson:"IsLendmeEligible" json:"IsLendmeEligible"`
 	Credit_Limit_Scheme string    `bson:"Credit_Limit_Scheme" json:"Credit_Limit_Scheme"`
 
+	Lendme_Amount float64   `bson:"Lendme_Amount" json:"Lendme_Amount"`
+	Lendme_Fee    float64   `bson:"Lendme_Fee" json:"Lendme_Fee"`
+	Lendme_Date   time.Time `bson:"Lendme_Date" json:"Lendme_Date"`
+
 	//Workflow status
 	Status            string    `bson:"Status" json:"Status"`
 	StatusDate        time.Time `bson:"StatusDate" json:"StatusDate"`
