@@ -46,9 +46,14 @@ type Subscriber struct {
 	IsLendmeEligible    bool      `bson:"IsLendmeEligible" json:"IsLendmeEligible"`
 	Credit_Limit_Scheme string    `bson:"Credit_Limit_Scheme" json:"Credit_Limit_Scheme"`
 
-	Lendme_Amount float64   `bson:"Lendme_Amount" json:"Lendme_Amount"`
-	Lendme_Fee    float64   `bson:"Lendme_Fee" json:"Lendme_Fee"`
-	Lendme_Date   time.Time `bson:"Lendme_Date" json:"Lendme_Date"`
+	Lendme_Outstanding_Amount float64   `bson:"Lendme_Outstanding_Amount" json:"Lendme_Outstanding_Amount"`
+	Lendme_Outstanding_Fee    float64   `bson:"Lendme_Outstanding_Fee" json:"Lendme_Outstanding_Fee"`
+	Last_Lend_Date            time.Time `bson:"Last_Lend_Date" json:"Last_Lend_Date"`
+
+	Cumulative_Lent_Amount float64   `bson:"Cumulative_Lent_Amount" json:"Cumulative_Lent_Amount"`
+	Cumulative_Lent_Fee    float64   `bson:"Cumulative_Lent_Fee" json:"Cumulative_Lent_Fee"`
+	Cumulative_Payback     float64   `bson:"Cumulative_Payback" json:"Cumulative_Payback"`
+	Last_Payback_Date      time.Time `bson:"Last_Payback_Date" json:"Last_Payback_Date"`
 
 	//Workflow status
 	Status            string    `bson:"Status" json:"Status"`
@@ -104,4 +109,16 @@ type Credit_Limit_Scheme_Edit_Request struct {
 
 type DefaultValues struct {
 	Key string `bson:"Key" json:"Key"` //"Default"
+}
+
+type Lendme_log struct {
+	Source        string    `bson:"Source" json:"Source"`
+	MSISDN        string    `bson:"MSISDN" json:"MSISDN"`
+	Log_Date      time.Time `bson:"Log_Date" json:"Log_Date"`
+	Type          string    `bson:"Type" json:"Type"`
+	Lendme_Amount float64   `bson:"Lendme_Amount" json:"Lendme_Amount"`
+	Lendme_Fee    float64   `bson:"Lendme_Fee" json:"Lendme_Fee"`
+
+	Status            string `bson:"Status" json:"Status"`
+	StatusDescription string `bson:"StatusDescription" json:"StatusDescription"`
 }

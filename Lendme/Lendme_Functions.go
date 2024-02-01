@@ -25,6 +25,8 @@ var DAO_Subscribers daoc.DAO
 var Map_Credit_Limit_Scheme daoc.Cache_Synch
 var DAO_Credit_Limit_Scheme daoc.DAO
 
+var DAO_Lendme_log daoc.DAO
+
 func (uc *UserControl) InitializeCache() {
 	var access_entry AuthCenter.AccessEntry
 	MapAccessEntry.Initialize("AccessEntry", "AccessEntry", reflect.TypeOf(AuthCenter.AccessEntry{}), access_entry, true, &DAO_AccessEntry, uc.CacheDir.List)
@@ -44,6 +46,7 @@ func (uc *UserControl) InitializeDAO() {
 	DAO_DefaultValues.Initialize("DefaultValues", uc.MongoDB.MongoDBClient, reflect.TypeOf(DefaultValues{}), Configuration.DB_Name, "Col_DefaultValues", "")
 	DAO_Subscribers.Initialize("Subscriber", uc.MongoDB.MongoDBClient, reflect.TypeOf(Subscriber{}), Configuration.DB_Name, "Col_Subscriber", "")
 	DAO_Credit_Limit_Scheme.Initialize("Credit_Limit_Scheme", uc.MongoDB.MongoDBClient, reflect.TypeOf(Credit_Limit_Scheme{}), Configuration.DB_Name, "Col_Credit_Limit_Scheme", "")
+	DAO_Lendme_log.Initialize("Lendme_log", uc.MongoDB.MongoDBClient, reflect.TypeOf(Lendme_log{}), Configuration.DB_Name, "Col_Lendme_log", "")
 }
 
 func (uc *UserControl) IndexesMaintenanceProcess() {
@@ -96,6 +99,17 @@ func (uc *UserControl) LoadDefaultValues() {
 		Map_DefaultValues.Put(defaultValues.Key, defaultValues)
 	}
 	uc.Credit_Limit_Scheme_LoadDefaultValues()
+}
+
+func (Uc *UserControl) Write_Lendme_log(record Lendme_log) {
+	YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.Log_Date)
+	Db := "Lendme_log_Archive_" + YYYY + MM
+	Col := "Col_Lendme_log_" + DD
+	_, err := DAO_Lendme_log.PutOneLogs(record, Db, Col)
+	if err != nil {
+		log.Println("Error in Write_Lendme_log:", err, " (", record, ")")
+		return
+	}
 }
 
 // ///////////////////////////////////////////////////////
@@ -973,7 +987,15 @@ func (Uc *UserControl) Subscriber_Delete(Key string) (err error) {
 // ///////////////////////////////////////////////////////
 // Lendme
 // ///////////////////////////////////////////////////////
-func (Uc *UserControl) Lendme_Request(MSISDN string, Amount float64) (err error) {
+func (Uc *UserControl) Lendme_Request(Source, MSISDN string, Amount float64) (err error) {
+	var lendLog Lendme_log
+	lendLog.Source = Source
+	lendLog.MSISDN = MSISDN
+	lendLog.Log_Date = time.Now()
+	lendLog.Type = "Lendme Request"
+	lendLog.Lendme_Amount = Amount
+	lendLog.Lendme_Fee = (Amount * Configuration.Service_FeePerc)
+
 	// check if subscriber exist, auto add if not
 	exist := Map_Subscribers.Check(MSISDN)
 	if !exist {
@@ -981,6 +1003,9 @@ func (Uc *UserControl) Lendme_Request(MSISDN string, Amount float64) (err error)
 		addRequest.Key = MSISDN
 		_, err := Uc.Subscriber_Add("Lendme Request", addRequest)
 		if err != nil {
+			lendLog.Status = "failed"
+			lendLog.StatusDescription = err.Error()
+			go Uc.Write_Lendme_log(lendLog)
 			return err
 		}
 	}
@@ -988,41 +1013,67 @@ func (Uc *UserControl) Lendme_Request(MSISDN string, Amount float64) (err error)
 	subscriber, ok := subscriber_na.(Subscriber)
 	if !ok {
 		err = errors.New("error in subscriber type assertion")
+		lendLog.Status = "failed"
+		lendLog.StatusDescription = err.Error()
+		go Uc.Write_Lendme_log(lendLog)
 		return err
 	}
 	if !subscriber.IsLendmeEligible {
 		err = errors.New("subscriber is not eligible")
+		lendLog.Status = "failed"
+		lendLog.StatusDescription = err.Error()
+		go Uc.Write_Lendme_log(lendLog)
 		return err
 	}
 	//check if exists on IN and get details
 	IN_Response, err := Uc.IN.INClient.GetAccountDetails("", "", MSISDN)
 	if err != nil {
 		err = errors.New("error getting account detail: " + err.Error())
+		lendLog.Status = "failed"
+		lendLog.StatusDescription = err.Error()
+		go Uc.Write_Lendme_log(lendLog)
 		return err
 	}
 	//check balance min and max
 	if IN_Response.Balance < Configuration.Min_Allowed_Balance {
 		err = errors.New("balance must be greater than " + strconv.FormatFloat(Round(Configuration.Min_Allowed_Balance, 1, 0), 'f', -1, 64))
+		lendLog.Status = "failed"
+		lendLog.StatusDescription = err.Error()
+		go Uc.Write_Lendme_log(lendLog)
 		return err
 	}
 	if IN_Response.Balance > Configuration.Max_Allowed_Balance {
 		err = errors.New("balance must be less than " + strconv.FormatFloat(Round(Configuration.Max_Allowed_Balance, 1, 0), 'f', -1, 64))
+		lendLog.Status = "failed"
+		lendLog.StatusDescription = err.Error()
+		go Uc.Write_Lendme_log(lendLog)
 		return err
 	}
 	//check if recharged in the past 60 days
 	if len(IN_Response.LastCredited) > 10 {
-
-	}
-	LastCredited := IN_Response.LastCredited[0:10]
-	LastCredited_Date, err := time.Parse("2006-01-02", LastCredited)
-	if err != nil {
-		err = errors.New("error parsing LastCredited date: " + err.Error())
-		return err
-	}
-	//check last credited (should be in more than 60 days)
-	durationSinceLastCredited := (time.Now().Sub(LastCredited_Date).Hours() / 24)
-	if durationSinceLastCredited < 60 {
+		LastCredited := IN_Response.LastCredited[0:10]
+		LastCredited_Date, err := time.Parse("2006-01-02", LastCredited)
+		if err != nil {
+			err = errors.New("error parsing LastCredited date: " + err.Error())
+			lendLog.Status = "failed"
+			lendLog.StatusDescription = err.Error()
+			go Uc.Write_Lendme_log(lendLog)
+			return err
+		}
+		//check last credited (should be in more than 60 days)
+		durationSinceLastCredited := (time.Now().Sub(LastCredited_Date).Hours() / 24)
+		if durationSinceLastCredited < 60 {
+			err = errors.New("subscriber must have recharged at least once in a 60-day period")
+			lendLog.Status = "failed"
+			lendLog.StatusDescription = err.Error()
+			go Uc.Write_Lendme_log(lendLog)
+			return err
+		}
+	} else {
 		err = errors.New("subscriber must have recharged at least once in a 60-day period")
+		lendLog.Status = "failed"
+		lendLog.StatusDescription = err.Error()
+		go Uc.Write_Lendme_log(lendLog)
 		return err
 	}
 	//check if SOS is active
@@ -1031,25 +1082,72 @@ func (Uc *UserControl) Lendme_Request(MSISDN string, Amount float64) (err error)
 	}
 
 	//check the amount
-	if Amount <= 0 {
-		err = errors.New("amount must be positive")
+	if Amount <= Configuration.Min_Allowed_Amnt {
+		err = errors.New("amount must greater than " + strconv.FormatFloat(Round(Configuration.Min_Allowed_Amnt, 1, 0), 'f', -1, 64))
+		lendLog.Status = "failed"
+		lendLog.StatusDescription = err.Error()
+		go Uc.Write_Lendme_log(lendLog)
 		return err
 	}
 	scheme_na, scheme_exist := Map_Credit_Limit_Scheme.CheckThenGet(subscriber.Credit_Limit_Scheme)
 	if !scheme_exist {
 		err = errors.New("credit limit schema does not exist")
+		lendLog.Status = "failed"
+		lendLog.StatusDescription = err.Error()
+		go Uc.Write_Lendme_log(lendLog)
 		return err
 	}
 	scheme, ok := scheme_na.(Credit_Limit_Scheme)
 	if !ok {
 		err = errors.New("error in credit limit schema type assertion")
+		lendLog.Status = "failed"
+		lendLog.StatusDescription = err.Error()
+		go Uc.Write_Lendme_log(lendLog)
 		return err
 	}
+
 	if Amount > scheme.Credit_limit_Amount {
 		err = errors.New("amount is not allowed")
+		lendLog.Status = "failed"
+		lendLog.StatusDescription = err.Error()
+		go Uc.Write_Lendme_log(lendLog)
 		return err
 	}
-	//
+	if (subscriber.Lendme_Outstanding_Amount + Amount) > scheme.Credit_limit_Amount {
+		err = errors.New("amount is exceeding credit limit")
+		lendLog.Status = "failed"
+		lendLog.StatusDescription = err.Error()
+		go Uc.Write_Lendme_log(lendLog)
+		return err
+	}
+	//credit the amount
+	credit_response, credit_err := Uc.IN.INClient.SetAccountBalances("", "", MSISDN, Amount, "N", 0, 0, 0, 0, "Lendme")
+	if credit_err != nil {
+		lendLog.Status = "failed"
+		lendLog.StatusDescription = credit_err.Error()
+		go Uc.Write_Lendme_log(lendLog)
+		return credit_err
+	}
+	if credit_response.ResultCode != "0" {
+		err = errors.New(credit_response.ResultText)
+		lendLog.Status = "failed"
+		lendLog.StatusDescription = err.Error()
+		go Uc.Write_Lendme_log(lendLog)
+		return err
+	}
+
+	// update subscription
+	subscriber.Lendme_Outstanding_Amount = subscriber.Lendme_Outstanding_Amount + Amount
+	subscriber.Lendme_Outstanding_Fee = subscriber.Lendme_Outstanding_Fee + (Amount * Configuration.Service_FeePerc)
+	subscriber.Last_Lend_Date = time.Now()
+	subscriber.Cumulative_Lent_Amount = subscriber.Cumulative_Lent_Amount + Amount
+	subscriber.Cumulative_Lent_Fee = subscriber.Cumulative_Lent_Fee + (Amount * Configuration.Service_FeePerc)
+	Map_Subscribers.Put(subscriber.Key, subscriber)
+
+	//save log into DB
+	lendLog.Status = "successful"
+	lendLog.StatusDescription = ""
+	go Uc.Write_Lendme_log(lendLog)
 	return nil
 }
 
