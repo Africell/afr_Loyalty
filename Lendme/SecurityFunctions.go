@@ -68,18 +68,18 @@ func (Uc *UserControl) ValidateJWEToken(h http.HandlerFunc) http.HandlerFunc {
 			r.Header.Set("Login", sra.Login)
 			r.Header.Set("DestinationPort", port)
 			h.ServeHTTP(w, r)
-		} else if port == Configuration.HttpOKAPIServicePort {
-			sra, err := Uc.OKAPIAUC.AUCClient.ValidateToken(AuthorizationSplit[1])
-			if err != nil {
-				sr.Status = sra.Status
-				sr.StatusCode = sra.StatusCode
-				sr.ErrorDescription = sra.ErrorDescription
-				Uc.HTTP_API_Standard_response(w, r, sr, false)
-				return
-			}
-			r.Header.Set("Login", sra.Login)
-			r.Header.Set("DestinationPort", port)
-			h.ServeHTTP(w, r)
+			// } else if port == Configuration.HttpOKAPIServicePort {
+			// 	sra, err := Uc.OKAPIAUC.AUCClient.ValidateToken(AuthorizationSplit[1])
+			// 	if err != nil {
+			// 		sr.Status = sra.Status
+			// 		sr.StatusCode = sra.StatusCode
+			// 		sr.ErrorDescription = sra.ErrorDescription
+			// 		Uc.HTTP_API_Standard_response(w, r, sr, false)
+			// 		return
+			// 	}
+			// 	r.Header.Set("Login", sra.Login)
+			// 	r.Header.Set("DestinationPort", port)
+			// 	h.ServeHTTP(w, r)
 		} else {
 			sr.Status = "failed"
 			sr.StatusCode = http.StatusBadRequest

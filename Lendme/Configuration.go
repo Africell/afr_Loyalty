@@ -88,6 +88,7 @@ func GetDefaultConfiguration() (err error) {
 func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 	Configuration.HttpOKAPIServicePort = "9291"
 	Configuration.HttpAppServicePort = "9290"
+
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:3000")
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:5173")
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:4173")
@@ -130,8 +131,8 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 	//mongoDB
 	Configuration.MongoDB.ReplicaSet = ""
 	Configuration.MongoDB.UserName = "db_root"
-	Configuration.MongoDB.Password = "P@s54D0Brdara_r@75S"
-	Configuration.MongoDB.HostIP_1 = "mongodb"
+	Configuration.MongoDB.Password = "B3202T@soSo0612w6"
+	Configuration.MongoDB.HostIP_1 = "LendMe_mongodb"
 	Configuration.MongoDB.HostPort_1 = "27017"
 	Configuration.MongoDB.HostIP_2 = ""
 	Configuration.MongoDB.HostPort_2 = ""
@@ -140,7 +141,7 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 	Configuration.MongoDB.HostIP_4 = ""
 	Configuration.MongoDB.HostPort_4 = ""
 
-	Configuration.IN.IP = "10.10.51.51"
+	Configuration.IN.IP = "10.70.1.38"
 	Configuration.IN.Port = "8080"
 	Configuration.IN.WS_SOAP_Endpoint = "/axis2/services/WebService.WebServiceHttpSoap12Endpoint/"
 	Configuration.IN.WS_XMLNS_SOAP_Env = "http://schemas.xmlsoap.org/soap/envelope/"
@@ -150,11 +151,13 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 	Configuration.IN.WS_EVC_XMLNS_SOAP_Env = "http://schemas.xmlsoap.org/soap/envelope/"
 	Configuration.IN.WS_EVC_XMLNS_Web = "http://webservice.CSI.omvia.convergys.com"
 
-	Configuration.IN.Default_OpId = "cap"
-	Configuration.IN.Default_OpPwd = "c@p@1235"
-	Configuration.IN.Is_OpPwd_Required = true
+	Configuration.IN.Default_OpId = "lendme"
+	Configuration.IN.Default_OpPwd = ""
+	Configuration.IN.Is_OpPwd_Required = false
 	Configuration.IN.Timeout = 5
 	Configuration.IN.PrintLogs = true
+
+	//http://10.95.64.6:15403/?systemid=lendme&password=lendmeP@ssw0rd&Originator=setest&dest_addr=243900100606&msg_text=test&registered_delivery=0&ston=5&snpi=0&dton=1&dnpi=1&encoding=1
 
 	return
 }

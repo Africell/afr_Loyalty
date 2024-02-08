@@ -80,14 +80,15 @@ func (p *program) run() {
 	UserControl.AddToAppRouter(App_router, UserControl)
 	HttpAppServicePort := lendme.Configuration.HttpAppServicePort
 	log.Println("App HTTP listen and serve on port: " + HttpAppServicePort) //auc.Configuration.HttpServicePort
-	go http.ListenAndServe(":"+HttpAppServicePort, corsOpts.Handler(App_router))
-	//**OKAPI web Service
-	log.Println("Add Lendme routers to the web service")
-	OKAPI_router := mux.NewRouter().StrictSlash(true)
-	UserControl.AddToOKAPIRouter(OKAPI_router, UserControl)
-	HttpOKAPIServicePort := lendme.Configuration.HttpOKAPIServicePort
-	log.Println("Lendme HTTP listen and serve on port: " + HttpOKAPIServicePort) //auc.Configuration.HttpServicePort
-	log.Fatal(http.ListenAndServe(":"+HttpOKAPIServicePort, corsOpts.Handler(OKAPI_router)))
+	//go http.ListenAndServe(":"+HttpAppServicePort, corsOpts.Handler(App_router))
+	log.Fatal(http.ListenAndServe(":"+HttpAppServicePort, corsOpts.Handler(App_router)))
+	// //**OKAPI web Service
+	// log.Println("Add Lendme routers to the web service")
+	// OKAPI_router := mux.NewRouter().StrictSlash(true)
+	// UserControl.AddToOKAPIRouter(OKAPI_router, UserControl)
+	// HttpOKAPIServicePort := lendme.Configuration.HttpOKAPIServicePort
+	// log.Println("Lendme HTTP listen and serve on port: " + HttpOKAPIServicePort) //auc.Configuration.HttpServicePort
+	// log.Fatal(http.ListenAndServe(":"+HttpOKAPIServicePort, corsOpts.Handler(OKAPI_router)))
 }
 
 func (p *program) Stop(s service.Service) error {
