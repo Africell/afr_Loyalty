@@ -2,6 +2,7 @@ package Lendme
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -12,8 +13,9 @@ func (Uc *UserControl) Import_Subscribers_ARPU_LineByLine(FileName string) (err 
 	log.Println("***Subscribers ARPU importing process started ***")
 	//Section 1: open file for reading
 	if FileName == "" {
-		FileName = Configuration.ARPU_File_Path
+		return errors.New("file name cannot be empty")
 	}
+	FileName = Configuration.ARPU_File_Path + FileName
 	file, err := os.Open(FileName)
 	if err != nil {
 		log.Println("Error opening subscribers ARPU file " + FileName + ": " + err.Error())
@@ -35,7 +37,7 @@ func (Uc *UserControl) Import_Subscribers_ARPU_LineByLine(FileName string) (err 
 			}
 		}
 		if len(line) > 0 {
-			log.Println(line)
+			log.Println(string(line))
 		}
 	}
 }

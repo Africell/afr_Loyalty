@@ -109,7 +109,7 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 	Configuration.Service_FeePerc = 0.1
 	Configuration.Min_Allowed_Balance = 0
 	Configuration.Max_Allowed_Balance = 1000
-	Configuration.ARPU_File_Path = "./Subscribers_ARPU.txt"
+	Configuration.ARPU_File_Path = "/home/Subs_ARPU/"
 
 	Configuration.App_AUC.Description = "App AUC service"
 	Configuration.App_AUC.Protocol = "http"
