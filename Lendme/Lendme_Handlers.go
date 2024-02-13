@@ -355,3 +355,39 @@ func (Uc *UserControl) HTTP_Subscriber(w http.ResponseWriter, r *http.Request) {
 	sr.ErrorDescription = ""
 	Uc.HTTP_API_Standard_response(w, r, sr, true)
 }
+
+func (Uc *UserControl) HTTP_Subscribers_ARPU_Import_Launch(w http.ResponseWriter, r *http.Request) {
+	var sr API_Standard_response
+	//**fill response source detail
+	SourceIp, _ := GetRequestIP(r)
+	sr.SourceIP = SourceIp
+	sr.Login = r.Header.Get("Login")
+	sr.SourceApp = r.Header.Get("SourceApp")
+	sr.AccessKey = r.URL.Path
+	sr.AccessMethod = r.Method
+	sr.HostId = Configuration.HostId
+	sr.ReceiveDate = time.Now()
+
+	method := r.Method
+	switch method {
+	case "GET":
+		sr.TransactionType = "Subscriber - Read"
+		FileName := r.URL.Query().Get("FileName")
+
+		err := Uc.Import_Subscribers_ARPU_LineByLine(FileName)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest)
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+	}
+	//successful response
+	sr.Status = "successful"
+	sr.StatusCode = http.StatusOK
+	sr.StatusDescription = ""
+	sr.ErrorDescription = ""
+	Uc.HTTP_API_Standard_response(w, r, sr, true)
+}

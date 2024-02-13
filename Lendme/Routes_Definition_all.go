@@ -53,7 +53,7 @@ func (UC *UserControl) Add_LendmeRoutes(R *Routes) {
 		"",                          // Level3
 		0,                           // Level3DisplayOrder
 		true,                        //AllowedFor_OKAPI
-		false,                       //AllowedFor_App
+		true,                        //AllowedFor_App
 	}
 	*R = append(*R, r)
 	DisplayOrder = DisplayOrder + 1
@@ -75,7 +75,7 @@ func (UC *UserControl) Add_LendmeRoutes(R *Routes) {
 		"",                           // Level3
 		0,                            // Level3DisplayOrder
 		true,                         //AllowedFor_OKAPI
-		false,                        //AllowedFor_App
+		true,                         //AllowedFor_App
 	}
 	*R = append(*R, r)
 	DisplayOrder = DisplayOrder + 1
@@ -97,7 +97,7 @@ func (UC *UserControl) Add_LendmeRoutes(R *Routes) {
 		"",                             // Level3
 		0,                              // Level3DisplayOrder
 		true,                           //AllowedFor_OKAPI
-		false,                          //AllowedFor_App
+		true,                           //AllowedFor_App
 	}
 	*R = append(*R, r)
 	DisplayOrder = DisplayOrder + 1
@@ -146,7 +146,7 @@ func (UC *UserControl) Add_LendmeRoutes(R *Routes) {
 		"",                 // Level3
 		0,                  // Level3DisplayOrder
 		true,               //AllowedFor_OKAPI
-		false,              //AllowedFor_App
+		true,               //AllowedFor_App
 	}
 	*R = append(*R, r)
 	DisplayOrder = DisplayOrder + 1
@@ -168,7 +168,7 @@ func (UC *UserControl) Add_LendmeRoutes(R *Routes) {
 		"",                  // Level3
 		0,                   // Level3DisplayOrder
 		true,                //AllowedFor_OKAPI
-		false,               //AllowedFor_App
+		true,                //AllowedFor_App
 	}
 	*R = append(*R, r)
 	DisplayOrder = DisplayOrder + 1
@@ -190,7 +190,34 @@ func (UC *UserControl) Add_LendmeRoutes(R *Routes) {
 		"",                    // Level3
 		0,                     // Level3DisplayOrder
 		true,                  //AllowedFor_OKAPI
-		false,                 //AllowedFor_App
+		true,                  //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+	//*********************************
+	// Subscribers ARPU Import Launch
+	//*********************************
+	Level1 = "Subscribers ARPU Import"
+	Level1DisplayOrder = Level1DisplayOrder + 1
+	r = Route{
+		"HTTP_Subscribers_ARPU_Import_Launch",
+		"GET",
+		"/" + Configuration.Module + "/" + Configuration.Version + "/HTTP_Subscribers_ARPU_Import_Launch/",
+		UC.HTTP_Subscribers_ARPU_Import_Launch,
+		true,
+		"Subscribers ARPU Import Launch", // DisplayName
+		DisplayOrder,                     // DisplayOrder
+		Module,                           // Module
+		ModuleDisplayOrder,               //ModuleDisplayOrder
+		Level1,                           // Level1
+		Level1DisplayOrder,               // Level1DisplayOrder
+		"",                               // Level2
+		0,                                // Level2DisplayOrder
+		"",                               // Level3
+		0,                                // Level3DisplayOrder
+		true,                             //AllowedFor_OKAPI
+		true,                             //AllowedFor_App
 	}
 	*R = append(*R, r)
 	DisplayOrder = DisplayOrder + 1

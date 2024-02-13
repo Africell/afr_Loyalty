@@ -123,7 +123,7 @@ func (Uc *UserControl) Credit_Limit_Scheme_Add(Login string, request Credit_Limi
 	}
 	//check if key already used
 	exits := Map_Credit_Limit_Scheme.Check(request.Key)
-	if !exits {
+	if exits {
 		err = errors.New("scheme already exist")
 		return Id, err
 	}
@@ -742,7 +742,7 @@ func (Uc *UserControl) Subscriber_Add(Login string, request Subscriber_Add_Reque
 	}
 	//check if key already used
 	exits := Map_Subscribers.Check(request.Key)
-	if !exits {
+	if exits {
 		err = errors.New("msisdn already exist")
 		return Id, err
 	}
@@ -1155,3 +1155,7 @@ func (Uc *UserControl) Lendme_PayBack(MSISDN string, Amount float64) (err error)
 
 	return
 }
+
+// ///////////////////////////////////////////////////////
+// Lendme ARPU
+// ///////////////////////////////////////////////////////

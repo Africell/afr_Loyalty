@@ -25,6 +25,8 @@ type ConfigType struct {
 	Min_Allowed_Balance float64
 	Max_Allowed_Balance float64
 
+	ARPU_File_Path string
+
 	App_AUC struct {
 		Description   string
 		Protocol      string
@@ -107,9 +109,10 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 	Configuration.Service_FeePerc = 0.1
 	Configuration.Min_Allowed_Balance = 0
 	Configuration.Max_Allowed_Balance = 1000
+	Configuration.ARPU_File_Path = "./Subscribers_ARPU.txt"
 
 	Configuration.App_AUC.Description = "App AUC service"
-	Configuration.App_AUC.Protocol = "https"
+	Configuration.App_AUC.Protocol = "http"
 	Configuration.App_AUC.Hostname = "Lendme_auc"
 	Configuration.App_AUC.Port = "9001"
 	Configuration.App_AUC.Module = "AUC"
