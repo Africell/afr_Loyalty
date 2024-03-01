@@ -36,15 +36,20 @@ type Event_Log struct {
 }
 
 type Subscriber struct {
-	Key           string `bson:"Key" json:"Key"` //MSISDN
-	Subscriber_Id int64  `bson:"Subscriber_Id" json:"Subscriber_Id"`
+	Key           string    `bson:"Key" json:"Key"` //MSISDN
+	Subscriber_Id int64     `bson:"Subscriber_Id" json:"Subscriber_Id"`
+	Add_Date      time.Time `bson:"Add_Date" json:"Add_Date"`
 
-	COS                 string    `bson:"COS" json:"COS"`
-	FirstUse_date       time.Time `bson:"FirstUse_date" json:"FirstUse_date"`
-	ARPU                float64   `bson:"ARPU" json:"ARPU"`
-	ARPU_date           time.Time `bson:"ARPU_date" json:"ARPU_date"`
-	IsLendmeEligible    bool      `bson:"IsLendmeEligible" json:"IsLendmeEligible"`
-	Credit_Limit_Scheme string    `bson:"Credit_Limit_Scheme" json:"Credit_Limit_Scheme"`
+	COS               string    `bson:"COS" json:"COS"`
+	FirstUse_date     time.Time `bson:"FirstUse_date" json:"FirstUse_date"`
+	Last_Credit       time.Time `bson:"Last_Credit" json:"Last_Credit"`
+	ARPU              float64   `bson:"ARPU" json:"ARPU"`
+	IN_Loyalty_Status string    `bson:"IN_Loyalty_Status" json:"IN_Loyalty_Status"`
+	IN_Credit_Limit   float64   `bson:"IN_Credit_Limit" json:"IN_Credit_Limit"`
+	Last_Update_date  time.Time `bson:"Last_Update_date" json:"Last_Update_date"`
+
+	IsLendmeEligible    bool   `bson:"IsLendmeEligible" json:"IsLendmeEligible"`
+	Credit_Limit_Scheme string `bson:"Credit_Limit_Scheme" json:"Credit_Limit_Scheme"`
 
 	Lendme_Outstanding_Amount float64   `bson:"Lendme_Outstanding_Amount" json:"Lendme_Outstanding_Amount"`
 	Lendme_Outstanding_Fee    float64   `bson:"Lendme_Outstanding_Fee" json:"Lendme_Outstanding_Fee"`
@@ -60,8 +65,6 @@ type Subscriber struct {
 	StatusDate        time.Time `bson:"StatusDate" json:"StatusDate"`
 	StatusUser        string    `bson:"StatusUser" json:"StatusUser"`
 	StatusDescription string    `bson:"StatusDescription" json:"StatusDescription"`
-	//Events Log trail
-	Event_Logs []Event_Log `bson:"Event_Logs" json:"Event_Logs"`
 }
 
 type Subscriber_Add_Request struct {
@@ -121,4 +124,20 @@ type Lendme_log struct {
 
 	Status            string `bson:"Status" json:"Status"`
 	StatusDescription string `bson:"StatusDescription" json:"StatusDescription"`
+}
+
+type LendMe_Request struct {
+	Source string  `bson:"Source" json:"Source"`
+	MSISDN string  `bson:"MSISDN" json:"MSISDN"`
+	Amount float64 `bson:"Amount" json:"Amount"`
+}
+
+type Sub_Update_Request struct {
+	MSISDN         string    `bson:"MSISDN" json:"MSISDN"`
+	COS            string    `bson:"COS" json:"COS"`
+	First_Used     time.Time `bson:"First_Used" json:"First_Used"`
+	Last_Credit    time.Time `bson:"Last_Credit" json:"Last_Credit"`
+	Loyalty_Status string    `bson:"Loyalty_Status" json:"Loyalty_Status"`
+	Credit_Limit   float64   `bson:"Credit_Limit" json:"Credit_Limit"`
+	ARPU_Amount    float64   `bson:"ARPU_Amount" json:"ARPU_Amount"`
 }

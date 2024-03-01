@@ -777,23 +777,13 @@ func (Uc *UserControl) Subscriber_Add(Login string, request Subscriber_Add_Reque
 		return Id, err
 	}
 	NewEntry.ARPU = ARPU
-	NewEntry.ARPU_date = time.Now()
+	NewEntry.Last_Update_date = time.Now()
 	NewEntry.Credit_Limit_Scheme = Uc.Credit_Limit_Scheme_Selection(NewEntry.ARPU, NewEntry.FirstUse_date)
 	if NewEntry.Credit_Limit_Scheme != "" {
 		NewEntry.IsLendmeEligible = true
 	} else {
 		NewEntry.IsLendmeEligible = false
 	}
-
-	log := Event_Log{
-		Event_User:         Login,
-		Event_Time:         time.Now(),
-		Event_Type:         "add",
-		Event_Description:  "create new entry",
-		Event_Entry_Before: nil,
-		Event_Entry_After:  nil,
-	}
-	NewEntry.Event_Logs = append(NewEntry.Event_Logs, log)
 	//add to cache and DB
 	Map_Subscribers.Put(NewEntry.Key, NewEntry)
 	return Id, nil
@@ -817,9 +807,6 @@ func (Uc *UserControl) Subscriber_Edit(Login string, request Subscriber_Edit_Req
 	if subscriber.Subscriber_Id != request.Subscriber_Id {
 		return Id, errors.New("id is not matching")
 	}
-	//take log for current values without the log trail
-	current_subscriber := subscriber
-	current_subscriber.Event_Logs = nil
 
 	//check if exists on IN and get details
 	IN_Response, err := Uc.IN.INClient.GetAccountDetails("", "", request.Key)
@@ -848,23 +835,13 @@ func (Uc *UserControl) Subscriber_Edit(Login string, request Subscriber_Edit_Req
 		return Id, err
 	}
 	subscriber.ARPU = ARPU
-	subscriber.ARPU_date = time.Now()
+	subscriber.Last_Update_date = time.Now()
 	subscriber.Credit_Limit_Scheme = Uc.Credit_Limit_Scheme_Selection(subscriber.ARPU, subscriber.FirstUse_date)
 	if subscriber.Credit_Limit_Scheme != "" {
 		subscriber.IsLendmeEligible = true
 	} else {
 		subscriber.IsLendmeEligible = false
 	}
-
-	log := Event_Log{
-		Event_User:         Login,
-		Event_Time:         time.Now(),
-		Event_Type:         "edit",
-		Event_Description:  "edit entry",
-		Event_Entry_Before: current_subscriber,
-		Event_Entry_After:  nil,
-	}
-	subscriber.Event_Logs = append(subscriber.Event_Logs, log)
 	if request.NewKey != "" {
 		if request.NewKey != request.Key {
 			//delete old
@@ -987,7 +964,7 @@ func (Uc *UserControl) Subscriber_Delete(Key string) (err error) {
 // ///////////////////////////////////////////////////////
 // Lendme
 // ///////////////////////////////////////////////////////
-func (Uc *UserControl) Lendme_Request(Source, MSISDN string, Amount float64) (err error) {
+func (Uc *UserControl) Lendme_exec_Request(Source, MSISDN string, Amount float64) (err error) {
 	var lendLog Lendme_log
 	lendLog.Source = Source
 	lendLog.MSISDN = MSISDN
@@ -1077,12 +1054,20 @@ func (Uc *UserControl) Lendme_Request(Source, MSISDN string, Amount float64) (er
 		return err
 	}
 	//check if SOS is active
-	if IN_Response.LoyaltyStatus == "Y" {
+	if IN_Response.LoyaltyStatus != "X" {
 		//todo: opt out from service
+		_, errL := Uc.IN.INClient.SetLoyaltyOverdraft("", "", MSISDN, "X", 0)
+		if errL != nil {
+			err = errors.New("failed to disable SOS: " + errL.Error())
+			lendLog.Status = "failed"
+			lendLog.StatusDescription = errL.Error()
+			go Uc.Write_Lendme_log(lendLog)
+			return err
+		}
 	}
 
 	//check the amount
-	if Amount <= Configuration.Min_Allowed_Amnt {
+	if Amount < Configuration.Min_Allowed_Amnt {
 		err = errors.New("amount must greater than " + strconv.FormatFloat(Round(Configuration.Min_Allowed_Amnt, 1, 0), 'f', -1, 64))
 		lendLog.Status = "failed"
 		lendLog.StatusDescription = err.Error()

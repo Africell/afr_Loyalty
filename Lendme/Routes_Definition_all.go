@@ -222,4 +222,55 @@ func (UC *UserControl) Add_LendmeRoutes(R *Routes) {
 	*R = append(*R, r)
 	DisplayOrder = DisplayOrder + 1
 
+	//*****************************
+	// Get IN subscriber detail
+	//*****************************
+	Level1 = "Subscribers IN functions"
+	Level1DisplayOrder = Level1DisplayOrder + 1
+	r = Route{
+		"HTTP_Subscribers_GetINDetail",
+		"GET",
+		"/" + Configuration.Module + "/" + Configuration.Version + "/HTTP_Subscribers_GetINDetail/",
+		UC.HTTP_Subscribers_GetINDetail,
+		true,
+		"Subscribers Get IN Detail", // DisplayName
+		DisplayOrder,                // DisplayOrder
+		Module,                      // Module
+		ModuleDisplayOrder,          //ModuleDisplayOrder
+		Level1,                      // Level1
+		Level1DisplayOrder,          // Level1DisplayOrder
+		"",                          // Level2
+		0,                           // Level2DisplayOrder
+		"",                          // Level3
+		0,                           // Level3DisplayOrder
+		true,                        //AllowedFor_OKAPI
+		true,                        //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+	//*****************************
+	// Subscriber Lendme Request
+	//*****************************
+	r = Route{
+		"HTTP_Lendme_Request",
+		"POST",
+		"/" + Configuration.Module + "/" + Configuration.Version + "/HTTP_Lendme_Request/",
+		UC.HTTP_Lendme_Request,
+		true,
+		"Subscriber - Add", // DisplayName
+		DisplayOrder,       // DisplayOrder
+		Module,             // Module
+		ModuleDisplayOrder, //ModuleDisplayOrder
+		Level1,             // Level1
+		Level1DisplayOrder, // Level1DisplayOrder
+		"",                 // Level2
+		0,                  // Level2DisplayOrder
+		"",                 // Level3
+		0,                  // Level3DisplayOrder
+		true,               //AllowedFor_OKAPI
+		true,               //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
 }

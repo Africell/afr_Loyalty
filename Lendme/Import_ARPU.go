@@ -3,22 +3,27 @@ package Lendme
 import (
 	"bufio"
 	"errors"
-	"fmt"
 	"io"
 	"log"
 	"os"
+	"strconv"
+	"strings"
+	"time"
 )
 
-func (Uc *UserControl) Import_Subscribers_ARPU_LineByLine(FileName string) (err error) {
-	log.Println("***Subscribers ARPU importing process started ***")
+var chan_SubQueueExecution_controler = make(chan int, 10)
+var chan_SubDump_EXECQueue = make(chan Sub_Update_Request, 1000)
+
+func (Uc *UserControl) Import_Subscribers_Dump_LineByLine(FileName string) (err error) {
+	log.Println("***subscribers dump importing process started ***")
 	//Section 1: open file for reading
 	if FileName == "" {
-		return errors.New("file name cannot be empty")
+		return errors.New("subscribers dump file name cannot be empty")
 	}
 	FileName = Configuration.ARPU_File_Path + FileName
 	file, err := os.Open(FileName)
 	if err != nil {
-		log.Println("Error opening subscribers ARPU file " + FileName + ": " + err.Error())
+		log.Println("error opening subscribers dump file " + FileName + ": " + err.Error())
 		return err
 	}
 	defer file.Close()
@@ -29,44 +34,99 @@ func (Uc *UserControl) Import_Subscribers_ARPU_LineByLine(FileName string) (err 
 		line, _, err := r.ReadLine()
 		if err != nil {
 			if err == io.EOF {
-				log.Println("***Subscribers ARPU importing process finished ***")
+				log.Println("***subscribers dump importing process finished ***")
 				return nil
 			} else {
-				log.Println("Error reading line from subscribers ARPU file: " + err.Error())
+				log.Println("error reading line from subscribers ARPU file: " + err.Error())
 				return err
 			}
 		}
 		if len(line) > 0 {
 			log.Println(string(line))
+			result := strings.Split(string(line), ",")
+			if len(result) == 7 {
+				Credit_Limit_str := result[1]
+				Credit_Limit, err := strconv.ParseFloat(Credit_Limit_str, 64)
+				if err == nil {
+					continue
+				}
+				ARPU_Amount_str := result[1]
+				ARPU_Amount, err := strconv.ParseFloat(ARPU_Amount_str, 64)
+				if err == nil {
+					continue
+				}
+				var firstUser time.Time
+				if len(result[2]) == 8 {
+					firstUser, _ = time.Parse("2006-01-02", result[2])
+				}
+				var lastCredit time.Time
+				if len(result[3]) == 8 {
+					lastCredit, _ = time.Parse("2006-01-02", result[3])
+				}
+				request := Sub_Update_Request{
+					MSISDN:         result[0],
+					COS:            result[1],
+					First_Used:     firstUser,
+					Last_Credit:    lastCredit,
+					Loyalty_Status: result[4],
+					Credit_Limit:   Credit_Limit,
+					ARPU_Amount:    ARPU_Amount,
+				}
+				chan_SubDump_EXECQueue <- request
+			}
+		}
+		return nil
+	}
+}
+
+func (Uc *UserControl) SubQueueExecution() {
+	for {
+		select {
+		case msg_sub := <-chan_SubDump_EXECQueue:
+			chan_SubQueueExecution_controler <- 1
+			go Uc.Subscriber_Update(msg_sub)
+		default:
+			time.Sleep(10 * time.Millisecond)
 		}
 	}
 }
 
-func (Uc *UserControl) Import_Subscribers_ARPU_bychunks() {
-	log.Println("***Subscribers ARPU importing processstarted ***")
-	var chunkSize = 10
-	f, err := os.Open(Configuration.ARPU_File_Path)
-	if err != nil {
-		log.Println("Failed to open subscribers ARPU file")
+func (Uc *UserControl) Subscriber_Update(request Sub_Update_Request) {
+	//check key if filled and if already used
+	if request.MSISDN == "" {
+		<-chan_SubQueueExecution_controler
 		return
 	}
-	// remember to close the file at the end of the program
-	defer f.Close()
-
-	buf := make([]byte, chunkSize)
-
-	for {
-		n, err := f.Read(buf)
-		if err != nil && err != io.EOF {
-			log.Fatal(err)
+	//check if key already used
+	var subscriber Subscriber
+	subscriber_na, exits := Map_Subscribers.CheckThenGet(request.MSISDN)
+	if exits {
+		var ok bool
+		subscriber, ok = subscriber_na.(Subscriber)
+		if !ok {
+			<-chan_SubQueueExecution_controler
+			return
 		}
-
-		if err == io.EOF {
-			break
-		}
-
-		fmt.Println(string(buf[:n]))
+	} else {
+		subscriber.Subscriber_Id = Map_AutoIncrement.GetNextAI("Subscriber-Id")
+		subscriber.Key = request.MSISDN
+		subscriber.Add_Date = time.Now()
 	}
+	subscriber.COS = request.COS
+	subscriber.FirstUse_date = request.First_Used
+	subscriber.Last_Credit = request.Last_Credit
+	subscriber.IN_Loyalty_Status = request.Loyalty_Status
+	subscriber.IN_Credit_Limit = request.Credit_Limit
+	subscriber.ARPU = request.ARPU_Amount
+	subscriber.Last_Update_date = time.Now()
 
-	log.Println("***Subscribers ARPU importing process finished ***")
+	subscriber.Credit_Limit_Scheme = Uc.Credit_Limit_Scheme_Selection(request.ARPU_Amount, request.First_Used)
+	if subscriber.Credit_Limit_Scheme != "" {
+		subscriber.IsLendmeEligible = true
+	} else {
+		subscriber.IsLendmeEligible = false
+	}
+	//add to cache and DB
+	Map_Subscribers.Put(subscriber.Key, subscriber)
+	<-chan_SubQueueExecution_controler
 }
