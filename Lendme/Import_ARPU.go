@@ -44,33 +44,58 @@ func (Uc *UserControl) Import_Subscribers_Dump_LineByLine(FileName string) (err 
 		if len(line) > 0 {
 			log.Println(string(line))
 			result := strings.Split(string(line), ",")
-			if len(result) == 7 {
-				Credit_Limit_str := result[1]
+			if len(result) == 11 {
+				//file fields: MSISDN, Cos ID, Enrol Date, Last Credited, Loyalty Status, Credit Limit, Revenue,
+				//	Recharge, Last Recharge date, Dealer bundle recharge, Last Dealer bundle recharge date
+
+				Credit_Limit_str := result[5]
 				Credit_Limit, err := strconv.ParseFloat(Credit_Limit_str, 64)
 				if err == nil {
 					continue
 				}
-				ARPU_Amount_str := result[1]
+				ARPU_Amount_str := result[6]
 				ARPU_Amount, err := strconv.ParseFloat(ARPU_Amount_str, 64)
 				if err == nil {
 					continue
 				}
-				var firstUser time.Time
+				var firstUsed time.Time
 				if len(result[2]) == 8 {
-					firstUser, _ = time.Parse("2006-01-02", result[2])
+					firstUsed, _ = time.Parse("2006-01-02", result[2])
 				}
 				var lastCredit time.Time
 				if len(result[3]) == 8 {
 					lastCredit, _ = time.Parse("2006-01-02", result[3])
 				}
+				Recharge_amnt_str := result[7]
+				Recharge_amnt, err := strconv.ParseFloat(Recharge_amnt_str, 64)
+				if err == nil {
+					continue
+				}
+				var lastRecharge time.Time
+				if len(result[8]) == 8 {
+					lastRecharge, _ = time.Parse("2006-01-02", result[8])
+				}
+				dealerPurchase_amnt_str := result[9]
+				dealerPurchase_amnt, err := strconv.ParseFloat(dealerPurchase_amnt_str, 64)
+				if err == nil {
+					continue
+				}
+				var lastdealerPurchase time.Time
+				if len(result[10]) == 8 {
+					lastdealerPurchase, _ = time.Parse("2006-01-02", result[10])
+				}
 				request := Sub_Update_Request{
-					MSISDN:         result[0],
-					COS:            result[1],
-					First_Used:     firstUser,
-					Last_Credit:    lastCredit,
-					Loyalty_Status: result[4],
-					Credit_Limit:   Credit_Limit,
-					ARPU_Amount:    ARPU_Amount,
+					MSISDN:                           result[0],
+					COS:                              result[1],
+					First_Used:                       firstUsed,
+					Last_Credit:                      lastCredit,
+					Loyalty_Status:                   result[4],
+					Credit_Limit:                     Credit_Limit,
+					ARPU_Amount:                      ARPU_Amount,
+					Recharge:                         Recharge_amnt,
+					Last_Recharge_Date:               lastRecharge,
+					Dealer_Bundle_Purchase:           dealerPurchase_amnt,
+					Last_Dealer_Bundle_Purchase_Date: lastdealerPurchase,
 				}
 				chan_SubDump_EXECQueue <- request
 			}
