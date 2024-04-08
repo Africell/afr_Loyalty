@@ -22,8 +22,11 @@ type ConfigType struct {
 	Min_Allowed_Amnt float64
 	Service_FeePerc  float64
 
-	Min_Allowed_Balance float64
-	Max_Allowed_Balance float64
+	Min_Allowed_AON        float64
+	Min_Avg3MRecharge      float64
+	Min_LastRechargePeriod float64
+	Min_Allowed_Balance    float64
+	Max_Allowed_Balance    float64
 
 	ARPU_File_Path string
 
@@ -108,6 +111,9 @@ func setDefaultConfiguration_Development() (Configuration ConfigType) {
 	Configuration.IsProduction = false
 	Configuration.Min_Allowed_Amnt = 10
 	Configuration.Service_FeePerc = 0.1
+	Configuration.Min_Allowed_AON = 3
+	Configuration.Min_Avg3MRecharge = 50
+	Configuration.Min_LastRechargePeriod = 60
 	Configuration.Min_Allowed_Balance = 0
 	Configuration.Max_Allowed_Balance = 1000
 	Configuration.ARPU_File_Path = "./" //"/home/Subs_ARPU/"
@@ -176,6 +182,9 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 	Configuration.IsProduction = false
 	Configuration.Min_Allowed_Amnt = 10
 	Configuration.Service_FeePerc = 0.1
+	Configuration.Min_Allowed_AON = 3
+	Configuration.Min_Avg3MRecharge = 50
+	Configuration.Min_LastRechargePeriod = 60
 	Configuration.Min_Allowed_Balance = 0
 	Configuration.Max_Allowed_Balance = 1000
 	Configuration.ARPU_File_Path = "/home/Subs_ARPU/"

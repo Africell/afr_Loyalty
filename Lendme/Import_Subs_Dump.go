@@ -38,50 +38,66 @@ func (Uc *UserControl) Import_Subscribers_Dump_LineByLine(FileName string) (err 
 				return nil
 			} else {
 				log.Println("error reading line from subscribers ARPU file: " + err.Error())
-				return err
+				continue
 			}
 		}
 		if len(line) > 0 {
-			log.Println(string(line))
+			//log.Println(string(line))
 			result := strings.Split(string(line), ",")
 			if len(result) == 11 {
 				//file fields: MSISDN, Cos ID, Enrol Date, Last Credited, Loyalty Status, Credit Limit, Revenue,
 				//	Recharge, Last Recharge date, Dealer bundle recharge, Last Dealer bundle recharge date
 
 				Credit_Limit_str := result[5]
+				if Credit_Limit_str == "" {
+					Credit_Limit_str = "0"
+				}
 				Credit_Limit, err := strconv.ParseFloat(Credit_Limit_str, 64)
-				if err == nil {
+				if err != nil {
+					log.Println("error converting Credit_Limit: ", err)
 					continue
 				}
 				ARPU_Amount_str := result[6]
+				if ARPU_Amount_str == "" {
+					ARPU_Amount_str = "0"
+				}
 				ARPU_Amount, err := strconv.ParseFloat(ARPU_Amount_str, 64)
-				if err == nil {
+				if err != nil {
+					log.Println("error converting ARPU_Amount: ", err)
 					continue
 				}
 				var firstUsed time.Time
-				if len(result[2]) == 8 {
+				if len(result[2]) == 10 {
 					firstUsed, _ = time.Parse("2006-01-02", result[2])
 				}
 				var lastCredit time.Time
-				if len(result[3]) == 8 {
+				if len(result[3]) == 10 {
 					lastCredit, _ = time.Parse("2006-01-02", result[3])
 				}
 				Recharge_amnt_str := result[7]
+				if Recharge_amnt_str == "" {
+					Recharge_amnt_str = "0"
+				}
 				Recharge_amnt, err := strconv.ParseFloat(Recharge_amnt_str, 64)
-				if err == nil {
+				if err != nil {
+					log.Println("error converting Recharge_amnt: ", err)
 					continue
 				}
 				var lastRecharge time.Time
-				if len(result[8]) == 8 {
+				if len(result[8]) == 10 {
 					lastRecharge, _ = time.Parse("2006-01-02", result[8])
 				}
 				dealerPurchase_amnt_str := result[9]
+				if dealerPurchase_amnt_str == "" {
+					dealerPurchase_amnt_str = "0"
+				}
 				dealerPurchase_amnt, err := strconv.ParseFloat(dealerPurchase_amnt_str, 64)
-				if err == nil {
+				if err != nil {
+					log.Println("error converting dealerPurchase_amnt: ", err)
 					continue
 				}
 				var lastdealerPurchase time.Time
-				if len(result[10]) == 8 {
+				if len(result[10]) == 10 {
 					lastdealerPurchase, _ = time.Parse("2006-01-02", result[10])
 				}
 				request := Sub_Update_Request{
@@ -97,10 +113,10 @@ func (Uc *UserControl) Import_Subscribers_Dump_LineByLine(FileName string) (err 
 					Dealer_Bundle_Purchase:           dealerPurchase_amnt,
 					Last_Dealer_Bundle_Purchase_Date: lastdealerPurchase,
 				}
+				//log.Println("fill request:", request)
 				chan_SubDump_EXECQueue <- request
 			}
 		}
-		return nil
 	}
 }
 
@@ -117,6 +133,7 @@ func (Uc *UserControl) SubQueueExecution() {
 }
 
 func (Uc *UserControl) Subscriber_Update(request Sub_Update_Request) {
+	//log.Println("request:", request)
 	//check key if filled and if already used
 	if request.MSISDN == "" {
 		<-chan_SubQueueExecution_controler
@@ -137,15 +154,24 @@ func (Uc *UserControl) Subscriber_Update(request Sub_Update_Request) {
 		subscriber.Key = request.MSISDN
 		subscriber.Add_Date = time.Now()
 	}
+	subscriber.Last_ProfileUpdate_date = time.Now()
+
 	subscriber.COS = request.COS
 	subscriber.FirstUse_date = request.First_Used
 	subscriber.Last_Credit = request.Last_Credit
 	subscriber.IN_Loyalty_Status = request.Loyalty_Status
 	subscriber.IN_Credit_Limit = request.Credit_Limit
 	subscriber.ARPU = request.ARPU_Amount
-	subscriber.Last_Update_date = time.Now()
+	subscriber.Recharge = request.Recharge
+	subscriber.Last_Recharge_Date = request.Last_Recharge_Date
+	subscriber.Dealer_Bundle_Purchase = request.Dealer_Bundle_Purchase
+	subscriber.Last_Dealer_Bundle_Purchase_Date = request.Last_Dealer_Bundle_Purchase_Date
 
-	subscriber.Credit_Limit_Scheme = Uc.Credit_Limit_Scheme_Selection(request.ARPU_Amount, request.First_Used)
+	LastRechargeDate := request.Last_Recharge_Date
+	if LastRechargeDate.Before(request.Last_Dealer_Bundle_Purchase_Date) {
+		LastRechargeDate = request.Last_Dealer_Bundle_Purchase_Date
+	}
+	subscriber.Credit_Limit_Scheme, subscriber.NotElligibleReason = Uc.Credit_Limit_Scheme_Selection((request.Recharge + request.Dealer_Bundle_Purchase), request.First_Used, LastRechargeDate)
 	if subscriber.Credit_Limit_Scheme != "" {
 		subscriber.IsLendmeEligible = true
 	} else {

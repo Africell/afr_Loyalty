@@ -133,8 +133,8 @@ func (Uc *UserControl) Credit_Limit_Scheme_Add(Login string, request Credit_Limi
 	NewEntry.Scheme_Id = Map_AutoIncrement.GetNextAI("Credit_Limit_Scheme-Id")
 	Id = NewEntry.Scheme_Id
 	NewEntry.Key = request.Key
-	NewEntry.ARPU_From = request.ARPU_From
-	NewEntry.ARPU_Till = request.ARPU_Till
+	NewEntry.Amount_From = request.Amount_From
+	NewEntry.Amount_Till = request.Amount_Till
 	NewEntry.AON_From = request.AON_From
 	NewEntry.AON_Till = request.AON_Till
 	NewEntry.Credit_limit_Amount = request.Credit_limit_Amount
@@ -176,8 +176,8 @@ func (Uc *UserControl) Credit_Limit_Scheme_Edit(Login string, request Credit_Lim
 
 	//Prepare new entry
 	scheme.Key = request.Key
-	scheme.ARPU_From = request.ARPU_From
-	scheme.ARPU_Till = request.ARPU_Till
+	scheme.Amount_From = request.Amount_From
+	scheme.Amount_Till = request.Amount_Till
 	scheme.AON_From = request.AON_From
 	scheme.AON_Till = request.AON_Till
 	scheme.Credit_limit_Amount = request.Credit_limit_Amount
@@ -315,8 +315,8 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues() {
 	request := Credit_Limit_Scheme_Add_Request{
 		Key:                 "50_100_3_6",
 		Scheme_Id:           0,
-		ARPU_From:           50,
-		ARPU_Till:           100,
+		Amount_From:         50,
+		Amount_Till:         100,
 		AON_From:            3,
 		AON_Till:            6,
 		Credit_limit_Amount: 10,
@@ -329,8 +329,8 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues() {
 	request = Credit_Limit_Scheme_Add_Request{
 		Key:                 "50_100_6_12",
 		Scheme_Id:           0,
-		ARPU_From:           50,
-		ARPU_Till:           100,
+		Amount_From:         50,
+		Amount_Till:         100,
 		AON_From:            6,
 		AON_Till:            12,
 		Credit_limit_Amount: 10,
@@ -343,8 +343,8 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues() {
 	request = Credit_Limit_Scheme_Add_Request{
 		Key:                 "50_100_12_24",
 		Scheme_Id:           0,
-		ARPU_From:           50,
-		ARPU_Till:           100,
+		Amount_From:         50,
+		Amount_Till:         100,
 		AON_From:            12,
 		AON_Till:            24,
 		Credit_limit_Amount: 20,
@@ -357,8 +357,8 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues() {
 	request = Credit_Limit_Scheme_Add_Request{
 		Key:                 "50_100_24_1200",
 		Scheme_Id:           0,
-		ARPU_From:           50,
-		ARPU_Till:           100,
+		Amount_From:         50,
+		Amount_Till:         100,
 		AON_From:            24,
 		AON_Till:            1200,
 		Credit_limit_Amount: 20,
@@ -372,8 +372,8 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues() {
 	request = Credit_Limit_Scheme_Add_Request{
 		Key:                 "100_200_3_6",
 		Scheme_Id:           0,
-		ARPU_From:           100,
-		ARPU_Till:           200,
+		Amount_From:         100,
+		Amount_Till:         200,
 		AON_From:            3,
 		AON_Till:            6,
 		Credit_limit_Amount: 20,
@@ -386,8 +386,8 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues() {
 	request = Credit_Limit_Scheme_Add_Request{
 		Key:                 "100_200_6_12",
 		Scheme_Id:           0,
-		ARPU_From:           100,
-		ARPU_Till:           200,
+		Amount_From:         100,
+		Amount_Till:         200,
 		AON_From:            6,
 		AON_Till:            12,
 		Credit_limit_Amount: 20,
@@ -400,8 +400,8 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues() {
 	request = Credit_Limit_Scheme_Add_Request{
 		Key:                 "100_200_12_24",
 		Scheme_Id:           0,
-		ARPU_From:           100,
-		ARPU_Till:           200,
+		Amount_From:         100,
+		Amount_Till:         200,
 		AON_From:            12,
 		AON_Till:            24,
 		Credit_limit_Amount: 30,
@@ -414,8 +414,8 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues() {
 	request = Credit_Limit_Scheme_Add_Request{
 		Key:                 "100_200_24_1200",
 		Scheme_Id:           0,
-		ARPU_From:           100,
-		ARPU_Till:           200,
+		Amount_From:         100,
+		Amount_Till:         200,
 		AON_From:            24,
 		AON_Till:            1200,
 		Credit_limit_Amount: 40,
@@ -429,8 +429,8 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues() {
 	request = Credit_Limit_Scheme_Add_Request{
 		Key:                 "200_400_3_6",
 		Scheme_Id:           0,
-		ARPU_From:           200,
-		ARPU_Till:           400,
+		Amount_From:         200,
+		Amount_Till:         400,
 		AON_From:            3,
 		AON_Till:            6,
 		Credit_limit_Amount: 30,
@@ -443,8 +443,8 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues() {
 	request = Credit_Limit_Scheme_Add_Request{
 		Key:                 "200_400_6_12",
 		Scheme_Id:           0,
-		ARPU_From:           200,
-		ARPU_Till:           400,
+		Amount_From:         200,
+		Amount_Till:         400,
 		AON_From:            6,
 		AON_Till:            12,
 		Credit_limit_Amount: 30,
@@ -457,8 +457,8 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues() {
 	request = Credit_Limit_Scheme_Add_Request{
 		Key:                 "200_400_12_24",
 		Scheme_Id:           0,
-		ARPU_From:           200,
-		ARPU_Till:           400,
+		Amount_From:         200,
+		Amount_Till:         400,
 		AON_From:            12,
 		AON_Till:            24,
 		Credit_limit_Amount: 50,
@@ -471,8 +471,8 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues() {
 	request = Credit_Limit_Scheme_Add_Request{
 		Key:                 "200_400_24_1200",
 		Scheme_Id:           0,
-		ARPU_From:           200,
-		ARPU_Till:           400,
+		Amount_From:         200,
+		Amount_Till:         400,
 		AON_From:            24,
 		AON_Till:            1200,
 		Credit_limit_Amount: 60,
@@ -485,8 +485,8 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues() {
 	request = Credit_Limit_Scheme_Add_Request{
 		Key:                 "400_800_3_6",
 		Scheme_Id:           0,
-		ARPU_From:           400,
-		ARPU_Till:           800,
+		Amount_From:         400,
+		Amount_Till:         800,
 		AON_From:            3,
 		AON_Till:            6,
 		Credit_limit_Amount: 40,
@@ -499,8 +499,8 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues() {
 	request = Credit_Limit_Scheme_Add_Request{
 		Key:                 "400_800_6_12",
 		Scheme_Id:           0,
-		ARPU_From:           400,
-		ARPU_Till:           800,
+		Amount_From:         400,
+		Amount_Till:         800,
 		AON_From:            6,
 		AON_Till:            12,
 		Credit_limit_Amount: 40,
@@ -513,8 +513,8 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues() {
 	request = Credit_Limit_Scheme_Add_Request{
 		Key:                 "400_800_12_24",
 		Scheme_Id:           0,
-		ARPU_From:           400,
-		ARPU_Till:           800,
+		Amount_From:         400,
+		Amount_Till:         800,
 		AON_From:            12,
 		AON_Till:            24,
 		Credit_limit_Amount: 60,
@@ -527,8 +527,8 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues() {
 	request = Credit_Limit_Scheme_Add_Request{
 		Key:                 "400_800_24_1200",
 		Scheme_Id:           0,
-		ARPU_From:           400,
-		ARPU_Till:           800,
+		Amount_From:         400,
+		Amount_Till:         800,
 		AON_From:            24,
 		AON_Till:            1200,
 		Credit_limit_Amount: 100,
@@ -542,8 +542,8 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues() {
 	request = Credit_Limit_Scheme_Add_Request{
 		Key:                 "800_1600_3_6",
 		Scheme_Id:           0,
-		ARPU_From:           800,
-		ARPU_Till:           1600,
+		Amount_From:         800,
+		Amount_Till:         1600,
 		AON_From:            3,
 		AON_Till:            6,
 		Credit_limit_Amount: 80,
@@ -556,8 +556,8 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues() {
 	request = Credit_Limit_Scheme_Add_Request{
 		Key:                 "800_1600_6_12",
 		Scheme_Id:           0,
-		ARPU_From:           800,
-		ARPU_Till:           1600,
+		Amount_From:         800,
+		Amount_Till:         1600,
 		AON_From:            6,
 		AON_Till:            12,
 		Credit_limit_Amount: 100,
@@ -570,8 +570,8 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues() {
 	request = Credit_Limit_Scheme_Add_Request{
 		Key:                 "800_1600_12_24",
 		Scheme_Id:           0,
-		ARPU_From:           800,
-		ARPU_Till:           1600,
+		Amount_From:         800,
+		Amount_Till:         1600,
 		AON_From:            12,
 		AON_Till:            24,
 		Credit_limit_Amount: 150,
@@ -584,8 +584,8 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues() {
 	request = Credit_Limit_Scheme_Add_Request{
 		Key:                 "800_1600_24_1200",
 		Scheme_Id:           0,
-		ARPU_From:           800,
-		ARPU_Till:           1600,
+		Amount_From:         800,
+		Amount_Till:         1600,
 		AON_From:            24,
 		AON_Till:            1200,
 		Credit_limit_Amount: 200,
@@ -599,8 +599,8 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues() {
 	request = Credit_Limit_Scheme_Add_Request{
 		Key:                 "1600_3000_3_6",
 		Scheme_Id:           0,
-		ARPU_From:           1600,
-		ARPU_Till:           3000,
+		Amount_From:         1600,
+		Amount_Till:         3000,
 		AON_From:            3,
 		AON_Till:            6,
 		Credit_limit_Amount: 150,
@@ -613,8 +613,8 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues() {
 	request = Credit_Limit_Scheme_Add_Request{
 		Key:                 "1600_3000_6_12",
 		Scheme_Id:           0,
-		ARPU_From:           1600,
-		ARPU_Till:           3000,
+		Amount_From:         1600,
+		Amount_Till:         3000,
 		AON_From:            6,
 		AON_Till:            12,
 		Credit_limit_Amount: 200,
@@ -627,8 +627,8 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues() {
 	request = Credit_Limit_Scheme_Add_Request{
 		Key:                 "1600_3000_12_24",
 		Scheme_Id:           0,
-		ARPU_From:           1600,
-		ARPU_Till:           3000,
+		Amount_From:         1600,
+		Amount_Till:         3000,
 		AON_From:            12,
 		AON_Till:            24,
 		Credit_limit_Amount: 250,
@@ -641,8 +641,8 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues() {
 	request = Credit_Limit_Scheme_Add_Request{
 		Key:                 "1600_3000_24_1200",
 		Scheme_Id:           0,
-		ARPU_From:           1600,
-		ARPU_Till:           3000,
+		Amount_From:         1600,
+		Amount_Till:         3000,
 		AON_From:            24,
 		AON_Till:            1200,
 		Credit_limit_Amount: 300,
@@ -656,8 +656,8 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues() {
 	request = Credit_Limit_Scheme_Add_Request{
 		Key:                 "3000_9999999_3_6",
 		Scheme_Id:           0,
-		ARPU_From:           3000,
-		ARPU_Till:           9999999,
+		Amount_From:         3000,
+		Amount_Till:         9999999,
 		AON_From:            3,
 		AON_Till:            6,
 		Credit_limit_Amount: 200,
@@ -670,8 +670,8 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues() {
 	request = Credit_Limit_Scheme_Add_Request{
 		Key:                 "3000_9999999_6_12",
 		Scheme_Id:           0,
-		ARPU_From:           3000,
-		ARPU_Till:           9999999,
+		Amount_From:         3000,
+		Amount_Till:         9999999,
 		AON_From:            6,
 		AON_Till:            12,
 		Credit_limit_Amount: 300,
@@ -684,8 +684,8 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues() {
 	request = Credit_Limit_Scheme_Add_Request{
 		Key:                 "3000_9999999_12_24",
 		Scheme_Id:           0,
-		ARPU_From:           3000,
-		ARPU_Till:           9999999,
+		Amount_From:         3000,
+		Amount_Till:         9999999,
 		AON_From:            12,
 		AON_Till:            24,
 		Credit_limit_Amount: 400,
@@ -698,8 +698,8 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues() {
 	request = Credit_Limit_Scheme_Add_Request{
 		Key:                 "3000_9999999_24_1200",
 		Scheme_Id:           0,
-		ARPU_From:           3000,
-		ARPU_Till:           9999999,
+		Amount_From:         3000,
+		Amount_Till:         9999999,
 		AON_From:            24,
 		AON_Till:            1200,
 		Credit_limit_Amount: 500,
@@ -710,7 +710,40 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues() {
 	}
 }
 
-func (Uc *UserControl) Credit_Limit_Scheme_Selection(ARPU float64, FirstUse_date time.Time) (scheme_name string) {
+func (Uc *UserControl) Credit_Limit_Scheme_Selection(Amount float64, FirstUse_date time.Time, LastRecharge_date time.Time) (scheme_name string, NotElligibleReason string) {
+	//AON >= 3 months
+	//Avg 3M Recharge >= 50
+	//last recharge date within past 60 days
+	//not Optin to SOS
+	//balance >=0
+	var Min_AON float64
+	var Min_Amount float64
+	AON_Hours := time.Now().Sub(FirstUse_date).Hours()
+	AON_Months := (AON_Hours / 24) / 30
+	if FirstUse_date.IsZero() {
+		NotElligibleReason = "Min AON"
+		return
+	}
+	if AON_Months < Configuration.Min_Allowed_AON {
+		NotElligibleReason = "Min AON"
+		return
+	}
+	if Amount < Configuration.Min_Avg3MRecharge {
+		NotElligibleReason = "Min Avg3MRecharge"
+		return
+	}
+
+	LastRecharge_Hours := time.Now().Sub(LastRecharge_date).Hours()
+	LastRecharge_Months := (LastRecharge_Hours / 24) / 30
+	if LastRecharge_date.IsZero() {
+		NotElligibleReason = "Min Last Recharge Period"
+		return
+	}
+	if LastRecharge_Months > Configuration.Min_LastRechargePeriod {
+		NotElligibleReason = "Min Last Recharge Period"
+		return
+	}
+
 	Schemes_na := Map_Credit_Limit_Scheme.ConvertToArray()
 	if len(Schemes_na) > 0 {
 		for _, scheme_na := range Schemes_na {
@@ -719,13 +752,35 @@ func (Uc *UserControl) Credit_Limit_Scheme_Selection(ARPU float64, FirstUse_date
 				log.Println("error in Credit_Limit_Scheme_Selection Credit_Limit_Scheme type assertion")
 				continue
 			}
-			if scheme.ARPU_From < ARPU && scheme.ARPU_Till >= ARPU {
-				AON_Hours := time.Now().Sub(FirstUse_date).Hours()
-				AON_Months := (AON_Hours / 24) / 30
-				if scheme.AON_From < AON_Months && scheme.AON_Till >= AON_Months {
-					return scheme.Key
+			if Min_Amount == 0 {
+				Min_Amount = scheme.Amount_From
+			} else {
+				if scheme.Amount_From < Min_Amount {
+					Min_Amount = scheme.Amount_From
 				}
 			}
+			if Min_AON == 0 {
+				Min_AON = scheme.AON_From
+			} else {
+				if scheme.AON_From < Min_AON {
+					Min_AON = scheme.AON_From
+				}
+			}
+
+			if Amount >= scheme.Amount_From && Amount < scheme.Amount_Till {
+
+				if AON_Months >= scheme.AON_From && AON_Months < scheme.AON_Till {
+					return scheme.Key, ""
+				}
+			}
+		}
+	}
+	if scheme_name == "" {
+		if AON_Months < Min_AON {
+			NotElligibleReason = "AON"
+		}
+		if Amount < Min_Amount {
+			NotElligibleReason = "Amount"
 		}
 	}
 	return
@@ -777,13 +832,13 @@ func (Uc *UserControl) Subscriber_Add(Login string, request Subscriber_Add_Reque
 		return Id, err
 	}
 	NewEntry.ARPU = ARPU
-	NewEntry.Last_Update_date = time.Now()
-	NewEntry.Credit_Limit_Scheme = Uc.Credit_Limit_Scheme_Selection(NewEntry.ARPU, NewEntry.FirstUse_date)
-	if NewEntry.Credit_Limit_Scheme != "" {
-		NewEntry.IsLendmeEligible = true
-	} else {
-		NewEntry.IsLendmeEligible = false
-	}
+	NewEntry.Last_ProfileUpdate_date = time.Now()
+	// NewEntry.Credit_Limit_Scheme, _ = Uc.Credit_Limit_Scheme_Selection(NewEntry.ARPU, NewEntry.FirstUse_date)
+	// if NewEntry.Credit_Limit_Scheme != "" {
+	// 	NewEntry.IsLendmeEligible = true
+	// } else {
+	// 	NewEntry.IsLendmeEligible = false
+	// }
 	//add to cache and DB
 	Map_Subscribers.Put(NewEntry.Key, NewEntry)
 	return Id, nil
@@ -835,13 +890,13 @@ func (Uc *UserControl) Subscriber_Edit(Login string, request Subscriber_Edit_Req
 		return Id, err
 	}
 	subscriber.ARPU = ARPU
-	subscriber.Last_Update_date = time.Now()
-	subscriber.Credit_Limit_Scheme = Uc.Credit_Limit_Scheme_Selection(subscriber.ARPU, subscriber.FirstUse_date)
-	if subscriber.Credit_Limit_Scheme != "" {
-		subscriber.IsLendmeEligible = true
-	} else {
-		subscriber.IsLendmeEligible = false
-	}
+	subscriber.Last_ProfileUpdate_date = time.Now()
+	// subscriber.Credit_Limit_Scheme, _ = Uc.Credit_Limit_Scheme_Selection(subscriber.ARPU, subscriber.FirstUse_date)
+	// if subscriber.Credit_Limit_Scheme != "" {
+	// 	subscriber.IsLendmeEligible = true
+	// } else {
+	// 	subscriber.IsLendmeEligible = false
+	// }
 	if request.NewKey != "" {
 		if request.NewKey != request.Key {
 			//delete old

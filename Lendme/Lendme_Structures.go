@@ -36,20 +36,27 @@ type Event_Log struct {
 }
 
 type Subscriber struct {
-	Key           string    `bson:"Key" json:"Key"` //MSISDN
-	Subscriber_Id int64     `bson:"Subscriber_Id" json:"Subscriber_Id"`
-	Add_Date      time.Time `bson:"Add_Date" json:"Add_Date"`
+	Key                     string    `bson:"Key" json:"Key"` //MSISDN
+	Subscriber_Id           int64     `bson:"Subscriber_Id" json:"Subscriber_Id"`
+	Add_Date                time.Time `bson:"Add_Date" json:"Add_Date"`
+	Last_ProfileUpdate_date time.Time `bson:"Last_ProfileUpdate_date" json:"Last_ProfileUpdate_date"`
 
-	COS               string    `bson:"COS" json:"COS"`
-	FirstUse_date     time.Time `bson:"FirstUse_date" json:"FirstUse_date"`
-	Last_Credit       time.Time `bson:"Last_Credit" json:"Last_Credit"`
-	ARPU              float64   `bson:"ARPU" json:"ARPU"`
-	IN_Loyalty_Status string    `bson:"IN_Loyalty_Status" json:"IN_Loyalty_Status"`
-	IN_Credit_Limit   float64   `bson:"IN_Credit_Limit" json:"IN_Credit_Limit"`
-	Last_Update_date  time.Time `bson:"Last_Update_date" json:"Last_Update_date"`
+	COS           string    `bson:"COS" json:"COS"`
+	FirstUse_date time.Time `bson:"FirstUse_date" json:"FirstUse_date"`
+	Last_Credit   time.Time `bson:"Last_Credit" json:"Last_Credit"`
 
-	IsLendmeEligible    bool   `bson:"IsLendmeEligible" json:"IsLendmeEligible"`
-	Credit_Limit_Scheme string `bson:"Credit_Limit_Scheme" json:"Credit_Limit_Scheme"`
+	IN_Loyalty_Status                string    `bson:"IN_Loyalty_Status" json:"IN_Loyalty_Status"`
+	IN_Credit_Limit                  float64   `bson:"IN_Credit_Limit" json:"IN_Credit_Limit"`
+	ARPU                             float64   `bson:"ARPU" json:"ARPU"`
+	Recharge                         float64   `bson:"Recharge" json:"Recharge"`
+	Last_Recharge_Date               time.Time `bson:"Last_Recharge_Date" json:"Last_Recharge_Date"`
+	Dealer_Bundle_Purchase           float64   `bson:"Dealer_Bundle_Purchase" json:"Dealer_Bundle_Purchase"`
+	Last_Dealer_Bundle_Purchase_Date time.Time `bson:"Last_Dealer_Bundle_Purchase_Date" json:"Last_Dealer_Bundle_Purchase_Date"`
+
+	IsLendmeEligible         bool      `bson:"IsLendmeEligible" json:"IsLendmeEligible"`
+	Credit_Limit_Scheme      string    `bson:"Credit_Limit_Scheme" json:"Credit_Limit_Scheme"`
+	Credit_Limit_Scheme_Date time.Time `bson:"Credit_Limit_Scheme_Date" json:"Credit_Limit_Scheme_Date"`
+	NotElligibleReason       string    `bson:"NotElligibleReason" json:"NotElligibleReason"`
 
 	Lendme_Outstanding_Amount float64   `bson:"Lendme_Outstanding_Amount" json:"Lendme_Outstanding_Amount"`
 	Lendme_Outstanding_Fee    float64   `bson:"Lendme_Outstanding_Fee" json:"Lendme_Outstanding_Fee"`
@@ -81,8 +88,8 @@ type Subscriber_Edit_Request struct {
 type Credit_Limit_Scheme struct {
 	Key                 string      `bson:"Key" json:"Key"` //Scheme name
 	Scheme_Id           int64       `bson:"Scheme_Id" json:"Scheme_Id"`
-	ARPU_From           float64     `bson:"ARPU_From" json:"ARPU_From"`
-	ARPU_Till           float64     `bson:"ARPU_Till" json:"ARPU_Till"`
+	Amount_From         float64     `bson:"Amount_From" json:"Amount_From"`
+	Amount_Till         float64     `bson:"Amount_Till" json:"Amount_Till"`
 	AON_From            float64     `bson:"AON_From" json:"AON_From"` //months
 	AON_Till            float64     `bson:"AON_Till" json:"AON_Till"` //months
 	Credit_limit_Amount float64     `bson:"Credit_limit_Amount" json:"Credit_limit_Amount"`
@@ -92,8 +99,8 @@ type Credit_Limit_Scheme struct {
 type Credit_Limit_Scheme_Add_Request struct {
 	Key                 string  `bson:"Key" json:"Key"` //Scheme name
 	Scheme_Id           int64   `bson:"Scheme_Id" json:"Scheme_Id"`
-	ARPU_From           float64 `bson:"ARPU_From" json:"ARPU_From"`
-	ARPU_Till           float64 `bson:"ARPU_Till" json:"ARPU_Till"`
+	Amount_From         float64 `bson:"Amount_From" json:"Amount_From"`
+	Amount_Till         float64 `bson:"Amount_Till" json:"Amount_Till"`
 	AON_From            float64 `bson:"AON_From" json:"AON_From"` //months
 	AON_Till            float64 `bson:"AON_Till" json:"AON_Till"` //months
 	Credit_limit_Amount float64 `bson:"Credit_limit_Amount" json:"Credit_limit_Amount"`
@@ -103,8 +110,8 @@ type Credit_Limit_Scheme_Edit_Request struct {
 	Key                 string  `bson:"Key" json:"Key"` //Scheme name
 	NewKey              string  `bson:"NewKey" json:"NewKey"`
 	Scheme_Id           int64   `bson:"Scheme_Id" json:"Scheme_Id"`
-	ARPU_From           float64 `bson:"ARPU_From" json:"ARPU_From"`
-	ARPU_Till           float64 `bson:"ARPU_Till" json:"ARPU_Till"`
+	Amount_From         float64 `bson:"Amount_From" json:"Amount_From"`
+	Amount_Till         float64 `bson:"Amount_Till" json:"Amount_Till"`
 	AON_From            float64 `bson:"AON_From" json:"AON_From"` //months
 	AON_Till            float64 `bson:"AON_Till" json:"AON_Till"` //months
 	Credit_limit_Amount float64 `bson:"Credit_limit_Amount" json:"Credit_limit_Amount"`

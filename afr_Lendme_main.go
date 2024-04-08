@@ -54,6 +54,8 @@ func (p *program) run() {
 	go lendme.Reset_Prometheus_Metrics()
 	go lendme.Reset_Prometheus_Metrics_Latency()
 
+	go UserControl.SubQueueExecution()
+
 	go sysadmin.SysAdminInit(UserControl.CacheDir, "3"+lendme.Configuration.HttpAppServicePort)
 
 	corsOpts := cors.New(cors.Options{
