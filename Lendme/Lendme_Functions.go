@@ -8,6 +8,8 @@ import (
 	"reflect"
 	"strconv"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var Map_DefaultValues daoc.Cache_Synch
@@ -722,14 +724,17 @@ func (Uc *UserControl) Credit_Limit_Scheme_Selection(Amount float64, FirstUse_da
 	AON_Months := (AON_Hours / 24) / 30
 	if FirstUse_date.IsZero() {
 		NotElligibleReason = "Min AON"
+		DailyImportSubsStats.With(prometheus.Labels{"IsElligble": "false", "Reason": NotElligibleReason, "Scheme": ""}).Inc()
 		return
 	}
 	if AON_Months < Configuration.Min_Allowed_AON {
 		NotElligibleReason = "Min AON"
+		DailyImportSubsStats.With(prometheus.Labels{"IsElligble": "false", "Reason": NotElligibleReason, "Scheme": ""}).Inc()
 		return
 	}
 	if Amount < Configuration.Min_Avg3MRecharge {
 		NotElligibleReason = "Min Avg3MRecharge"
+		DailyImportSubsStats.With(prometheus.Labels{"IsElligble": "false", "Reason": NotElligibleReason, "Scheme": ""}).Inc()
 		return
 	}
 
@@ -737,10 +742,12 @@ func (Uc *UserControl) Credit_Limit_Scheme_Selection(Amount float64, FirstUse_da
 	LastRecharge_Months := (LastRecharge_Hours / 24) / 30
 	if LastRecharge_date.IsZero() {
 		NotElligibleReason = "Min Last Recharge Period"
+		DailyImportSubsStats.With(prometheus.Labels{"IsElligble": "false", "Reason": NotElligibleReason, "Scheme": ""}).Inc()
 		return
 	}
 	if LastRecharge_Months > Configuration.Min_LastRechargePeriod {
 		NotElligibleReason = "Min Last Recharge Period"
+		DailyImportSubsStats.With(prometheus.Labels{"IsElligble": "false", "Reason": NotElligibleReason, "Scheme": ""}).Inc()
 		return
 	}
 
@@ -770,6 +777,8 @@ func (Uc *UserControl) Credit_Limit_Scheme_Selection(Amount float64, FirstUse_da
 			if Amount >= scheme.Amount_From && Amount < scheme.Amount_Till {
 
 				if AON_Months >= scheme.AON_From && AON_Months < scheme.AON_Till {
+					DailyImportSubsStats.With(prometheus.Labels{"IsElligble": "true", "Reason": "", "Scheme": scheme.Key}).Inc()
+					DailyImportSubsStats.With(prometheus.Labels{"IsElligble": "true", "Reason": "", "Scheme": "All"}).Inc()
 					return scheme.Key, ""
 				}
 			}
@@ -778,9 +787,11 @@ func (Uc *UserControl) Credit_Limit_Scheme_Selection(Amount float64, FirstUse_da
 	if scheme_name == "" {
 		if AON_Months < Min_AON {
 			NotElligibleReason = "AON"
+			DailyImportSubsStats.With(prometheus.Labels{"IsElligble": "false", "Reason": NotElligibleReason, "Scheme": ""}).Inc()
 		}
 		if Amount < Min_Amount {
 			NotElligibleReason = "Amount"
+			DailyImportSubsStats.With(prometheus.Labels{"IsElligble": "false", "Reason": NotElligibleReason, "Scheme": ""}).Inc()
 		}
 	}
 	return
@@ -790,124 +801,124 @@ func (Uc *UserControl) Credit_Limit_Scheme_Selection(Amount float64, FirstUse_da
 // Subscriber
 // ///////////////////////////////////////////////////////
 func (Uc *UserControl) Subscriber_Add(Login string, request Subscriber_Add_Request) (Id int64, err error) {
+	err = errors.New("add subscriber is restricted to the daily importing process")
+	return Id, err
 	//check key if filled and if already used
-	if request.Key == "" {
-		err = errors.New("msisdn cannot be empty")
-		return Id, err
-	}
-	//check if key already used
-	exits := Map_Subscribers.Check(request.Key)
-	if exits {
-		err = errors.New("msisdn already exist")
-		return Id, err
-	}
+	// 	if request.Key == "" {
+	// 		err = errors.New("msisdn cannot be empty")
+	// 		return Id, err
+	// 	}
+	// 	//check if key already used
+	// 	exits := Map_Subscribers.Check(request.Key)
+	// 	if exits {
+	// 		err = errors.New("msisdn already exist")
+	// 		return Id, err
+	// 	}
 
-	//check if exists on IN and get details
-	IN_Response, err := Uc.IN.INClient.GetAccountDetails("", "", request.Key)
-	if err != nil {
-		err = errors.New("error getting account detail: " + err.Error())
-		return Id, err
-	}
+	// 	//check if exists on IN and get details
+	// 	IN_Response, err := Uc.IN.INClient.GetAccountDetails("", "", request.Key)
+	// 	if err != nil {
+	// 		err = errors.New("error getting account detail: " + err.Error())
+	// 		return Id, err
+	// 	}
 
-	//to do: get ARPU
-	var ARPU float64
-	ARPU = 200
-
-	//Prepare new entry
-	var NewEntry Subscriber
-	NewEntry.Subscriber_Id = Map_AutoIncrement.GetNextAI("Subscriber-Id")
-	Id = NewEntry.Subscriber_Id
-	NewEntry.Key = request.Key
-	NewEntry.COS = IN_Response.COS
-	if len(IN_Response.FirstUse) > 10 { //"FirstUse": "2016-06-20T17:51:00.000+00:00"
-		First_Use := IN_Response.FirstUse[0:10]
-		First_Use_Date, err := time.Parse("2006-01-02", First_Use)
-		if err != nil {
-			err = errors.New("error parsing FirstUse date: " + err.Error())
-			return Id, err
-		}
-		NewEntry.FirstUse_date = First_Use_Date
-	} else {
-		err = errors.New("error getting account detail: FirstUse date not defined")
-		return Id, err
-	}
-	NewEntry.ARPU = ARPU
-	NewEntry.Last_ProfileUpdate_date = time.Now()
-	// NewEntry.Credit_Limit_Scheme, _ = Uc.Credit_Limit_Scheme_Selection(NewEntry.ARPU, NewEntry.FirstUse_date)
-	// if NewEntry.Credit_Limit_Scheme != "" {
-	// 	NewEntry.IsLendmeEligible = true
-	// } else {
-	// 	NewEntry.IsLendmeEligible = false
-	// }
-	//add to cache and DB
-	Map_Subscribers.Put(NewEntry.Key, NewEntry)
-	return Id, nil
+	// 	//Prepare new entry
+	// 	var NewEntry Subscriber
+	// 	NewEntry.Subscriber_Id = Map_AutoIncrement.GetNextAI("Subscriber-Id")
+	// 	Id = NewEntry.Subscriber_Id
+	// 	NewEntry.Key = request.Key
+	// 	NewEntry.COS = IN_Response.COS
+	// 	if len(IN_Response.FirstUse) > 10 { //"FirstUse": "2016-06-20T17:51:00.000+00:00"
+	// 		First_Use := IN_Response.FirstUse[0:10]
+	// 		First_Use_Date, err := time.Parse("2006-01-02", First_Use)
+	// 		if err != nil {
+	// 			err = errors.New("error parsing FirstUse date: " + err.Error())
+	// 			return Id, err
+	// 		}
+	// 		NewEntry.FirstUse_date = First_Use_Date
+	// 	} else {
+	// 		err = errors.New("error getting account detail: FirstUse date not defined")
+	// 		return Id, err
+	// 	}
+	// 	NewEntry.ARPU = ARPU
+	// 	NewEntry.Last_ProfileUpdate_date = time.Now()
+	// 	// NewEntry.Credit_Limit_Scheme, _ = Uc.Credit_Limit_Scheme_Selection(NewEntry.ARPU, NewEntry.FirstUse_date)
+	// 	// if NewEntry.Credit_Limit_Scheme != "" {
+	// 	// 	NewEntry.IsLendmeEligible = true
+	// 	// } else {
+	// 	// 	NewEntry.IsLendmeEligible = false
+	// 	// }
+	// 	//add to cache and DB
+	// 	Map_Subscribers.Put(NewEntry.Key, NewEntry)
+	// 	return Id, nil
 }
 
 func (Uc *UserControl) Subscriber_Edit(Login string, request Subscriber_Edit_Request) (Id int64, err error) {
-	//check and validate outlet
-	if request.Key == "" {
-		err = errors.New("msisdn cannot be empty")
-		return Id, err
-	}
-	subscriber_na, exits := Map_Subscribers.CheckThenGet(request.Key)
-	if !exits {
-		err = errors.New("msisdn is not created")
-		return Id, err
-	}
-	subscriber, ok := subscriber_na.(Subscriber)
-	if !ok {
-		return Id, errors.New("error in subscriber type assertion")
-	}
-	if subscriber.Subscriber_Id != request.Subscriber_Id {
-		return Id, errors.New("id is not matching")
-	}
-
-	//check if exists on IN and get details
-	IN_Response, err := Uc.IN.INClient.GetAccountDetails("", "", request.Key)
-	if err != nil {
-		err = errors.New("error getting account detail: " + err.Error())
-		return Id, err
-	}
-
-	//to do: get ARPU
-	var ARPU float64
-	ARPU = 200
-
-	//Prepare new entry
-	subscriber.Key = request.Key
-	subscriber.COS = IN_Response.COS
-	if len(IN_Response.FirstUse) > 10 { //"FirstUse": "2016-06-20T17:51:00.000+00:00"
-		First_Use := IN_Response.FirstUse[0:10]
-		First_Use_Date, err := time.Parse("2006-01-02", First_Use)
-		if err != nil {
-			err = errors.New("error parsing FirstUse date: " + err.Error())
-			return Id, err
-		}
-		subscriber.FirstUse_date = First_Use_Date
-	} else {
-		err = errors.New("error getting account detail: FirstUse date not defined")
-		return Id, err
-	}
-	subscriber.ARPU = ARPU
-	subscriber.Last_ProfileUpdate_date = time.Now()
-	// subscriber.Credit_Limit_Scheme, _ = Uc.Credit_Limit_Scheme_Selection(subscriber.ARPU, subscriber.FirstUse_date)
-	// if subscriber.Credit_Limit_Scheme != "" {
-	// 	subscriber.IsLendmeEligible = true
-	// } else {
-	// 	subscriber.IsLendmeEligible = false
+	err = errors.New("edit subscriber is restricted to the daily importing process")
+	return Id, err
+	// //check and validate outlet
+	// if request.Key == "" {
+	// 	err = errors.New("msisdn cannot be empty")
+	// 	return Id, err
 	// }
-	if request.NewKey != "" {
-		if request.NewKey != request.Key {
-			//delete old
-			Map_Subscribers.Delete(request.Key)
-			//update key
-			subscriber.Key = request.NewKey
-		}
-	}
-	//add to cache and DB
-	Map_Subscribers.Put(subscriber.Key, subscriber)
-	return Id, nil
+	// subscriber_na, exits := Map_Subscribers.CheckThenGet(request.Key)
+	// if !exits {
+	// 	err = errors.New("msisdn is not created")
+	// 	return Id, err
+	// }
+	// subscriber, ok := subscriber_na.(Subscriber)
+	// if !ok {
+	// 	return Id, errors.New("error in subscriber type assertion")
+	// }
+	// if subscriber.Subscriber_Id != request.Subscriber_Id {
+	// 	return Id, errors.New("id is not matching")
+	// }
+
+	// //check if exists on IN and get details
+	// IN_Response, err := Uc.IN.INClient.GetAccountDetails("", "", request.Key)
+	// if err != nil {
+	// 	err = errors.New("error getting account detail: " + err.Error())
+	// 	return Id, err
+	// }
+
+	// //to do: get ARPU
+	// var ARPU float64
+	// ARPU = 200
+
+	// //Prepare new entry
+	// subscriber.Key = request.Key
+	// subscriber.COS = IN_Response.COS
+	// if len(IN_Response.FirstUse) > 10 { //"FirstUse": "2016-06-20T17:51:00.000+00:00"
+	// 	First_Use := IN_Response.FirstUse[0:10]
+	// 	First_Use_Date, err := time.Parse("2006-01-02", First_Use)
+	// 	if err != nil {
+	// 		err = errors.New("error parsing FirstUse date: " + err.Error())
+	// 		return Id, err
+	// 	}
+	// 	subscriber.FirstUse_date = First_Use_Date
+	// } else {
+	// 	err = errors.New("error getting account detail: FirstUse date not defined")
+	// 	return Id, err
+	// }
+	// subscriber.ARPU = ARPU
+	// subscriber.Last_ProfileUpdate_date = time.Now()
+	// // subscriber.Credit_Limit_Scheme, _ = Uc.Credit_Limit_Scheme_Selection(subscriber.ARPU, subscriber.FirstUse_date)
+	// // if subscriber.Credit_Limit_Scheme != "" {
+	// // 	subscriber.IsLendmeEligible = true
+	// // } else {
+	// // 	subscriber.IsLendmeEligible = false
+	// // }
+	// if request.NewKey != "" {
+	// 	if request.NewKey != request.Key {
+	// 		//delete old
+	// 		Map_Subscribers.Delete(request.Key)
+	// 		//update key
+	// 		subscriber.Key = request.NewKey
+	// 	}
+	// }
+	// //add to cache and DB
+	// Map_Subscribers.Put(subscriber.Key, subscriber)
+	// return Id, nil
 }
 
 func (Uc *UserControl) Subscriber_Get(Key string) (subscribers []Subscriber, err error) {
@@ -1028,42 +1039,60 @@ func (Uc *UserControl) Lendme_exec_Request(Source, MSISDN string, Amount float64
 	lendLog.Lendme_Amount = Amount
 	lendLog.Lendme_Fee = (Amount * Configuration.Service_FeePerc)
 
-	// check if subscriber exist, auto add if not
+	// check if subscriber exist, return error if not existing
 	exist := Map_Subscribers.Check(MSISDN)
 	if !exist {
-		var addRequest Subscriber_Add_Request
-		addRequest.Key = MSISDN
-		_, err := Uc.Subscriber_Add("Lendme Request", addRequest)
-		if err != nil {
-			lendLog.Status = "failed"
-			lendLog.StatusDescription = err.Error()
-			go Uc.Write_Lendme_log(lendLog)
-			return err
-		}
+		error_msg := "subscriber does not exist in the service pool"
+		err = errors.New(error_msg)
+		lendLog.Status = "failed"
+		lendLog.StatusDescription = err.Error()
+		go Uc.Write_Lendme_log(lendLog)
+
+		LendMeRequestsCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Inc()
+		LendMeRequestsAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Add(Amount)
+		return err
+		// var addRequest Subscriber_Add_Request
+		// addRequest.Key = MSISDN
+		// _, err := Uc.Subscriber_Add("Lendme Request", addRequest)
+		// if err != nil {
+		// 	lendLog.Status = "failed"
+		// 	lendLog.StatusDescription = err.Error()
+		// 	go Uc.Write_Lendme_log(lendLog)
+		// 	return err
+		// }
 	}
 	subscriber_na := Map_Subscribers.Get(MSISDN)
 	subscriber, ok := subscriber_na.(Subscriber)
 	if !ok {
-		err = errors.New("error in subscriber type assertion")
+		error_msg := "error in subscriber type assertion"
+		err = errors.New(error_msg)
 		lendLog.Status = "failed"
 		lendLog.StatusDescription = err.Error()
 		go Uc.Write_Lendme_log(lendLog)
+		LendMeRequestsCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Inc()
+		LendMeRequestsAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Add(Amount)
 		return err
 	}
 	if !subscriber.IsLendmeEligible {
-		err = errors.New("subscriber is not eligible")
+		error_msg := "subscriber is not eligible"
+		err = errors.New(error_msg)
 		lendLog.Status = "failed"
 		lendLog.StatusDescription = err.Error()
 		go Uc.Write_Lendme_log(lendLog)
+		LendMeRequestsCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Inc()
+		LendMeRequestsAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Add(Amount)
 		return err
 	}
 	//check if exists on IN and get details
 	IN_Response, err := Uc.IN.INClient.GetAccountDetails("", "", MSISDN)
 	if err != nil {
-		err = errors.New("error getting account detail: " + err.Error())
+		error_msg := "error getting account detail: " + err.Error()
+		err = errors.New(error_msg)
 		lendLog.Status = "failed"
 		lendLog.StatusDescription = err.Error()
 		go Uc.Write_Lendme_log(lendLog)
+		LendMeRequestsCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Inc()
+		LendMeRequestsAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Add(Amount)
 		return err
 	}
 	//check balance min and max
@@ -1072,6 +1101,9 @@ func (Uc *UserControl) Lendme_exec_Request(Source, MSISDN string, Amount float64
 		lendLog.Status = "failed"
 		lendLog.StatusDescription = err.Error()
 		go Uc.Write_Lendme_log(lendLog)
+		error_msg := "balance must be greater than minimum allowed"
+		LendMeRequestsCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Inc()
+		LendMeRequestsAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Add(Amount)
 		return err
 	}
 	if IN_Response.Balance > Configuration.Max_Allowed_Balance {
@@ -1079,44 +1111,51 @@ func (Uc *UserControl) Lendme_exec_Request(Source, MSISDN string, Amount float64
 		lendLog.Status = "failed"
 		lendLog.StatusDescription = err.Error()
 		go Uc.Write_Lendme_log(lendLog)
+		error_msg := "balance must be less than maximum allowed"
+		LendMeRequestsCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Inc()
+		LendMeRequestsAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Add(Amount)
 		return err
 	}
-	//check if recharged in the past 60 days
-	if len(IN_Response.LastCredited) > 10 {
-		LastCredited := IN_Response.LastCredited[0:10]
-		LastCredited_Date, err := time.Parse("2006-01-02", LastCredited)
-		if err != nil {
-			err = errors.New("error parsing LastCredited date: " + err.Error())
-			lendLog.Status = "failed"
-			lendLog.StatusDescription = err.Error()
-			go Uc.Write_Lendme_log(lendLog)
-			return err
-		}
-		//check last credited (should be in more than 60 days)
-		durationSinceLastCredited := (time.Now().Sub(LastCredited_Date).Hours() / 24)
-		if durationSinceLastCredited < 60 {
-			err = errors.New("subscriber must have recharged at least once in a 60-day period")
-			lendLog.Status = "failed"
-			lendLog.StatusDescription = err.Error()
-			go Uc.Write_Lendme_log(lendLog)
-			return err
-		}
-	} else {
-		err = errors.New("subscriber must have recharged at least once in a 60-day period")
-		lendLog.Status = "failed"
-		lendLog.StatusDescription = err.Error()
-		go Uc.Write_Lendme_log(lendLog)
-		return err
-	}
+
+	//check if recharged in the past 60 days --> done in the daily importing process
+	// if len(IN_Response.LastCredited) > 10 {
+	// 	LastCredited := IN_Response.LastCredited[0:10]
+	// 	LastCredited_Date, err := time.Parse("2006-01-02", LastCredited)
+	// 	if err != nil {
+	// 		err = errors.New("error parsing LastCredited date: " + err.Error())
+	// 		lendLog.Status = "failed"
+	// 		lendLog.StatusDescription = err.Error()
+	// 		go Uc.Write_Lendme_log(lendLog)
+	// 		return err
+	// 	}
+	// 	//check last credited (should be in more than 60 days)
+	// 	durationSinceLastCredited := (time.Now().Sub(LastCredited_Date).Hours() / 24)
+	// 	if durationSinceLastCredited < 60 {
+	// 		err = errors.New("subscriber must have recharged at least once in a 60-day period")
+	// 		lendLog.Status = "failed"
+	// 		lendLog.StatusDescription = err.Error()
+	// 		go Uc.Write_Lendme_log(lendLog)
+	// 		return err
+	// 	}
+	// } else {
+	// 	err = errors.New("subscriber must have recharged at least once in a 60-day period")
+	// 	lendLog.Status = "failed"
+	// 	lendLog.StatusDescription = err.Error()
+	// 	go Uc.Write_Lendme_log(lendLog)
+	// 	return err
+	// }
 	//check if SOS is active
 	if IN_Response.LoyaltyStatus != "X" {
 		//todo: opt out from service
 		_, errL := Uc.IN.INClient.SetLoyaltyOverdraft("", "", MSISDN, "X", 0)
 		if errL != nil {
-			err = errors.New("failed to disable SOS: " + errL.Error())
+			error_msg := "failed to disable SOS: " + errL.Error()
+			err = errors.New(error_msg)
 			lendLog.Status = "failed"
 			lendLog.StatusDescription = errL.Error()
 			go Uc.Write_Lendme_log(lendLog)
+			LendMeRequestsCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Inc()
+			LendMeRequestsAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Add(Amount)
 			return err
 		}
 	}
@@ -1127,37 +1166,52 @@ func (Uc *UserControl) Lendme_exec_Request(Source, MSISDN string, Amount float64
 		lendLog.Status = "failed"
 		lendLog.StatusDescription = err.Error()
 		go Uc.Write_Lendme_log(lendLog)
+		error_msg := "requested amount must greater than minimum allowed amount"
+		LendMeRequestsCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Inc()
+		LendMeRequestsAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Add(Amount)
 		return err
 	}
 	scheme_na, scheme_exist := Map_Credit_Limit_Scheme.CheckThenGet(subscriber.Credit_Limit_Scheme)
 	if !scheme_exist {
-		err = errors.New("credit limit schema does not exist")
+		error_msg := "credit limit schema does not exist"
+		err = errors.New(error_msg)
 		lendLog.Status = "failed"
 		lendLog.StatusDescription = err.Error()
 		go Uc.Write_Lendme_log(lendLog)
+		LendMeRequestsCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Inc()
+		LendMeRequestsAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Add(Amount)
 		return err
 	}
 	scheme, ok := scheme_na.(Credit_Limit_Scheme)
 	if !ok {
-		err = errors.New("error in credit limit schema type assertion")
+		error_msg := "error in credit limit schema type assertion"
+		err = errors.New(error_msg)
 		lendLog.Status = "failed"
 		lendLog.StatusDescription = err.Error()
 		go Uc.Write_Lendme_log(lendLog)
+		LendMeRequestsCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Inc()
+		LendMeRequestsAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Add(Amount)
 		return err
 	}
 
 	if Amount > scheme.Credit_limit_Amount {
-		err = errors.New("amount is not allowed")
+		error_msg := "requested amount is not allowed"
+		err = errors.New(error_msg)
 		lendLog.Status = "failed"
 		lendLog.StatusDescription = err.Error()
 		go Uc.Write_Lendme_log(lendLog)
+		LendMeRequestsCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Inc()
+		LendMeRequestsAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Add(Amount)
 		return err
 	}
 	if (subscriber.Lendme_Outstanding_Amount + Amount) > scheme.Credit_limit_Amount {
-		err = errors.New("amount is exceeding credit limit")
+		error_msg := "requested amount is exceeding credit limit"
+		err = errors.New(error_msg)
 		lendLog.Status = "failed"
 		lendLog.StatusDescription = err.Error()
 		go Uc.Write_Lendme_log(lendLog)
+		LendMeRequestsCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Inc()
+		LendMeRequestsAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Add(Amount)
 		return err
 	}
 	//credit the amount
@@ -1166,6 +1220,8 @@ func (Uc *UserControl) Lendme_exec_Request(Source, MSISDN string, Amount float64
 		lendLog.Status = "failed"
 		lendLog.StatusDescription = credit_err.Error()
 		go Uc.Write_Lendme_log(lendLog)
+		LendMeRequestsCount.With(prometheus.Labels{"Status": "failed", "Reason": credit_err.Error(), "Scheme": ""}).Inc()
+		LendMeRequestsAmount.With(prometheus.Labels{"Status": "failed", "Reason": credit_err.Error(), "Scheme": ""}).Add(Amount)
 		return credit_err
 	}
 	if credit_response.ResultCode != "0" {
@@ -1173,6 +1229,8 @@ func (Uc *UserControl) Lendme_exec_Request(Source, MSISDN string, Amount float64
 		lendLog.Status = "failed"
 		lendLog.StatusDescription = err.Error()
 		go Uc.Write_Lendme_log(lendLog)
+		LendMeRequestsCount.With(prometheus.Labels{"Status": "failed", "Reason": err.Error(), "Scheme": ""}).Inc()
+		LendMeRequestsAmount.With(prometheus.Labels{"Status": "failed", "Reason": err.Error(), "Scheme": ""}).Add(Amount)
 		return err
 	}
 
@@ -1188,6 +1246,8 @@ func (Uc *UserControl) Lendme_exec_Request(Source, MSISDN string, Amount float64
 	lendLog.Status = "successful"
 	lendLog.StatusDescription = ""
 	go Uc.Write_Lendme_log(lendLog)
+	LendMeRequestsCount.With(prometheus.Labels{"Status": "successful", "Reason": "", "Scheme": subscriber.Credit_Limit_Scheme}).Inc()
+	LendMeRequestsAmount.With(prometheus.Labels{"Status": "successful", "Reason": "", "Scheme": subscriber.Credit_Limit_Scheme}).Add(Amount)
 	return nil
 }
 

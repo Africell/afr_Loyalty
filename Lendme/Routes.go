@@ -124,7 +124,7 @@ func (Uc *UserControl) AddToAppRouter(router *mux.Router, UC *UserControl) {
 		}
 
 	}
-	// router.Path("/metrics").Handler(CustomPrometheusHandler())
+	router.Path("/metrics").Handler(CustomPrometheusHandler())
 	// router.Path("/metrics_latency").Handler(CustomPrometheusLatencyHandler())
 }
 

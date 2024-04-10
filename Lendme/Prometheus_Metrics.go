@@ -20,57 +20,48 @@ var (
 		[]string{"DestinationHost"},
 	)
 
-	TransactionsCount = prometheus.NewCounterVec(
+	DailyImportSubsStats = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "TransactionsCount",
-			Help: "TransactionsCount",
+			Name: "DailyImportSubsStats",
+			Help: "DailyImportSubsStats",
 		},
-		[]string{"Stream", "Type", "Description"},
+		[]string{"IsElligble", "Reason", "Scheme"},
 	)
-	TransactionsTotalAmount = prometheus.NewGaugeVec(
+
+	LendMeRequestsCount = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "LendMeRequestsCount",
+			Help: "LendMeRequestsCount",
+		},
+		[]string{"Status", "Reason", "Scheme"},
+	)
+	LendMeRequestsAmount = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Name: "TransactionsTotalAmount",
-			Help: "TransactionsTotalAmount",
+			Name: "LendMeRequestsAmount",
+			Help: "LendMeRequestsAmount",
 		},
-		[]string{"Stream", "Type", "Description"},
+		[]string{"Status", "Reason", "Scheme"},
 	)
 
-	LiveFeedStream = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "LiveFeedStream",
-			Help: "LiveFeedStream",
-		},
-		[]string{"Type"},
-	)
-
-	SubscriptionRequestCount = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "SubscriptionRequestCount",
-			Help: "SubscriptionRequestCount",
-		},
-		[]string{"RequestType", "Status"},
-	)
-
-	NotificationCount = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "NotificationCount",
-			Help: "NotificationCount",
-		},
-		[]string{"Type", "Status"},
-	)
+	// TransactionsTotalAmount = prometheus.NewGaugeVec(
+	// 	prometheus.GaugeOpts{
+	// 		Name: "TransactionsTotalAmount",
+	// 		Help: "TransactionsTotalAmount",
+	// 	},
+	// 	[]string{"Stream", "Type", "Description"},
+	// )
 )
 
-//NotificationCount.With(prometheus.Labels{"Type": "", "Status":""}).Inc()
+//DailyImportSubsStats.With(prometheus.Labels{"IsElligble":"", "Reason":"", "Scheme":""}).Inc()
 //TriviaQuizChargedAmount.With(prometheus.Labels{"Description": "desc"}).Add()
 
 func Init_Prometheus_Metrics() {
 	log.Println("Init Prometheus metrics")
 	PrometheusRegistry.Register(PortStatus)
-	PrometheusRegistry.Register(TransactionsCount)
-	PrometheusRegistry.Register(TransactionsTotalAmount)
-	PrometheusRegistry.Register(LiveFeedStream)
-	PrometheusRegistry.Register(SubscriptionRequestCount)
-	PrometheusRegistry.Register(NotificationCount)
+	PrometheusRegistry.Register(DailyImportSubsStats)
+	PrometheusRegistry.Register(LendMeRequestsCount)
+	PrometheusRegistry.Register(LendMeRequestsAmount)
+	//PrometheusRegistry.Register(TransactionsTotalAmount)
 }
 
 func Reset_Prometheus_Metrics() {
@@ -82,11 +73,10 @@ func Reset_Prometheus_Metrics() {
 			if _mi == 0 {
 				if _se < 10 {
 					if exec == 0 {
-						TransactionsCount.Reset()
-						TransactionsTotalAmount.Reset()
-						SubscriptionRequestCount.Reset()
-						NotificationCount.Reset()
-						LiveFeedStream.Reset()
+						DailyImportSubsStats.Reset()
+						LendMeRequestsCount.Reset()
+						LendMeRequestsAmount.Reset()
+						//TransactionsTotalAmount.Reset()
 						exec = 1
 					}
 				} else {
