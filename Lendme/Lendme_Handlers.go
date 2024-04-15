@@ -356,6 +356,44 @@ func (Uc *UserControl) HTTP_Subscriber(w http.ResponseWriter, r *http.Request) {
 	Uc.HTTP_API_Standard_response(w, r, sr, true)
 }
 
+func (Uc *UserControl) HTTP_Subscriber_USSD(w http.ResponseWriter, r *http.Request) {
+	var sr API_Standard_response
+	//**fill response source detail
+	SourceIp, _ := GetRequestIP(r)
+	sr.SourceIP = SourceIp
+	sr.Login = r.Header.Get("Login")
+	sr.SourceApp = r.Header.Get("SourceApp")
+	sr.AccessKey = r.URL.Path
+	sr.AccessMethod = r.Method
+	sr.HostId = Configuration.HostId
+	sr.ReceiveDate = time.Now()
+
+	method := r.Method
+	switch method {
+	case "GET":
+		sr.TransactionType = "Subscriber USSD - Read"
+		MSISDN := r.URL.Query().Get("MSISDN")
+
+		subscriber, err := Uc.SubscriberUSSD_Get(MSISDN)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		sr.Data = subscriber
+
+	}
+	//successful response
+	sr.Status = "successful"
+	sr.StatusCode = http.StatusOK
+	sr.StatusDescription = ""
+	sr.ErrorDescription = ""
+	Uc.HTTP_API_Standard_response(w, r, sr, true)
+}
+
 func (Uc *UserControl) HTTP_Subscribers_ARPU_Import_Launch(w http.ResponseWriter, r *http.Request) {
 	var sr API_Standard_response
 	//**fill response source detail

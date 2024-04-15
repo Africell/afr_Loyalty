@@ -1257,5 +1257,53 @@ func (Uc *UserControl) Lendme_PayBack(MSISDN string, Amount float64) (err error)
 }
 
 // ///////////////////////////////////////////////////////
-// Lendme ARPU
+// get subscriber from USSD
 // ///////////////////////////////////////////////////////
+
+func (Uc *UserControl) SubscriberUSSD_Get(Key string) (response Subscriber_USSD, err error) {
+	if Key == "" {
+		err = errors.New("subscriber MSISDN is not provided")
+		return response, err
+	} else {
+		subscriber_na, exits := Map_Subscribers.CheckThenGet(Key)
+		if !exits {
+			err = errors.New("subscriber does not exist")
+			return response, err
+		}
+		subscriber, ok := subscriber_na.(Subscriber)
+		if !ok {
+			err = errors.New("error in subcriber type assertion")
+			return response, err
+		}
+		response.MSISDN = Key
+		response.IsLendmeEligible = subscriber.IsLendmeEligible
+		response.Credit_Limit_Scheme = subscriber.Credit_Limit_Scheme
+		response.NotElligibleReason = subscriber.NotElligibleReason
+		response.Lendme_Outstanding_Amount = subscriber.Lendme_Outstanding_Amount
+		response.Lendme_Outstanding_Fee = subscriber.Lendme_Outstanding_Fee
+		//get schema detail for elligble subscriber
+		if subscriber.IsLendmeEligible {
+			scheme_na, exits := Map_Credit_Limit_Scheme.CheckThenGet(subscriber.Credit_Limit_Scheme)
+			if !exits {
+				err = errors.New("credit limit scheme does not exist")
+				return response, err
+			}
+			scheme, ok := scheme_na.(Credit_Limit_Scheme)
+			if !ok {
+				err = errors.New("error in credit limit scheme type assertion")
+				return response, err
+			}
+			response.Credit_limit_Amount = scheme.Credit_limit_Amount
+			remaining_Allowed := scheme.Credit_limit_Amount - subscriber.Lendme_Outstanding_Amount
+			if remaining_Allowed > Configuration.Min_Allowed_Amnt {
+				response.Min_Allowed_Amount = Configuration.Min_Allowed_Amnt
+				response.Max_Allowed_Amount = remaining_Allowed
+			} else {
+				response.Min_Allowed_Amount = 0
+				response.Max_Allowed_Amount = 0
+			}
+		}
+
+		return response, nil
+	}
+}

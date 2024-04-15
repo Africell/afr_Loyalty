@@ -152,3 +152,18 @@ type Sub_Update_Request struct {
 	Dealer_Bundle_Purchase           float64   `bson:"Dealer_Bundle_Purchase" json:"Dealer_Bundle_Purchase"`
 	Last_Dealer_Bundle_Purchase_Date time.Time `bson:"Last_Dealer_Bundle_Purchase_Date" json:"Last_Dealer_Bundle_Purchase_Date"`
 }
+
+type Subscriber_USSD struct {
+	MSISDN string `bson:"MSISDN" json:"MSISDN"` //MSISDN
+
+	IsLendmeEligible    bool    `bson:"IsLendmeEligible" json:"IsLendmeEligible"`
+	Credit_Limit_Scheme string  `bson:"Credit_Limit_Scheme" json:"Credit_Limit_Scheme"`
+	NotElligibleReason  string  `bson:"NotElligibleReason" json:"NotElligibleReason"`
+	Credit_limit_Amount float64 `bson:"Credit_limit_Amount" json:"Credit_limit_Amount"`
+
+	Min_Allowed_Amount float64 `bson:"Min_Allowed_Amount" json:"Min_Allowed_Amount"`
+	Max_Allowed_Amount float64 `bson:"Max_Allowed_Amount" json:"Max_Allowed_Amount"`
+
+	Lendme_Outstanding_Amount float64 `bson:"Lendme_Outstanding_Amount" json:"Lendme_Outstanding_Amount"`
+	Lendme_Outstanding_Fee    float64 `bson:"Lendme_Outstanding_Fee" json:"Lendme_Outstanding_Fee"`
+}
