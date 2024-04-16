@@ -1259,6 +1259,17 @@ func (Uc *UserControl) Lendme_PayBack(Source, MSISDN string, RechargeAmount floa
 	// lendLog.Lendme_Amount = Amount
 	// lendLog.Lendme_Fee = (Amount * Configuration.Service_FeePerc)
 
+	if RechargeAmount <= 0 {
+		error_msg := "recharge amount must be positive"
+		err = errors.New(error_msg)
+		lendLog.Status = "failed"
+		lendLog.StatusDescription = err.Error()
+		go Uc.Write_Lendme_log(lendLog)
+		LendMePayBackCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Description": ""}).Inc()
+		//LendMePayBackAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Description" : ""}).Add(RechargeAmount)
+		return err
+	}
+
 	// check if subscriber exist, return error if not existing
 	subscriber_na, exist := Map_Subscribers.CheckThenGet(MSISDN)
 	if !exist {
