@@ -43,6 +43,21 @@ var (
 		[]string{"Status", "Reason", "Scheme"},
 	)
 
+	LendMePayBackCount = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "LendMePayBackCount",
+			Help: "LendMePayBackCount",
+		},
+		[]string{"Status", "Reason", "Description"},
+	)
+	LendMePayBackAmount = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "LendMePayBackAmount",
+			Help: "LendMePayBackAmount",
+		},
+		[]string{"Status", "Reason", "Description"},
+	)
+
 	// TransactionsTotalAmount = prometheus.NewGaugeVec(
 	// 	prometheus.GaugeOpts{
 	// 		Name: "TransactionsTotalAmount",
@@ -61,6 +76,8 @@ func Init_Prometheus_Metrics() {
 	PrometheusRegistry.Register(DailyImportSubsStats)
 	PrometheusRegistry.Register(LendMeRequestsCount)
 	PrometheusRegistry.Register(LendMeRequestsAmount)
+	PrometheusRegistry.Register(LendMePayBackCount)
+	PrometheusRegistry.Register(LendMePayBackAmount)
 	//PrometheusRegistry.Register(TransactionsTotalAmount)
 }
 
@@ -76,6 +93,8 @@ func Reset_Prometheus_Metrics() {
 						DailyImportSubsStats.Reset()
 						LendMeRequestsCount.Reset()
 						LendMeRequestsAmount.Reset()
+						LendMePayBackCount.Reset()
+						LendMePayBackAmount.Reset()
 						//TransactionsTotalAmount.Reset()
 						exec = 1
 					}

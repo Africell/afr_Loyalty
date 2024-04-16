@@ -62,10 +62,13 @@ type Subscriber struct {
 	Lendme_Outstanding_Fee    float64   `bson:"Lendme_Outstanding_Fee" json:"Lendme_Outstanding_Fee"`
 	Last_Lend_Date            time.Time `bson:"Last_Lend_Date" json:"Last_Lend_Date"`
 
-	Cumulative_Lent_Amount float64   `bson:"Cumulative_Lent_Amount" json:"Cumulative_Lent_Amount"`
-	Cumulative_Lent_Fee    float64   `bson:"Cumulative_Lent_Fee" json:"Cumulative_Lent_Fee"`
-	Cumulative_Payback     float64   `bson:"Cumulative_Payback" json:"Cumulative_Payback"`
-	Last_Payback_Date      time.Time `bson:"Last_Payback_Date" json:"Last_Payback_Date"`
+	Cumulative_Lent_Amount float64 `bson:"Cumulative_Lent_Amount" json:"Cumulative_Lent_Amount"`
+	Cumulative_Lent_Fee    float64 `bson:"Cumulative_Lent_Fee" json:"Cumulative_Lent_Fee"`
+
+	Cumulative_Payback_Amount float64   `bson:"Cumulative_Payback_Amount" json:"Cumulative_Payback_Amount"`
+	Last_Payback_Date         time.Time `bson:"Last_Payback_Date" json:"Last_Payback_Date"`
+	Cumulative_Payback_Fee    float64   `bson:"Cumulative_Payback_Fee" json:"Cumulative_Payback_Fee"`
+	Last_Payback_Fee_Date     time.Time `bson:"Last_Payback_Fee_Date" json:"Last_Payback_Fee_Date"`
 
 	//Workflow status
 	Status            string    `bson:"Status" json:"Status"`
@@ -166,4 +169,10 @@ type Subscriber_USSD struct {
 
 	Lendme_Outstanding_Amount float64 `bson:"Lendme_Outstanding_Amount" json:"Lendme_Outstanding_Amount"`
 	Lendme_Outstanding_Fee    float64 `bson:"Lendme_Outstanding_Fee" json:"Lendme_Outstanding_Fee"`
+}
+
+type Lendme_PayBack_Request struct {
+	Source         string  `bson:"Source" json:"Source"`
+	MSISDN         string  `bson:"MSISDN" json:"MSISDN"`
+	RechargeAmount float64 `bson:"RechargeAmount" json:"RechargeAmount"`
 }

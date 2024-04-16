@@ -1040,7 +1040,7 @@ func (Uc *UserControl) Lendme_exec_Request(Source, MSISDN string, Amount float64
 	lendLog.Lendme_Fee = (Amount * Configuration.Service_FeePerc)
 
 	// check if subscriber exist, return error if not existing
-	exist := Map_Subscribers.Check(MSISDN)
+	subscriber_na, exist := Map_Subscribers.CheckThenGet(MSISDN)
 	if !exist {
 		error_msg := "subscriber does not exist in the service pool"
 		err = errors.New(error_msg)
@@ -1061,7 +1061,6 @@ func (Uc *UserControl) Lendme_exec_Request(Source, MSISDN string, Amount float64
 		// 	return err
 		// }
 	}
-	subscriber_na := Map_Subscribers.Get(MSISDN)
 	subscriber, ok := subscriber_na.(Subscriber)
 	if !ok {
 		error_msg := "error in subscriber type assertion"
@@ -1251,9 +1250,148 @@ func (Uc *UserControl) Lendme_exec_Request(Source, MSISDN string, Amount float64
 	return nil
 }
 
-func (Uc *UserControl) Lendme_PayBack(MSISDN string, Amount float64) (err error) {
+func (Uc *UserControl) Lendme_PayBack(Source, MSISDN string, RechargeAmount float64) (err error) {
+	var lendLog Lendme_log
+	lendLog.Source = Source
+	lendLog.MSISDN = MSISDN
+	lendLog.Log_Date = time.Now()
+	lendLog.Type = "Lendme PayBack"
+	// lendLog.Lendme_Amount = Amount
+	// lendLog.Lendme_Fee = (Amount * Configuration.Service_FeePerc)
 
-	return
+	// check if subscriber exist, return error if not existing
+	subscriber_na, exist := Map_Subscribers.CheckThenGet(MSISDN)
+	if !exist {
+		error_msg := "subscriber does not exist in the service pool"
+		err = errors.New(error_msg)
+		lendLog.Status = "failed"
+		lendLog.StatusDescription = err.Error()
+		go Uc.Write_Lendme_log(lendLog)
+		LendMePayBackCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Description": ""}).Inc()
+		//LendMePayBackAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Description" : ""}).Add(RechargeAmount)
+		return err
+	}
+	subscriber, ok := subscriber_na.(Subscriber)
+	if !ok {
+		error_msg := "error in subscriber type assertion"
+		err = errors.New(error_msg)
+		lendLog.Status = "failed"
+		lendLog.StatusDescription = err.Error()
+		go Uc.Write_Lendme_log(lendLog)
+		LendMePayBackCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Description": ""}).Inc()
+		//LendMePayBackAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Description" : ""}).Add(RechargeAmount)
+		return err
+	}
+	//check if subscriber have outstanding amount
+	Outstanding_Amount := subscriber.Lendme_Outstanding_Amount + subscriber.Lendme_Outstanding_Fee
+	if Outstanding_Amount <= 0 {
+		return nil
+	}
+	//check if exists on IN and get details
+	IN_Response, err := Uc.IN.INClient.GetAccountDetails("", "", MSISDN)
+	if err != nil {
+		error_msg := "error getting account detail: " + err.Error()
+		err = errors.New(error_msg)
+		lendLog.Status = "failed"
+		lendLog.StatusDescription = err.Error()
+		go Uc.Write_Lendme_log(lendLog)
+		LendMePayBackCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Description": ""}).Inc()
+		//LendMePayBackAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Description" : ""}).Add(RechargeAmount)
+		return err
+	}
+
+	//check balance min and max
+	if IN_Response.Balance <= 0 {
+		error_msg := "balance must be positive"
+		err = errors.New(error_msg)
+		lendLog.Status = "failed"
+		lendLog.StatusDescription = err.Error()
+		go Uc.Write_Lendme_log(lendLog)
+		LendMePayBackCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Description": ""}).Inc()
+		//LendMePayBackAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Description" : ""}).Add(RechargeAmount)
+		return err
+	}
+	//calculate debit fee/amount
+	var DebitfeeAmount float64
+	var DebitAmount float64
+	if IN_Response.Balance >= Outstanding_Amount {
+		DebitfeeAmount = subscriber.Lendme_Outstanding_Fee
+		DebitAmount = subscriber.Lendme_Outstanding_Amount
+	} else {
+		if IN_Response.Balance > DebitfeeAmount {
+			DebitfeeAmount = subscriber.Lendme_Outstanding_Fee
+			DebitAmount = IN_Response.Balance - subscriber.Lendme_Outstanding_Fee
+		} else {
+			DebitfeeAmount = IN_Response.Balance
+		}
+	}
+	lendLog.Lendme_Amount = DebitfeeAmount
+	lendLog.Lendme_Fee = DebitAmount
+	//debit the fee amount
+	if DebitfeeAmount > 0 {
+		credit_response, credit_err := Uc.IN.INClient.SetAccountBalances("", "", MSISDN, -1*DebitfeeAmount, "N", 0, 0, 0, 0, "LendmeFee")
+		if credit_err != nil {
+			error_msg := credit_err.Error()
+			lendLog.Status = "failed"
+			lendLog.StatusDescription = error_msg
+			go Uc.Write_Lendme_log(lendLog)
+			LendMePayBackCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Description": "LendmeFee"}).Inc()
+			LendMePayBackAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Description": "LendmeFee"}).Add(DebitfeeAmount)
+			return credit_err
+		}
+		if credit_response.ResultCode != "0" {
+			error_msg := err.Error()
+			err = errors.New(error_msg)
+			lendLog.Status = "failed"
+			lendLog.StatusDescription = error_msg
+			go Uc.Write_Lendme_log(lendLog)
+			LendMePayBackCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Description": "LendmeFee"}).Inc()
+			LendMePayBackAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Description": "LendmeFee"}).Add(DebitfeeAmount)
+			return err
+		}
+		//subscriber.Cumulative_Payback_Amount
+		subscriber.Lendme_Outstanding_Fee = subscriber.Lendme_Outstanding_Fee - DebitfeeAmount
+		subscriber.Cumulative_Payback_Fee = subscriber.Cumulative_Payback_Fee + DebitfeeAmount
+		subscriber.Last_Payback_Fee_Date = time.Now()
+		Map_Subscribers.Put(subscriber.Key, subscriber)
+		LendMePayBackCount.With(prometheus.Labels{"Status": "successful", "Reason": "", "Description": "LendmeFee"}).Inc()
+		LendMePayBackAmount.With(prometheus.Labels{"Status": "successful", "Reason": "", "Description": "LendmeFee"}).Add(DebitfeeAmount)
+	}
+	//debit the fee amount
+	if DebitAmount > 0 {
+		credit_response, credit_err := Uc.IN.INClient.SetAccountBalances("", "", MSISDN, -1*DebitAmount, "N", 0, 0, 0, 0, "LendmePayBack")
+		if credit_err != nil {
+			error_msg := credit_err.Error()
+			lendLog.Status = "failed"
+			lendLog.StatusDescription = error_msg
+			go Uc.Write_Lendme_log(lendLog)
+			LendMePayBackCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Description": "LendmePayBack"}).Inc()
+			LendMePayBackAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Description": "LendmePayBack"}).Add(DebitAmount)
+			return credit_err
+		}
+		if credit_response.ResultCode != "0" {
+			error_msg := err.Error()
+			err = errors.New(error_msg)
+			lendLog.Status = "failed"
+			lendLog.StatusDescription = error_msg
+			go Uc.Write_Lendme_log(lendLog)
+			LendMePayBackCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Description": "LendmePayBack"}).Inc()
+			LendMePayBackAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Description": "LendmePayBack"}).Add(DebitAmount)
+			return err
+		}
+		subscriber.Lendme_Outstanding_Amount = subscriber.Lendme_Outstanding_Amount - DebitAmount
+		subscriber.Cumulative_Payback_Amount = subscriber.Cumulative_Payback_Amount + DebitAmount
+		subscriber.Last_Payback_Date = time.Now()
+		Map_Subscribers.Put(subscriber.Key, subscriber)
+		LendMePayBackCount.With(prometheus.Labels{"Status": "successful", "Reason": "", "Description": "LendmePayBack"}).Inc()
+		LendMePayBackAmount.With(prometheus.Labels{"Status": "successful", "Reason": "", "Description": "LendmePayBack"}).Add(DebitAmount)
+	}
+
+	//save log into DB
+	lendLog.Status = "successful"
+	lendLog.StatusDescription = ""
+	go Uc.Write_Lendme_log(lendLog)
+	return nil
 }
 
 // ///////////////////////////////////////////////////////

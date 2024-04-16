@@ -280,18 +280,43 @@ func (UC *UserControl) Add_LendmeRoutes(R *Routes) {
 		"/" + Configuration.Module + "/" + Configuration.Version + "/HTTP_Lendme_Request/",
 		UC.HTTP_Lendme_Request,
 		true,
-		"Subscriber - Add", // DisplayName
-		DisplayOrder,       // DisplayOrder
-		Module,             // Module
-		ModuleDisplayOrder, //ModuleDisplayOrder
-		Level1,             // Level1
-		Level1DisplayOrder, // Level1DisplayOrder
-		"",                 // Level2
-		0,                  // Level2DisplayOrder
-		"",                 // Level3
-		0,                  // Level3DisplayOrder
-		true,               //AllowedFor_OKAPI
-		true,               //AllowedFor_App
+		"Lendme Request - Add", // DisplayName
+		DisplayOrder,           // DisplayOrder
+		Module,                 // Module
+		ModuleDisplayOrder,     //ModuleDisplayOrder
+		Level1,                 // Level1
+		Level1DisplayOrder,     // Level1DisplayOrder
+		"",                     // Level2
+		0,                      // Level2DisplayOrder
+		"",                     // Level3
+		0,                      // Level3DisplayOrder
+		true,                   //AllowedFor_OKAPI
+		true,                   //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+	//*****************************
+	// Subscriber PayBack
+	//*****************************
+	r = Route{
+		"HTTP_Lendme_PayBack",
+		"POST",
+		"/" + Configuration.Module + "/" + Configuration.Version + "/HTTP_Lendme_PayBack/",
+		UC.HTTP_Lendme_PayBack,
+		true,
+		"Lendme PayBack - Add", // DisplayName
+		DisplayOrder,           // DisplayOrder
+		Module,                 // Module
+		ModuleDisplayOrder,     //ModuleDisplayOrder
+		Level1,                 // Level1
+		Level1DisplayOrder,     // Level1DisplayOrder
+		"",                     // Level2
+		0,                      // Level2DisplayOrder
+		"",                     // Level3
+		0,                      // Level3DisplayOrder
+		true,                   //AllowedFor_OKAPI
+		true,                   //AllowedFor_App
 	}
 	*R = append(*R, r)
 	DisplayOrder = DisplayOrder + 1
