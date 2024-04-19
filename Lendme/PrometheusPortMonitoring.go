@@ -27,25 +27,19 @@ func Init_DestinationHosts() {
 	destinationHots = append(destinationHots, host)
 
 	host = destinationHost{
-		HostName: "Recharge Feed",
-		HostIP:   "10.10.231.50", //container name
-		HostPort: "9658",
+		HostName: "IN Web Services",
+		HostIP:   Configuration.IN.IP, //container name
+		HostPort: Configuration.IN.Port,
 	}
 	destinationHots = append(destinationHots, host)
 
 	host = destinationHost{
-		HostName: "SMSC",
-		HostIP:   "10.10.215.52",
-		HostPort: "15403",
+		HostName: "AUC",
+		HostIP:   Configuration.App_AUC.Hostname,
+		HostPort: Configuration.App_AUC.Port,
 	}
 	destinationHots = append(destinationHots, host)
 
-	host = destinationHost{
-		HostName: "WhatsApp",
-		HostIP:   "10.10.231.52",
-		HostPort: "9010",
-	}
-	destinationHots = append(destinationHots, host)
 }
 
 func PortlinkInquiry() {

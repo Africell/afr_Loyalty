@@ -55,6 +55,7 @@ func (p *program) run() {
 	go lendme.Reset_Prometheus_Metrics_Latency()
 
 	go UserControl.SubQueueExecution()
+	go UserControl.Auto_Import_Subscribers_Dump()
 
 	go sysadmin.SysAdminInit(UserControl.CacheDir, "3"+lendme.Configuration.HttpAppServicePort)
 

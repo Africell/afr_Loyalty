@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var chan_SubQueueExecution_controler = make(chan int, 10)
@@ -29,12 +31,18 @@ func (Uc *UserControl) Import_Subscribers_Dump_LineByLine(FileName string) (err 
 	defer file.Close()
 
 	// Section 2: read lines
+	post_start := time.Now()
+	SubsDumpFile.Reset()
+	SubsDumpFileImportTime.Reset()
 	r := bufio.NewReader(file)
+
 	for {
 		line, _, err := r.ReadLine()
 		if err != nil {
 			if err == io.EOF {
 				log.Println("***subscribers dump importing process finished ***")
+				import_time := (float64((time.Since(post_start).Nanoseconds())/1000000) / 1000) / 60 //in minutes
+				SubsDumpFileImportTime.With(prometheus.Labels{"TimeInMinutes": ""}).Add(import_time)
 				return nil
 			} else {
 				log.Println("error reading line from subscribers ARPU file: " + err.Error())
@@ -115,6 +123,7 @@ func (Uc *UserControl) Import_Subscribers_Dump_LineByLine(FileName string) (err 
 				}
 				//log.Println("fill request:", request)
 				chan_SubDump_EXECQueue <- request
+				SubsDumpFile.With(prometheus.Labels{"FileName": FileName}).Inc()
 			}
 		}
 	}
@@ -180,4 +189,26 @@ func (Uc *UserControl) Subscriber_Update(request Sub_Update_Request) {
 	//add to cache and DB
 	Map_Subscribers.Put(subscriber.Key, subscriber)
 	<-chan_SubQueueExecution_controler
+}
+
+func (Uc *UserControl) Auto_Import_Subscribers_Dump() (err error) {
+	exec := 0
+	for range time.Tick(time.Second * 60) {
+		timeparts := GetTimeParts_V2(time.Now().Add(24 * time.Hour))
+		fileName := "Rgs_" + timeparts.YYYY + timeparts.MM + timeparts.DD + ".txt"
+		if exec == 0 {
+			//do the work here
+			go Uc.Import_Subscribers_Dump_LineByLine(fileName)
+			exec = 1
+		}
+		//reset exec
+		_CurrentDateTime := time.Now()
+		_hr, _, _ := _CurrentDateTime.Clock()
+		if _hr == 0 {
+			if exec == 1 {
+				exec = 0
+			}
+		}
+	}
+	return nil
 }

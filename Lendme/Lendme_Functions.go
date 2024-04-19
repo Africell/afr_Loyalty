@@ -1251,6 +1251,7 @@ func (Uc *UserControl) Lendme_exec_Request(Source, MSISDN string, Amount float64
 }
 
 func (Uc *UserControl) Lendme_PayBack(Source, MSISDN string, RechargeAmount float64) (err error) {
+	LendMePayBackCount.With(prometheus.Labels{"Status": "requested", "Reason": "", "Description": Source}).Inc()
 	var lendLog Lendme_log
 	lendLog.Source = Source
 	lendLog.MSISDN = MSISDN
