@@ -17,13 +17,16 @@ var chan_SubQueueExecution_controler = make(chan int, 10)
 var chan_SubDump_EXECQueue = make(chan Sub_Update_Request, 1000)
 
 func (Uc *UserControl) Import_Subscribers_Dump_LineByLine(FileName string) (err error) {
-	log.Println("***subscribers dump importing process started ***")
 	//Section 1: open file for reading
 	if FileName == "" {
 		return errors.New("subscribers dump file name cannot be empty")
 	}
-	FileName = Configuration.ARPU_File_Path + FileName
-	file, err := os.Open(FileName)
+	FullFileName := Configuration.ARPU_File_Path + FileName
+	if !CheckIfExists(FullFileName) {
+		return
+	}
+	log.Println("***subscribers dump importing process started ***")
+	file, err := os.Open(FullFileName)
 	if err != nil {
 		log.Println("error opening subscribers dump file " + FileName + ": " + err.Error())
 		return err
@@ -194,9 +197,10 @@ func (Uc *UserControl) Subscriber_Update(request Sub_Update_Request) {
 func (Uc *UserControl) Auto_Import_Subscribers_Dump() (err error) {
 	exec := 0
 	for range time.Tick(time.Second * 60) {
-		timeparts := GetTimeParts_V2(time.Now().Add(24 * time.Hour))
-		fileName := "Rgs_" + timeparts.YYYY + timeparts.MM + timeparts.DD + ".txt"
 		if exec == 0 {
+			timeparts := GetTimeParts_V2(time.Now().Add(-24 * time.Hour))
+			fileName := "Rgs_" + timeparts.YYYY + timeparts.MM + timeparts.DD + ".txt"
+			log.Println("Import subscriber dump attempt for " + fileName)
 			//do the work here
 			go Uc.Import_Subscribers_Dump_LineByLine(fileName)
 			exec = 1
@@ -211,4 +215,13 @@ func (Uc *UserControl) Auto_Import_Subscribers_Dump() (err error) {
 		}
 	}
 	return nil
+}
+
+func CheckIfExists(name string) bool {
+	if _, err := os.Stat(name); err != nil {
+		if os.IsNotExist(err) {
+			return false
+		}
+	}
+	return true
 }
