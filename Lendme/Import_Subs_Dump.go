@@ -23,7 +23,8 @@ func (Uc *UserControl) Import_Subscribers_Dump_LineByLine(FileName string) (err 
 	}
 	FullFileName := Configuration.ARPU_File_Path + FileName
 	if !CheckIfExists(FullFileName) {
-		return
+		log.Println("subscribers dump file not found")
+		return errors.New("subscribers dump file not found")
 	}
 	log.Println("***subscribers dump importing process started ***")
 	file, err := os.Open(FullFileName)
@@ -200,10 +201,14 @@ func (Uc *UserControl) Auto_Import_Subscribers_Dump() (err error) {
 		if exec == 0 {
 			timeparts := GetTimeParts_V2(time.Now().Add(-24 * time.Hour))
 			fileName := "Rgs_" + timeparts.YYYY + timeparts.MM + timeparts.DD + ".txt"
-			log.Println("Import subscriber dump attempt for " + fileName)
-			//do the work here
-			go Uc.Import_Subscribers_Dump_LineByLine(fileName)
-			exec = 1
+			//check if file exist
+			FullFileName := Configuration.ARPU_File_Path + fileName
+			if CheckIfExists(FullFileName) {
+				log.Println("Import subscriber dump attempt for " + fileName)
+				//do the work here
+				go Uc.Import_Subscribers_Dump_LineByLine(fileName)
+				exec = 1
+			}
 		}
 		//reset exec
 		_CurrentDateTime := time.Now()

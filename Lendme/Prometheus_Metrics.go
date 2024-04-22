@@ -114,7 +114,7 @@ func Reset_Prometheus_Metrics() {
 						LendMeRequestsAmount.Reset()
 						LendMePayBackCount.Reset()
 						LendMePayBackAmount.Reset()
-						SubsDumpFile.Reset()
+						//SubsDumpFile.Reset()
 						//TransactionsTotalAmount.Reset()
 						exec = 1
 					}
