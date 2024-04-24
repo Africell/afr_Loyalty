@@ -175,4 +175,5 @@ type Lendme_PayBack_Request struct {
 	Source         string  `bson:"Source" json:"Source"`
 	MSISDN         string  `bson:"MSISDN" json:"MSISDN"`
 	RechargeAmount float64 `bson:"RechargeAmount" json:"RechargeAmount"`
+	Opid           string  `bson:"Opid" json:"Opid"`
 }

@@ -1031,6 +1031,7 @@ func (Uc *UserControl) Subscriber_Delete(Key string) (err error) {
 // Lendme
 // ///////////////////////////////////////////////////////
 func (Uc *UserControl) Lendme_exec_Request(Source, MSISDN string, Amount float64) (err error) {
+	log.Println("Lendme Request for "+MSISDN+": ", Amount)
 	var lendLog Lendme_log
 	lendLog.Source = Source
 	lendLog.MSISDN = MSISDN
@@ -1250,7 +1251,11 @@ func (Uc *UserControl) Lendme_exec_Request(Source, MSISDN string, Amount float64
 	return nil
 }
 
-func (Uc *UserControl) Lendme_PayBack(Source, MSISDN string, RechargeAmount float64) (err error) {
+func (Uc *UserControl) Lendme_PayBack(Source, MSISDN string, RechargeAmount float64, Opid string) (err error) {
+	if Opid == "lendme" {
+		LendMePayBackCount.With(prometheus.Labels{"Status": "Ignored", "Reason": "Opid is lendme", "Description": Source}).Inc()
+		return
+	}
 	LendMePayBackCount.With(prometheus.Labels{"Status": "requested", "Reason": "", "Description": Source}).Inc()
 	var lendLog Lendme_log
 	lendLog.Source = Source

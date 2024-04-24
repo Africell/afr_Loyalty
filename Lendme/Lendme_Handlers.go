@@ -551,7 +551,7 @@ func (Uc *UserControl) HTTP_Lendme_PayBack(w http.ResponseWriter, r *http.Reques
 			Uc.HTTP_API_Standard_response(w, r, sr, false)
 			return
 		}
-		err = Uc.Lendme_PayBack(request.Source, request.MSISDN, request.RechargeAmount)
+		err = Uc.Lendme_PayBack(request.Source, request.MSISDN, request.RechargeAmount, request.Opid)
 		if err != nil {
 			sr.Status = "failed"
 			sr.StatusCode = http.StatusBadRequest
