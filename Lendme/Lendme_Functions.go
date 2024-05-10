@@ -1161,15 +1161,17 @@ func (Uc *UserControl) Lendme_exec_Request(Source, MSISDN string, Amount float64
 	}
 
 	//check the amount
-	if Amount < Configuration.Min_Allowed_Amnt {
-		err = errors.New("amount must greater than " + strconv.FormatFloat(Round(Configuration.Min_Allowed_Amnt, 1, 0), 'f', -1, 64))
-		lendLog.Status = "failed"
-		lendLog.StatusDescription = err.Error()
-		go Uc.Write_Lendme_log(lendLog)
-		error_msg := "requested amount must greater than minimum allowed amount"
-		LendMeRequestsCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Inc()
-		LendMeRequestsAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Add(Amount)
-		return err
+	if subscriber.Lendme_Outstanding_Amount == 0 {
+		if Amount < Configuration.Min_Allowed_Amnt {
+			err = errors.New("amount must greater than " + strconv.FormatFloat(Round(Configuration.Min_Allowed_Amnt, 1, 0), 'f', -1, 64))
+			lendLog.Status = "failed"
+			lendLog.StatusDescription = err.Error()
+			go Uc.Write_Lendme_log(lendLog)
+			error_msg := "requested amount must greater than minimum allowed amount"
+			LendMeRequestsCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Inc()
+			LendMeRequestsAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Add(Amount)
+			return err
+		}
 	}
 	scheme_na, scheme_exist := Map_Credit_Limit_Scheme.CheckThenGet(subscriber.Credit_Limit_Scheme)
 	if !scheme_exist {
@@ -1450,15 +1452,24 @@ func (Uc *UserControl) SubscriberUSSD_Get(Key string) (response Subscriber_USSD,
 			}
 			response.Credit_limit_Amount = scheme.Credit_limit_Amount
 			remaining_Allowed := scheme.Credit_limit_Amount - subscriber.Lendme_Outstanding_Amount
-			if remaining_Allowed > Configuration.Min_Allowed_Amnt {
-				response.Min_Allowed_Amount = Configuration.Min_Allowed_Amnt
-				response.Max_Allowed_Amount = remaining_Allowed
+			if subscriber.Lendme_Outstanding_Amount > 0 {
+				if remaining_Allowed > 0 {
+					response.Min_Allowed_Amount = 1
+					response.Max_Allowed_Amount = remaining_Allowed
+				} else {
+					response.Min_Allowed_Amount = 0
+					response.Max_Allowed_Amount = 0
+				}
 			} else {
-				response.Min_Allowed_Amount = 0
-				response.Max_Allowed_Amount = 0
+				if remaining_Allowed > Configuration.Min_Allowed_Amnt {
+					response.Min_Allowed_Amount = Configuration.Min_Allowed_Amnt
+					response.Max_Allowed_Amount = remaining_Allowed
+				} else {
+					response.Min_Allowed_Amount = 0
+					response.Max_Allowed_Amount = 0
+				}
 			}
 		}
-
 		return response, nil
 	}
 }
