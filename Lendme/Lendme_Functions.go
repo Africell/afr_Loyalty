@@ -1432,12 +1432,13 @@ func (Uc *UserControl) SubscriberUSSD_Get(Key string) (response Subscriber_USSD,
 			err = errors.New("error in subcriber type assertion")
 			return response, err
 		}
+
 		response.MSISDN = Key
 		response.IsLendmeEligible = subscriber.IsLendmeEligible
 		response.Credit_Limit_Scheme = subscriber.Credit_Limit_Scheme
 		response.NotElligibleReason = subscriber.NotElligibleReason
-		response.Lendme_Outstanding_Amount = subscriber.Lendme_Outstanding_Amount
-		response.Lendme_Outstanding_Fee = subscriber.Lendme_Outstanding_Fee
+		response.Lendme_Outstanding_Amount = RoundToNearest(subscriber.Lendme_Outstanding_Amount, 2)
+		response.Lendme_Outstanding_Fee = RoundToNearest(subscriber.Lendme_Outstanding_Fee, 2)
 		//get schema detail for elligble subscriber
 		if subscriber.IsLendmeEligible {
 			scheme_na, exits := Map_Credit_Limit_Scheme.CheckThenGet(subscriber.Credit_Limit_Scheme)
@@ -1455,7 +1456,7 @@ func (Uc *UserControl) SubscriberUSSD_Get(Key string) (response Subscriber_USSD,
 			if subscriber.Lendme_Outstanding_Amount > 0 {
 				if remaining_Allowed > 0 {
 					response.Min_Allowed_Amount = 1
-					response.Max_Allowed_Amount = remaining_Allowed
+					response.Max_Allowed_Amount = RoundDown(remaining_Allowed, 0)
 				} else {
 					response.Min_Allowed_Amount = 0
 					response.Max_Allowed_Amount = 0
@@ -1463,7 +1464,7 @@ func (Uc *UserControl) SubscriberUSSD_Get(Key string) (response Subscriber_USSD,
 			} else {
 				if remaining_Allowed > Configuration.Min_Allowed_Amnt {
 					response.Min_Allowed_Amount = Configuration.Min_Allowed_Amnt
-					response.Max_Allowed_Amount = remaining_Allowed
+					response.Max_Allowed_Amount = RoundDown(remaining_Allowed, 0)
 				} else {
 					response.Min_Allowed_Amount = 0
 					response.Max_Allowed_Amount = 0
