@@ -74,6 +74,13 @@ var (
 		[]string{"TimeInMinutes"},
 	)
 
+	LendMeOutstandingSummary = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "LendMeOutstandingSummary",
+			Help: "LendMeOutstandingSummary",
+		},
+		[]string{"Field"},
+	)
 	// TransactionsTotalAmount = prometheus.NewGaugeVec(
 	// 	prometheus.GaugeOpts{
 	// 		Name: "TransactionsTotalAmount",
@@ -84,7 +91,7 @@ var (
 )
 
 //DailyImportSubsStats.With(prometheus.Labels{"IsElligble":"", "Reason":"", "Scheme":""}).Inc()
-//TriviaQuizChargedAmount.With(prometheus.Labels{"Description": "desc"}).Add()
+//LendMeOutstandingSummary.With(prometheus.Labels{""Field"": "desc"}).Add()
 
 func Init_Prometheus_Metrics() {
 	log.Println("Init Prometheus metrics")
@@ -96,6 +103,7 @@ func Init_Prometheus_Metrics() {
 	PrometheusRegistry.Register(LendMePayBackAmount)
 	PrometheusRegistry.Register(SubsDumpFile)
 	PrometheusRegistry.Register(SubsDumpFileImportTime)
+	PrometheusRegistry.Register(LendMeOutstandingSummary)
 
 	//PrometheusRegistry.Register(TransactionsTotalAmount)
 }
@@ -114,6 +122,7 @@ func Reset_Prometheus_Metrics() {
 						LendMeRequestsAmount.Reset()
 						LendMePayBackCount.Reset()
 						LendMePayBackAmount.Reset()
+						//LendMeOutstandingSummary.Reset()
 						//SubsDumpFile.Reset()
 						//TransactionsTotalAmount.Reset()
 						exec = 1

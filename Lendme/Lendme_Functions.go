@@ -2,6 +2,7 @@ package Lendme
 
 import (
 	"afr_auth_center/AuthCenter"
+	"context"
 	"daoc"
 	"errors"
 	"log"
@@ -10,6 +11,9 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var Map_DefaultValues daoc.Cache_Synch
@@ -1462,7 +1466,7 @@ func (Uc *UserControl) SubscriberUSSD_Get(Key string) (response Subscriber_USSD,
 					response.Max_Allowed_Amount = 0
 				}
 			} else {
-				if remaining_Allowed > Configuration.Min_Allowed_Amnt {
+				if remaining_Allowed >= Configuration.Min_Allowed_Amnt {
 					response.Min_Allowed_Amount = Configuration.Min_Allowed_Amnt
 					response.Max_Allowed_Amount = RoundDown(remaining_Allowed, 0)
 				} else {
@@ -1472,5 +1476,85 @@ func (Uc *UserControl) SubscriberUSSD_Get(Key string) (response Subscriber_USSD,
 			}
 		}
 		return response, nil
+	}
+}
+
+func (Uc *UserControl) GetOutstandingSummary() (err error) {
+	pipe := mongo.Pipeline{
+		bson.D{
+			{Key: "$match", Value: bson.D{
+				{Key: "Lendme_Outstanding_Amount", Value: bson.D{
+					{Key: "$gt", Value: 0},
+				}},
+			}},
+		},
+		bson.D{
+			{Key: "$group", Value: bson.D{
+				// {Key: "_id", Value: bson.D{
+				// 	{Key: "CreateTime", Value: bson.D{
+				// 		{Key: "$dateToString", Value: bson.D{
+				// 			{Key: "format", Value: "%Y-%m-%d"},
+				// 			{Key: "date", Value: "$CreateTime"},
+				// 		}},
+				// 	}},
+				// 	{Key: "Type", Value: "$Type"},
+				// }},
+
+				{Key: "_id", Value: nil},
+
+				{Key: "TotalSubsWithOutstanding", Value: bson.D{
+					{Key: "$sum", Value: 1},
+				}},
+				{Key: "TotalOutstandingAmount", Value: bson.D{
+					{Key: "$sum", Value: "$Lendme_Outstanding_Amount"},
+				}},
+				{Key: "TotalOutstandingFee", Value: bson.D{
+					{Key: "$sum", Value: "$Lendme_Outstanding_Fee"},
+				}},
+			}},
+		},
+		// bson.D{
+		// 	{Key: "$project", Value: bson.D{
+		// 		{Key: "CreateTime", Value: "$_id.CreateTime"},
+		// 		{Key: "Type", Value: "$_id.Type"},
+		// 		{Key: "Total", Value: "$total"},
+		// 		{Key: "_id", Value: 0},
+		// 	}},
+		// },
+		// bson.D{
+		// 	{Key: "$sort", Value: bson.D{
+		// 		{Key: "CreateTime", Value: 1},
+		// 	}},
+		// },
+	}
+
+	cur, err := Uc.MongoDB.MongoDBClient.Database(Configuration.DB_Name).Collection(DAO_Subscribers.Collection).Aggregate(context.TODO(), pipe, options.Aggregate())
+
+	if err != nil {
+		log.Println("Error in GetOutstandingSummary: ", err)
+		return
+	}
+	defer cur.Close(context.Background())
+	//var output []AlarmsDailyByType
+	for cur.Next(context.Background()) {
+		var entry Lendme_Outstanding_Summary
+		err := cur.Decode(&entry)
+		if err != nil {
+			log.Println("Error in GetOutstandingSummary: ", err)
+			return err
+		}
+		//log.Println(entry)
+		LendMeOutstandingSummary.Reset()
+		LendMeOutstandingSummary.With(prometheus.Labels{"Field": "TotalOutstandingAmount"}).Add(entry.TotalOutstandingAmount)
+		LendMeOutstandingSummary.With(prometheus.Labels{"Field": "TotalOutstandingFee"}).Add(entry.TotalOutstandingFee)
+		LendMeOutstandingSummary.With(prometheus.Labels{"Field": "TotalSubsWithOutstanding"}).Add(entry.TotalSubsWithOutstanding)
+	}
+	return
+}
+
+func (Uc *UserControl) Auto_GetOutstandingSummary() {
+	Uc.GetOutstandingSummary()
+	for range time.Tick(time.Second * 300) {
+		Uc.GetOutstandingSummary()
 	}
 }

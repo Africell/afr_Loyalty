@@ -56,6 +56,7 @@ func (p *program) run() {
 
 	go UserControl.SubQueueExecution()
 	go UserControl.Auto_Import_Subscribers_Dump()
+	go UserControl.Auto_GetOutstandingSummary()
 
 	go sysadmin.SysAdminInit(UserControl.CacheDir, "3"+lendme.Configuration.HttpAppServicePort)
 

@@ -177,3 +177,9 @@ type Lendme_PayBack_Request struct {
 	RechargeAmount float64 `bson:"RechargeAmount" json:"RechargeAmount"`
 	Opid           string  `bson:"Opid" json:"Opid"`
 }
+
+type Lendme_Outstanding_Summary struct {
+	TotalOutstandingAmount   float64
+	TotalOutstandingFee      float64
+	TotalSubsWithOutstanding float64
+}
