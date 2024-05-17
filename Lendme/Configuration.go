@@ -83,6 +83,13 @@ type ConfigType struct {
 		Timeout               time.Duration
 		PrintLogs             bool
 	}
+
+	SMPP struct {
+		IP       string
+		Port     string
+		Login    string
+		Password string
+	}
 }
 
 func GetDefaultConfiguration() (err error) {
@@ -308,9 +315,15 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 	Configuration.IN.Default_OpPwd = ""
 	Configuration.IN.Is_OpPwd_Required = false
 	Configuration.IN.Timeout = 5
-	Configuration.IN.PrintLogs = true
+	Configuration.IN.PrintLogs = false
 
 	//http://10.95.64.6:15403/?systemid=lendme&password=lendmeP@ssw0rd&Originator=setest&dest_addr=243900100606&msg_text=test&registered_delivery=0&ston=5&snpi=0&dton=1&dnpi=1&encoding=1
+
+	//SMPP
+	Configuration.SMPP.IP = "10.95.64.6" //// floating IS IP: "10.250.8.53", test IP VPN: "10.250.0.52" (or .50, .51)
+	Configuration.SMPP.Port = "15403"
+	Configuration.SMPP.Login = "lendme"
+	Configuration.SMPP.Password = "lendmeP@ssw0rd"
 
 	return
 }

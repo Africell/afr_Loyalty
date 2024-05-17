@@ -40,6 +40,13 @@ func Init_DestinationHosts() {
 	}
 	destinationHots = append(destinationHots, host)
 
+	host = destinationHost{
+		HostName: "SMSC",
+		HostIP:   Configuration.SMPP.IP,
+		HostPort: Configuration.SMPP.Port,
+	}
+	destinationHots = append(destinationHots, host)
+
 }
 
 func PortlinkInquiry() {

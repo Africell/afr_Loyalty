@@ -6,6 +6,8 @@ import (
 	"daoc"
 	"errors"
 	"log"
+	"net/http"
+	"net/url"
 	"reflect"
 	"strconv"
 	"time"
@@ -1414,6 +1416,11 @@ func (Uc *UserControl) Lendme_PayBack(Source, MSISDN string, RechargeAmount floa
 		LendMePayBackCount.With(prometheus.Labels{"Status": "successful", "Reason": "", "Description": "LendmePayBack"}).Inc()
 		LendMePayBackAmount.With(prometheus.Labels{"Status": "successful", "Reason": "", "Description": "LendmePayBack"}).Add(DebitAmount)
 	}
+	//Send notification SMS
+	PaidAmount_round := Round((DebitAmount + DebitfeeAmount), 1, 2)
+	PaidAmount_str := strconv.FormatFloat(PaidAmount_round, 'f', -1, 64)
+	SMSText := "Cher abonne, merci d'avoir paye le montant emprunte par Lendme de " + PaidAmount_str + "u"
+	go SendSMS("Africell", subscriber.Key, SMSText)
 
 	//save log into DB
 	lendLog.Status = "successful"
@@ -1561,5 +1568,36 @@ func (Uc *UserControl) Auto_GetOutstandingSummary() {
 	Uc.GetOutstandingSummary()
 	for range time.Tick(time.Second * 300) {
 		Uc.GetOutstandingSummary()
+	}
+}
+
+// /////////////////////////////////////////////////////////////////////////////////////////////////////
+// /////SEND SMS////////////////////////////////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////////////////////////////////////////////
+func SendSMS(Sender string, target string, SMSText string) (_rErr error) {
+	//log.Println("Sending SMS: Sender (" + Sender + "), Target (" + target + "), text (" + SMSText + ") ")
+	url := "http://" + Configuration.SMPP.IP + ":" + Configuration.SMPP.Port + "/?systemid=" + Configuration.SMPP.Login + "&password=" + Configuration.SMPP.Password + "&Originator=" + Sender + "&dest_addr=" + target + "&msg_text=" + url.QueryEscape(SMSText) + "&ston=5&snpi=0&dton=1&dnpi=1&encoding=1"
+	method := "GET"
+	req, err := http.NewRequest(method, url, nil)
+	if err != nil {
+		log.Println("Error sending SMS: ", err)
+		return err
+	}
+	//client := &http.Client{}
+	client := &http.Client{
+		Timeout: 15 * time.Second, //is SMSC not reachable request will time out after 15 sec
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Println("Error sending SMS: ", err)
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == 200 {
+		return nil
+	} else {
+		err := errors.New("error sending SMS")
+		log.Println("Error sending SMS: ", err)
+		return err
 	}
 }
