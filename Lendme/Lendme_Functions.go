@@ -1077,6 +1077,8 @@ func (Uc *UserControl) Lendme_exec_Request(Source, MSISDN string, Amount float64
 		LendMeRequestsAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Add(Amount)
 		return err
 	}
+	lendLog.Lendme_Outstanding_Amount = subscriber.Lendme_Outstanding_Amount
+	lendLog.Lendme_Outstanding_Fee = subscriber.Lendme_Outstanding_Fee
 	if !subscriber.IsLendmeEligible {
 		error_msg := "subscriber is not eligible"
 		err = errors.New(error_msg)
@@ -1099,6 +1101,7 @@ func (Uc *UserControl) Lendme_exec_Request(Source, MSISDN string, Amount float64
 		LendMeRequestsAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Add(Amount)
 		return err
 	}
+	lendLog.Subscriber_OpeningBlance = IN_Response.Balance
 	//check balance min and max
 	if IN_Response.Balance < Configuration.Min_Allowed_Balance {
 		err = errors.New("balance must be greater than " + strconv.FormatFloat(Round(Configuration.Min_Allowed_Balance, 1, 0), 'f', -1, 64))
@@ -1305,6 +1308,8 @@ func (Uc *UserControl) Lendme_PayBack(Source, MSISDN string, RechargeAmount floa
 		//LendMePayBackAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Description" : ""}).Add(RechargeAmount)
 		return err
 	}
+	lendLog.Lendme_Outstanding_Amount = subscriber.Lendme_Outstanding_Amount
+	lendLog.Lendme_Outstanding_Fee = subscriber.Lendme_Outstanding_Fee
 	//check if subscriber have outstanding amount
 	Outstanding_Amount := subscriber.Lendme_Outstanding_Amount + subscriber.Lendme_Outstanding_Fee
 	if Outstanding_Amount <= 0 {
@@ -1322,7 +1327,7 @@ func (Uc *UserControl) Lendme_PayBack(Source, MSISDN string, RechargeAmount floa
 		//LendMePayBackAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Description" : ""}).Add(RechargeAmount)
 		return err
 	}
-
+	lendLog.Subscriber_OpeningBlance = IN_Response.Balance
 	//check balance min and max
 	if IN_Response.Balance <= 0 {
 		error_msg := "balance must be positive"
@@ -1341,15 +1346,15 @@ func (Uc *UserControl) Lendme_PayBack(Source, MSISDN string, RechargeAmount floa
 		DebitfeeAmount = subscriber.Lendme_Outstanding_Fee
 		DebitAmount = subscriber.Lendme_Outstanding_Amount
 	} else {
-		if IN_Response.Balance > DebitfeeAmount {
+		if IN_Response.Balance > subscriber.Lendme_Outstanding_Fee {
 			DebitfeeAmount = subscriber.Lendme_Outstanding_Fee
 			DebitAmount = IN_Response.Balance - subscriber.Lendme_Outstanding_Fee
 		} else {
 			DebitfeeAmount = IN_Response.Balance
 		}
 	}
-	lendLog.Lendme_Amount = DebitfeeAmount
-	lendLog.Lendme_Fee = DebitAmount
+	lendLog.Lendme_PayBack_Amount = DebitAmount
+	lendLog.Lendme_PayBack_Fee = DebitfeeAmount
 	//debit the fee amount
 	if DebitfeeAmount > 0 {
 		credit_response, credit_err := Uc.IN.INClient.SetAccountBalances("", "", MSISDN, -1*DebitfeeAmount, "N", 0, 0, 0, 0, "LendmeFee")
@@ -1363,7 +1368,7 @@ func (Uc *UserControl) Lendme_PayBack(Source, MSISDN string, RechargeAmount floa
 			return credit_err
 		}
 		if credit_response.ResultCode != "0" {
-			error_msg := err.Error()
+			error_msg := "result code is not 0"
 			err = errors.New(error_msg)
 			lendLog.Status = "failed"
 			lendLog.StatusDescription = error_msg
@@ -1393,7 +1398,7 @@ func (Uc *UserControl) Lendme_PayBack(Source, MSISDN string, RechargeAmount floa
 			return credit_err
 		}
 		if credit_response.ResultCode != "0" {
-			error_msg := err.Error()
+			error_msg := "result code is not 0"
 			err = errors.New(error_msg)
 			lendLog.Status = "failed"
 			lendLog.StatusDescription = error_msg

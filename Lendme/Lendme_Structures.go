@@ -132,6 +132,12 @@ type Lendme_log struct {
 	Lendme_Amount float64   `bson:"Lendme_Amount" json:"Lendme_Amount"`
 	Lendme_Fee    float64   `bson:"Lendme_Fee" json:"Lendme_Fee"`
 
+	Lendme_Outstanding_Amount float64 `bson:"Lendme_Outstanding_Amount" json:"Lendme_Outstanding_Amount"`
+	Lendme_Outstanding_Fee    float64 `bson:"Lendme_Outstanding_Fee" json:"Lendme_Outstanding_Fee"`
+	Subscriber_OpeningBlance  float64 `bson:"Subscriber_OpeningBlance" json:"Subscriber_OpeningBlance"`
+	Lendme_PayBack_Amount     float64 `bson:"Lendme_PayBack_Amount" json:"Lendme_PayBack_Amount"`
+	Lendme_PayBack_Fee        float64 `bson:"Lendme_PayBack_Fee" json:"Lendme_PayBack_Fee"`
+
 	Status            string `bson:"Status" json:"Status"`
 	StatusDescription string `bson:"StatusDescription" json:"StatusDescription"`
 }
