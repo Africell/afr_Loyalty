@@ -94,9 +94,8 @@ type ConfigType struct {
 }
 
 func GetDefaultConfiguration() (err error) {
-	Configuration = setDefaultConfiguration_DRC_Live()
-	//Configuration = setDefaultConfiguration_Development()
-	//Configuration = setDefaultConfiguration_Development_DB_DRC()
+	//Configuration = setDefaultConfiguration_DRC_Live()
+	Configuration = setDefaultConfiguration_GM_Live()
 	return nil
 }
 
@@ -268,7 +267,7 @@ func setDefaultConfiguration_GM_Live() (Configuration ConfigType) {
 	//http://10.95.64.6:15403/?systemid=lendme&password=lendmeP@ssw0rd&Originator=setest&dest_addr=243900100606&msg_text=test&registered_delivery=0&ston=5&snpi=0&dton=1&dnpi=1&encoding=1
 
 	//SMPP
-	Configuration.SMPP.IP = "10.95.64.6"
+	Configuration.SMPP.IP = "10.30.8.10"
 	Configuration.SMPP.Port = "15403"
 	Configuration.SMPP.Login = "lendme"
 	Configuration.SMPP.Password = "lendmeP@ssw0rd"
