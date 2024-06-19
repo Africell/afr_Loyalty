@@ -218,7 +218,7 @@ func setDefaultConfiguration_GM_Live() (Configuration ConfigType) {
 	Configuration.App_AUC.Description = "App AUC service"
 	Configuration.App_AUC.Protocol = "http"
 	Configuration.App_AUC.Hostname = "Lendme_auc"
-	Configuration.App_AUC.Port = "9001"
+	Configuration.App_AUC.Port = "9293"
 	Configuration.App_AUC.Module = "AUC"
 	Configuration.App_AUC.Version = "V1"
 	Configuration.App_AUC.S2S_Username = "Lendme_Admin"
