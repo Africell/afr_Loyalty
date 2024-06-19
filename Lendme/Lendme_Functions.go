@@ -1825,8 +1825,14 @@ func (Uc *UserControl) Lendme_PayBack(Source, MSISDN string, RechargeAmount floa
 	//Send notification SMS
 	PaidAmount_round := Round((DebitAmount + DebitfeeAmount), 1, 2)
 	PaidAmount_str := strconv.FormatFloat(PaidAmount_round, 'f', -1, 64)
-	SMSText := "Cher abonne, merci d'avoir paye le montant emprunte par Lendme de " + PaidAmount_str + "u"
-	go SendSMS("Africell", subscriber.Key, SMSText)
+
+	if Configuration.Operation == "Gambia" {
+		SMSText := "Dear subscriber, thank you for paying outstanding Lendme amount " + PaidAmount_str + " GMD"
+		go SendSMS("Africell", subscriber.Key, SMSText)
+	} else if Configuration.Operation == "DRC" {
+		SMSText := "Cher abonne, merci d'avoir paye le montant emprunte par Lendme de " + PaidAmount_str + "u"
+		go SendSMS("Africell", subscriber.Key, SMSText)
+	}
 
 	//save log into DB
 	lendLog.Status = "successful"
