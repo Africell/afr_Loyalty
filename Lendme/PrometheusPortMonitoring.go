@@ -19,33 +19,57 @@ type destinationHost struct {
 var destinationHots []destinationHost
 
 func Init_DestinationHosts() {
-	host := destinationHost{
-		HostName: "MongoDB",
-		HostIP:   Configuration.MongoDB.HostIP_1,
-		HostPort: Configuration.MongoDB.HostPort_1,
+	if Configuration.MongoDB.HostIP_1 != "" {
+		host := destinationHost{
+			HostName: "MongoDB 01",
+			HostIP:   Configuration.MongoDB.HostIP_1,
+			HostPort: Configuration.MongoDB.HostPort_1,
+		}
+		destinationHots = append(destinationHots, host)
 	}
-	destinationHots = append(destinationHots, host)
+	if Configuration.MongoDB.HostIP_2 != "" {
+		host := destinationHost{
+			HostName: "MongoDB 02",
+			HostIP:   Configuration.MongoDB.HostIP_2,
+			HostPort: Configuration.MongoDB.HostPort_2,
+		}
+		destinationHots = append(destinationHots, host)
+	}
+	if Configuration.MongoDB.HostIP_3 != "" {
+		host := destinationHost{
+			HostName: "MongoDB 03",
+			HostIP:   Configuration.MongoDB.HostIP_3,
+			HostPort: Configuration.MongoDB.HostPort_3,
+		}
+		destinationHots = append(destinationHots, host)
+	}
 
-	host = destinationHost{
-		HostName: "IN Web Services",
-		HostIP:   Configuration.IN.IP, //container name
-		HostPort: Configuration.IN.Port,
+	if Configuration.IN.IP != "" {
+		host := destinationHost{
+			HostName: "IN Web Services",
+			HostIP:   Configuration.IN.IP, //container name
+			HostPort: Configuration.IN.Port,
+		}
+		destinationHots = append(destinationHots, host)
 	}
-	destinationHots = append(destinationHots, host)
 
-	host = destinationHost{
-		HostName: "AUC",
-		HostIP:   Configuration.App_AUC.Hostname,
-		HostPort: Configuration.App_AUC.Port,
+	if Configuration.App_AUC.Hostname != "" {
+		host := destinationHost{
+			HostName: "AUC",
+			HostIP:   Configuration.App_AUC.Hostname,
+			HostPort: Configuration.App_AUC.Port,
+		}
+		destinationHots = append(destinationHots, host)
 	}
-	destinationHots = append(destinationHots, host)
 
-	host = destinationHost{
-		HostName: "SMSC",
-		HostIP:   Configuration.SMPP.IP,
-		HostPort: Configuration.SMPP.Port,
+	if Configuration.SMPP.IP != "" {
+		host := destinationHost{
+			HostName: "SMSC",
+			HostIP:   Configuration.SMPP.IP,
+			HostPort: Configuration.SMPP.Port,
+		}
+		destinationHots = append(destinationHots, host)
 	}
-	destinationHots = append(destinationHots, host)
 
 }
 
