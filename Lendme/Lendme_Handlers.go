@@ -439,7 +439,13 @@ func (Uc *UserControl) HTTP_Subscribers_GetINDetail(w http.ResponseWriter, r *ht
 		sr.TransactionType = "Subscriber Get IN Detail- Read"
 		MSISDN := r.URL.Query().Get("MSISDN")
 
-		IN_Response, err := Uc.IN.INClient.GetAccountDetails("", "", MSISDN)
+		IN_MSISDN := MSISDN
+		if Configuration.Operation == "Gambia" {
+			if len(MSISDN) > 7 {
+				IN_MSISDN = IN_MSISDN[len(MSISDN)-7 : len(MSISDN)]
+			}
+		}
+		IN_Response, err := Uc.IN.INClient.GetAccountDetails("", "", IN_MSISDN)
 		if err != nil {
 			sr.Status = "failed"
 			sr.StatusCode = http.StatusBadRequest

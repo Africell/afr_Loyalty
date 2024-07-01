@@ -1497,8 +1497,14 @@ func (Uc *UserControl) Lendme_exec_Request(Source, MSISDN string, Amount float64
 		LendMeRequestsAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Add(Amount)
 		return err
 	}
+	IN_MSISDN := MSISDN
+	if Configuration.Operation == "Gambia" {
+		if len(MSISDN) > 7 {
+			IN_MSISDN = IN_MSISDN[len(MSISDN)-7 : len(MSISDN)]
+		}
+	}
 	//check if exists on IN and get details
-	IN_Response, err := Uc.IN.INClient.GetAccountDetails("", "", MSISDN)
+	IN_Response, err := Uc.IN.INClient.GetAccountDetails("", "", IN_MSISDN)
 	if err != nil {
 		error_msg := "error getting account detail: " + err.Error()
 		err = errors.New(error_msg)
@@ -1561,8 +1567,14 @@ func (Uc *UserControl) Lendme_exec_Request(Source, MSISDN string, Amount float64
 	// }
 	//check if SOS is active
 	if IN_Response.LoyaltyStatus != "X" {
+		IN_MSISDN := MSISDN
+		if Configuration.Operation == "Gambia" {
+			if len(MSISDN) > 7 {
+				IN_MSISDN = IN_MSISDN[len(MSISDN)-7 : len(MSISDN)]
+			}
+		}
 		//todo: opt out from service
-		_, errL := Uc.IN.INClient.SetLoyaltyOverdraft("", "", MSISDN, "X", 0)
+		_, errL := Uc.IN.INClient.SetLoyaltyOverdraft("", "", IN_MSISDN, "X", 0)
 		if errL != nil {
 			error_msg := "failed to disable SOS: " + errL.Error()
 			err = errors.New(error_msg)
@@ -1632,7 +1644,7 @@ func (Uc *UserControl) Lendme_exec_Request(Source, MSISDN string, Amount float64
 		return err
 	}
 	//credit the amount
-	credit_response, credit_err := Uc.IN.INClient.SetAccountBalances("", "", MSISDN, Amount, "N", 0, 0, 0, 0, "Lendme")
+	credit_response, credit_err := Uc.IN.INClient.SetAccountBalances("", "", IN_MSISDN, Amount, "N", 0, 0, 0, 0, "Lendme")
 	if credit_err != nil {
 		lendLog.Status = "failed"
 		lendLog.StatusDescription = credit_err.Error()
@@ -1723,8 +1735,14 @@ func (Uc *UserControl) Lendme_PayBack(Source, MSISDN string, RechargeAmount floa
 	if Outstanding_Amount <= 0 {
 		return nil
 	}
+	IN_MSISDN := MSISDN
+	if Configuration.Operation == "Gambia" {
+		if len(MSISDN) > 7 {
+			IN_MSISDN = IN_MSISDN[len(MSISDN)-7 : len(MSISDN)]
+		}
+	}
 	//check if exists on IN and get details
-	IN_Response, err := Uc.IN.INClient.GetAccountDetails("", "", MSISDN)
+	IN_Response, err := Uc.IN.INClient.GetAccountDetails("", "", IN_MSISDN)
 	if err != nil {
 		error_msg := "error getting account detail: " + err.Error()
 		err = errors.New(error_msg)
@@ -1765,7 +1783,13 @@ func (Uc *UserControl) Lendme_PayBack(Source, MSISDN string, RechargeAmount floa
 	lendLog.Lendme_PayBack_Fee = DebitfeeAmount
 	//debit the fee amount
 	if DebitfeeAmount > 0 {
-		credit_response, credit_err := Uc.IN.INClient.SetAccountBalances("", "", MSISDN, -1*DebitfeeAmount, "N", 0, 0, 0, 0, "LendmeFee")
+		IN_MSISDN := MSISDN
+		if Configuration.Operation == "Gambia" {
+			if len(MSISDN) > 7 {
+				IN_MSISDN = IN_MSISDN[len(MSISDN)-7 : len(MSISDN)]
+			}
+		}
+		credit_response, credit_err := Uc.IN.INClient.SetAccountBalances("", "", IN_MSISDN, -1*DebitfeeAmount, "N", 0, 0, 0, 0, "LendmeFee")
 		if credit_err != nil {
 			error_msg := credit_err.Error()
 			lendLog.Status = "failed"
@@ -1795,7 +1819,13 @@ func (Uc *UserControl) Lendme_PayBack(Source, MSISDN string, RechargeAmount floa
 	}
 	//debit the fee amount
 	if DebitAmount > 0 {
-		credit_response, credit_err := Uc.IN.INClient.SetAccountBalances("", "", MSISDN, -1*DebitAmount, "N", 0, 0, 0, 0, "LendmePayBack")
+		IN_MSISDN := MSISDN
+		if Configuration.Operation == "Gambia" {
+			if len(MSISDN) > 7 {
+				IN_MSISDN = IN_MSISDN[len(MSISDN)-7 : len(MSISDN)]
+			}
+		}
+		credit_response, credit_err := Uc.IN.INClient.SetAccountBalances("", "", IN_MSISDN, -1*DebitAmount, "N", 0, 0, 0, 0, "LendmePayBack")
 		if credit_err != nil {
 			error_msg := credit_err.Error()
 			lendLog.Status = "failed"
