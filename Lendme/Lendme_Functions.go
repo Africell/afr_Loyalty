@@ -1857,8 +1857,12 @@ func (Uc *UserControl) Lendme_PayBack(Source, MSISDN string, RechargeAmount floa
 	PaidAmount_str := strconv.FormatFloat(PaidAmount_round, 'f', -1, 64)
 
 	if Configuration.Operation == "Gambia" {
+		SMS_MSISDN := subscriber.Key
+		if len(SMS_MSISDN) >= 7 {
+			SMS_MSISDN = "220" + SMS_MSISDN[len(SMS_MSISDN)-7:]
+		}
 		SMSText := "Dear subscriber, thank you for paying outstanding Lendme amount " + PaidAmount_str + " GMD"
-		go SendSMS("Africell", subscriber.Key, SMSText)
+		go SendSMS("Africell", SMS_MSISDN, SMSText)
 	} else if Configuration.Operation == "DRC" {
 		SMSText := "Cher abonne, merci d'avoir paye le montant emprunte par Lendme de " + PaidAmount_str + "u"
 		go SendSMS("Africell", subscriber.Key, SMSText)
@@ -2017,7 +2021,7 @@ func (Uc *UserControl) Auto_GetOutstandingSummary() {
 // /////SEND SMS////////////////////////////////////////////////////////////////////////////////////////
 // /////////////////////////////////////////////////////////////////////////////////////////////////////
 func SendSMS(Sender string, target string, SMSText string) (_rErr error) {
-	//log.Println("Sending SMS: Sender (" + Sender + "), Target (" + target + "), text (" + SMSText + ") ")
+	log.Println("Sending SMS: Sender (" + Sender + "), Target (" + target + "), text (" + SMSText + ") ")
 	url := "http://" + Configuration.SMPP.IP + ":" + Configuration.SMPP.Port + "/?systemid=" + Configuration.SMPP.Login + "&password=" + Configuration.SMPP.Password + "&Originator=" + Sender + "&dest_addr=" + target + "&msg_text=" + url.QueryEscape(SMSText) + "&ston=5&snpi=0&dton=1&dnpi=1&encoding=1"
 	method := "GET"
 	req, err := http.NewRequest(method, url, nil)
