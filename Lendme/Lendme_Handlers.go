@@ -575,3 +575,41 @@ func (Uc *UserControl) HTTP_Lendme_PayBack(w http.ResponseWriter, r *http.Reques
 	sr.ErrorDescription = ""
 	Uc.HTTP_API_Standard_response(w, r, sr, true)
 }
+
+func (Uc *UserControl) HTTP_Lendme_SendSMS(w http.ResponseWriter, r *http.Request) {
+	var sr API_Standard_response
+	//**fill response source detail
+	SourceIp, _ := GetRequestIP(r)
+	sr.SourceIP = SourceIp
+	sr.Login = r.Header.Get("Login")
+	sr.SourceApp = r.Header.Get("SourceApp")
+	sr.AccessKey = r.URL.Path
+	sr.AccessMethod = r.Method
+	sr.HostId = Configuration.HostId
+	sr.ReceiveDate = time.Now()
+
+	method := r.Method
+	switch method {
+	case "GET":
+		sr.TransactionType = "Lendme Send SMS"
+		Sender := r.URL.Query().Get("Sender")
+		Target := r.URL.Query().Get("Target")
+		Text := r.URL.Query().Get("Text")
+
+		err := SendSMS(Sender, Target, Text)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = "failed to send sms"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+	}
+	//successful response
+	sr.Status = "successful"
+	sr.StatusCode = http.StatusOK
+	sr.StatusDescription = ""
+	sr.ErrorDescription = ""
+	Uc.HTTP_API_Standard_response(w, r, sr, true)
+}
