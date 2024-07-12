@@ -269,8 +269,8 @@ func setDefaultConfiguration_GM_Live() (Configuration ConfigType) {
 	//SMPP
 	Configuration.SMPP.IP = "10.30.8.10"
 	Configuration.SMPP.Port = "15403"
-	Configuration.SMPP.Login = "lendme"
-	Configuration.SMPP.Password = "lendmeP@ssw0rd"
+	Configuration.SMPP.Login = "LendME2"
+	Configuration.SMPP.Password = "LendMEP@ssw0rd"
 
 	return
 }
