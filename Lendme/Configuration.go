@@ -236,15 +236,15 @@ func setDefaultConfiguration_GM_Live() (Configuration ConfigType) {
 	// Configuration.OKAPI_AUC.Timeout_After = 5 * time.Second
 
 	//mongoDB
-	//Configuration.MongoDB.ReplicaSet = "reps01"
+	Configuration.MongoDB.ReplicaSet = "reps01"
 	Configuration.MongoDB.UserName = "mongo-root"
 	Configuration.MongoDB.Password = "Speci@LM0nG0P@ssw0rd_F0r_G@mB!A"
 	Configuration.MongoDB.HostIP_1 = "10.64.33.49" //==>Primary
 	Configuration.MongoDB.HostPort_1 = "9001"
-	// Configuration.MongoDB.HostIP_2 = "10.64.33.48" //==>Secondary
-	// Configuration.MongoDB.HostPort_2 = "9002"
-	// Configuration.MongoDB.HostIP_3 = "10.64.33.101" //==> Aribter
-	// Configuration.MongoDB.HostPort_3 = "9003"
+	Configuration.MongoDB.HostIP_2 = "10.64.33.48" //==>Secondary
+	Configuration.MongoDB.HostPort_2 = "9002"
+	Configuration.MongoDB.HostIP_3 = "10.64.33.101" //==> Aribter
+	Configuration.MongoDB.HostPort_3 = "9003"
 	Configuration.MongoDB.HostIP_4 = ""
 	Configuration.MongoDB.HostPort_4 = ""
 
