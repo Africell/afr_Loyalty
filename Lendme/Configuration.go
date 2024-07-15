@@ -94,8 +94,8 @@ type ConfigType struct {
 }
 
 func GetDefaultConfiguration() (err error) {
-	//Configuration = setDefaultConfiguration_DRC_Live()
-	Configuration = setDefaultConfiguration_GM_Live()
+	Configuration = setDefaultConfiguration_DRC_Live()
+	//Configuration = setDefaultConfiguration_GM_Live()
 	return nil
 }
 
@@ -148,15 +148,26 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 	// Configuration.OKAPI_AUC.Timeout_After = 5 * time.Second
 
 	//mongoDB
-	Configuration.MongoDB.ReplicaSet = ""
+	// Configuration.MongoDB.ReplicaSet = ""
+	// Configuration.MongoDB.UserName = "db_root"
+	// Configuration.MongoDB.Password = "B3202T@soSo0612w6"
+	// Configuration.MongoDB.HostIP_1 = "LendMe_mongodb"
+	// Configuration.MongoDB.HostPort_1 = "27017"
+	// Configuration.MongoDB.HostIP_2 = ""
+	// Configuration.MongoDB.HostPort_2 = ""
+	// Configuration.MongoDB.HostIP_3 = ""
+	// Configuration.MongoDB.HostPort_3 = ""
+	// Configuration.MongoDB.HostIP_4 = ""
+	// Configuration.MongoDB.HostPort_4 = ""
+	Configuration.MongoDB.ReplicaSet = "reps1"
 	Configuration.MongoDB.UserName = "db_root"
 	Configuration.MongoDB.Password = "B3202T@soSo0612w6"
-	Configuration.MongoDB.HostIP_1 = "LendMe_mongodb"
-	Configuration.MongoDB.HostPort_1 = "27017"
-	Configuration.MongoDB.HostIP_2 = ""
-	Configuration.MongoDB.HostPort_2 = ""
-	Configuration.MongoDB.HostIP_3 = ""
-	Configuration.MongoDB.HostPort_3 = ""
+	Configuration.MongoDB.HostIP_1 = "10.95.64.177" //==> Primary
+	Configuration.MongoDB.HostPort_1 = "9001"
+	Configuration.MongoDB.HostIP_2 = "10.95.64.176" //==>secondary
+	Configuration.MongoDB.HostPort_2 = "9002"
+	Configuration.MongoDB.HostIP_3 = "10.95.32.22" //==> Aribter
+	Configuration.MongoDB.HostPort_3 = "9003"
 	Configuration.MongoDB.HostIP_4 = ""
 	Configuration.MongoDB.HostPort_4 = ""
 
