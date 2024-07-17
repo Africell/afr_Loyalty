@@ -1864,7 +1864,8 @@ func (Uc *UserControl) Lendme_PayBack(Source, MSISDN string, RechargeAmount floa
 		SMSText := "Dear subscriber, thank you for paying outstanding Lendme amount " + PaidAmount_str + " GMD"
 		go SendSMS("Africell", SMS_MSISDN, SMSText)
 	} else if Configuration.Operation == "DRC" {
-		SMSText := "Cher abonne, merci d'avoir paye le montant emprunte par Lendme de " + PaidAmount_str + "u"
+		//SMSText := "Cher abonne, merci d'avoir paye le montant emprunte par Lendme de " + PaidAmount_str + "u"
+		SMSText := "Cher abonne, merci d'avoir paye le montant emprunte par Le service pretez moi de" + PaidAmount_str + "u"
 		go SendSMS("Africell", subscriber.Key, SMSText)
 	}
 
