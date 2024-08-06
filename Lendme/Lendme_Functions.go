@@ -733,7 +733,7 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_Gambia() {
 		Amount_Till:         135,
 		AON_From:            3,
 		AON_Till:            6,
-		Credit_limit_Amount: 20,
+		Credit_limit_Amount: 10,
 	}
 	_, err := uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
 	if err != nil {
@@ -761,7 +761,7 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_Gambia() {
 		Amount_Till:         135,
 		AON_From:            12,
 		AON_Till:            24,
-		Credit_limit_Amount: 40,
+		Credit_limit_Amount: 25,
 	}
 	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
 	if err != nil {
@@ -775,7 +775,7 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_Gambia() {
 		Amount_Till:         135,
 		AON_From:            24,
 		AON_Till:            1200,
-		Credit_limit_Amount: 40,
+		Credit_limit_Amount: 50,
 	}
 	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
 	if err != nil {
@@ -804,7 +804,7 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_Gambia() {
 		Amount_Till:         270,
 		AON_From:            6,
 		AON_Till:            12,
-		Credit_limit_Amount: 20,
+		Credit_limit_Amount: 25,
 	}
 	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
 	if err != nil {
@@ -818,7 +818,7 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_Gambia() {
 		Amount_Till:         270,
 		AON_From:            12,
 		AON_Till:            24,
-		Credit_limit_Amount: 40,
+		Credit_limit_Amount: 50,
 	}
 	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
 	if err != nil {
@@ -832,7 +832,7 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_Gambia() {
 		Amount_Till:         270,
 		AON_From:            24,
 		AON_Till:            1200,
-		Credit_limit_Amount: 40,
+		Credit_limit_Amount: 50,
 	}
 	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
 	if err != nil {
@@ -847,7 +847,7 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_Gambia() {
 		Amount_Till:         340,
 		AON_From:            3,
 		AON_Till:            6,
-		Credit_limit_Amount: 40,
+		Credit_limit_Amount: 25,
 	}
 	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
 	if err != nil {
@@ -861,7 +861,7 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_Gambia() {
 		Amount_Till:         340,
 		AON_From:            6,
 		AON_Till:            12,
-		Credit_limit_Amount: 40,
+		Credit_limit_Amount: 50,
 	}
 	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
 	if err != nil {
@@ -875,7 +875,7 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_Gambia() {
 		Amount_Till:         340,
 		AON_From:            12,
 		AON_Till:            24,
-		Credit_limit_Amount: 60,
+		Credit_limit_Amount: 50,
 	}
 	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
 	if err != nil {
@@ -889,7 +889,7 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_Gambia() {
 		Amount_Till:         340,
 		AON_From:            24,
 		AON_Till:            1200,
-		Credit_limit_Amount: 80,
+		Credit_limit_Amount: 75,
 	}
 	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
 	if err != nil {
@@ -903,7 +903,7 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_Gambia() {
 		Amount_Till:         680,
 		AON_From:            3,
 		AON_Till:            6,
-		Credit_limit_Amount: 40,
+		Credit_limit_Amount: 25,
 	}
 	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
 	if err != nil {
@@ -917,7 +917,7 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_Gambia() {
 		Amount_Till:         680,
 		AON_From:            6,
 		AON_Till:            12,
-		Credit_limit_Amount: 40,
+		Credit_limit_Amount: 50,
 	}
 	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
 	if err != nil {
@@ -931,7 +931,7 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_Gambia() {
 		Amount_Till:         680,
 		AON_From:            12,
 		AON_Till:            24,
-		Credit_limit_Amount: 65,
+		Credit_limit_Amount: 75,
 	}
 	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
 	if err != nil {
@@ -945,7 +945,7 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_Gambia() {
 		Amount_Till:         680,
 		AON_From:            24,
 		AON_Till:            1200,
-		Credit_limit_Amount: 80,
+		Credit_limit_Amount: 75,
 	}
 	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
 	if err != nil {
@@ -988,7 +988,7 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_Gambia() {
 		Amount_Till:         1300,
 		AON_From:            12,
 		AON_Till:            24,
-		Credit_limit_Amount: 80,
+		Credit_limit_Amount: 75,
 	}
 	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
 	if err != nil {
@@ -1002,7 +1002,7 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_Gambia() {
 		Amount_Till:         1300,
 		AON_From:            24,
 		AON_Till:            1200,
-		Credit_limit_Amount: 130,
+		Credit_limit_Amount: 100,
 	}
 	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
 	if err != nil {
@@ -1017,7 +1017,7 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_Gambia() {
 		Amount_Till:         2350,
 		AON_From:            3,
 		AON_Till:            6,
-		Credit_limit_Amount: 100,
+		Credit_limit_Amount: 75,
 	}
 	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
 	if err != nil {
@@ -1031,7 +1031,7 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_Gambia() {
 		Amount_Till:         2350,
 		AON_From:            6,
 		AON_Till:            12,
-		Credit_limit_Amount: 120,
+		Credit_limit_Amount: 100,
 	}
 	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
 	if err != nil {
@@ -1045,7 +1045,7 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_Gambia() {
 		Amount_Till:         2350,
 		AON_From:            12,
 		AON_Till:            24,
-		Credit_limit_Amount: 175,
+		Credit_limit_Amount: 200,
 	}
 	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
 	if err != nil {
@@ -1059,7 +1059,7 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_Gambia() {
 		Amount_Till:         2350,
 		AON_From:            24,
 		AON_Till:            1200,
-		Credit_limit_Amount: 250,
+		Credit_limit_Amount: 200,
 	}
 	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
 	if err != nil {
@@ -1074,7 +1074,7 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_Gambia() {
 		Amount_Till:         9999999,
 		AON_From:            3,
 		AON_Till:            6,
-		Credit_limit_Amount: 180,
+		Credit_limit_Amount: 100,
 	}
 	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
 	if err != nil {
@@ -1088,7 +1088,7 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_Gambia() {
 		Amount_Till:         9999999,
 		AON_From:            6,
 		AON_Till:            12,
-		Credit_limit_Amount: 250,
+		Credit_limit_Amount: 100,
 	}
 	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
 	if err != nil {
@@ -1102,7 +1102,7 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_Gambia() {
 		Amount_Till:         9999999,
 		AON_From:            12,
 		AON_Till:            24,
-		Credit_limit_Amount: 280,
+		Credit_limit_Amount: 200,
 	}
 	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
 	if err != nil {
@@ -1116,7 +1116,7 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_Gambia() {
 		Amount_Till:         9999999,
 		AON_From:            24,
 		AON_Till:            1200,
-		Credit_limit_Amount: 350,
+		Credit_limit_Amount: 300,
 	}
 	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
 	if err != nil {

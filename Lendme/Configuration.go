@@ -94,8 +94,8 @@ type ConfigType struct {
 }
 
 func GetDefaultConfiguration() (err error) {
-	Configuration = setDefaultConfiguration_DRC_Live()
-	//Configuration = setDefaultConfiguration_GM_Live()
+	//Configuration = setDefaultConfiguration_DRC_Live()
+	Configuration = setDefaultConfiguration_GM_Live()
 	return nil
 }
 
