@@ -95,7 +95,8 @@ type ConfigType struct {
 
 func GetDefaultConfiguration() (err error) {
 	//Configuration = setDefaultConfiguration_DRC_Live()
-	Configuration = setDefaultConfiguration_GM_Live()
+	//Configuration = setDefaultConfiguration_GM_Live()
+	Configuration = setDefaultConfiguration_SL_Live()
 	return nil
 }
 
@@ -282,6 +283,84 @@ func setDefaultConfiguration_GM_Live() (Configuration ConfigType) {
 	Configuration.SMPP.Port = "15403"
 	Configuration.SMPP.Login = "LendME2"
 	Configuration.SMPP.Password = "LendMEP@ssw0rd"
+
+	return
+}
+
+func setDefaultConfiguration_SL_Live() (Configuration ConfigType) {
+	//Configuration.HttpOKAPIServicePort = "9291"
+	Configuration.HttpAppServicePort = "9290"
+
+	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:3000")
+	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:5173")
+	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:4173")
+	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:4414")
+	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "https://okpaihr.africell.ao")
+	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "https://outlet.africell.ao")
+
+	Configuration.Operation = "SierraLeone"
+	Configuration.HostId = "Lendme-01"
+	Configuration.DB_Name = "Lendme_DB"
+
+	Configuration.Version = "V1"
+	Configuration.Module = "Lendme"
+
+	Configuration.IsProduction = false
+	Configuration.Min_Allowed_Amnt = 1
+	Configuration.Service_FeePerc = 0.15
+	Configuration.Min_Allowed_AON = 3
+	Configuration.Min_Avg3MRecharge = 0
+	Configuration.Min_LastRechargePeriod = 60
+	Configuration.Min_Allowed_Balance = 0
+	Configuration.Max_Allowed_Balance = 225
+	Configuration.ARPU_File_Path = "/home/Subs_ARPU/"
+
+	Configuration.App_AUC.Description = "App AUC service"
+	Configuration.App_AUC.Protocol = "http"
+	Configuration.App_AUC.Hostname = "Lendme_auc"
+	Configuration.App_AUC.Port = "9293"
+	Configuration.App_AUC.Module = "AUC"
+	Configuration.App_AUC.Version = "V1"
+	Configuration.App_AUC.S2S_Username = "Lendme_Admin"
+	Configuration.App_AUC.S2S_Password = "s@l$e$IrSW0$4"
+	Configuration.App_AUC.Timeout_After = 5 * time.Second
+
+	//mongoDB
+	Configuration.MongoDB.ReplicaSet = "reps1"
+	Configuration.MongoDB.UserName = "mongo-root"
+	Configuration.MongoDB.Password = "Speci@LM0nG0P@ssw0rd_F0r_LeNdM#SL"
+	Configuration.MongoDB.HostIP_1 = "10.10.247.21" //==>Primary
+	Configuration.MongoDB.HostPort_1 = "9001"
+	Configuration.MongoDB.HostIP_2 = "10.10.247.22" //==>Secondary
+	Configuration.MongoDB.HostPort_2 = "9002"
+	Configuration.MongoDB.HostIP_3 = "10.10.231.52" //==> Aribter
+	Configuration.MongoDB.HostPort_3 = "9003"
+	Configuration.MongoDB.HostIP_4 = ""
+	Configuration.MongoDB.HostPort_4 = ""
+
+	Configuration.IN.IP = "10.10.51.51"
+	Configuration.IN.Port = "8080"
+	Configuration.IN.WS_SOAP_Endpoint = "/axis2/services/WebService.WebServiceHttpSoap12Endpoint/"
+	Configuration.IN.WS_XMLNS_SOAP_Env = "http://schemas.xmlsoap.org/soap/envelope/"
+	Configuration.IN.WS_XMLNS_Web = "http://webservice.CSI.omvia.convergys.com"
+
+	Configuration.IN.WS_EVC_SOAP_Endpoint = "/axis2/services/ERechargeWebService.ERechargeWebServiceHttpSoap11Endpoint/"
+	Configuration.IN.WS_EVC_XMLNS_SOAP_Env = "http://schemas.xmlsoap.org/soap/envelope/"
+	Configuration.IN.WS_EVC_XMLNS_Web = "http://webservice.CSI.omvia.convergys.com"
+
+	Configuration.IN.Default_OpId = "lendme"
+	Configuration.IN.Default_OpPwd = "gu1vY6Q$"
+	Configuration.IN.Is_OpPwd_Required = true
+	Configuration.IN.Timeout = 5
+	Configuration.IN.PrintLogs = true
+
+	//http://10.95.64.6:15403/?systemid=lendme&password=lendmeP@ssw0rd&Originator=setest&dest_addr=243900100606&msg_text=test&registered_delivery=0&ston=5&snpi=0&dton=1&dnpi=1&encoding=1
+
+	//SMPP
+	Configuration.SMPP.IP = "10.10.215.52"
+	Configuration.SMPP.Port = "15403"
+	Configuration.SMPP.Login = "lendme"
+	Configuration.SMPP.Password = "lendmeP@ssw0rd"
 
 	return
 }

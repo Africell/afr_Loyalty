@@ -110,6 +110,8 @@ func (uc *UserControl) LoadDefaultValues() {
 		uc.Credit_Limit_Scheme_LoadDefaultValues_DRC()
 	} else if Configuration.Operation == "Gambia" {
 		uc.Credit_Limit_Scheme_LoadDefaultValues_Gambia()
+	} else if Configuration.Operation == "SierraLeone" {
+		uc.Credit_Limit_Scheme_LoadDefaultValues_SierraLeone()
 	}
 
 }
@@ -1124,6 +1126,408 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_Gambia() {
 	}
 }
 
+func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_SierraLeone() {
+	log.Println("Loading credit limit scheme default values for Gambia")
+	//
+	request := Credit_Limit_Scheme_Add_Request{
+		Key:                 "0_33_3_6",
+		Scheme_Id:           0,
+		Amount_From:         0,
+		Amount_Till:         33,
+		AON_From:            3,
+		AON_Till:            6,
+		Credit_limit_Amount: 3,
+	}
+	_, err := uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "0_33_6_12",
+		Scheme_Id:           0,
+		Amount_From:         0,
+		Amount_Till:         33,
+		AON_From:            6,
+		AON_Till:            12,
+		Credit_limit_Amount: 3,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "0_33_12_24",
+		Scheme_Id:           0,
+		Amount_From:         0,
+		Amount_Till:         33,
+		AON_From:            12,
+		AON_Till:            24,
+		Credit_limit_Amount: 6,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "0_33_24_1200",
+		Scheme_Id:           0,
+		Amount_From:         0,
+		Amount_Till:         33,
+		AON_From:            24,
+		AON_Till:            1200,
+		Credit_limit_Amount: 6,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	//
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "33_65_3_6",
+		Scheme_Id:           0,
+		Amount_From:         33,
+		Amount_Till:         65,
+		AON_From:            3,
+		AON_Till:            6,
+		Credit_limit_Amount: 6,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "33_65_6_12",
+		Scheme_Id:           0,
+		Amount_From:         33,
+		Amount_Till:         65,
+		AON_From:            6,
+		AON_Till:            12,
+		Credit_limit_Amount: 6,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "33_65_12_24",
+		Scheme_Id:           0,
+		Amount_From:         33,
+		Amount_Till:         65,
+		AON_From:            12,
+		AON_Till:            24,
+		Credit_limit_Amount: 10,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "33_65_24_1200",
+		Scheme_Id:           0,
+		Amount_From:         33,
+		Amount_Till:         65,
+		AON_From:            24,
+		AON_Till:            1200,
+		Credit_limit_Amount: 13,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	//
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "65_88_3_6",
+		Scheme_Id:           0,
+		Amount_From:         65,
+		Amount_Till:         88,
+		AON_From:            3,
+		AON_Till:            6,
+		Credit_limit_Amount: 7,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "65_88_6_12",
+		Scheme_Id:           0,
+		Amount_From:         65,
+		Amount_Till:         88,
+		AON_From:            6,
+		AON_Till:            12,
+		Credit_limit_Amount: 7,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "65_88_12_24",
+		Scheme_Id:           0,
+		Amount_From:         65,
+		Amount_Till:         88,
+		AON_From:            12,
+		AON_Till:            24,
+		Credit_limit_Amount: 11,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "65_88_24_1200",
+		Scheme_Id:           0,
+		Amount_From:         65,
+		Amount_Till:         88,
+		AON_From:            24,
+		AON_Till:            1200,
+		Credit_limit_Amount: 15,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	//
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "88_175_3_6",
+		Scheme_Id:           0,
+		Amount_From:         88,
+		Amount_Till:         175,
+		AON_From:            3,
+		AON_Till:            6,
+		Credit_limit_Amount: 8,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "88_175_6_12",
+		Scheme_Id:           0,
+		Amount_From:         88,
+		Amount_Till:         175,
+		AON_From:            6,
+		AON_Till:            12,
+		Credit_limit_Amount: 8,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "88_175_12_24",
+		Scheme_Id:           0,
+		Amount_From:         88,
+		Amount_Till:         175,
+		AON_From:            12,
+		AON_Till:            24,
+		Credit_limit_Amount: 15,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "88_175_24_1200",
+		Scheme_Id:           0,
+		Amount_From:         88,
+		Amount_Till:         175,
+		AON_From:            24,
+		AON_Till:            1200,
+		Credit_limit_Amount: 20,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	//
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "175_375_3_6",
+		Scheme_Id:           0,
+		Amount_From:         175,
+		Amount_Till:         375,
+		AON_From:            3,
+		AON_Till:            6,
+		Credit_limit_Amount: 8,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "175_375_6_12",
+		Scheme_Id:           0,
+		Amount_From:         175,
+		Amount_Till:         375,
+		AON_From:            6,
+		AON_Till:            12,
+		Credit_limit_Amount: 8,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "175_375_12_24",
+		Scheme_Id:           0,
+		Amount_From:         175,
+		Amount_Till:         375,
+		AON_From:            12,
+		AON_Till:            24,
+		Credit_limit_Amount: 15,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "175_375_24_1200",
+		Scheme_Id:           0,
+		Amount_From:         175,
+		Amount_Till:         375,
+		AON_From:            24,
+		AON_Till:            1200,
+		Credit_limit_Amount: 20,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	//
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "375_760_3_6",
+		Scheme_Id:           0,
+		Amount_From:         375,
+		Amount_Till:         760,
+		AON_From:            3,
+		AON_Till:            6,
+		Credit_limit_Amount: 35,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "375_760_6_12",
+		Scheme_Id:           0,
+		Amount_From:         375,
+		Amount_Till:         760,
+		AON_From:            6,
+		AON_Till:            12,
+		Credit_limit_Amount: 50,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "375_760_12_24",
+		Scheme_Id:           0,
+		Amount_From:         375,
+		Amount_Till:         760,
+		AON_From:            12,
+		AON_Till:            24,
+		Credit_limit_Amount: 60,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "375_760_24_1200",
+		Scheme_Id:           0,
+		Amount_From:         375,
+		Amount_Till:         760,
+		AON_From:            24,
+		AON_Till:            1200,
+		Credit_limit_Amount: 70,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	//
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "760_9999999_3_6",
+		Scheme_Id:           0,
+		Amount_From:         760,
+		Amount_Till:         9999999,
+		AON_From:            3,
+		AON_Till:            6,
+		Credit_limit_Amount: 40,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "760_9999999_6_12",
+		Scheme_Id:           0,
+		Amount_From:         760,
+		Amount_Till:         9999999,
+		AON_From:            6,
+		AON_Till:            12,
+		Credit_limit_Amount: 60,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "760_9999999_12_24",
+		Scheme_Id:           0,
+		Amount_From:         760,
+		Amount_Till:         9999999,
+		AON_From:            12,
+		AON_Till:            24,
+		Credit_limit_Amount: 70,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "760_9999999_24_1200",
+		Scheme_Id:           0,
+		Amount_From:         760,
+		Amount_Till:         9999999,
+		AON_From:            24,
+		AON_Till:            1200,
+		Credit_limit_Amount: 80,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+}
+
 func (Uc *UserControl) Credit_Limit_Scheme_Selection(Amount float64, FirstUse_date time.Time, LastRecharge_date time.Time) (scheme_name string, NotElligibleReason string) {
 	//AON >= 3 months
 	//Avg 3M Recharge >= 50
@@ -1502,6 +1906,10 @@ func (Uc *UserControl) Lendme_exec_Request(Source, MSISDN string, Amount float64
 		if len(MSISDN) > 7 {
 			IN_MSISDN = IN_MSISDN[len(MSISDN)-7 : len(MSISDN)]
 		}
+	} else if Configuration.Operation == "SierraLeone" { //077928014
+		if len(MSISDN) > 8 {
+			IN_MSISDN = "0" + IN_MSISDN[len(MSISDN)-8:len(MSISDN)]
+		}
 	}
 	//check if exists on IN and get details
 	IN_Response, err := Uc.IN.INClient.GetAccountDetails("", "", IN_MSISDN)
@@ -1571,6 +1979,10 @@ func (Uc *UserControl) Lendme_exec_Request(Source, MSISDN string, Amount float64
 		if Configuration.Operation == "Gambia" {
 			if len(MSISDN) > 7 {
 				IN_MSISDN = IN_MSISDN[len(MSISDN)-7 : len(MSISDN)]
+			}
+		} else if Configuration.Operation == "SierraLeone" { //077928014
+			if len(MSISDN) > 8 {
+				IN_MSISDN = "0" + IN_MSISDN[len(MSISDN)-8:len(MSISDN)]
 			}
 		}
 		//todo: opt out from service
@@ -1740,6 +2152,10 @@ func (Uc *UserControl) Lendme_PayBack(Source, MSISDN string, RechargeAmount floa
 		if len(MSISDN) > 7 {
 			IN_MSISDN = IN_MSISDN[len(MSISDN)-7 : len(MSISDN)]
 		}
+	} else if Configuration.Operation == "SierraLeone" { //077928014
+		if len(MSISDN) > 8 {
+			IN_MSISDN = "0" + IN_MSISDN[len(MSISDN)-8:len(MSISDN)]
+		}
 	}
 	//check if exists on IN and get details
 	IN_Response, err := Uc.IN.INClient.GetAccountDetails("", "", IN_MSISDN)
@@ -1788,6 +2204,10 @@ func (Uc *UserControl) Lendme_PayBack(Source, MSISDN string, RechargeAmount floa
 			if len(MSISDN) > 7 {
 				IN_MSISDN = IN_MSISDN[len(MSISDN)-7 : len(MSISDN)]
 			}
+		} else if Configuration.Operation == "SierraLeone" { //077928014
+			if len(MSISDN) > 8 {
+				IN_MSISDN = "0" + IN_MSISDN[len(MSISDN)-8:len(MSISDN)]
+			}
 		}
 		credit_response, credit_err := Uc.IN.INClient.SetAccountBalances("", "", IN_MSISDN, -1*DebitfeeAmount, "N", 0, 0, 0, 0, "LendmeFee")
 		if credit_err != nil {
@@ -1823,6 +2243,10 @@ func (Uc *UserControl) Lendme_PayBack(Source, MSISDN string, RechargeAmount floa
 		if Configuration.Operation == "Gambia" {
 			if len(MSISDN) > 7 {
 				IN_MSISDN = IN_MSISDN[len(MSISDN)-7 : len(MSISDN)]
+			}
+		} else if Configuration.Operation == "SierraLeone" { //077928014
+			if len(MSISDN) > 8 {
+				IN_MSISDN = "0" + IN_MSISDN[len(MSISDN)-8:len(MSISDN)]
 			}
 		}
 		credit_response, credit_err := Uc.IN.INClient.SetAccountBalances("", "", IN_MSISDN, -1*DebitAmount, "N", 0, 0, 0, 0, "LendmePayBack")
@@ -1867,6 +2291,14 @@ func (Uc *UserControl) Lendme_PayBack(Source, MSISDN string, RechargeAmount floa
 		//SMSText := "Cher abonne, merci d'avoir paye le montant emprunte par Lendme de " + PaidAmount_str + "u"
 		SMSText := "Cher abonne, merci d'avoir paye le montant emprunte par Le service pretez moi de" + PaidAmount_str + "u"
 		go SendSMS("Africell", subscriber.Key, SMSText)
+	} else if Configuration.Operation == "SierraLeone" {
+		SMS_MSISDN := subscriber.Key
+		if len(SMS_MSISDN) >= 8 {
+			SMS_MSISDN = "232" + SMS_MSISDN[len(SMS_MSISDN)-8:]
+		}
+		SMSText := "Dear subscriber, thank you for paying outstanding Lendme amount " + PaidAmount_str + " NLE"
+		go SendSMS("Africell", SMS_MSISDN, SMSText)
+
 	}
 
 	//save log into DB

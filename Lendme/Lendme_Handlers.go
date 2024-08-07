@@ -444,6 +444,10 @@ func (Uc *UserControl) HTTP_Subscribers_GetINDetail(w http.ResponseWriter, r *ht
 			if len(MSISDN) > 7 {
 				IN_MSISDN = IN_MSISDN[len(MSISDN)-7 : len(MSISDN)]
 			}
+		} else if Configuration.Operation == "SierraLeone" { //077928014
+			if len(MSISDN) > 8 {
+				IN_MSISDN = "0" + IN_MSISDN[len(MSISDN)-8:len(MSISDN)]
+			}
 		}
 		IN_Response, err := Uc.IN.INClient.GetAccountDetails("", "", IN_MSISDN)
 		if err != nil {
