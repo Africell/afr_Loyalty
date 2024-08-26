@@ -16,6 +16,7 @@ require (
 	github.com/kardianos/service v1.2.2
 	github.com/prometheus/client_golang v1.18.0
 	github.com/rs/cors v1.10.1
+	go.mongodb.org/mongo-driver v1.13.1
 )
 
 require (
@@ -59,7 +60,6 @@ require (
 	github.com/xdg-go/stringprep v1.0.4 // indirect
 	github.com/yosida95/uritemplate/v3 v3.0.2 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
-	go.mongodb.org/mongo-driver v1.13.1 // indirect
 	go.opentelemetry.io/otel v1.16.0 // indirect
 	go.opentelemetry.io/otel/metric v1.16.0 // indirect
 	go.opentelemetry.io/otel/trace v1.16.0 // indirect

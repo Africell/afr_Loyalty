@@ -95,8 +95,8 @@ type ConfigType struct {
 
 func GetDefaultConfiguration() (err error) {
 	//Configuration = setDefaultConfiguration_DRC_Live()
-	Configuration = setDefaultConfiguration_GM_Live()
-	//Configuration = setDefaultConfiguration_SL_Live()
+	//Configuration = setDefaultConfiguration_GM_Live()
+	Configuration = setDefaultConfiguration_SL_Live()
 	return nil
 }
 
@@ -359,8 +359,11 @@ func setDefaultConfiguration_SL_Live() (Configuration ConfigType) {
 	//SMPP
 	Configuration.SMPP.IP = "10.10.215.52"
 	Configuration.SMPP.Port = "15403"
-	Configuration.SMPP.Login = "lendme"
-	Configuration.SMPP.Password = "lendmeP@ssw0rd"
+
+	//Configuration.SMPP.Login = "lendme"
+	//Configuration.SMPP.Password = "lendmeP@ssw0rd"
+	Configuration.SMPP.Login = "LendME2"
+	Configuration.SMPP.Password = "LendMEP@ssw0rd"
 
 	return
 }
