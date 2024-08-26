@@ -2456,8 +2456,9 @@ func (Uc *UserControl) Auto_GetOutstandingSummary() {
 func SendSMS(Sender string, target string, SMSText string) (_rErr error) {
 	log.Println("Sending SMS: Sender (" + Sender + "), Target (" + target + "), text (" + SMSText + ") ")
 	url := "http://" + Configuration.SMPP.IP + ":" + Configuration.SMPP.Port + "/?systemid=" + Configuration.SMPP.Login + "&password=" + Configuration.SMPP.Password + "&Originator=" + Sender + "&dest_addr=" + target + "&msg_text=" + url.QueryEscape(SMSText) + "&encoding=0&ston=5&snpi=0&dton=1&registered_delivery=0"
-
+	//-------------- Encoding used in DRC and GM Start
 	//"&ston=5&snpi=0&dton=1&dnpi=1&encoding=1"
+	//-------------- Encoding used in DRC and GM End
 	method := "GET"
 	req, err := http.NewRequest(method, url, nil)
 	if err != nil {
