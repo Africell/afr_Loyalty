@@ -219,7 +219,7 @@ func setDefaultConfiguration_GM_Live() (Configuration ConfigType) {
 
 	Configuration.IsProduction = false
 	Configuration.Min_Allowed_Amnt = 5
-	Configuration.Service_FeePerc = 0.1
+	Configuration.Service_FeePerc = 0.04
 	Configuration.Min_Allowed_AON = 3
 	Configuration.Min_Avg3MRecharge = 5
 	Configuration.Min_LastRechargePeriod = 60
