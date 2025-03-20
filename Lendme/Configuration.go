@@ -8,16 +8,21 @@ var Configuration ConfigType
 
 type ConfigType struct {
 	//HttpOKAPIServicePort string
-	HttpAppServicePort  string
-	OKAPIAllowedOrigins []string
+	HttpAppServicePort        string
+	HttpAppLoyaltyServicePort string
+	OKAPIAllowedOrigins       []string
 
-	Operation string
-	HostId    string
-	DB_Name   string
-	Version   string
-	Module    string
+	Operation       string
+	HostId          string
+	DB_Name         string
+	DB_Name_Loyalty string
+	Version         string
+	Module          string
 
-	IsProduction bool
+	IsProduction       bool
+	LoyaltyProgramName string
+	LoyaltyVersion     string
+	LoyaltyModule      string
 
 	//Lendme Config
 	Min_Allowed_Amnt float64
@@ -68,6 +73,19 @@ type ConfigType struct {
 		HostIP_4   string
 		HostPort_4 string
 	}
+	LoyaltyMongoDB struct {
+		ReplicaSet string
+		UserName   string
+		Password   string
+		HostIP_1   string
+		HostPort_1 string
+		HostIP_2   string
+		HostPort_2 string
+		HostIP_3   string
+		HostPort_3 string
+		HostIP_4   string
+		HostPort_4 string
+	}
 
 	IN struct {
 		IP                    string
@@ -103,6 +121,7 @@ func GetDefaultConfiguration() (err error) {
 func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 	//Configuration.HttpOKAPIServicePort = "9291"
 	Configuration.HttpAppServicePort = "9290"
+	Configuration.HttpAppLoyaltyServicePort = "9280"
 
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:3000")
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:5173")
@@ -117,6 +136,9 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 
 	Configuration.Version = "V1"
 	Configuration.Module = "Lendme"
+
+	Configuration.LoyaltyVersion = "V1"
+	Configuration.LoyaltyModule = "Loyalty"
 
 	Configuration.IsProduction = false
 	Configuration.Min_Allowed_Amnt = 10
@@ -172,6 +194,20 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 	Configuration.MongoDB.HostIP_4 = ""
 	Configuration.MongoDB.HostPort_4 = ""
 
+	Configuration.DB_Name_Loyalty = "Loyalty_DB"
+	Configuration.LoyaltyProgramName = "Loyalty"
+	Configuration.LoyaltyMongoDB.ReplicaSet = Configuration.MongoDB.ReplicaSet
+	Configuration.LoyaltyMongoDB.UserName = Configuration.MongoDB.UserName
+	Configuration.LoyaltyMongoDB.Password = Configuration.MongoDB.Password
+	Configuration.LoyaltyMongoDB.HostIP_1 = Configuration.MongoDB.HostIP_1
+	Configuration.LoyaltyMongoDB.HostPort_1 = Configuration.MongoDB.HostPort_1
+	Configuration.LoyaltyMongoDB.HostIP_2 = Configuration.MongoDB.HostIP_2
+	Configuration.LoyaltyMongoDB.HostPort_2 = Configuration.MongoDB.HostPort_2
+	Configuration.LoyaltyMongoDB.HostIP_3 = Configuration.MongoDB.HostIP_3
+	Configuration.LoyaltyMongoDB.HostPort_3 = Configuration.MongoDB.HostPort_3
+	Configuration.LoyaltyMongoDB.HostIP_4 = Configuration.MongoDB.HostIP_4
+	Configuration.LoyaltyMongoDB.HostPort_4 = Configuration.MongoDB.HostPort_4
+
 	Configuration.IN.IP = "10.70.1.38"
 	Configuration.IN.Port = "8080"
 	Configuration.IN.WS_SOAP_Endpoint = "/axis2/services/WebService.WebServiceHttpSoap12Endpoint/"
@@ -202,6 +238,7 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 func setDefaultConfiguration_GM_Live() (Configuration ConfigType) {
 	//Configuration.HttpOKAPIServicePort = "9291"
 	Configuration.HttpAppServicePort = "9290"
+	Configuration.HttpAppLoyaltyServicePort = "9280"
 
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:3000")
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:5173")
@@ -216,6 +253,9 @@ func setDefaultConfiguration_GM_Live() (Configuration ConfigType) {
 
 	Configuration.Version = "V1"
 	Configuration.Module = "Lendme"
+
+	Configuration.LoyaltyVersion = "V1"
+	Configuration.LoyaltyModule = "Loyalty"
 
 	Configuration.IsProduction = false
 	Configuration.Min_Allowed_Amnt = 5
@@ -260,6 +300,19 @@ func setDefaultConfiguration_GM_Live() (Configuration ConfigType) {
 	Configuration.MongoDB.HostIP_4 = ""
 	Configuration.MongoDB.HostPort_4 = ""
 
+	Configuration.DB_Name_Loyalty = "Loyalty_DB"
+	Configuration.LoyaltyMongoDB.ReplicaSet = Configuration.MongoDB.ReplicaSet
+	Configuration.LoyaltyMongoDB.UserName = Configuration.MongoDB.UserName
+	Configuration.LoyaltyMongoDB.Password = Configuration.MongoDB.Password
+	Configuration.LoyaltyMongoDB.HostIP_1 = Configuration.MongoDB.HostIP_1
+	Configuration.LoyaltyMongoDB.HostPort_1 = Configuration.MongoDB.HostPort_1
+	Configuration.LoyaltyMongoDB.HostIP_2 = Configuration.MongoDB.HostIP_2
+	Configuration.LoyaltyMongoDB.HostPort_2 = Configuration.MongoDB.HostPort_2
+	Configuration.LoyaltyMongoDB.HostIP_3 = Configuration.MongoDB.HostIP_3
+	Configuration.LoyaltyMongoDB.HostPort_3 = Configuration.MongoDB.HostPort_3
+	Configuration.LoyaltyMongoDB.HostIP_4 = Configuration.MongoDB.HostIP_4
+	Configuration.LoyaltyMongoDB.HostPort_4 = Configuration.MongoDB.HostPort_4
+
 	Configuration.IN.IP = "192.168.0.232"
 	Configuration.IN.Port = "8080"
 	Configuration.IN.WS_SOAP_Endpoint = "/axis2/services/WebService.WebServiceHttpSoap12Endpoint/"
@@ -290,6 +343,7 @@ func setDefaultConfiguration_GM_Live() (Configuration ConfigType) {
 func setDefaultConfiguration_SL_Live() (Configuration ConfigType) {
 	//Configuration.HttpOKAPIServicePort = "9291"
 	Configuration.HttpAppServicePort = "9290"
+	Configuration.HttpAppLoyaltyServicePort = "9280"
 
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:3000")
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:5173")
@@ -304,6 +358,9 @@ func setDefaultConfiguration_SL_Live() (Configuration ConfigType) {
 
 	Configuration.Version = "V1"
 	Configuration.Module = "Lendme"
+
+	Configuration.LoyaltyVersion = "V1"
+	Configuration.LoyaltyModule = "Loyalty"
 
 	Configuration.IsProduction = false
 	Configuration.Min_Allowed_Amnt = 1
@@ -337,6 +394,19 @@ func setDefaultConfiguration_SL_Live() (Configuration ConfigType) {
 	Configuration.MongoDB.HostPort_3 = "9003"
 	Configuration.MongoDB.HostIP_4 = ""
 	Configuration.MongoDB.HostPort_4 = ""
+
+	Configuration.DB_Name_Loyalty = "Loyalty_DB"
+	Configuration.LoyaltyMongoDB.ReplicaSet = Configuration.MongoDB.ReplicaSet
+	Configuration.LoyaltyMongoDB.UserName = Configuration.MongoDB.UserName
+	Configuration.LoyaltyMongoDB.Password = Configuration.MongoDB.Password
+	Configuration.LoyaltyMongoDB.HostIP_1 = Configuration.MongoDB.HostIP_1
+	Configuration.LoyaltyMongoDB.HostPort_1 = Configuration.MongoDB.HostPort_1
+	Configuration.LoyaltyMongoDB.HostIP_2 = Configuration.MongoDB.HostIP_2
+	Configuration.LoyaltyMongoDB.HostPort_2 = Configuration.MongoDB.HostPort_2
+	Configuration.LoyaltyMongoDB.HostIP_3 = Configuration.MongoDB.HostIP_3
+	Configuration.LoyaltyMongoDB.HostPort_3 = Configuration.MongoDB.HostPort_3
+	Configuration.LoyaltyMongoDB.HostIP_4 = Configuration.MongoDB.HostIP_4
+	Configuration.LoyaltyMongoDB.HostPort_4 = Configuration.MongoDB.HostPort_4
 
 	Configuration.IN.IP = "10.10.51.51"
 	Configuration.IN.Port = "8080"

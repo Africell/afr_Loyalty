@@ -346,3 +346,107 @@ func (UC *UserControl) Add_LendmeRoutes(R *Routes) {
 	*R = append(*R, r)
 	DisplayOrder = DisplayOrder + 1
 }
+
+func (UC *UserControl) Add_LoyaltyRoutes(R *Routes) {
+	// var r Route
+	// var Module, Level1 string
+	// var ModuleDisplayOrder int64
+	// Module = Configuration.LoyaltyModule
+	// ModuleDisplayOrder = 1
+	// var Level1DisplayOrder int64
+	// var DisplayOrder int64 = 1
+
+	// //*****************************
+	// // Loyalty_Governance
+	// //*****************************
+	// Level1 = "Loyalty Governance"
+	// Level1DisplayOrder = Level1DisplayOrder + 1
+	// r = Route{
+	// 	"HTTP_Loyalty_Governance",
+	// 	"GET",
+	// 	"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Governance/",
+	// 	UC.HTTP_Loyalty_Governance,
+	// 	true,
+	// 	"Loyalty Governance - Read", // DisplayName
+	// 	DisplayOrder,                // DisplayOrder
+	// 	Module,                      // Module
+	// 	ModuleDisplayOrder,          //ModuleDisplayOrder
+	// 	Level1,                      // Level1
+	// 	Level1DisplayOrder,          // Level1DisplayOrder
+	// 	"",                          // Level2
+	// 	0,                           // Level2DisplayOrder
+	// 	"",                          // Level3
+	// 	0,                           // Level3DisplayOrder
+	// 	true,                        //AllowedFor_OKAPI
+	// 	true,                        //AllowedFor_App
+	// }
+	// *R = append(*R, r)
+	// DisplayOrder = DisplayOrder + 1
+
+	// r = Route{
+	// 	"HTTP_Loyalty_Governance",
+	// 	"POST",
+	// 	"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Governance/",
+	// 	UC.HTTP_Loyalty_Governance,
+	// 	true,
+	// 	"Loyalty Governance - Add", // DisplayName
+	// 	DisplayOrder,               // DisplayOrder
+	// 	Module,                     // Module
+	// 	ModuleDisplayOrder,         //ModuleDisplayOrder
+	// 	Level1,                     // Level1
+	// 	Level1DisplayOrder,         // Level1DisplayOrder
+	// 	"",                         // Level2
+	// 	0,                          // Level2DisplayOrder
+	// 	"",                         // Level3
+	// 	0,                          // Level3DisplayOrder
+	// 	true,                       //AllowedFor_OKAPI
+	// 	true,                       //AllowedFor_App
+	// }
+	// *R = append(*R, r)
+	// DisplayOrder = DisplayOrder + 1
+
+	// r = Route{
+	// 	"HTTP_Loyalty_Governance",
+	// 	"PUT",
+	// 	"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Governance/",
+	// 	UC.HTTP_Loyalty_Governance,
+	// 	true,
+	// 	"Loyalty Governance - Edit", // DisplayName
+	// 	DisplayOrder,                // DisplayOrder
+	// 	Module,                      // Module
+	// 	ModuleDisplayOrder,          //ModuleDisplayOrder
+	// 	Level1,                      // Level1
+	// 	Level1DisplayOrder,          // Level1DisplayOrder
+	// 	"",                          // Level2
+	// 	0,                           // Level2DisplayOrder
+	// 	"",                          // Level3
+	// 	0,                           // Level3DisplayOrder
+	// 	true,                        //AllowedFor_OKAPI
+	// 	true,                        //AllowedFor_App
+	// }
+	// *R = append(*R, r)
+	// DisplayOrder = DisplayOrder + 1
+
+	// r = Route{
+	// 	"HTTP_Loyalty_Governance",
+	// 	"DELETE",
+	// 	"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Governance/{KeyDelete}/",
+	// 	UC.HTTP_Loyalty_Governance,
+	// 	true,
+	// 	"Loyalty Governance - Delete", // DisplayName
+	// 	DisplayOrder,                  // DisplayOrder
+	// 	Module,                        // Module
+	// 	ModuleDisplayOrder,            //ModuleDisplayOrder
+	// 	Level1,                        // Level1
+	// 	Level1DisplayOrder,            // Level1DisplayOrder
+	// 	"",                            // Level2
+	// 	0,                             // Level2DisplayOrder
+	// 	"",                            // Level3
+	// 	0,                             // Level3DisplayOrder
+	// 	true,                          //AllowedFor_OKAPI
+	// 	true,                          //AllowedFor_App
+	// }
+	// *R = append(*R, r)
+	// DisplayOrder = DisplayOrder + 1
+
+}

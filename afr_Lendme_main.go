@@ -37,7 +37,6 @@ func (p *program) run() {
 		log.Println(err)
 		return
 	}
-
 	log.Println("Establishing connections...")
 	UserControl := lendme.NewUserControl()
 	UserControl.InitializeDAO()
@@ -77,8 +76,23 @@ func (p *program) run() {
 		},
 	})
 
-	//Add user routers to the web service
-	//**App web services
+	//**Loyalty main section
+	if lendme.Configuration.HttpAppLoyaltyServicePort != "" {
+		//Initialize loyalty
+		UserControl.InitializeLoyaltyDAO()
+		UserControl.InitializeLoyaltyCache()
+		UserControl.LoyaltyIndexesMaintenanceProcess()
+
+		//Loyalty web services
+		log.Println("Add Loyalty routers to the web service")
+		Loyalty_router := mux.NewRouter().StrictSlash(true)
+		UserControl.AddToLoyaltyRouter(Loyalty_router, UserControl)
+		HttpLoyaltyServicePort := lendme.Configuration.HttpAppLoyaltyServicePort
+		log.Println("Loyalty WS listen and serve on port: " + HttpLoyaltyServicePort) //auc.Configuration.HttpServicePort
+		go http.ListenAndServe(":"+HttpLoyaltyServicePort, corsOpts.Handler(Loyalty_router))
+	}
+
+	//**Lendme web services
 	log.Println("Add App routers to the web service")
 	App_router := mux.NewRouter().StrictSlash(true)
 	UserControl.AddToAppRouter(App_router, UserControl)

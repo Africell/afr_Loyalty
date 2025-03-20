@@ -7,9 +7,10 @@ import (
 )
 
 type UserControl struct {
-	MongoDB  *daoc.MongoDB
-	CacheDir *daoc.CacheRegistry
-	AppAUC   *AuthCenterClient.AUC
+	MongoDB        *daoc.MongoDB
+	LoyaltyMongoDB *daoc.MongoDB
+	CacheDir       *daoc.CacheRegistry
+	AppAUC         *AuthCenterClient.AUC
 	//OKAPIAUC *AuthCenterClient.AUC
 	IN *INClient.IN
 }
@@ -26,6 +27,18 @@ func NewUserControl() *UserControl {
 		Configuration.MongoDB.HostPort_3,
 		Configuration.MongoDB.HostIP_4,
 		Configuration.MongoDB.HostPort_4,
+	)
+	LoyaltyMongoHostConfig := daoc.InitMongoHost(Configuration.LoyaltyMongoDB.ReplicaSet,
+		Configuration.LoyaltyMongoDB.UserName,
+		Configuration.LoyaltyMongoDB.Password,
+		Configuration.LoyaltyMongoDB.HostIP_1,
+		Configuration.LoyaltyMongoDB.HostPort_1,
+		Configuration.LoyaltyMongoDB.HostIP_2,
+		Configuration.LoyaltyMongoDB.HostPort_2,
+		Configuration.LoyaltyMongoDB.HostIP_3,
+		Configuration.LoyaltyMongoDB.HostPort_3,
+		Configuration.LoyaltyMongoDB.HostIP_4,
+		Configuration.LoyaltyMongoDB.HostPort_4,
 	)
 	App_AUCHostConfig := AuthCenterClient.InitHostConfig(Configuration.App_AUC.Protocol,
 		Configuration.App_AUC.Hostname,
@@ -56,12 +69,15 @@ func NewUserControl() *UserControl {
 		Configuration.IN.Default_OpId,
 		Configuration.IN.Default_OpPwd,
 		Configuration.IN.Is_OpPwd_Required,
+		"",
+		"",
 		Configuration.IN.Timeout,
 		Configuration.IN.PrintLogs)
 
 	UC := &UserControl{
-		MongoDB: daoc.NewMongoDBClient(MongoHostConfig),
-		AppAUC:  AuthCenterClient.NewAUCClient(App_AUCHostConfig),
+		MongoDB:        daoc.NewMongoDBClient(MongoHostConfig),
+		LoyaltyMongoDB: daoc.NewMongoDBClient(LoyaltyMongoHostConfig),
+		AppAUC:         AuthCenterClient.NewAUCClient(App_AUCHostConfig),
 		//OKAPIAUC: AuthCenterClient.NewAUCClient(OKAPI_AUCHostConfig),
 		CacheDir: daoc.NewCacheRegistry(),
 		IN:       INClient.NewINClient(INHostConfig),
