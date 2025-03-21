@@ -348,105 +348,755 @@ func (UC *UserControl) Add_LendmeRoutes(R *Routes) {
 }
 
 func (UC *UserControl) Add_LoyaltyRoutes(R *Routes) {
-	// var r Route
-	// var Module, Level1 string
-	// var ModuleDisplayOrder int64
-	// Module = Configuration.LoyaltyModule
-	// ModuleDisplayOrder = 1
-	// var Level1DisplayOrder int64
-	// var DisplayOrder int64 = 1
+	var r Route
+	var Module, Level1 string
+	var ModuleDisplayOrder int64
+	Module = Configuration.LoyaltyModule
+	ModuleDisplayOrder = 1
+	var Level1DisplayOrder int64
+	var DisplayOrder int64 = 1
 
-	// //*****************************
-	// // Loyalty_Governance
-	// //*****************************
-	// Level1 = "Loyalty Governance"
-	// Level1DisplayOrder = Level1DisplayOrder + 1
-	// r = Route{
-	// 	"HTTP_Loyalty_Governance",
-	// 	"GET",
-	// 	"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Governance/",
-	// 	UC.HTTP_Loyalty_Governance,
-	// 	true,
-	// 	"Loyalty Governance - Read", // DisplayName
-	// 	DisplayOrder,                // DisplayOrder
-	// 	Module,                      // Module
-	// 	ModuleDisplayOrder,          //ModuleDisplayOrder
-	// 	Level1,                      // Level1
-	// 	Level1DisplayOrder,          // Level1DisplayOrder
-	// 	"",                          // Level2
-	// 	0,                           // Level2DisplayOrder
-	// 	"",                          // Level3
-	// 	0,                           // Level3DisplayOrder
-	// 	true,                        //AllowedFor_OKAPI
-	// 	true,                        //AllowedFor_App
-	// }
-	// *R = append(*R, r)
-	// DisplayOrder = DisplayOrder + 1
+	//*****************************
+	// Loyalty_Governance
+	//*****************************
+	Level1 = "Loyalty Governance"
+	Level1DisplayOrder = Level1DisplayOrder + 1
+	r = Route{
+		"HTTP_Loyalty_Governance",
+		"GET",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Governance/",
+		UC.HTTP_Loyalty_Governance,
+		true,
+		Level1 + " - Read", // DisplayName
+		DisplayOrder,       // DisplayOrder
+		Module,             // Module
+		ModuleDisplayOrder, //ModuleDisplayOrder
+		Level1,             // Level1
+		Level1DisplayOrder, // Level1DisplayOrder
+		"",                 // Level2
+		0,                  // Level2DisplayOrder
+		"",                 // Level3
+		0,                  // Level3DisplayOrder
+		true,               //AllowedFor_OKAPI
+		true,               //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
 
-	// r = Route{
-	// 	"HTTP_Loyalty_Governance",
-	// 	"POST",
-	// 	"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Governance/",
-	// 	UC.HTTP_Loyalty_Governance,
-	// 	true,
-	// 	"Loyalty Governance - Add", // DisplayName
-	// 	DisplayOrder,               // DisplayOrder
-	// 	Module,                     // Module
-	// 	ModuleDisplayOrder,         //ModuleDisplayOrder
-	// 	Level1,                     // Level1
-	// 	Level1DisplayOrder,         // Level1DisplayOrder
-	// 	"",                         // Level2
-	// 	0,                          // Level2DisplayOrder
-	// 	"",                         // Level3
-	// 	0,                          // Level3DisplayOrder
-	// 	true,                       //AllowedFor_OKAPI
-	// 	true,                       //AllowedFor_App
-	// }
-	// *R = append(*R, r)
-	// DisplayOrder = DisplayOrder + 1
+	r = Route{
+		"HTTP_Loyalty_Governance",
+		"POST",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Governance/",
+		UC.HTTP_Loyalty_Governance,
+		true,
+		Level1 + " - Add",  // DisplayName
+		DisplayOrder,       // DisplayOrder
+		Module,             // Module
+		ModuleDisplayOrder, //ModuleDisplayOrder
+		Level1,             // Level1
+		Level1DisplayOrder, // Level1DisplayOrder
+		"",                 // Level2
+		0,                  // Level2DisplayOrder
+		"",                 // Level3
+		0,                  // Level3DisplayOrder
+		true,               //AllowedFor_OKAPI
+		true,               //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
 
-	// r = Route{
-	// 	"HTTP_Loyalty_Governance",
-	// 	"PUT",
-	// 	"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Governance/",
-	// 	UC.HTTP_Loyalty_Governance,
-	// 	true,
-	// 	"Loyalty Governance - Edit", // DisplayName
-	// 	DisplayOrder,                // DisplayOrder
-	// 	Module,                      // Module
-	// 	ModuleDisplayOrder,          //ModuleDisplayOrder
-	// 	Level1,                      // Level1
-	// 	Level1DisplayOrder,          // Level1DisplayOrder
-	// 	"",                          // Level2
-	// 	0,                           // Level2DisplayOrder
-	// 	"",                          // Level3
-	// 	0,                           // Level3DisplayOrder
-	// 	true,                        //AllowedFor_OKAPI
-	// 	true,                        //AllowedFor_App
-	// }
-	// *R = append(*R, r)
-	// DisplayOrder = DisplayOrder + 1
+	r = Route{
+		"HTTP_Loyalty_Governance",
+		"PUT",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Governance/",
+		UC.HTTP_Loyalty_Governance,
+		true,
+		Level1 + " - Edit", // DisplayName
+		DisplayOrder,       // DisplayOrder
+		Module,             // Module
+		ModuleDisplayOrder, //ModuleDisplayOrder
+		Level1,             // Level1
+		Level1DisplayOrder, // Level1DisplayOrder
+		"",                 // Level2
+		0,                  // Level2DisplayOrder
+		"",                 // Level3
+		0,                  // Level3DisplayOrder
+		true,               //AllowedFor_OKAPI
+		true,               //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
 
-	// r = Route{
-	// 	"HTTP_Loyalty_Governance",
-	// 	"DELETE",
-	// 	"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Governance/{KeyDelete}/",
-	// 	UC.HTTP_Loyalty_Governance,
-	// 	true,
-	// 	"Loyalty Governance - Delete", // DisplayName
-	// 	DisplayOrder,                  // DisplayOrder
-	// 	Module,                        // Module
-	// 	ModuleDisplayOrder,            //ModuleDisplayOrder
-	// 	Level1,                        // Level1
-	// 	Level1DisplayOrder,            // Level1DisplayOrder
-	// 	"",                            // Level2
-	// 	0,                             // Level2DisplayOrder
-	// 	"",                            // Level3
-	// 	0,                             // Level3DisplayOrder
-	// 	true,                          //AllowedFor_OKAPI
-	// 	true,                          //AllowedFor_App
-	// }
-	// *R = append(*R, r)
-	// DisplayOrder = DisplayOrder + 1
+	r = Route{
+		"HTTP_Loyalty_Governance",
+		"DELETE",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Governance/{KeyDelete}/",
+		UC.HTTP_Loyalty_Governance,
+		true,
+		Level1 + " - Delete", // DisplayName
+		DisplayOrder,         // DisplayOrder
+		Module,               // Module
+		ModuleDisplayOrder,   //ModuleDisplayOrder
+		Level1,               // Level1
+		Level1DisplayOrder,   // Level1DisplayOrder
+		"",                   // Level2
+		0,                    // Level2DisplayOrder
+		"",                   // Level3
+		0,                    // Level3DisplayOrder
+		true,                 //AllowedFor_OKAPI
+		true,                 //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
 
+	//*****************************
+	// Loyalty_Level
+	//*****************************
+	Level1 = "Loyalty Level"
+	Level1DisplayOrder = Level1DisplayOrder + 1
+	r = Route{
+		"HTTP_Loyalty_Level",
+		"GET",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Level/",
+		UC.HTTP_Loyalty_Level,
+		true,
+		Level1 + " - Read", // DisplayName
+		DisplayOrder,       // DisplayOrder
+		Module,             // Module
+		ModuleDisplayOrder, //ModuleDisplayOrder
+		Level1,             // Level1
+		Level1DisplayOrder, // Level1DisplayOrder
+		"",                 // Level2
+		0,                  // Level2DisplayOrder
+		"",                 // Level3
+		0,                  // Level3DisplayOrder
+		true,               //AllowedFor_OKAPI
+		true,               //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+	r = Route{
+		"HTTP_Loyalty_Level",
+		"POST",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Level/",
+		UC.HTTP_Loyalty_Level,
+		true,
+		Level1 + " - Add",  // DisplayName
+		DisplayOrder,       // DisplayOrder
+		Module,             // Module
+		ModuleDisplayOrder, //ModuleDisplayOrder
+		Level1,             // Level1
+		Level1DisplayOrder, // Level1DisplayOrder
+		"",                 // Level2
+		0,                  // Level2DisplayOrder
+		"",                 // Level3
+		0,                  // Level3DisplayOrder
+		true,               //AllowedFor_OKAPI
+		true,               //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+	r = Route{
+		"HTTP_Loyalty_Level",
+		"PUT",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Level/",
+		UC.HTTP_Loyalty_Level,
+		true,
+		Level1 + " - Edit", // DisplayName
+		DisplayOrder,       // DisplayOrder
+		Module,             // Module
+		ModuleDisplayOrder, //ModuleDisplayOrder
+		Level1,             // Level1
+		Level1DisplayOrder, // Level1DisplayOrder
+		"",                 // Level2
+		0,                  // Level2DisplayOrder
+		"",                 // Level3
+		0,                  // Level3DisplayOrder
+		true,               //AllowedFor_OKAPI
+		true,               //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+	r = Route{
+		"HTTP_Loyalty_Level",
+		"DELETE",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Level/{KeyDelete}/",
+		UC.HTTP_Loyalty_Level,
+		true,
+		Level1 + " - Delete", // DisplayName
+		DisplayOrder,         // DisplayOrder
+		Module,               // Module
+		ModuleDisplayOrder,   //ModuleDisplayOrder
+		Level1,               // Level1
+		Level1DisplayOrder,   // Level1DisplayOrder
+		"",                   // Level2
+		0,                    // Level2DisplayOrder
+		"",                   // Level3
+		0,                    // Level3DisplayOrder
+		true,                 //AllowedFor_OKAPI
+		true,                 //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+	//*****************************
+	// Loyalty_Account_Segment
+	//*****************************
+	Level1 = "Loyalty Account Segment"
+	Level1DisplayOrder = Level1DisplayOrder + 1
+	r = Route{
+		"HTTP_Loyalty_Account_Segment",
+		"GET",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Account_Segment/",
+		UC.HTTP_Loyalty_Account_Segment,
+		true,
+		Level1 + " - Read", // DisplayName
+		DisplayOrder,       // DisplayOrder
+		Module,             // Module
+		ModuleDisplayOrder, //ModuleDisplayOrder
+		Level1,             // Level1
+		Level1DisplayOrder, // Level1DisplayOrder
+		"",                 // Level2
+		0,                  // Level2DisplayOrder
+		"",                 // Level3
+		0,                  // Level3DisplayOrder
+		true,               //AllowedFor_OKAPI
+		true,               //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+	r = Route{
+		"HTTP_Loyalty_Account_Segment",
+		"POST",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Account_Segment/",
+		UC.HTTP_Loyalty_Account_Segment,
+		true,
+		Level1 + " - Add",  // DisplayName
+		DisplayOrder,       // DisplayOrder
+		Module,             // Module
+		ModuleDisplayOrder, //ModuleDisplayOrder
+		Level1,             // Level1
+		Level1DisplayOrder, // Level1DisplayOrder
+		"",                 // Level2
+		0,                  // Level2DisplayOrder
+		"",                 // Level3
+		0,                  // Level3DisplayOrder
+		true,               //AllowedFor_OKAPI
+		true,               //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+	r = Route{
+		"HTTP_Loyalty_Account_Segment",
+		"PUT",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Account_Segment/",
+		UC.HTTP_Loyalty_Account_Segment,
+		true,
+		Level1 + " - Edit", // DisplayName
+		DisplayOrder,       // DisplayOrder
+		Module,             // Module
+		ModuleDisplayOrder, //ModuleDisplayOrder
+		Level1,             // Level1
+		Level1DisplayOrder, // Level1DisplayOrder
+		"",                 // Level2
+		0,                  // Level2DisplayOrder
+		"",                 // Level3
+		0,                  // Level3DisplayOrder
+		true,               //AllowedFor_OKAPI
+		true,               //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+	r = Route{
+		"HTTP_Loyalty_Account_Segment",
+		"DELETE",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Account_Segment/{KeyDelete}/",
+		UC.HTTP_Loyalty_Account_Segment,
+		true,
+		Level1 + " - Delete", // DisplayName
+		DisplayOrder,         // DisplayOrder
+		Module,               // Module
+		ModuleDisplayOrder,   //ModuleDisplayOrder
+		Level1,               // Level1
+		Level1DisplayOrder,   // Level1DisplayOrder
+		"",                   // Level2
+		0,                    // Level2DisplayOrder
+		"",                   // Level3
+		0,                    // Level3DisplayOrder
+		true,                 //AllowedFor_OKAPI
+		true,                 //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+	//*****************************
+	// Loyalty_Point_Earning_Rules
+	//*****************************
+	Level1 = "Loyalty Point Earning Rules"
+	Level1DisplayOrder = Level1DisplayOrder + 1
+	r = Route{
+		"HTTP_Loyalty_Point_Earning_Rules",
+		"GET",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Point_Earning_Rules/",
+		UC.HTTP_Loyalty_Point_Earning_Rules,
+		true,
+		Level1 + " - Read", // DisplayName
+		DisplayOrder,       // DisplayOrder
+		Module,             // Module
+		ModuleDisplayOrder, //ModuleDisplayOrder
+		Level1,             // Level1
+		Level1DisplayOrder, // Level1DisplayOrder
+		"",                 // Level2
+		0,                  // Level2DisplayOrder
+		"",                 // Level3
+		0,                  // Level3DisplayOrder
+		true,               //AllowedFor_OKAPI
+		true,               //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+	r = Route{
+		"HTTP_Loyalty_Point_Earning_Rules",
+		"POST",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Point_Earning_Rules/",
+		UC.HTTP_Loyalty_Point_Earning_Rules,
+		true,
+		Level1 + " - Add",  // DisplayName
+		DisplayOrder,       // DisplayOrder
+		Module,             // Module
+		ModuleDisplayOrder, //ModuleDisplayOrder
+		Level1,             // Level1
+		Level1DisplayOrder, // Level1DisplayOrder
+		"",                 // Level2
+		0,                  // Level2DisplayOrder
+		"",                 // Level3
+		0,                  // Level3DisplayOrder
+		true,               //AllowedFor_OKAPI
+		true,               //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+	r = Route{
+		"HTTP_Loyalty_Point_Earning_Rules",
+		"PUT",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Point_Earning_Rules/",
+		UC.HTTP_Loyalty_Point_Earning_Rules,
+		true,
+		Level1 + " - Edit", // DisplayName
+		DisplayOrder,       // DisplayOrder
+		Module,             // Module
+		ModuleDisplayOrder, //ModuleDisplayOrder
+		Level1,             // Level1
+		Level1DisplayOrder, // Level1DisplayOrder
+		"",                 // Level2
+		0,                  // Level2DisplayOrder
+		"",                 // Level3
+		0,                  // Level3DisplayOrder
+		true,               //AllowedFor_OKAPI
+		true,               //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+	r = Route{
+		"HTTP_Loyalty_Point_Earning_Rules",
+		"DELETE",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Point_Earning_Rules/{KeyDelete}/",
+		UC.HTTP_Loyalty_Point_Earning_Rules,
+		true,
+		Level1 + " - Delete", // DisplayName
+		DisplayOrder,         // DisplayOrder
+		Module,               // Module
+		ModuleDisplayOrder,   //ModuleDisplayOrder
+		Level1,               // Level1
+		Level1DisplayOrder,   // Level1DisplayOrder
+		"",                   // Level2
+		0,                    // Level2DisplayOrder
+		"",                   // Level3
+		0,                    // Level3DisplayOrder
+		true,                 //AllowedFor_OKAPI
+		true,                 //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+	//*****************************
+	// Loyalty_Point_Expiry_Rules
+	//*****************************
+	Level1 = "Loyalty Point Expiry Rules"
+	Level1DisplayOrder = Level1DisplayOrder + 1
+	r = Route{
+		"HTTP_Loyalty_Point_Expiry_Rules",
+		"GET",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Point_Expiry_Rules/",
+		UC.HTTP_Loyalty_Point_Expiry_Rules,
+		true,
+		Level1 + " - Read", // DisplayName
+		DisplayOrder,       // DisplayOrder
+		Module,             // Module
+		ModuleDisplayOrder, //ModuleDisplayOrder
+		Level1,             // Level1
+		Level1DisplayOrder, // Level1DisplayOrder
+		"",                 // Level2
+		0,                  // Level2DisplayOrder
+		"",                 // Level3
+		0,                  // Level3DisplayOrder
+		true,               //AllowedFor_OKAPI
+		true,               //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+	r = Route{
+		"HTTP_Loyalty_Point_Expiry_Rules",
+		"POST",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Point_Expiry_Rules/",
+		UC.HTTP_Loyalty_Point_Expiry_Rules,
+		true,
+		Level1 + " - Add",  // DisplayName
+		DisplayOrder,       // DisplayOrder
+		Module,             // Module
+		ModuleDisplayOrder, //ModuleDisplayOrder
+		Level1,             // Level1
+		Level1DisplayOrder, // Level1DisplayOrder
+		"",                 // Level2
+		0,                  // Level2DisplayOrder
+		"",                 // Level3
+		0,                  // Level3DisplayOrder
+		true,               //AllowedFor_OKAPI
+		true,               //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+	r = Route{
+		"HTTP_Loyalty_Point_Expiry_Rules",
+		"PUT",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Point_Expiry_Rules/",
+		UC.HTTP_Loyalty_Point_Expiry_Rules,
+		true,
+		Level1 + " - Edit", // DisplayName
+		DisplayOrder,       // DisplayOrder
+		Module,             // Module
+		ModuleDisplayOrder, //ModuleDisplayOrder
+		Level1,             // Level1
+		Level1DisplayOrder, // Level1DisplayOrder
+		"",                 // Level2
+		0,                  // Level2DisplayOrder
+		"",                 // Level3
+		0,                  // Level3DisplayOrder
+		true,               //AllowedFor_OKAPI
+		true,               //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+	r = Route{
+		"HTTP_Loyalty_Point_Expiry_Rules",
+		"DELETE",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Point_Expiry_Rules/{KeyDelete}/",
+		UC.HTTP_Loyalty_Point_Expiry_Rules,
+		true,
+		Level1 + " - Delete", // DisplayName
+		DisplayOrder,         // DisplayOrder
+		Module,               // Module
+		ModuleDisplayOrder,   //ModuleDisplayOrder
+		Level1,               // Level1
+		Level1DisplayOrder,   // Level1DisplayOrder
+		"",                   // Level2
+		0,                    // Level2DisplayOrder
+		"",                   // Level3
+		0,                    // Level3DisplayOrder
+		true,                 //AllowedFor_OKAPI
+		true,                 //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+	//*****************************
+	// Loyalty_Point_Redemption_Rules
+	//*****************************
+	Level1 = "Loyalty Point Redemption Rules"
+	Level1DisplayOrder = Level1DisplayOrder + 1
+	r = Route{
+		"HTTP_Loyalty_Point_Redemption_Rules",
+		"GET",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Point_Redemption_Rules/",
+		UC.HTTP_Loyalty_Point_Redemption_Rules,
+		true,
+		Level1 + " - Read", // DisplayName
+		DisplayOrder,       // DisplayOrder
+		Module,             // Module
+		ModuleDisplayOrder, //ModuleDisplayOrder
+		Level1,             // Level1
+		Level1DisplayOrder, // Level1DisplayOrder
+		"",                 // Level2
+		0,                  // Level2DisplayOrder
+		"",                 // Level3
+		0,                  // Level3DisplayOrder
+		true,               //AllowedFor_OKAPI
+		true,               //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+	r = Route{
+		"HTTP_Loyalty_Point_Redemption_Rules",
+		"POST",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Point_Redemption_Rules/",
+		UC.HTTP_Loyalty_Point_Redemption_Rules,
+		true,
+		Level1 + " - Add",  // DisplayName
+		DisplayOrder,       // DisplayOrder
+		Module,             // Module
+		ModuleDisplayOrder, //ModuleDisplayOrder
+		Level1,             // Level1
+		Level1DisplayOrder, // Level1DisplayOrder
+		"",                 // Level2
+		0,                  // Level2DisplayOrder
+		"",                 // Level3
+		0,                  // Level3DisplayOrder
+		true,               //AllowedFor_OKAPI
+		true,               //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+	r = Route{
+		"HTTP_Loyalty_Point_Redemption_Rules",
+		"PUT",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Point_Redemption_Rules/",
+		UC.HTTP_Loyalty_Point_Redemption_Rules,
+		true,
+		Level1 + " - Edit", // DisplayName
+		DisplayOrder,       // DisplayOrder
+		Module,             // Module
+		ModuleDisplayOrder, //ModuleDisplayOrder
+		Level1,             // Level1
+		Level1DisplayOrder, // Level1DisplayOrder
+		"",                 // Level2
+		0,                  // Level2DisplayOrder
+		"",                 // Level3
+		0,                  // Level3DisplayOrder
+		true,               //AllowedFor_OKAPI
+		true,               //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+	r = Route{
+		"HTTP_Loyalty_Point_Redemption_Rules",
+		"DELETE",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Point_Redemption_Rules/{KeyDelete}/",
+		UC.HTTP_Loyalty_Point_Redemption_Rules,
+		true,
+		Level1 + " - Delete", // DisplayName
+		DisplayOrder,         // DisplayOrder
+		Module,               // Module
+		ModuleDisplayOrder,   //ModuleDisplayOrder
+		Level1,               // Level1
+		Level1DisplayOrder,   // Level1DisplayOrder
+		"",                   // Level2
+		0,                    // Level2DisplayOrder
+		"",                   // Level3
+		0,                    // Level3DisplayOrder
+		true,                 //AllowedFor_OKAPI
+		true,                 //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+	//*****************************
+	// Loyalty_Plan
+	//*****************************
+	Level1 = "Loyalty Plan"
+	Level1DisplayOrder = Level1DisplayOrder + 1
+	r = Route{
+		"HTTP_Loyalty_Plan",
+		"GET",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Plan/",
+		UC.HTTP_Loyalty_Plan,
+		true,
+		Level1 + " - Read", // DisplayName
+		DisplayOrder,       // DisplayOrder
+		Module,             // Module
+		ModuleDisplayOrder, //ModuleDisplayOrder
+		Level1,             // Level1
+		Level1DisplayOrder, // Level1DisplayOrder
+		"",                 // Level2
+		0,                  // Level2DisplayOrder
+		"",                 // Level3
+		0,                  // Level3DisplayOrder
+		true,               //AllowedFor_OKAPI
+		true,               //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+	r = Route{
+		"HTTP_Loyalty_Plan",
+		"POST",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Plan/",
+		UC.HTTP_Loyalty_Plan,
+		true,
+		Level1 + " - Add",  // DisplayName
+		DisplayOrder,       // DisplayOrder
+		Module,             // Module
+		ModuleDisplayOrder, //ModuleDisplayOrder
+		Level1,             // Level1
+		Level1DisplayOrder, // Level1DisplayOrder
+		"",                 // Level2
+		0,                  // Level2DisplayOrder
+		"",                 // Level3
+		0,                  // Level3DisplayOrder
+		true,               //AllowedFor_OKAPI
+		true,               //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+	r = Route{
+		"HTTP_Loyalty_Plan",
+		"PUT",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Plan/",
+		UC.HTTP_Loyalty_Plan,
+		true,
+		Level1 + " - Edit", // DisplayName
+		DisplayOrder,       // DisplayOrder
+		Module,             // Module
+		ModuleDisplayOrder, //ModuleDisplayOrder
+		Level1,             // Level1
+		Level1DisplayOrder, // Level1DisplayOrder
+		"",                 // Level2
+		0,                  // Level2DisplayOrder
+		"",                 // Level3
+		0,                  // Level3DisplayOrder
+		true,               //AllowedFor_OKAPI
+		true,               //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+	r = Route{
+		"HTTP_Loyalty_Plan",
+		"DELETE",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Plan/{KeyDelete}/",
+		UC.HTTP_Loyalty_Plan,
+		true,
+		Level1 + " - Delete", // DisplayName
+		DisplayOrder,         // DisplayOrder
+		Module,               // Module
+		ModuleDisplayOrder,   //ModuleDisplayOrder
+		Level1,               // Level1
+		Level1DisplayOrder,   // Level1DisplayOrder
+		"",                   // Level2
+		0,                    // Level2DisplayOrder
+		"",                   // Level3
+		0,                    // Level3DisplayOrder
+		true,                 //AllowedFor_OKAPI
+		true,                 //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+	//*****************************
+	// Loyalty_Plan
+	//*****************************
+	Level1 = "Customer Loyalty Account"
+	Level1DisplayOrder = Level1DisplayOrder + 1
+	r = Route{
+		"HTTP_Customer_Loyalty_Account",
+		"GET",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Customer_Loyalty_Account/",
+		UC.HTTP_Customer_Loyalty_Account,
+		true,
+		Level1 + " - Read", // DisplayName
+		DisplayOrder,       // DisplayOrder
+		Module,             // Module
+		ModuleDisplayOrder, //ModuleDisplayOrder
+		Level1,             // Level1
+		Level1DisplayOrder, // Level1DisplayOrder
+		"",                 // Level2
+		0,                  // Level2DisplayOrder
+		"",                 // Level3
+		0,                  // Level3DisplayOrder
+		true,               //AllowedFor_OKAPI
+		true,               //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+	r = Route{
+		"HTTP_Customer_Loyalty_Account",
+		"POST",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Customer_Loyalty_Account/",
+		UC.HTTP_Customer_Loyalty_Account,
+		true,
+		Level1 + " - Add",  // DisplayName
+		DisplayOrder,       // DisplayOrder
+		Module,             // Module
+		ModuleDisplayOrder, //ModuleDisplayOrder
+		Level1,             // Level1
+		Level1DisplayOrder, // Level1DisplayOrder
+		"",                 // Level2
+		0,                  // Level2DisplayOrder
+		"",                 // Level3
+		0,                  // Level3DisplayOrder
+		true,               //AllowedFor_OKAPI
+		true,               //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+	r = Route{
+		"HTTP_Customer_Loyalty_Account",
+		"PUT",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Customer_Loyalty_Account/",
+		UC.HTTP_Customer_Loyalty_Account,
+		true,
+		Level1 + " - Edit", // DisplayName
+		DisplayOrder,       // DisplayOrder
+		Module,             // Module
+		ModuleDisplayOrder, //ModuleDisplayOrder
+		Level1,             // Level1
+		Level1DisplayOrder, // Level1DisplayOrder
+		"",                 // Level2
+		0,                  // Level2DisplayOrder
+		"",                 // Level3
+		0,                  // Level3DisplayOrder
+		true,               //AllowedFor_OKAPI
+		true,               //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+	r = Route{
+		"HTTP_Customer_Loyalty_Account",
+		"DELETE",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Customer_Loyalty_Account/{KeyDelete}/",
+		UC.HTTP_Customer_Loyalty_Account,
+		true,
+		Level1 + " - Delete", // DisplayName
+		DisplayOrder,         // DisplayOrder
+		Module,               // Module
+		ModuleDisplayOrder,   //ModuleDisplayOrder
+		Level1,               // Level1
+		Level1DisplayOrder,   // Level1DisplayOrder
+		"",                   // Level2
+		0,                    // Level2DisplayOrder
+		"",                   // Level3
+		0,                    // Level3DisplayOrder
+		true,                 //AllowedFor_OKAPI
+		true,                 //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
 }

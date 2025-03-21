@@ -56,6 +56,7 @@ type Loyalty_Level struct {
 
 type Loyalty_Level_AddRequest struct {
 	Key                    string  `bson:"Key" json:"Key"`
+	Level_Id               int64   `bson:"Level_Id" json:"Level_Id"`
 	Description            string  `bson:"Description" json:"Description"`
 	Min_Accumulated_Points float64 `bson:"Min_Accumulated_Points" json:"Min_Accumulated_Points"` //will be used for upgrade
 	Max_Accumulated_Points float64 `bson:"Max_Accumulated_Points" json:"Max_Accumulated_Points"` //will be used for downgrade
@@ -82,6 +83,7 @@ type Loyalty_Account_Segment struct {
 
 type Loyalty_Account_Segment_AddRequest struct {
 	Key         string  `bson:"Key" json:"Key"`
+	Segment_Id  int64   `bson:"Segment_Id" json:"Segment_Id"`
 	Description string  `bson:"Description" json:"Description"`
 	Amount_From float64 `bson:"Amount_From" json:"Amount_From"`
 	Amount_Till float64 `bson:"Amount_Till" json:"Amount_Till"`
@@ -286,7 +288,8 @@ type Customer_Loyalty_Account struct {
 }
 
 type Customer_Loyalty_Account_AddRequest struct {
-	Key         string `bson:"Key" json:"Key"`                 //MSISDN
+	Key         string `bson:"Key" json:"Key"` //MSISDN
+	Customer_Id int64  `bson:"Customer_Id" json:"Customer_Id"`
 	EventSource string `bson:"EventSource" json:"EventSource"` //MSISDN
 }
 
