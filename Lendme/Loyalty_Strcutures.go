@@ -313,3 +313,9 @@ type Customer_Loyalty_Account_AwardRequest struct {
 	EventType   string  `bson:"EventType" json:"EventType"`     //BundlePurchase, MOC,...
 	Amount      float64 `bson:"Amount" json:"Amount"`
 }
+
+type Customer_Loyalty_Account_DeleteRequest struct {
+	Key         string `bson:"Key" json:"Key"` //MSISDN
+	Customer_Id int64  `bson:"Customer_Id" json:"Customer_Id"`
+	EventSource string `bson:"EventSource" json:"EventSource"` //MSISDN
+}
