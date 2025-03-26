@@ -8,9 +8,11 @@ var Configuration ConfigType
 
 type ConfigType struct {
 	//HttpOKAPIServicePort string
-	HttpAppServicePort        string
-	HttpAppLoyaltyServicePort string
-	OKAPIAllowedOrigins       []string
+	HttpAppServicePort           string
+	HttpAppLoyaltyServicePort    string
+	HttpAppLoyaltyManagementPort string
+	HttpAppLoyaltyFeedPort       string
+	OKAPIAllowedOrigins          []string
 
 	Operation       string
 	HostId          string
@@ -121,7 +123,9 @@ func GetDefaultConfiguration() (err error) {
 func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 	//Configuration.HttpOKAPIServicePort = "9291"
 	Configuration.HttpAppServicePort = "9290"
-	Configuration.HttpAppLoyaltyServicePort = "9280"
+	Configuration.HttpAppLoyaltyServicePort = "9280"    //for USSD and Mobile App
+	Configuration.HttpAppLoyaltyManagementPort = "9281" //for OKAPI
+	Configuration.HttpAppLoyaltyFeedPort = "9282"       //for IN & MM live feed
 
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:3000")
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:5173")
@@ -239,6 +243,8 @@ func setDefaultConfiguration_GM_Live() (Configuration ConfigType) {
 	//Configuration.HttpOKAPIServicePort = "9291"
 	Configuration.HttpAppServicePort = "9290"
 	Configuration.HttpAppLoyaltyServicePort = "9280"
+	Configuration.HttpAppLoyaltyManagementPort = "9281"
+	Configuration.HttpAppLoyaltyFeedPort = "9282"
 
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:3000")
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:5173")
@@ -344,6 +350,8 @@ func setDefaultConfiguration_SL_Live() (Configuration ConfigType) {
 	//Configuration.HttpOKAPIServicePort = "9291"
 	Configuration.HttpAppServicePort = "9290"
 	Configuration.HttpAppLoyaltyServicePort = "9280"
+	Configuration.HttpAppLoyaltyManagementPort = "9281"
+	Configuration.HttpAppLoyaltyFeedPort = "9282"
 
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:3000")
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:5173")

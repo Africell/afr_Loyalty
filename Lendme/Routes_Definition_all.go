@@ -347,7 +347,42 @@ func (UC *UserControl) Add_LendmeRoutes(R *Routes) {
 	DisplayOrder = DisplayOrder + 1
 }
 
-func (UC *UserControl) Add_LoyaltyRoutes(R *Routes) {
+func (UC *UserControl) Add_LoyaltyServiceRoutes(R *Routes) {
+	var r Route
+	var Module, Level1 string
+	var ModuleDisplayOrder int64
+	Module = Configuration.LoyaltyModule
+	ModuleDisplayOrder = 1
+	var Level1DisplayOrder int64
+	var DisplayOrder int64 = 1
+
+	Level1 = "Customer Loyalty Account"
+	Level1DisplayOrder = Level1DisplayOrder + 1
+	r = Route{
+		"HTTP_Customer_Loyalty_Account",
+		"GET",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Customer_Loyalty_Account/",
+		UC.HTTP_Customer_Loyalty_Account,
+		true,
+		Level1 + " - Read", // DisplayName
+		DisplayOrder,       // DisplayOrder
+		Module,             // Module
+		ModuleDisplayOrder, //ModuleDisplayOrder
+		Level1,             // Level1
+		Level1DisplayOrder, // Level1DisplayOrder
+		"",                 // Level2
+		0,                  // Level2DisplayOrder
+		"",                 // Level3
+		0,                  // Level3DisplayOrder
+		true,               //AllowedFor_OKAPI
+		true,               //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+}
+
+func (UC *UserControl) Add_LoyaltyManagementRoutes(R *Routes) {
 	var r Route
 	var Module, Level1 string
 	var ModuleDisplayOrder int64
@@ -1008,7 +1043,7 @@ func (UC *UserControl) Add_LoyaltyRoutes(R *Routes) {
 	DisplayOrder = DisplayOrder + 1
 
 	//*****************************
-	// Loyalty_Plan
+	// Customer_Loyalty_Account
 	//*****************************
 	Level1 = "Customer Loyalty Account"
 	Level1DisplayOrder = Level1DisplayOrder + 1
@@ -1099,6 +1134,16 @@ func (UC *UserControl) Add_LoyaltyRoutes(R *Routes) {
 	}
 	*R = append(*R, r)
 	DisplayOrder = DisplayOrder + 1
+}
+
+func (UC *UserControl) Add_LoyaltyFeedRoutes(R *Routes) {
+	var r Route
+	var Module, Level1 string
+	var ModuleDisplayOrder int64
+	Module = Configuration.LoyaltyModule
+	ModuleDisplayOrder = 1
+	var Level1DisplayOrder int64
+	var DisplayOrder int64 = 1
 
 	//*****************************
 	// Receive IN Live feed

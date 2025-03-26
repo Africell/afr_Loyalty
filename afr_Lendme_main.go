@@ -83,13 +83,30 @@ func (p *program) run() {
 		UserControl.InitializeLoyaltyCache()
 		UserControl.LoyaltyIndexesMaintenanceProcess()
 
-		//Loyalty web services
-		log.Println("Add Loyalty routers to the web service")
-		Loyalty_router := mux.NewRouter().StrictSlash(true)
-		UserControl.AddToLoyaltyRouter(Loyalty_router, UserControl)
+		//Loyalty service
+		log.Println("Add Loyalty service routers to the web service")
+		Loyalty_Service_router := mux.NewRouter().StrictSlash(true)
+		UserControl.AddToLoyaltyServiceRouter(Loyalty_Service_router, UserControl)
 		HttpLoyaltyServicePort := lendme.Configuration.HttpAppLoyaltyServicePort
-		log.Println("Loyalty WS listen and serve on port: " + HttpLoyaltyServicePort) //auc.Configuration.HttpServicePort
-		go http.ListenAndServe(":"+HttpLoyaltyServicePort, corsOpts.Handler(Loyalty_router))
+		log.Println("Loyalty service WS listen and serve on port: " + HttpLoyaltyServicePort) //auc.Configuration.HttpServicePort
+		go http.ListenAndServe(":"+HttpLoyaltyServicePort, corsOpts.Handler(Loyalty_Service_router))
+
+		//Loyalty management
+		log.Println("Add Loyalty management routers to the web service")
+		Loyalty_management_router := mux.NewRouter().StrictSlash(true)
+		UserControl.AddToLoyaltyManagementRouter(Loyalty_management_router, UserControl)
+		HttpLoyaltyManagementPort := lendme.Configuration.HttpAppLoyaltyManagementPort
+		log.Println("Loyalty management WS listen and serve on port: " + HttpLoyaltyManagementPort) //auc.Configuration.HttpServicePort
+		go http.ListenAndServe(":"+HttpLoyaltyManagementPort, corsOpts.Handler(Loyalty_management_router))
+
+		//Loyalty Feed
+		log.Println("Add Loyalty Feed routers to the web service")
+		Loyalty_Feed_router := mux.NewRouter().StrictSlash(true)
+		UserControl.AddToLoyaltyFeedRouter(Loyalty_Feed_router, UserControl)
+		HttpLoyaltyFeedPort := lendme.Configuration.HttpAppLoyaltyFeedPort
+		log.Println("Loyalty Feed WS listen and serve on port: " + HttpLoyaltyFeedPort) //auc.Configuration.HttpServicePort
+		go http.ListenAndServe(":"+HttpLoyaltyFeedPort, corsOpts.Handler(Loyalty_Feed_router))
+
 	}
 
 	//**Lendme web services
