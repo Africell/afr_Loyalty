@@ -249,29 +249,6 @@ func GetRequestIP(r *http.Request) (string, error) {
 	return "", fmt.Errorf("no valid ip found")
 }
 
-func GetDestinationPortFromRequest(r *http.Request) (port string, err error) {
-	//Get IP from the X-Original-Host header -- Behind our API Gateway
-	host := r.Header.Get("X-Original-Host")
-	if host != "" {
-		_, port, err = net.SplitHostPort(host)
-		if err == nil {
-			return
-		} else {
-			fmt.Println(err)
-			return "", fmt.Errorf("no valid destination port")
-		}
-	}
-
-	//Get IP from host -- Running locally
-	_, port, err = net.SplitHostPort(r.Host)
-	if err == nil {
-		return
-	} else {
-		fmt.Println(err)
-		return "", fmt.Errorf("no valid destination port")
-	}
-}
-
 // //////////////////////////////////////////////////////////////////////////////////////////////////////
 // //Hashing Functions///////////////////////////////////////////////////////////////////////////////////
 // //////////////////////////////////////////////////////////////////////////////////////////////////////

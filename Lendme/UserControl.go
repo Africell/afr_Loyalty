@@ -11,8 +11,8 @@ type UserControl struct {
 	LoyaltyMongoDB *daoc.MongoDB
 	CacheDir       *daoc.CacheRegistry
 	AppAUC         *AuthCenterClient.AUC
-	//OKAPIAUC *AuthCenterClient.AUC
-	IN *INClient.IN
+	OKAPIAUC       *AuthCenterClient.AUC
+	IN             *INClient.IN
 }
 
 func NewUserControl() *UserControl {
@@ -49,15 +49,15 @@ func NewUserControl() *UserControl {
 		Configuration.App_AUC.S2S_Username,
 		Configuration.App_AUC.S2S_Password,
 		Configuration.App_AUC.Timeout_After)
-	// OKAPI_AUCHostConfig := AuthCenterClient.InitHostConfig(Configuration.OKAPI_AUC.Protocol,
-	// 	Configuration.OKAPI_AUC.Hostname,
-	// 	Configuration.OKAPI_AUC.Port,
-	// 	Configuration.OKAPI_AUC.Module,
-	// 	Configuration.OKAPI_AUC.Version,
-	// 	"",
-	// 	Configuration.OKAPI_AUC.S2S_Username,
-	// 	Configuration.OKAPI_AUC.S2S_Password,
-	// 	Configuration.OKAPI_AUC.Timeout_After)
+	OKAPI_AUCHostConfig := AuthCenterClient.InitHostConfig(Configuration.OKAPI_AUC.Protocol,
+		Configuration.OKAPI_AUC.Hostname,
+		Configuration.OKAPI_AUC.Port,
+		Configuration.OKAPI_AUC.Module,
+		Configuration.OKAPI_AUC.Version,
+		"",
+		Configuration.OKAPI_AUC.S2S_Username,
+		Configuration.OKAPI_AUC.S2S_Password,
+		Configuration.OKAPI_AUC.Timeout_After)
 	INHostConfig := INClient.InitHostConfig(Configuration.IN.IP,
 		Configuration.IN.Port,
 		Configuration.IN.WS_SOAP_Endpoint,
@@ -78,9 +78,9 @@ func NewUserControl() *UserControl {
 		MongoDB:        daoc.NewMongoDBClient(MongoHostConfig),
 		LoyaltyMongoDB: daoc.NewMongoDBClient(LoyaltyMongoHostConfig),
 		AppAUC:         AuthCenterClient.NewAUCClient(App_AUCHostConfig),
-		//OKAPIAUC: AuthCenterClient.NewAUCClient(OKAPI_AUCHostConfig),
-		CacheDir: daoc.NewCacheRegistry(),
-		IN:       INClient.NewINClient(INHostConfig),
+		OKAPIAUC:       AuthCenterClient.NewAUCClient(OKAPI_AUCHostConfig),
+		CacheDir:       daoc.NewCacheRegistry(),
+		IN:             INClient.NewINClient(INHostConfig),
 	}
 	return UC
 }

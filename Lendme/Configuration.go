@@ -50,17 +50,17 @@ type ConfigType struct {
 		Timeout_After time.Duration
 	}
 
-	// OKAPI_AUC struct {
-	// 	Description   string
-	// 	Protocol      string
-	// 	Hostname      string
-	// 	Port          string
-	// 	Module        string
-	// 	Version       string
-	// 	S2S_Username  string
-	// 	S2S_Password  string
-	// 	Timeout_After time.Duration
-	// }
+	OKAPI_AUC struct {
+		Description   string
+		Protocol      string
+		Hostname      string
+		Port          string
+		Module        string
+		Version       string
+		S2S_Username  string
+		S2S_Password  string
+		Timeout_After time.Duration
+	}
 
 	MongoDB struct {
 		ReplicaSet string
@@ -122,7 +122,7 @@ func GetDefaultConfiguration() (err error) {
 
 func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 	//Configuration.HttpOKAPIServicePort = "9291"
-	Configuration.HttpAppServicePort = "9290"
+	Configuration.HttpAppServicePort = "9290"           //lendme services
 	Configuration.HttpAppLoyaltyServicePort = "9280"    //for USSD and Mobile App
 	Configuration.HttpAppLoyaltyManagementPort = "9281" //for OKAPI
 	Configuration.HttpAppLoyaltyFeedPort = "9282"       //for IN & MM live feed
@@ -164,15 +164,15 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 	Configuration.App_AUC.S2S_Password = "s@l$e$IrSW0$4"
 	Configuration.App_AUC.Timeout_After = 5 * time.Second
 
-	// Configuration.OKAPI_AUC.Description = "OKAPI AUC service"
-	// Configuration.OKAPI_AUC.Protocol = "https"
-	// Configuration.OKAPI_AUC.Hostname = "auc"
-	// Configuration.OKAPI_AUC.Port = "9001"
-	// Configuration.OKAPI_AUC.Module = "AUC"
-	// Configuration.OKAPI_AUC.Version = "V1"
-	// Configuration.OKAPI_AUC.S2S_Username = "SalesMonitoring_OKAPI"
-	// Configuration.OKAPI_AUC.S2S_Password = "s@le$P@s$W0$3"
-	// Configuration.OKAPI_AUC.Timeout_After = 5 * time.Second
+	Configuration.OKAPI_AUC.Description = "OKAPI AUC service"
+	Configuration.OKAPI_AUC.Protocol = "https"
+	Configuration.OKAPI_AUC.Hostname = "auc"
+	Configuration.OKAPI_AUC.Port = "9001"
+	Configuration.OKAPI_AUC.Module = "AUC"
+	Configuration.OKAPI_AUC.Version = "V1"
+	Configuration.OKAPI_AUC.S2S_Username = "SalesMonitoring_OKAPI"
+	Configuration.OKAPI_AUC.S2S_Password = "s@le$P@s$W0$3"
+	Configuration.OKAPI_AUC.Timeout_After = 5 * time.Second
 
 	//mongoDB
 	// Configuration.MongoDB.ReplicaSet = ""
@@ -283,15 +283,15 @@ func setDefaultConfiguration_GM_Live() (Configuration ConfigType) {
 	Configuration.App_AUC.S2S_Password = "s@l$e$IrSW0$4"
 	Configuration.App_AUC.Timeout_After = 5 * time.Second
 
-	// Configuration.OKAPI_AUC.Description = "OKAPI AUC service"
-	// Configuration.OKAPI_AUC.Protocol = "https"
-	// Configuration.OKAPI_AUC.Hostname = "auc"
-	// Configuration.OKAPI_AUC.Port = "9001"
-	// Configuration.OKAPI_AUC.Module = "AUC"
-	// Configuration.OKAPI_AUC.Version = "V1"
-	// Configuration.OKAPI_AUC.S2S_Username = "SalesMonitoring_OKAPI"
-	// Configuration.OKAPI_AUC.S2S_Password = "s@le$P@s$W0$3"
-	// Configuration.OKAPI_AUC.Timeout_After = 5 * time.Second
+	Configuration.OKAPI_AUC.Description = "OKAPI AUC service"
+	Configuration.OKAPI_AUC.Protocol = "https"
+	Configuration.OKAPI_AUC.Hostname = "auc"
+	Configuration.OKAPI_AUC.Port = "9001"
+	Configuration.OKAPI_AUC.Module = "AUC"
+	Configuration.OKAPI_AUC.Version = "V1"
+	Configuration.OKAPI_AUC.S2S_Username = "SalesMonitoring_OKAPI"
+	Configuration.OKAPI_AUC.S2S_Password = "s@le$P@s$W0$3"
+	Configuration.OKAPI_AUC.Timeout_After = 5 * time.Second
 
 	//mongoDB
 	Configuration.MongoDB.ReplicaSet = "reps01"
@@ -389,6 +389,16 @@ func setDefaultConfiguration_SL_Live() (Configuration ConfigType) {
 	Configuration.App_AUC.S2S_Username = "Lendme_Admin"
 	Configuration.App_AUC.S2S_Password = "s@l$e$IrSW0$4"
 	Configuration.App_AUC.Timeout_After = 5 * time.Second
+
+	Configuration.OKAPI_AUC.Description = "OKAPI AUC service"
+	Configuration.OKAPI_AUC.Protocol = "https"
+	Configuration.OKAPI_AUC.Hostname = "auc"
+	Configuration.OKAPI_AUC.Port = "9001"
+	Configuration.OKAPI_AUC.Module = "AUC"
+	Configuration.OKAPI_AUC.Version = "V1"
+	Configuration.OKAPI_AUC.S2S_Username = "SalesMonitoring_OKAPI"
+	Configuration.OKAPI_AUC.S2S_Password = "s@le$P@s$W0$3"
+	Configuration.OKAPI_AUC.Timeout_After = 5 * time.Second
 
 	//mongoDB
 	Configuration.MongoDB.ReplicaSet = "reps1"
