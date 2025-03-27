@@ -241,10 +241,10 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 
 func setDefaultConfiguration_GM_Live() (Configuration ConfigType) {
 	//Configuration.HttpOKAPIServicePort = "9291"
-	Configuration.HttpAppServicePort = "9290"
-	Configuration.HttpAppLoyaltyServicePort = "9280"
-	Configuration.HttpAppLoyaltyManagementPort = "9281"
-	Configuration.HttpAppLoyaltyFeedPort = "9282"
+	Configuration.HttpAppServicePort = "9290"           //lendme services
+	Configuration.HttpAppLoyaltyServicePort = "9280"    //for USSD and Mobile App
+	Configuration.HttpAppLoyaltyManagementPort = "9281" //for OKAPI
+	Configuration.HttpAppLoyaltyFeedPort = "9282"       //for IN & MM live feed
 
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:3000")
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:5173")
@@ -348,10 +348,10 @@ func setDefaultConfiguration_GM_Live() (Configuration ConfigType) {
 
 func setDefaultConfiguration_SL_Live() (Configuration ConfigType) {
 	//Configuration.HttpOKAPIServicePort = "9291"
-	Configuration.HttpAppServicePort = "9290"
-	Configuration.HttpAppLoyaltyServicePort = "9280"
-	Configuration.HttpAppLoyaltyManagementPort = "9281"
-	Configuration.HttpAppLoyaltyFeedPort = "9282"
+	Configuration.HttpAppServicePort = "9290"           //lendme services
+	Configuration.HttpAppLoyaltyServicePort = "9280"    //for USSD and Mobile App
+	Configuration.HttpAppLoyaltyManagementPort = "9281" //for OKAPI
+	Configuration.HttpAppLoyaltyFeedPort = "9282"       //for IN & MM live feed
 
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:3000")
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:5173")
@@ -391,13 +391,13 @@ func setDefaultConfiguration_SL_Live() (Configuration ConfigType) {
 	Configuration.App_AUC.Timeout_After = 5 * time.Second
 
 	Configuration.OKAPI_AUC.Description = "OKAPI AUC service"
-	Configuration.OKAPI_AUC.Protocol = "https"
-	Configuration.OKAPI_AUC.Hostname = "auc"
+	Configuration.OKAPI_AUC.Protocol = "http"
+	Configuration.OKAPI_AUC.Hostname = "10.10.234.56"
 	Configuration.OKAPI_AUC.Port = "9001"
 	Configuration.OKAPI_AUC.Module = "AUC"
 	Configuration.OKAPI_AUC.Version = "V1"
-	Configuration.OKAPI_AUC.S2S_Username = "SalesMonitoring_OKAPI"
-	Configuration.OKAPI_AUC.S2S_Password = "s@le$P@s$W0$3"
+	Configuration.OKAPI_AUC.S2S_Username = "Loyalty_OKAPI"
+	Configuration.OKAPI_AUC.S2S_Password = "]W8#x3D1USKUyH@p]s&D_"
 	Configuration.OKAPI_AUC.Timeout_After = 5 * time.Second
 
 	//mongoDB

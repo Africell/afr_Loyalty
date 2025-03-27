@@ -207,7 +207,7 @@ func (Uc *UserControl) AddToLoyaltyManagementRouter(router *mux.Router, UC *User
 
 	Uc.Add_LoyaltyManagementRoutes(&routes)
 
-	accessEntries, err := Uc.AppAUC.AUCClient.ReadAccessEntries("")
+	accessEntries, err := Uc.OKAPIAUC.AUCClient.ReadAccessEntries("")
 	if err != nil {
 		log.Fatalln("Error Reading Existing Access Entries from AUC !!!")
 	}
@@ -256,7 +256,7 @@ func (Uc *UserControl) AddToLoyaltyManagementRouter(router *mux.Router, UC *User
 					AccessKeyDescription = strings.Replace(AccessKeyDescription, "_", " ", -1)
 					accessEntry.AccessKeyDescription = AccessKeyDescription
 					//Insert into Cache
-					_, err := Uc.AppAUC.AUCClient.CreateAccessEntries(accessEntry)
+					_, err := Uc.OKAPIAUC.AUCClient.CreateAccessEntries(accessEntry)
 					if err == nil {
 						log.Println("Created Access Entry: ", accessEntry.Key)
 					} else {
