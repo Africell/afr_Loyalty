@@ -2458,7 +2458,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_Add(Login string, request Custom
 	NewEntry.Loyalty_Level_Key = Loyalty_Level_Selection(0)
 	NewEntry.Loyalty_Level_Date = time.Now()
 	NewEntry.Loyalty_Level_Direction = ""
-	NewEntry.Loyalty_Level_SetBy = "program" //program or admin, if admin program cannot change anymore
+	NewEntry.Loyalty_Level_SetBy = Login //program or admin, if admin program cannot change anymore
 
 	subscriber_na, subexist := Map_Subscribers.CheckThenGet(request.Key)
 	if subexist {
@@ -2467,33 +2467,35 @@ func (Uc *UserControl) Customer_Loyalty_Account_Add(Login string, request Custom
 			NewEntry.Loyalty_Account_Segment_Key = Loyalty_Account_Segment_Selection(request.ARPU, request.Joining_Date)
 			NewEntry.Loyalty_Account_Segment_Date = time.Now()
 			NewEntry.Loyalty_Account_Segment_Direction = ""
-			NewEntry.Loyalty_Account_Segment_SetBy = "program"
+			NewEntry.Loyalty_Account_Segment_SetBy = Login
 		} else {
 			NewEntry.Loyalty_Account_Segment_Key = Loyalty_Account_Segment_Selection(subscriber.ARPU, subscriber.FirstUse_date)
 			NewEntry.Loyalty_Account_Segment_Date = time.Now()
 			NewEntry.Loyalty_Account_Segment_Direction = ""
-			NewEntry.Loyalty_Account_Segment_SetBy = "program"
+			NewEntry.Loyalty_Account_Segment_SetBy = Login
 		}
 	} else {
 		NewEntry.Loyalty_Account_Segment_Key = Loyalty_Account_Segment_Selection(request.ARPU, request.Joining_Date)
 		NewEntry.Loyalty_Account_Segment_Date = time.Now()
 		NewEntry.Loyalty_Account_Segment_Direction = ""
-		NewEntry.Loyalty_Account_Segment_SetBy = "program"
+		NewEntry.Loyalty_Account_Segment_SetBy = Login
 	}
 	NewEntry.LoyaltyPointsDetail = make(map[string]Loyalty_Points_Detail)
 
 	//add to cache and DB
 	Map_Customer_Loyalty_Account.Put(NewEntry.Key, NewEntry)
-	//add logs --> off to avoid filling up logs
-	// Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
-	// 	Event_User:         Login,
-	// 	Event_Time:         time.Now(),
-	// 	Event_AffectedType: "Customer_Loyalty_Account",
-	// 	Event_ActionType:   "Add",
-	// 	Event_Description:  "",
-	// 	Event_Entry_Before: nil,
-	// 	Event_Entry_After:  NewEntry,
-	// })
+	//add logs
+	if Login != "DWH_Import" && Login != "INLiveFeed" { //--> off to avoid filling up logs
+		Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
+			Event_User:         Login,
+			Event_Time:         time.Now(),
+			Event_AffectedType: "Customer_Loyalty_Account",
+			Event_ActionType:   "Add",
+			Event_Description:  "",
+			Event_Entry_Before: nil,
+			Event_Entry_After:  NewEntry,
+		})
+	}
 	Uc.Customer_Loyalty_Account_AwardPoints(Login, Customer_Loyalty_Account_AwardRequest{
 		MSISDN:      NewEntry.Key,
 		EventSource: request.EventSource,
@@ -2522,6 +2524,13 @@ func (Uc *UserControl) Customer_Loyalty_Account_Edit(Login string, request Custo
 		return Id, errors.New("id is not matching")
 	}
 	Current_Entry := entry
+	//check exclusion list
+	exists_exclusion := Map_Customer_Exclusion.Check(request.Key)
+	if exists_exclusion {
+		Uc.Customer_Loyalty_Account_Delete("Program", request.Key)
+		err = errors.New("customer is included in the exclusion list")
+		return Id, err
+	}
 	//Prepare new entry
 	entry.Key = request.Key
 	if entry.Loyalty_Level_Key != request.Loyalty_Level_Key {
@@ -2529,6 +2538,25 @@ func (Uc *UserControl) Customer_Loyalty_Account_Edit(Login string, request Custo
 		entry.Loyalty_Level_Date = time.Now()
 		//entry.Loyalty_Level_Direction =
 		entry.Loyalty_Level_SetBy = Login
+	}
+	if entry.COS != request.COS {
+		//check COS exclusion list
+		exists_exclusion_cos := Map_Customer_COS_Exclusion.Check(request.COS)
+		if exists_exclusion_cos {
+			Uc.Customer_Loyalty_Account_Delete("Program", request.Key)
+			err = errors.New("customer is included in the cos exclusion list")
+			return Id, err
+		}
+		entry.COS = request.COS
+	}
+	entry.ARPU = request.ARPU
+	entry.Joining_Date = request.Joining_Date
+	Loyalty_Account_Segment_Key := Loyalty_Account_Segment_Selection(request.ARPU, request.Joining_Date)
+	if Loyalty_Account_Segment_Key != entry.Loyalty_Account_Segment_Key {
+		entry.Loyalty_Account_Segment_Key = Loyalty_Account_Segment_Key
+		entry.Loyalty_Account_Segment_Date = time.Now()
+		entry.Loyalty_Account_Segment_Direction = ""
+		entry.Loyalty_Account_Segment_SetBy = Login
 	}
 	if request.NewKey != "" {
 		if request.NewKey != request.Key {
@@ -2538,30 +2566,21 @@ func (Uc *UserControl) Customer_Loyalty_Account_Edit(Login string, request Custo
 			entry.Key = request.NewKey
 		}
 	}
-	entry.COS = request.COS
-	entry.ARPU = request.ARPU
-	entry.Joining_Date = request.Joining_Date
-
-	Loyalty_Account_Segment_Key := Loyalty_Account_Segment_Selection(request.ARPU, request.Joining_Date)
-	if Loyalty_Account_Segment_Key != entry.Loyalty_Account_Segment_Key {
-		entry.Loyalty_Account_Segment_Key = Loyalty_Account_Segment_Key
-		entry.Loyalty_Account_Segment_Date = time.Now()
-		entry.Loyalty_Account_Segment_Direction = ""
-		entry.Loyalty_Account_Segment_SetBy = "program"
-	}
 
 	//add to cache and DB
 	Map_Customer_Loyalty_Account.Put(entry.Key, entry)
 	//add logs
-	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
-		Event_User:         Login,
-		Event_Time:         time.Now(),
-		Event_AffectedType: "Customer_Loyalty_Account",
-		Event_ActionType:   "Edit",
-		Event_Description:  "",
-		Event_Entry_Before: Current_Entry,
-		Event_Entry_After:  entry,
-	})
+	if Login != "DWH_Import" { // --> off to avoid filling up logs
+		Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
+			Event_User:         Login,
+			Event_Time:         time.Now(),
+			Event_AffectedType: "Customer_Loyalty_Account",
+			Event_ActionType:   "Edit",
+			Event_Description:  "",
+			Event_Entry_Before: Current_Entry,
+			Event_Entry_After:  entry,
+		})
+	}
 	return Id, nil
 }
 

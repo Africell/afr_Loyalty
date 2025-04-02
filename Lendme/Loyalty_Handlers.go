@@ -2045,7 +2045,7 @@ func (Uc *UserControl) HTTP_INLiveFeed_NewJoining(w http.ResponseWriter, r *http
 			Uc.HTTP_API_Standard_response(w, r, sr, false)
 			return
 		}
-		Id, err := Uc.Customer_Loyalty_Account_Add(sr.Login, request)
+		Id, err := Uc.Customer_Loyalty_Account_Add("INLiveFeed", request)
 		if err != nil {
 			sr.Status = "failed"
 			sr.StatusCode = http.StatusBadRequest
