@@ -2460,25 +2460,32 @@ func (Uc *UserControl) Customer_Loyalty_Account_Add(Login string, request Custom
 	NewEntry.Loyalty_Level_Direction = ""
 	NewEntry.Loyalty_Level_SetBy = Login //program or admin, if admin program cannot change anymore
 
-	subscriber_na, subexist := Map_Subscribers.CheckThenGet(request.Key)
-	if subexist {
-		subscriber, ok := subscriber_na.(Subscriber)
-		if !ok {
-			NewEntry.Loyalty_Account_Segment_Key = Loyalty_Account_Segment_Selection(request.ARPU, request.Joining_Date)
-			NewEntry.Loyalty_Account_Segment_Date = time.Now()
-			NewEntry.Loyalty_Account_Segment_Direction = ""
-			NewEntry.Loyalty_Account_Segment_SetBy = Login
-		} else {
-			NewEntry.Loyalty_Account_Segment_Key = Loyalty_Account_Segment_Selection(subscriber.ARPU, subscriber.FirstUse_date)
-			NewEntry.Loyalty_Account_Segment_Date = time.Now()
-			NewEntry.Loyalty_Account_Segment_Direction = ""
-			NewEntry.Loyalty_Account_Segment_SetBy = Login
-		}
-	} else {
+	if Login != "DWH_Import" {
 		NewEntry.Loyalty_Account_Segment_Key = Loyalty_Account_Segment_Selection(request.ARPU, request.Joining_Date)
 		NewEntry.Loyalty_Account_Segment_Date = time.Now()
 		NewEntry.Loyalty_Account_Segment_Direction = ""
 		NewEntry.Loyalty_Account_Segment_SetBy = Login
+	} else {
+		subscriber_na, subexist := Map_Subscribers.CheckThenGet(request.Key)
+		if subexist {
+			subscriber, ok := subscriber_na.(Subscriber)
+			if !ok {
+				NewEntry.Loyalty_Account_Segment_Key = Loyalty_Account_Segment_Selection(request.ARPU, request.Joining_Date)
+				NewEntry.Loyalty_Account_Segment_Date = time.Now()
+				NewEntry.Loyalty_Account_Segment_Direction = ""
+				NewEntry.Loyalty_Account_Segment_SetBy = Login
+			} else {
+				NewEntry.Loyalty_Account_Segment_Key = Loyalty_Account_Segment_Selection(subscriber.ARPU, subscriber.FirstUse_date)
+				NewEntry.Loyalty_Account_Segment_Date = time.Now()
+				NewEntry.Loyalty_Account_Segment_Direction = ""
+				NewEntry.Loyalty_Account_Segment_SetBy = Login
+			}
+		} else {
+			NewEntry.Loyalty_Account_Segment_Key = Loyalty_Account_Segment_Selection(request.ARPU, request.Joining_Date)
+			NewEntry.Loyalty_Account_Segment_Date = time.Now()
+			NewEntry.Loyalty_Account_Segment_Direction = ""
+			NewEntry.Loyalty_Account_Segment_SetBy = Login
+		}
 	}
 	NewEntry.LoyaltyPointsDetail = make(map[string]Loyalty_Points_Detail)
 
@@ -2549,14 +2556,47 @@ func (Uc *UserControl) Customer_Loyalty_Account_Edit(Login string, request Custo
 		}
 		entry.COS = request.COS
 	}
-	entry.ARPU = request.ARPU
-	entry.Joining_Date = request.Joining_Date
-	Loyalty_Account_Segment_Key := Loyalty_Account_Segment_Selection(request.ARPU, request.Joining_Date)
-	if Loyalty_Account_Segment_Key != entry.Loyalty_Account_Segment_Key {
-		entry.Loyalty_Account_Segment_Key = Loyalty_Account_Segment_Key
-		entry.Loyalty_Account_Segment_Date = time.Now()
-		entry.Loyalty_Account_Segment_Direction = ""
-		entry.Loyalty_Account_Segment_SetBy = Login
+
+	if Login != "DWH_Import" {
+		entry.ARPU = request.ARPU
+		entry.Joining_Date = request.Joining_Date
+		Loyalty_Account_Segment_Key := Loyalty_Account_Segment_Selection(request.ARPU, request.Joining_Date)
+		if Loyalty_Account_Segment_Key != entry.Loyalty_Account_Segment_Key {
+			entry.Loyalty_Account_Segment_Key = Loyalty_Account_Segment_Key
+			entry.Loyalty_Account_Segment_Date = time.Now()
+			entry.Loyalty_Account_Segment_Direction = ""
+			entry.Loyalty_Account_Segment_SetBy = Login
+		}
+	} else {
+		subscriber_na, subexist := Map_Subscribers.CheckThenGet(request.Key)
+		if subexist {
+			subscriber, ok := subscriber_na.(Subscriber)
+			if !ok {
+				Loyalty_Account_Segment_Key := Loyalty_Account_Segment_Selection(request.ARPU, request.Joining_Date)
+				if Loyalty_Account_Segment_Key != entry.Loyalty_Account_Segment_Key {
+					entry.Loyalty_Account_Segment_Key = Loyalty_Account_Segment_Key
+					entry.Loyalty_Account_Segment_Date = time.Now()
+					entry.Loyalty_Account_Segment_Direction = ""
+					entry.Loyalty_Account_Segment_SetBy = Login
+				}
+			} else {
+				Loyalty_Account_Segment_Key := Loyalty_Account_Segment_Selection(subscriber.ARPU, subscriber.FirstUse_date)
+				if Loyalty_Account_Segment_Key != entry.Loyalty_Account_Segment_Key {
+					entry.Loyalty_Account_Segment_Key = Loyalty_Account_Segment_Key
+					entry.Loyalty_Account_Segment_Date = time.Now()
+					entry.Loyalty_Account_Segment_Direction = ""
+					entry.Loyalty_Account_Segment_SetBy = Login
+				}
+			}
+		} else {
+			Loyalty_Account_Segment_Key := Loyalty_Account_Segment_Selection(request.ARPU, request.Joining_Date)
+			if Loyalty_Account_Segment_Key != entry.Loyalty_Account_Segment_Key {
+				entry.Loyalty_Account_Segment_Key = Loyalty_Account_Segment_Key
+				entry.Loyalty_Account_Segment_Date = time.Now()
+				entry.Loyalty_Account_Segment_Direction = ""
+				entry.Loyalty_Account_Segment_SetBy = Login
+			}
+		}
 	}
 	if request.NewKey != "" {
 		if request.NewKey != request.Key {

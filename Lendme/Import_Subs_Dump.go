@@ -219,16 +219,6 @@ func (Uc *UserControl) Subscriber_Update(request Sub_Update_Request) {
 			ARPU:              subscriber.ARPU,
 			Joining_Date:      subscriber.FirstUse_date,
 		})
-
-		loyalty_account.Loyalty_Account_Segment_Key = Loyalty_Account_Segment_Selection(subscriber.ARPU, subscriber.FirstUse_date)
-		loyalty_account.Loyalty_Account_Segment_Date = time.Now()
-		loyalty_account.Loyalty_Account_Segment_Direction = ""
-		loyalty_account.Loyalty_Account_Segment_SetBy = "DWH_Import"
-		loyalty_account.COS = subscriber.COS
-		loyalty_account.ARPU = subscriber.ARPU
-		loyalty_account.Joining_Date = subscriber.FirstUse_date
-
-		Map_Customer_Loyalty_Account.Put(loyalty_account.Key, loyalty_account)
 	}
 	<-chan_SubQueueExecution_controler
 }
