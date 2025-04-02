@@ -320,3 +320,91 @@ type Customer_Loyalty_Account_DeleteRequest struct {
 	Customer_Id int64  `bson:"Customer_Id" json:"Customer_Id"`
 	EventSource string `bson:"EventSource" json:"EventSource"` //MSISDN
 }
+
+type Customer_UAT struct {
+	Key       string    `bson:"Key" json:"Key"` //Key is the MSISDN
+	Id        int64     `bson:"Id" json:"Id"`
+	AddTime   time.Time `bson:"AddTime" json:"AddTime"`
+	AddReason string    `bson:"AddReason" json:"AddReason"`
+}
+
+type Customer_UAT_AddRequest struct {
+	Key       string    `bson:"Key" json:"Key"` //Key is the MSISDN
+	Id        int64     `bson:"Id" json:"Id"`
+	AddTime   time.Time `bson:"AddTime" json:"AddTime"`
+	AddReason string    `bson:"AddReason" json:"AddReason"`
+}
+
+type Customer_UAT_EditRequest struct {
+	Key       string    `bson:"Key" json:"Key"` //Key is the MSISDN
+	NewKey    string    `bson:"NewKey" json:"NewKey"`
+	Id        int64     `bson:"Id" json:"Id"`
+	AddTime   time.Time `bson:"AddTime" json:"AddTime"`
+	AddReason string    `bson:"AddReason" json:"AddReason"`
+}
+
+type Customer_DND struct {
+	Key       string    `bson:"Key" json:"Key"` //Key is the MSISDN
+	Id        int64     `bson:"Id" json:"Id"`
+	AddTime   time.Time `bson:"AddTime" json:"AddTime"`
+	AddReason string    `bson:"AddReason" json:"AddReason"`
+}
+
+type Customer_DND_AddRequest struct {
+	Key       string    `bson:"Key" json:"Key"` //Key is the MSISDN
+	Id        int64     `bson:"Id" json:"Id"`
+	AddTime   time.Time `bson:"AddTime" json:"AddTime"`
+	AddReason string    `bson:"AddReason" json:"AddReason"`
+}
+
+type Customer_DND_EditRequest struct {
+	Key       string    `bson:"Key" json:"Key"` //Key is the MSISDN
+	NewKey    string    `bson:"NewKey" json:"NewKey"`
+	Id        int64     `bson:"Id" json:"Id"`
+	AddTime   time.Time `bson:"AddTime" json:"AddTime"`
+	AddReason string    `bson:"AddReason" json:"AddReason"`
+}
+
+type Customer_Exclusion struct {
+	Key       string    `bson:"Key" json:"Key"` //Key is the MSISDN
+	Id        int64     `bson:"Id" json:"Id"`
+	AddTime   time.Time `bson:"AddTime" json:"AddTime"`
+	AddReason string    `bson:"AddReason" json:"AddReason"`
+}
+
+type Customer_Exclusion_AddRequest struct {
+	Key       string    `bson:"Key" json:"Key"` //Key is the MSISDN
+	Id        int64     `bson:"Id" json:"Id"`
+	AddTime   time.Time `bson:"AddTime" json:"AddTime"`
+	AddReason string    `bson:"AddReason" json:"AddReason"`
+}
+
+type Customer_Exclusion_EditRequest struct {
+	Key       string    `bson:"Key" json:"Key"` //Key is the MSISDN
+	NewKey    string    `bson:"NewKey" json:"NewKey"`
+	Id        int64     `bson:"Id" json:"Id"`
+	AddTime   time.Time `bson:"AddTime" json:"AddTime"`
+	AddReason string    `bson:"AddReason" json:"AddReason"`
+}
+
+type Customer_COS_Exclusion struct {
+	Key       string    `bson:"Key" json:"Key"` //Key is the COS Id
+	Id        int64     `bson:"Id" json:"Id"`
+	AddTime   time.Time `bson:"AddTime" json:"AddTime"`
+	AddReason string    `bson:"AddReason" json:"AddReason"`
+}
+
+type Customer_COS_Exclusion_AddRequest struct {
+	Key       string    `bson:"Key" json:"Key"` //Key is the COS Id
+	Id        int64     `bson:"Id" json:"Id"`
+	AddTime   time.Time `bson:"AddTime" json:"AddTime"`
+	AddReason string    `bson:"AddReason" json:"AddReason"`
+}
+
+type Customer_COS_Exclusion_EditRequest struct {
+	Key       string    `bson:"Key" json:"Key"` //Key is the COS Id
+	NewKey    string    `bson:"NewKey" json:"NewKey"`
+	Id        int64     `bson:"Id" json:"Id"`
+	AddTime   time.Time `bson:"AddTime" json:"AddTime"`
+	AddReason string    `bson:"AddReason" json:"AddReason"`
+}

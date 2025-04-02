@@ -35,6 +35,18 @@ var DAO_Loyalty_Plan daoc.DAO
 var Map_Customer_Loyalty_Account daoc.Cache_Synch
 var DAO_Customer_Loyalty_Account daoc.DAO
 
+var Map_Customer_DND daoc.Cache_Synch
+var DAO_Customer_DND daoc.DAO
+
+var Map_Customer_Exclusion daoc.Cache_Synch
+var DAO_Customer_Exclusion daoc.DAO
+
+var Map_Customer_COS_Exclusion daoc.Cache_Synch
+var DAO_Customer_COS_Exclusion daoc.DAO
+
+var Map_Customer_UAT daoc.Cache_Synch
+var DAO_Customer_UAT daoc.DAO
+
 var DAO_Loyalty_Event_Log daoc.DAO
 
 var chan_LoyaltyGovernanceAvailable_Debit_Controler = make(chan int, 1)
@@ -60,6 +72,15 @@ func (uc *UserControl) InitializeLoyaltyCache() {
 	Map_Loyalty_Plan.Initialize("Loyalty_Plan", "Loyalty_Plan", reflect.TypeOf(Loyalty_Plan{}), loyalty_Plan, true, &DAO_Loyalty_Plan, uc.CacheDir.List)
 	var customer_Loyalty_Account Customer_Loyalty_Account
 	Map_Customer_Loyalty_Account.Initialize("Customer_Loyalty_Account", "Customer_Loyalty_Account", reflect.TypeOf(Customer_Loyalty_Account{}), customer_Loyalty_Account, true, &DAO_Customer_Loyalty_Account, uc.CacheDir.List)
+	var customer_DND Customer_DND
+	Map_Customer_DND.Initialize("Customer_DND", "Customer_DND", reflect.TypeOf(Customer_DND{}), customer_DND, true, &DAO_Customer_DND, uc.CacheDir.List)
+	var customer_Exclusion Customer_Exclusion
+	Map_Customer_Exclusion.Initialize("Customer_Exclusion", "Customer_Exclusion", reflect.TypeOf(Customer_Exclusion{}), customer_Exclusion, true, &DAO_Customer_Exclusion, uc.CacheDir.List)
+	var customer_COS_Exclusion Customer_COS_Exclusion
+	Map_Customer_COS_Exclusion.Initialize("Customer_COS_Exclusion", "Customer_COS_Exclusion", reflect.TypeOf(Customer_COS_Exclusion{}), customer_COS_Exclusion, true, &DAO_Customer_COS_Exclusion, uc.CacheDir.List)
+	var customer_UAT Customer_UAT
+	Map_Customer_UAT.Initialize("Customer_UAT", "Customer_UAT", reflect.TypeOf(Customer_UAT{}), customer_UAT, true, &DAO_Customer_UAT, uc.CacheDir.List)
+
 }
 
 func (uc *UserControl) InitializeLoyaltyDAO() {
@@ -73,6 +94,10 @@ func (uc *UserControl) InitializeLoyaltyDAO() {
 	DAO_Loyalty_Plan.Initialize("Loyalty_Plan", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Plan{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Plan", "")
 	DAO_Customer_Loyalty_Account.Initialize("Customer_Loyalty_Account", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Customer_Loyalty_Account{}), Configuration.DB_Name_Loyalty, "Col_Customer_Loyalty_Account", "")
 	DAO_Loyalty_Event_Log.Initialize("Loyalty_Event_Log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Event_Log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Event_Log", "")
+	DAO_Customer_DND.Initialize("Customer_DND", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Customer_DND{}), Configuration.DB_Name_Loyalty, "Col_Customer_DND", "")
+	DAO_Customer_Exclusion.Initialize("Customer_Exclusion", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Customer_Exclusion{}), Configuration.DB_Name_Loyalty, "Col_Customer_Exclusion", "")
+	DAO_Customer_COS_Exclusion.Initialize("Customer_COS_Exclusion", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Customer_COS_Exclusion{}), Configuration.DB_Name_Loyalty, "Col_Customer_COS_Exclusion", "")
+	DAO_Customer_UAT.Initialize("Customer_UAT", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Customer_UAT{}), Configuration.DB_Name_Loyalty, "Col_Customer_UAT", "")
 }
 
 func (uc *UserControl) LoyaltyIndexesMaintenanceProcess() {
@@ -158,6 +183,41 @@ func (uc *UserControl) LoyaltyIndexesMaintenanceProcess() {
 		}
 	}
 
+	exists, err = DAO_Customer_DND.CheckAndCreateIndex("Idx_Customer_DND_Key", []string{"Key"}, true)
+	if err != nil {
+		log.Println("Error creating index Idx_Customer_DND_Key: ", err)
+	} else {
+		if !exists {
+			log.Println("Index Idx_Customer_DND_Key created")
+		}
+	}
+
+	exists, err = DAO_Customer_Exclusion.CheckAndCreateIndex("Idx_Customer_Exclusion_Key", []string{"Key"}, true)
+	if err != nil {
+		log.Println("Error creating index Idx_Customer_Exclusion_Key: ", err)
+	} else {
+		if !exists {
+			log.Println("Index Idx_Customer_Exclusion_Key created")
+		}
+	}
+
+	exists, err = DAO_Customer_COS_Exclusion.CheckAndCreateIndex("Idx_Customer_COS_Exclusion_Key", []string{"Key"}, true)
+	if err != nil {
+		log.Println("Error creating index Idx_Customer_COS_Exclusion_Key: ", err)
+	} else {
+		if !exists {
+			log.Println("Index Idx_Customer_COS_Exclusion_Key created")
+		}
+	}
+
+	exists, err = DAO_Customer_UAT.CheckAndCreateIndex("Idx_Customer_UAT_Key", []string{"Key"}, true)
+	if err != nil {
+		log.Println("Error creating index Idx_Customer_UAT_Key: ", err)
+	} else {
+		if !exists {
+			log.Println("Index Idx_Customer_UAT_Key created")
+		}
+	}
 }
 
 func (Uc *UserControl) Write_Loyalty_Event_Log(record Loyalty_Event_Log) {
@@ -1578,6 +1638,774 @@ func (Uc *UserControl) Loyalty_Plan_Delete(Login, Key string) (err error) {
 		Event_User:         Login,
 		Event_Time:         time.Now(),
 		Event_AffectedType: "Loyalty_Plan",
+		Event_ActionType:   "Delete",
+		Event_Description:  "",
+		Event_Entry_Before: nil,
+		Event_Entry_After:  entry,
+	})
+	return nil
+}
+
+// ***********************************************************************
+// Customer UAT functions
+// ***********************************************************************
+func (Uc *UserControl) Customer_UAT_Add(Login string, request Customer_UAT_AddRequest) (Id int64, err error) {
+	//check key if filled and if already used
+	if request.Key == "" {
+		err = errors.New("key cannot be empty")
+		return Id, err
+	}
+	//check if key already used
+	exits := Map_Customer_UAT.Check(request.Key)
+	if exits {
+		err = errors.New("key already exist")
+		return Id, err
+	}
+	//Prepare new entry
+	var NewEntry Customer_UAT
+	NewEntry.Id = Map_Loyalty_AutoIncrement.GetNextAI("Customer_UAT-Id")
+	Id = NewEntry.Id
+	NewEntry.Key = request.Key
+	NewEntry.AddTime = time.Now()
+	NewEntry.AddReason = request.AddReason
+	//add to cache and DB
+	Map_Customer_UAT.Put(NewEntry.Key, NewEntry)
+	//add logs
+	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
+		Event_User:         Login,
+		Event_Time:         time.Now(),
+		Event_AffectedType: "Customer_UAT",
+		Event_ActionType:   "Add",
+		Event_Description:  "",
+		Event_Entry_Before: nil,
+		Event_Entry_After:  NewEntry,
+	})
+	return Id, nil
+}
+
+func (Uc *UserControl) Customer_UAT_Edit(Login string, request Customer_UAT_EditRequest) (Id int64, err error) {
+	//check and validate
+	if request.Key == "" {
+		err = errors.New("key cannot be empty")
+		return Id, err
+	}
+	entry_na, exits := Map_Customer_UAT.CheckThenGet(request.Key)
+	if !exits {
+		err = errors.New("key is not created")
+		return Id, err
+	}
+	entry, ok := entry_na.(Customer_UAT)
+	if !ok {
+		return Id, errors.New("error in type assertion")
+	}
+	if entry.Id != request.Id {
+		return Id, errors.New("id is not matching")
+	}
+	Current_Entry := entry
+
+	//Prepare new entry
+	entry.Key = request.Key
+	entry.AddReason = request.AddReason
+
+	if request.NewKey != "" {
+		if request.NewKey != request.Key {
+			//delete old
+			Map_Customer_UAT.Delete(request.Key)
+			//update key
+			entry.Key = request.NewKey
+		}
+	}
+	//add to cache and DB
+	Map_Customer_UAT.Put(entry.Key, entry)
+	//add logs
+	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
+		Event_User:         Login,
+		Event_Time:         time.Now(),
+		Event_AffectedType: "Customer_UAT",
+		Event_ActionType:   "Edit",
+		Event_Description:  "",
+		Event_Entry_Before: Current_Entry,
+		Event_Entry_After:  entry,
+	})
+	return Id, nil
+}
+
+func (Uc *UserControl) Customer_UAT_Get(Key string) (entries []Customer_UAT, err error) {
+	if Key == "" {
+		entries_na := Map_Customer_UAT.ConvertToArray()
+		if len(entries_na) > 0 {
+			for _, entry_na := range entries_na {
+				entry, ok := entry_na.(Customer_UAT)
+				if !ok {
+					err = errors.New("error in type assertion")
+					return entries, err
+				} else {
+					entries = append(entries, entry)
+				}
+			}
+		}
+		return entries, nil
+	} else {
+		entry_na, exits := Map_Customer_UAT.CheckThenGet(Key)
+		if !exits {
+			err = errors.New("key does not exist")
+			return entries, err
+		}
+		entry, ok := entry_na.(Customer_UAT)
+		if !ok {
+			err = errors.New("error in type assertion")
+			return entries, err
+		}
+		entries = append(entries, entry)
+		return entries, nil
+	}
+}
+
+func (Uc *UserControl) Customer_UAT_GetPaginated(Page, Limit int64) (entries []Customer_UAT, err error) {
+	if Page < 1 {
+		return entries, errors.New("invalid page")
+	}
+	if Limit < 1 || Limit > 50000 {
+		return entries, errors.New("invalid limit (accept value between 1 and 50000)")
+	}
+
+	var findparams daoc.DAOFindParams
+	//var array []daoc.DAOFindCriteria
+	// if Outlet_Key != "" {
+	// 	//restrict access for records that belong to this user
+	// 	var criteria daoc.DAOFindCriteria = daoc.DAOFindCriteria{
+	// 		Field:    "Outlet_Key",
+	// 		Value:    Outlet_Key,
+	// 		Operator: "EQUAL",
+	// 	}
+	// 	array = append(array, criteria)
+	// }
+	// if Agent_Key != "" {
+	// 	//restrict access for records that belong to this user
+	// 	var criteria daoc.DAOFindCriteria = daoc.DAOFindCriteria{
+	// 		Field:    "Agent_Key",
+	// 		Value:    Agent_Key,
+	// 		Operator: "EQUAL",
+	// 	}
+	// 	array = append(array, criteria)
+	// }
+	// if len(array) > 0 {
+	// 	findparams.FindCriteria = array
+	// }
+	var paginationparams daoc.DAOPaginate
+	paginationparams.Limit = Limit
+	paginationparams.Page = Page
+	findResult, err := DAO_Customer_UAT.FindPaginate(findparams, paginationparams)
+	if err != nil {
+		return entries, err
+	}
+	if len(findResult) > 0 {
+		for _, findres := range findResult {
+			InterfaceValue := reflect.ValueOf(findres).Elem().Interface().(Customer_UAT)
+			entries = append(entries, InterfaceValue)
+		}
+	}
+	return entries, nil
+
+}
+
+func (Uc *UserControl) Customer_UAT_Delete(Login, Key string) (err error) {
+	if Key == "" {
+		err = errors.New("key cannot be empty")
+		return err
+	}
+	entry_na, exits := Map_Customer_UAT.CheckThenGet(Key)
+	if !exits {
+		err = errors.New("entry does not exist")
+		return err
+	}
+	entry, ok := entry_na.(Customer_UAT)
+	if !ok {
+		err = errors.New("error in type assertion")
+		return err
+	}
+	Map_Customer_UAT.Delete(Key)
+	//add logs
+	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
+		Event_User:         Login,
+		Event_Time:         time.Now(),
+		Event_AffectedType: "Customer_UAT",
+		Event_ActionType:   "Delete",
+		Event_Description:  "",
+		Event_Entry_Before: nil,
+		Event_Entry_After:  entry,
+	})
+	return nil
+}
+
+// ***********************************************************************
+// Customer UAT functions
+// ***********************************************************************
+func (Uc *UserControl) Customer_DND_Add(Login string, request Customer_DND_AddRequest) (Id int64, err error) {
+	//check key if filled and if already used
+	if request.Key == "" {
+		err = errors.New("key cannot be empty")
+		return Id, err
+	}
+	//check if key already used
+	exits := Map_Customer_DND.Check(request.Key)
+	if exits {
+		err = errors.New("key already exist")
+		return Id, err
+	}
+	//Prepare new entry
+	var NewEntry Customer_DND
+	NewEntry.Id = Map_Loyalty_AutoIncrement.GetNextAI("Customer_DND-Id")
+	Id = NewEntry.Id
+	NewEntry.Key = request.Key
+	NewEntry.AddTime = time.Now()
+	NewEntry.AddReason = request.AddReason
+	//add to cache and DB
+	Map_Customer_DND.Put(NewEntry.Key, NewEntry)
+	//add logs
+	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
+		Event_User:         Login,
+		Event_Time:         time.Now(),
+		Event_AffectedType: "Customer_DND",
+		Event_ActionType:   "Add",
+		Event_Description:  "",
+		Event_Entry_Before: nil,
+		Event_Entry_After:  NewEntry,
+	})
+	return Id, nil
+}
+
+func (Uc *UserControl) Customer_DND_Edit(Login string, request Customer_DND_EditRequest) (Id int64, err error) {
+	//check and validate
+	if request.Key == "" {
+		err = errors.New("key cannot be empty")
+		return Id, err
+	}
+	entry_na, exits := Map_Customer_DND.CheckThenGet(request.Key)
+	if !exits {
+		err = errors.New("key is not created")
+		return Id, err
+	}
+	entry, ok := entry_na.(Customer_DND)
+	if !ok {
+		return Id, errors.New("error in type assertion")
+	}
+	if entry.Id != request.Id {
+		return Id, errors.New("id is not matching")
+	}
+	Current_Entry := entry
+
+	//Prepare new entry
+	entry.Key = request.Key
+	entry.AddReason = request.AddReason
+
+	if request.NewKey != "" {
+		if request.NewKey != request.Key {
+			//delete old
+			Map_Customer_DND.Delete(request.Key)
+			//update key
+			entry.Key = request.NewKey
+		}
+	}
+	//add to cache and DB
+	Map_Customer_DND.Put(entry.Key, entry)
+	//add logs
+	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
+		Event_User:         Login,
+		Event_Time:         time.Now(),
+		Event_AffectedType: "Customer_DND",
+		Event_ActionType:   "Edit",
+		Event_Description:  "",
+		Event_Entry_Before: Current_Entry,
+		Event_Entry_After:  entry,
+	})
+	return Id, nil
+}
+
+func (Uc *UserControl) Customer_DND_Get(Key string) (entries []Customer_DND, err error) {
+	if Key == "" {
+		entries_na := Map_Customer_DND.ConvertToArray()
+		if len(entries_na) > 0 {
+			for _, entry_na := range entries_na {
+				entry, ok := entry_na.(Customer_DND)
+				if !ok {
+					err = errors.New("error in type assertion")
+					return entries, err
+				} else {
+					entries = append(entries, entry)
+				}
+			}
+		}
+		return entries, nil
+	} else {
+		entry_na, exits := Map_Customer_DND.CheckThenGet(Key)
+		if !exits {
+			err = errors.New("key does not exist")
+			return entries, err
+		}
+		entry, ok := entry_na.(Customer_DND)
+		if !ok {
+			err = errors.New("error in type assertion")
+			return entries, err
+		}
+		entries = append(entries, entry)
+		return entries, nil
+	}
+}
+
+func (Uc *UserControl) Customer_DND_GetPaginated(Page, Limit int64) (entries []Customer_DND, err error) {
+	if Page < 1 {
+		return entries, errors.New("invalid page")
+	}
+	if Limit < 1 || Limit > 50000 {
+		return entries, errors.New("invalid limit (accept value between 1 and 50000)")
+	}
+
+	var findparams daoc.DAOFindParams
+	//var array []daoc.DAOFindCriteria
+	// if Outlet_Key != "" {
+	// 	//restrict access for records that belong to this user
+	// 	var criteria daoc.DAOFindCriteria = daoc.DAOFindCriteria{
+	// 		Field:    "Outlet_Key",
+	// 		Value:    Outlet_Key,
+	// 		Operator: "EQUAL",
+	// 	}
+	// 	array = append(array, criteria)
+	// }
+	// if Agent_Key != "" {
+	// 	//restrict access for records that belong to this user
+	// 	var criteria daoc.DAOFindCriteria = daoc.DAOFindCriteria{
+	// 		Field:    "Agent_Key",
+	// 		Value:    Agent_Key,
+	// 		Operator: "EQUAL",
+	// 	}
+	// 	array = append(array, criteria)
+	// }
+	// if len(array) > 0 {
+	// 	findparams.FindCriteria = array
+	// }
+	var paginationparams daoc.DAOPaginate
+	paginationparams.Limit = Limit
+	paginationparams.Page = Page
+	findResult, err := DAO_Customer_DND.FindPaginate(findparams, paginationparams)
+	if err != nil {
+		return entries, err
+	}
+	if len(findResult) > 0 {
+		for _, findres := range findResult {
+			InterfaceValue := reflect.ValueOf(findres).Elem().Interface().(Customer_DND)
+			entries = append(entries, InterfaceValue)
+		}
+	}
+	return entries, nil
+
+}
+
+func (Uc *UserControl) Customer_DND_Delete(Login, Key string) (err error) {
+	if Key == "" {
+		err = errors.New("key cannot be empty")
+		return err
+	}
+	entry_na, exits := Map_Customer_DND.CheckThenGet(Key)
+	if !exits {
+		err = errors.New("entry does not exist")
+		return err
+	}
+	entry, ok := entry_na.(Customer_DND)
+	if !ok {
+		err = errors.New("error in type assertion")
+		return err
+	}
+	Map_Customer_DND.Delete(Key)
+	//add logs
+	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
+		Event_User:         Login,
+		Event_Time:         time.Now(),
+		Event_AffectedType: "Customer_DND",
+		Event_ActionType:   "Delete",
+		Event_Description:  "",
+		Event_Entry_Before: nil,
+		Event_Entry_After:  entry,
+	})
+	return nil
+}
+
+// ***********************************************************************
+// Customer Exclusion functions
+// ***********************************************************************
+func (Uc *UserControl) Customer_Exclusion_Add(Login string, request Customer_Exclusion_AddRequest) (Id int64, err error) {
+	//check key if filled and if already used
+	if request.Key == "" {
+		err = errors.New("key cannot be empty")
+		return Id, err
+	}
+	//check if key already used
+	exits := Map_Customer_Exclusion.Check(request.Key)
+	if exits {
+		err = errors.New("key already exist")
+		return Id, err
+	}
+	//Prepare new entry
+	var NewEntry Customer_Exclusion
+	NewEntry.Id = Map_Loyalty_AutoIncrement.GetNextAI("Customer_Exclusion-Id")
+	Id = NewEntry.Id
+	NewEntry.Key = request.Key
+	NewEntry.AddTime = time.Now()
+	NewEntry.AddReason = request.AddReason
+	//add to cache and DB
+	Map_Customer_Exclusion.Put(NewEntry.Key, NewEntry)
+	//add logs
+	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
+		Event_User:         Login,
+		Event_Time:         time.Now(),
+		Event_AffectedType: "Customer_Exclusion",
+		Event_ActionType:   "Add",
+		Event_Description:  "",
+		Event_Entry_Before: nil,
+		Event_Entry_After:  NewEntry,
+	})
+	return Id, nil
+}
+
+func (Uc *UserControl) Customer_Exclusion_Edit(Login string, request Customer_Exclusion_EditRequest) (Id int64, err error) {
+	//check and validate
+	if request.Key == "" {
+		err = errors.New("key cannot be empty")
+		return Id, err
+	}
+	entry_na, exits := Map_Customer_Exclusion.CheckThenGet(request.Key)
+	if !exits {
+		err = errors.New("key is not created")
+		return Id, err
+	}
+	entry, ok := entry_na.(Customer_Exclusion)
+	if !ok {
+		return Id, errors.New("error in type assertion")
+	}
+	if entry.Id != request.Id {
+		return Id, errors.New("id is not matching")
+	}
+	Current_Entry := entry
+
+	//Prepare new entry
+	entry.Key = request.Key
+	entry.AddReason = request.AddReason
+
+	if request.NewKey != "" {
+		if request.NewKey != request.Key {
+			//delete old
+			Map_Customer_Exclusion.Delete(request.Key)
+			//update key
+			entry.Key = request.NewKey
+		}
+	}
+	//add to cache and DB
+	Map_Customer_Exclusion.Put(entry.Key, entry)
+	//add logs
+	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
+		Event_User:         Login,
+		Event_Time:         time.Now(),
+		Event_AffectedType: "Customer_Exclusion",
+		Event_ActionType:   "Edit",
+		Event_Description:  "",
+		Event_Entry_Before: Current_Entry,
+		Event_Entry_After:  entry,
+	})
+	return Id, nil
+}
+
+func (Uc *UserControl) Customer_Exclusion_Get(Key string) (entries []Customer_Exclusion, err error) {
+	if Key == "" {
+		entries_na := Map_Customer_Exclusion.ConvertToArray()
+		if len(entries_na) > 0 {
+			for _, entry_na := range entries_na {
+				entry, ok := entry_na.(Customer_Exclusion)
+				if !ok {
+					err = errors.New("error in type assertion")
+					return entries, err
+				} else {
+					entries = append(entries, entry)
+				}
+			}
+		}
+		return entries, nil
+	} else {
+		entry_na, exits := Map_Customer_Exclusion.CheckThenGet(Key)
+		if !exits {
+			err = errors.New("key does not exist")
+			return entries, err
+		}
+		entry, ok := entry_na.(Customer_Exclusion)
+		if !ok {
+			err = errors.New("error in type assertion")
+			return entries, err
+		}
+		entries = append(entries, entry)
+		return entries, nil
+	}
+}
+
+func (Uc *UserControl) Customer_Exclusion_GetPaginated(Page, Limit int64) (entries []Customer_Exclusion, err error) {
+	if Page < 1 {
+		return entries, errors.New("invalid page")
+	}
+	if Limit < 1 || Limit > 50000 {
+		return entries, errors.New("invalid limit (accept value between 1 and 50000)")
+	}
+
+	var findparams daoc.DAOFindParams
+	//var array []daoc.DAOFindCriteria
+	// if Outlet_Key != "" {
+	// 	//restrict access for records that belong to this user
+	// 	var criteria daoc.DAOFindCriteria = daoc.DAOFindCriteria{
+	// 		Field:    "Outlet_Key",
+	// 		Value:    Outlet_Key,
+	// 		Operator: "EQUAL",
+	// 	}
+	// 	array = append(array, criteria)
+	// }
+	// if Agent_Key != "" {
+	// 	//restrict access for records that belong to this user
+	// 	var criteria daoc.DAOFindCriteria = daoc.DAOFindCriteria{
+	// 		Field:    "Agent_Key",
+	// 		Value:    Agent_Key,
+	// 		Operator: "EQUAL",
+	// 	}
+	// 	array = append(array, criteria)
+	// }
+	// if len(array) > 0 {
+	// 	findparams.FindCriteria = array
+	// }
+	var paginationparams daoc.DAOPaginate
+	paginationparams.Limit = Limit
+	paginationparams.Page = Page
+	findResult, err := DAO_Customer_Exclusion.FindPaginate(findparams, paginationparams)
+	if err != nil {
+		return entries, err
+	}
+	if len(findResult) > 0 {
+		for _, findres := range findResult {
+			InterfaceValue := reflect.ValueOf(findres).Elem().Interface().(Customer_Exclusion)
+			entries = append(entries, InterfaceValue)
+		}
+	}
+	return entries, nil
+
+}
+
+func (Uc *UserControl) Customer_Exclusion_Delete(Login, Key string) (err error) {
+	if Key == "" {
+		err = errors.New("key cannot be empty")
+		return err
+	}
+	entry_na, exits := Map_Customer_Exclusion.CheckThenGet(Key)
+	if !exits {
+		err = errors.New("entry does not exist")
+		return err
+	}
+	entry, ok := entry_na.(Customer_Exclusion)
+	if !ok {
+		err = errors.New("error in type assertion")
+		return err
+	}
+	Map_Customer_Exclusion.Delete(Key)
+	//add logs
+	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
+		Event_User:         Login,
+		Event_Time:         time.Now(),
+		Event_AffectedType: "Customer_Exclusion",
+		Event_ActionType:   "Delete",
+		Event_Description:  "",
+		Event_Entry_Before: nil,
+		Event_Entry_After:  entry,
+	})
+	return nil
+}
+
+// ***********************************************************************
+// Customer Exclusion functions
+// ***********************************************************************
+func (Uc *UserControl) Customer_COS_Exclusion_Add(Login string, request Customer_COS_Exclusion_AddRequest) (Id int64, err error) {
+	//check key if filled and if already used
+	if request.Key == "" {
+		err = errors.New("key cannot be empty")
+		return Id, err
+	}
+	//check if key already used
+	exits := Map_Customer_COS_Exclusion.Check(request.Key)
+	if exits {
+		err = errors.New("key already exist")
+		return Id, err
+	}
+	//Prepare new entry
+	var NewEntry Customer_COS_Exclusion
+	NewEntry.Id = Map_Loyalty_AutoIncrement.GetNextAI("Customer_COS_Exclusion-Id")
+	Id = NewEntry.Id
+	NewEntry.Key = request.Key
+	NewEntry.AddTime = time.Now()
+	NewEntry.AddReason = request.AddReason
+	//add to cache and DB
+	Map_Customer_COS_Exclusion.Put(NewEntry.Key, NewEntry)
+	//add logs
+	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
+		Event_User:         Login,
+		Event_Time:         time.Now(),
+		Event_AffectedType: "Customer_COS_Exclusion",
+		Event_ActionType:   "Add",
+		Event_Description:  "",
+		Event_Entry_Before: nil,
+		Event_Entry_After:  NewEntry,
+	})
+	return Id, nil
+}
+
+func (Uc *UserControl) Customer_COS_Exclusion_Edit(Login string, request Customer_COS_Exclusion_EditRequest) (Id int64, err error) {
+	//check and validate
+	if request.Key == "" {
+		err = errors.New("key cannot be empty")
+		return Id, err
+	}
+	entry_na, exits := Map_Customer_COS_Exclusion.CheckThenGet(request.Key)
+	if !exits {
+		err = errors.New("key is not created")
+		return Id, err
+	}
+	entry, ok := entry_na.(Customer_COS_Exclusion)
+	if !ok {
+		return Id, errors.New("error in type assertion")
+	}
+	if entry.Id != request.Id {
+		return Id, errors.New("id is not matching")
+	}
+	Current_Entry := entry
+
+	//Prepare new entry
+	entry.Key = request.Key
+	entry.AddReason = request.AddReason
+
+	if request.NewKey != "" {
+		if request.NewKey != request.Key {
+			//delete old
+			Map_Customer_COS_Exclusion.Delete(request.Key)
+			//update key
+			entry.Key = request.NewKey
+		}
+	}
+	//add to cache and DB
+	Map_Customer_COS_Exclusion.Put(entry.Key, entry)
+	//add logs
+	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
+		Event_User:         Login,
+		Event_Time:         time.Now(),
+		Event_AffectedType: "Customer_COS_Exclusion",
+		Event_ActionType:   "Edit",
+		Event_Description:  "",
+		Event_Entry_Before: Current_Entry,
+		Event_Entry_After:  entry,
+	})
+	return Id, nil
+}
+
+func (Uc *UserControl) Customer_COS_Exclusion_Get(Key string) (entries []Customer_COS_Exclusion, err error) {
+	if Key == "" {
+		entries_na := Map_Customer_COS_Exclusion.ConvertToArray()
+		if len(entries_na) > 0 {
+			for _, entry_na := range entries_na {
+				entry, ok := entry_na.(Customer_COS_Exclusion)
+				if !ok {
+					err = errors.New("error in type assertion")
+					return entries, err
+				} else {
+					entries = append(entries, entry)
+				}
+			}
+		}
+		return entries, nil
+	} else {
+		entry_na, exits := Map_Customer_COS_Exclusion.CheckThenGet(Key)
+		if !exits {
+			err = errors.New("key does not exist")
+			return entries, err
+		}
+		entry, ok := entry_na.(Customer_COS_Exclusion)
+		if !ok {
+			err = errors.New("error in type assertion")
+			return entries, err
+		}
+		entries = append(entries, entry)
+		return entries, nil
+	}
+}
+
+func (Uc *UserControl) Customer_COS_Exclusion_GetPaginated(Page, Limit int64) (entries []Customer_COS_Exclusion, err error) {
+	if Page < 1 {
+		return entries, errors.New("invalid page")
+	}
+	if Limit < 1 || Limit > 50000 {
+		return entries, errors.New("invalid limit (accept value between 1 and 50000)")
+	}
+
+	var findparams daoc.DAOFindParams
+	//var array []daoc.DAOFindCriteria
+	// if Outlet_Key != "" {
+	// 	//restrict access for records that belong to this user
+	// 	var criteria daoc.DAOFindCriteria = daoc.DAOFindCriteria{
+	// 		Field:    "Outlet_Key",
+	// 		Value:    Outlet_Key,
+	// 		Operator: "EQUAL",
+	// 	}
+	// 	array = append(array, criteria)
+	// }
+	// if Agent_Key != "" {
+	// 	//restrict access for records that belong to this user
+	// 	var criteria daoc.DAOFindCriteria = daoc.DAOFindCriteria{
+	// 		Field:    "Agent_Key",
+	// 		Value:    Agent_Key,
+	// 		Operator: "EQUAL",
+	// 	}
+	// 	array = append(array, criteria)
+	// }
+	// if len(array) > 0 {
+	// 	findparams.FindCriteria = array
+	// }
+	var paginationparams daoc.DAOPaginate
+	paginationparams.Limit = Limit
+	paginationparams.Page = Page
+	findResult, err := DAO_Customer_COS_Exclusion.FindPaginate(findparams, paginationparams)
+	if err != nil {
+		return entries, err
+	}
+	if len(findResult) > 0 {
+		for _, findres := range findResult {
+			InterfaceValue := reflect.ValueOf(findres).Elem().Interface().(Customer_COS_Exclusion)
+			entries = append(entries, InterfaceValue)
+		}
+	}
+	return entries, nil
+
+}
+
+func (Uc *UserControl) Customer_COS_Exclusion_Delete(Login, Key string) (err error) {
+	if Key == "" {
+		err = errors.New("key cannot be empty")
+		return err
+	}
+	entry_na, exits := Map_Customer_COS_Exclusion.CheckThenGet(Key)
+	if !exits {
+		err = errors.New("entry does not exist")
+		return err
+	}
+	entry, ok := entry_na.(Customer_COS_Exclusion)
+	if !ok {
+		err = errors.New("error in type assertion")
+		return err
+	}
+	Map_Customer_COS_Exclusion.Delete(Key)
+	//add logs
+	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
+		Event_User:         Login,
+		Event_Time:         time.Now(),
+		Event_AffectedType: "Customer_COS_Exclusion",
 		Event_ActionType:   "Delete",
 		Event_Description:  "",
 		Event_Entry_Before: nil,

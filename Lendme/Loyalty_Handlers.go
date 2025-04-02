@@ -1177,6 +1177,670 @@ func (Uc *UserControl) HTTP_Loyalty_Plan(w http.ResponseWriter, r *http.Request)
 	Uc.HTTP_API_Standard_response(w, r, sr, true)
 }
 
+func (Uc *UserControl) HTTP_Customer_UAT(w http.ResponseWriter, r *http.Request) {
+	var sr API_Standard_response
+	//**fill response source detail
+	SourceIp, _ := GetRequestIP(r)
+	sr.SourceIP = SourceIp
+	sr.Login = r.Header.Get("Login")
+	sr.SourceApp = r.Header.Get("SourceApp")
+	sr.AccessKey = r.URL.Path
+	sr.AccessMethod = r.Method
+	sr.HostId = Configuration.HostId
+	sr.ReceiveDate = time.Now()
+
+	method := r.Method
+	switch method {
+	case "GET":
+		sr.TransactionType = "Customer UAT - Read"
+		key := r.URL.Query().Get("Key")
+		LimitStr := r.URL.Query().Get("Limit")
+		PageStr := r.URL.Query().Get("Page")
+
+		if LimitStr != "" || PageStr != "" {
+			Limit, limiterr := strconv.ParseInt(LimitStr, 10, 64)
+			if limiterr != nil {
+				sr.Status = "failed"
+				sr.StatusCode = http.StatusBadRequest
+				sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+				sr.ErrorDescription = limiterr.Error()
+				Uc.HTTP_API_Standard_response(w, r, sr, false)
+				return
+			}
+			Page, pageerr := strconv.ParseInt(PageStr, 10, 64)
+			if pageerr != nil {
+				sr.Status = "failed"
+				sr.StatusCode = http.StatusBadRequest
+				sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+				sr.ErrorDescription = pageerr.Error()
+				Uc.HTTP_API_Standard_response(w, r, sr, false)
+				return
+			}
+			entries, err := Uc.Customer_UAT_GetPaginated(Page, Limit)
+			if err != nil {
+				sr.Status = "failed"
+				sr.StatusCode = http.StatusBadRequest
+				sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+				sr.ErrorDescription = err.Error()
+				Uc.HTTP_API_Standard_response(w, r, sr, false)
+				return
+			}
+			sr.Data = entries
+		} else {
+			entries, err := Uc.Customer_UAT_Get(key)
+			if err != nil {
+				sr.Status = "failed"
+				sr.StatusCode = http.StatusBadRequest
+				sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+				sr.ErrorDescription = err.Error()
+				Uc.HTTP_API_Standard_response(w, r, sr, false)
+				return
+			}
+			sr.Data = entries
+		}
+	case "POST":
+		sr.TransactionType = "Customer UAT - Add"
+		//parse body
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to read request body"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		var request Customer_UAT_AddRequest
+		err = json.Unmarshal(body, &request)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to Unmarshal body"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		Id, err := Uc.Customer_UAT_Add(sr.Login, request)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to add request"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, true)
+			return
+		}
+		request.Id = Id
+		sr.Data = request
+
+	case "PUT":
+		sr.TransactionType = "Customer UAT - Edit"
+		//parse body
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to read request body"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		var request Customer_UAT_EditRequest
+		err = json.Unmarshal(body, &request)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to Unmarshal body"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		// if request.Key == "" {
+		// 	sr.Status = "failed"
+		// 	sr.StatusCode = http.StatusBadRequest
+		// 	sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": key cannot be empty"
+		// 	sr.ErrorDescription = "key cannot be empty"
+		// 	Uc.HTTP_API_Standard_response(w, r, sr, false)
+		// 	return
+		// }
+		id, err := Uc.Customer_UAT_Edit(sr.Login, request)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to edit"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, true)
+			return
+		}
+		request.Id = id
+		sr.Data = request
+	case "DELETE":
+		sr.TransactionType = "Customer UAT - Delete"
+		vars := mux.Vars(r)
+		KeyDelete := vars["KeyDelete"]
+		if KeyDelete == "" {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": key is empty"
+			sr.ErrorDescription = "key is empty"
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		err := Uc.Customer_UAT_Delete(sr.Login, KeyDelete)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to delete"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+	}
+	//successful response
+	sr.Status = "successful"
+	sr.StatusCode = http.StatusOK
+	sr.StatusDescription = ""
+	sr.ErrorDescription = ""
+	Uc.HTTP_API_Standard_response(w, r, sr, true)
+}
+
+func (Uc *UserControl) HTTP_Customer_DND(w http.ResponseWriter, r *http.Request) {
+	var sr API_Standard_response
+	//**fill response source detail
+	SourceIp, _ := GetRequestIP(r)
+	sr.SourceIP = SourceIp
+	sr.Login = r.Header.Get("Login")
+	sr.SourceApp = r.Header.Get("SourceApp")
+	sr.AccessKey = r.URL.Path
+	sr.AccessMethod = r.Method
+	sr.HostId = Configuration.HostId
+	sr.ReceiveDate = time.Now()
+
+	method := r.Method
+	switch method {
+	case "GET":
+		sr.TransactionType = "Customer DND - Read"
+		key := r.URL.Query().Get("Key")
+		LimitStr := r.URL.Query().Get("Limit")
+		PageStr := r.URL.Query().Get("Page")
+
+		if LimitStr != "" || PageStr != "" {
+			Limit, limiterr := strconv.ParseInt(LimitStr, 10, 64)
+			if limiterr != nil {
+				sr.Status = "failed"
+				sr.StatusCode = http.StatusBadRequest
+				sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+				sr.ErrorDescription = limiterr.Error()
+				Uc.HTTP_API_Standard_response(w, r, sr, false)
+				return
+			}
+			Page, pageerr := strconv.ParseInt(PageStr, 10, 64)
+			if pageerr != nil {
+				sr.Status = "failed"
+				sr.StatusCode = http.StatusBadRequest
+				sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+				sr.ErrorDescription = pageerr.Error()
+				Uc.HTTP_API_Standard_response(w, r, sr, false)
+				return
+			}
+			entries, err := Uc.Customer_DND_GetPaginated(Page, Limit)
+			if err != nil {
+				sr.Status = "failed"
+				sr.StatusCode = http.StatusBadRequest
+				sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+				sr.ErrorDescription = err.Error()
+				Uc.HTTP_API_Standard_response(w, r, sr, false)
+				return
+			}
+			sr.Data = entries
+		} else {
+			entries, err := Uc.Customer_DND_Get(key)
+			if err != nil {
+				sr.Status = "failed"
+				sr.StatusCode = http.StatusBadRequest
+				sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+				sr.ErrorDescription = err.Error()
+				Uc.HTTP_API_Standard_response(w, r, sr, false)
+				return
+			}
+			sr.Data = entries
+		}
+	case "POST":
+		sr.TransactionType = "Customer DND - Add"
+		//parse body
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to read request body"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		var request Customer_DND_AddRequest
+		err = json.Unmarshal(body, &request)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to Unmarshal body"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		Id, err := Uc.Customer_DND_Add(sr.Login, request)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to add request"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, true)
+			return
+		}
+		request.Id = Id
+		sr.Data = request
+
+	case "PUT":
+		sr.TransactionType = "Customer DND - Edit"
+		//parse body
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to read request body"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		var request Customer_DND_EditRequest
+		err = json.Unmarshal(body, &request)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to Unmarshal body"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		// if request.Key == "" {
+		// 	sr.Status = "failed"
+		// 	sr.StatusCode = http.StatusBadRequest
+		// 	sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": key cannot be empty"
+		// 	sr.ErrorDescription = "key cannot be empty"
+		// 	Uc.HTTP_API_Standard_response(w, r, sr, false)
+		// 	return
+		// }
+		id, err := Uc.Customer_DND_Edit(sr.Login, request)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to edit"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, true)
+			return
+		}
+		request.Id = id
+		sr.Data = request
+	case "DELETE":
+		sr.TransactionType = "Customer DND - Delete"
+		vars := mux.Vars(r)
+		KeyDelete := vars["KeyDelete"]
+		if KeyDelete == "" {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": key is empty"
+			sr.ErrorDescription = "key is empty"
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		err := Uc.Customer_DND_Delete(sr.Login, KeyDelete)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to delete"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+	}
+	//successful response
+	sr.Status = "successful"
+	sr.StatusCode = http.StatusOK
+	sr.StatusDescription = ""
+	sr.ErrorDescription = ""
+	Uc.HTTP_API_Standard_response(w, r, sr, true)
+}
+
+func (Uc *UserControl) HTTP_Customer_Exclusion(w http.ResponseWriter, r *http.Request) {
+	var sr API_Standard_response
+	//**fill response source detail
+	SourceIp, _ := GetRequestIP(r)
+	sr.SourceIP = SourceIp
+	sr.Login = r.Header.Get("Login")
+	sr.SourceApp = r.Header.Get("SourceApp")
+	sr.AccessKey = r.URL.Path
+	sr.AccessMethod = r.Method
+	sr.HostId = Configuration.HostId
+	sr.ReceiveDate = time.Now()
+
+	method := r.Method
+	switch method {
+	case "GET":
+		sr.TransactionType = "Customer Exclusion - Read"
+		key := r.URL.Query().Get("Key")
+		LimitStr := r.URL.Query().Get("Limit")
+		PageStr := r.URL.Query().Get("Page")
+
+		if LimitStr != "" || PageStr != "" {
+			Limit, limiterr := strconv.ParseInt(LimitStr, 10, 64)
+			if limiterr != nil {
+				sr.Status = "failed"
+				sr.StatusCode = http.StatusBadRequest
+				sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+				sr.ErrorDescription = limiterr.Error()
+				Uc.HTTP_API_Standard_response(w, r, sr, false)
+				return
+			}
+			Page, pageerr := strconv.ParseInt(PageStr, 10, 64)
+			if pageerr != nil {
+				sr.Status = "failed"
+				sr.StatusCode = http.StatusBadRequest
+				sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+				sr.ErrorDescription = pageerr.Error()
+				Uc.HTTP_API_Standard_response(w, r, sr, false)
+				return
+			}
+			entries, err := Uc.Customer_Exclusion_GetPaginated(Page, Limit)
+			if err != nil {
+				sr.Status = "failed"
+				sr.StatusCode = http.StatusBadRequest
+				sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+				sr.ErrorDescription = err.Error()
+				Uc.HTTP_API_Standard_response(w, r, sr, false)
+				return
+			}
+			sr.Data = entries
+		} else {
+			entries, err := Uc.Customer_Exclusion_Get(key)
+			if err != nil {
+				sr.Status = "failed"
+				sr.StatusCode = http.StatusBadRequest
+				sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+				sr.ErrorDescription = err.Error()
+				Uc.HTTP_API_Standard_response(w, r, sr, false)
+				return
+			}
+			sr.Data = entries
+		}
+	case "POST":
+		sr.TransactionType = "Customer Exclusion - Add"
+		//parse body
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to read request body"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		var request Customer_Exclusion_AddRequest
+		err = json.Unmarshal(body, &request)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to Unmarshal body"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		Id, err := Uc.Customer_Exclusion_Add(sr.Login, request)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to add request"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, true)
+			return
+		}
+		request.Id = Id
+		sr.Data = request
+
+	case "PUT":
+		sr.TransactionType = "Customer Exclusion - Edit"
+		//parse body
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to read request body"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		var request Customer_Exclusion_EditRequest
+		err = json.Unmarshal(body, &request)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to Unmarshal body"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		// if request.Key == "" {
+		// 	sr.Status = "failed"
+		// 	sr.StatusCode = http.StatusBadRequest
+		// 	sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": key cannot be empty"
+		// 	sr.ErrorDescription = "key cannot be empty"
+		// 	Uc.HTTP_API_Standard_response(w, r, sr, false)
+		// 	return
+		// }
+		id, err := Uc.Customer_Exclusion_Edit(sr.Login, request)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to edit"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, true)
+			return
+		}
+		request.Id = id
+		sr.Data = request
+	case "DELETE":
+		sr.TransactionType = "Customer Exclusion - Delete"
+		vars := mux.Vars(r)
+		KeyDelete := vars["KeyDelete"]
+		if KeyDelete == "" {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": key is empty"
+			sr.ErrorDescription = "key is empty"
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		err := Uc.Customer_Exclusion_Delete(sr.Login, KeyDelete)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to delete"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+	}
+	//successful response
+	sr.Status = "successful"
+	sr.StatusCode = http.StatusOK
+	sr.StatusDescription = ""
+	sr.ErrorDescription = ""
+	Uc.HTTP_API_Standard_response(w, r, sr, true)
+}
+
+func (Uc *UserControl) HTTP_Customer_COS_Exclusion(w http.ResponseWriter, r *http.Request) {
+	var sr API_Standard_response
+	//**fill response source detail
+	SourceIp, _ := GetRequestIP(r)
+	sr.SourceIP = SourceIp
+	sr.Login = r.Header.Get("Login")
+	sr.SourceApp = r.Header.Get("SourceApp")
+	sr.AccessKey = r.URL.Path
+	sr.AccessMethod = r.Method
+	sr.HostId = Configuration.HostId
+	sr.ReceiveDate = time.Now()
+
+	method := r.Method
+	switch method {
+	case "GET":
+		sr.TransactionType = "Customer COS Exclusion - Read"
+		key := r.URL.Query().Get("Key")
+		LimitStr := r.URL.Query().Get("Limit")
+		PageStr := r.URL.Query().Get("Page")
+
+		if LimitStr != "" || PageStr != "" {
+			Limit, limiterr := strconv.ParseInt(LimitStr, 10, 64)
+			if limiterr != nil {
+				sr.Status = "failed"
+				sr.StatusCode = http.StatusBadRequest
+				sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+				sr.ErrorDescription = limiterr.Error()
+				Uc.HTTP_API_Standard_response(w, r, sr, false)
+				return
+			}
+			Page, pageerr := strconv.ParseInt(PageStr, 10, 64)
+			if pageerr != nil {
+				sr.Status = "failed"
+				sr.StatusCode = http.StatusBadRequest
+				sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+				sr.ErrorDescription = pageerr.Error()
+				Uc.HTTP_API_Standard_response(w, r, sr, false)
+				return
+			}
+			entries, err := Uc.Customer_COS_Exclusion_GetPaginated(Page, Limit)
+			if err != nil {
+				sr.Status = "failed"
+				sr.StatusCode = http.StatusBadRequest
+				sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+				sr.ErrorDescription = err.Error()
+				Uc.HTTP_API_Standard_response(w, r, sr, false)
+				return
+			}
+			sr.Data = entries
+		} else {
+			entries, err := Uc.Customer_COS_Exclusion_Get(key)
+			if err != nil {
+				sr.Status = "failed"
+				sr.StatusCode = http.StatusBadRequest
+				sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+				sr.ErrorDescription = err.Error()
+				Uc.HTTP_API_Standard_response(w, r, sr, false)
+				return
+			}
+			sr.Data = entries
+		}
+	case "POST":
+		sr.TransactionType = "Customer COS Exclusion - Add"
+		//parse body
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to read request body"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		var request Customer_COS_Exclusion_AddRequest
+		err = json.Unmarshal(body, &request)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to Unmarshal body"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		Id, err := Uc.Customer_COS_Exclusion_Add(sr.Login, request)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to add request"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, true)
+			return
+		}
+		request.Id = Id
+		sr.Data = request
+
+	case "PUT":
+		sr.TransactionType = "Customer COS Exclusion - Edit"
+		//parse body
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to read request body"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		var request Customer_COS_Exclusion_EditRequest
+		err = json.Unmarshal(body, &request)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to Unmarshal body"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		// if request.Key == "" {
+		// 	sr.Status = "failed"
+		// 	sr.StatusCode = http.StatusBadRequest
+		// 	sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": key cannot be empty"
+		// 	sr.ErrorDescription = "key cannot be empty"
+		// 	Uc.HTTP_API_Standard_response(w, r, sr, false)
+		// 	return
+		// }
+		id, err := Uc.Customer_COS_Exclusion_Edit(sr.Login, request)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to edit"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, true)
+			return
+		}
+		request.Id = id
+		sr.Data = request
+	case "DELETE":
+		sr.TransactionType = "Customer COS Exclusion - Delete"
+		vars := mux.Vars(r)
+		KeyDelete := vars["KeyDelete"]
+		if KeyDelete == "" {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": key is empty"
+			sr.ErrorDescription = "key is empty"
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		err := Uc.Customer_COS_Exclusion_Delete(sr.Login, KeyDelete)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to delete"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+	}
+	//successful response
+	sr.Status = "successful"
+	sr.StatusCode = http.StatusOK
+	sr.StatusDescription = ""
+	sr.ErrorDescription = ""
+	Uc.HTTP_API_Standard_response(w, r, sr, true)
+}
+
 func (Uc *UserControl) HTTP_Customer_Loyalty_Account(w http.ResponseWriter, r *http.Request) {
 	var sr API_Standard_response
 	//**fill response source detail

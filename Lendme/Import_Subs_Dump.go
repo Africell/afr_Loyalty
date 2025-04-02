@@ -192,6 +192,27 @@ func (Uc *UserControl) Subscriber_Update(request Sub_Update_Request) {
 	}
 	//add to cache and DB
 	Map_Subscribers.Put(subscriber.Key, subscriber)
+	//*******************************
+	//Update loyalty profile
+	//*******************************
+	loyalty_account_na, cl_exits := Map_Customer_Loyalty_Account.CheckThenGet(subscriber.Key)
+	if !cl_exits {
+		Uc.Customer_Loyalty_Account_Add("DWH_Import", Customer_Loyalty_Account_AddRequest{
+			Key:         subscriber.Key,
+			EventSource: "DWH_Import",
+		})
+	} else {
+		loyalty_account, ok := loyalty_account_na.(Customer_Loyalty_Account)
+		if !ok {
+			<-chan_SubQueueExecution_controler
+			return
+		}
+		loyalty_account.Loyalty_Account_Segment_Key = Loyalty_Account_Segment_Selection(subscriber.ARPU, subscriber.FirstUse_date)
+		loyalty_account.Loyalty_Account_Segment_Date = time.Now()
+		loyalty_account.Loyalty_Account_Segment_Direction = ""
+		loyalty_account.Loyalty_Account_Segment_SetBy = "DWH_Import"
+		Map_Customer_Loyalty_Account.Put(loyalty_account.Key, loyalty_account)
+	}
 	<-chan_SubQueueExecution_controler
 }
 
