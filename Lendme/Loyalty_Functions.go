@@ -2429,11 +2429,27 @@ func (Uc *UserControl) Customer_Loyalty_Account_Add(Login string, request Custom
 		err = errors.New("key already exist")
 		return Id, err
 	}
+	//check exclusion list
+	exists_exclusion := Map_Customer_Exclusion.Check(request.Key)
+	if exists_exclusion {
+		err = errors.New("customer is included in the exclusion list")
+		return Id, err
+	}
+	//check COS exclusion list
+	exists_exclusion_cos := Map_Customer_COS_Exclusion.Check(request.COS)
+	if exists_exclusion_cos {
+		err = errors.New("customer is included in the cos exclusion list")
+		return Id, err
+	}
 	//Prepare new entry
 	var NewEntry Customer_Loyalty_Account
 	NewEntry.Customer_Id = Map_Loyalty_AutoIncrement.GetNextAI("Customer_Loyalty_Account-Id")
 	Id = NewEntry.Customer_Id
 	NewEntry.Key = request.Key
+
+	NewEntry.COS = request.COS
+	NewEntry.ARPU = request.ARPU
+	NewEntry.Joining_Date = request.Joining_Date
 
 	NewEntry.Creation_date = time.Now()
 	NewEntry.Account_Status = "active"
@@ -2448,7 +2464,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_Add(Login string, request Custom
 	if subexist {
 		subscriber, ok := subscriber_na.(Subscriber)
 		if !ok {
-			NewEntry.Loyalty_Account_Segment_Key = Loyalty_Account_Segment_Selection(0, time.Now())
+			NewEntry.Loyalty_Account_Segment_Key = Loyalty_Account_Segment_Selection(request.ARPU, request.Joining_Date)
 			NewEntry.Loyalty_Account_Segment_Date = time.Now()
 			NewEntry.Loyalty_Account_Segment_Direction = ""
 			NewEntry.Loyalty_Account_Segment_SetBy = "program"
@@ -2459,7 +2475,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_Add(Login string, request Custom
 			NewEntry.Loyalty_Account_Segment_SetBy = "program"
 		}
 	} else {
-		NewEntry.Loyalty_Account_Segment_Key = Loyalty_Account_Segment_Selection(0, time.Now())
+		NewEntry.Loyalty_Account_Segment_Key = Loyalty_Account_Segment_Selection(request.ARPU, request.Joining_Date)
 		NewEntry.Loyalty_Account_Segment_Date = time.Now()
 		NewEntry.Loyalty_Account_Segment_Direction = ""
 		NewEntry.Loyalty_Account_Segment_SetBy = "program"
@@ -2522,6 +2538,18 @@ func (Uc *UserControl) Customer_Loyalty_Account_Edit(Login string, request Custo
 			entry.Key = request.NewKey
 		}
 	}
+	entry.COS = request.COS
+	entry.ARPU = request.ARPU
+	entry.Joining_Date = request.Joining_Date
+
+	Loyalty_Account_Segment_Key := Loyalty_Account_Segment_Selection(request.ARPU, request.Joining_Date)
+	if Loyalty_Account_Segment_Key != entry.Loyalty_Account_Segment_Key {
+		entry.Loyalty_Account_Segment_Key = Loyalty_Account_Segment_Key
+		entry.Loyalty_Account_Segment_Date = time.Now()
+		entry.Loyalty_Account_Segment_Direction = ""
+		entry.Loyalty_Account_Segment_SetBy = "program"
+	}
+
 	//add to cache and DB
 	Map_Customer_Loyalty_Account.Put(entry.Key, entry)
 	//add logs

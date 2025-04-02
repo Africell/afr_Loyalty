@@ -260,6 +260,9 @@ type Loyalty_Plan_EditRequest struct {
 
 type Customer_Loyalty_Account struct {
 	Key             string    `bson:"Key" json:"Key"` //MSISDN
+	COS             string    `bson:"COS" json:"COS"`
+	Joining_Date    time.Time `bson:"Joining_Date" json:"Joining_Date"` //
+	ARPU            float64   `bson:"ARPU" json:"ARPU"`
 	Customer_Id     int64     `bson:"Customer_Id" json:"Customer_Id"`
 	Creation_date   time.Time `bson:"Creation_date" json:"Creation_date"`
 	Account_Status  string    `bson:"Account_Status" json:"Account_Status"`
@@ -288,16 +291,22 @@ type Customer_Loyalty_Account struct {
 }
 
 type Customer_Loyalty_Account_AddRequest struct {
-	Key         string `bson:"Key" json:"Key"` //MSISDN
-	Customer_Id int64  `bson:"Customer_Id" json:"Customer_Id"`
-	EventSource string `bson:"EventSource" json:"EventSource"` //MSISDN
+	Key          string    `bson:"Key" json:"Key"` //MSISDN
+	Customer_Id  int64     `bson:"Customer_Id" json:"Customer_Id"`
+	EventSource  string    `bson:"EventSource" json:"EventSource"` //MSISDN
+	COS          string    `bson:"COS" json:"COS"`
+	ARPU         float64   `bson:"ARPU" json:"ARPU"`
+	Joining_Date time.Time `bson:"Joining_Date" json:"Joining_Date"`
 }
 
 type Customer_Loyalty_Account_EditRequest struct {
-	Key               string `bson:"Key" json:"Key"` //MSISDN
-	NewKey            string `bson:"NewKey" json:"NewKey"`
-	Customer_Id       int64  `bson:"Customer_Id" json:"Customer_Id"`
-	Loyalty_Level_Key string `bson:"Loyalty_Level_Key" json:"Loyalty_Level_Key"`
+	Key               string    `bson:"Key" json:"Key"` //MSISDN
+	NewKey            string    `bson:"NewKey" json:"NewKey"`
+	Customer_Id       int64     `bson:"Customer_Id" json:"Customer_Id"`
+	Loyalty_Level_Key string    `bson:"Loyalty_Level_Key" json:"Loyalty_Level_Key"`
+	COS               string    `bson:"COS" json:"COS"`
+	ARPU              float64   `bson:"ARPU" json:"ARPU"`
+	Joining_Date      time.Time `bson:"Joining_Date" json:"Joining_Date"`
 }
 
 type Loyalty_Points_Detail struct {
