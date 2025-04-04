@@ -271,6 +271,9 @@ type Customer_Loyalty_Account struct {
 	Account_Status  string    `bson:"Account_Status" json:"Account_Status"`
 	Account_Profile string    `bson:"Account_Profile" json:"Account_Profile"`
 
+	Previous_Loyalty_Level_Key  string    `bson:"Previous_Loyalty_Level_Key" json:"Previous_Loyalty_Level_Key"`
+	Previous_Loyalty_Level_Date time.Time `bson:"Previous_Loyalty_Level_Date" json:"Previous_Loyalty_Level_Date"`
+
 	Loyalty_Level_Key       string    `bson:"Loyalty_Level_Key" json:"Loyalty_Level_Key"`
 	Loyalty_Level_Date      time.Time `bson:"Loyalty_Level_Date" json:"Loyalty_Level_Date"`
 	Loyalty_Level_Direction string    `bson:"Loyalty_Level_Direction" json:"Loyalty_Level_Direction"` //last change: Up or Down
@@ -419,4 +422,33 @@ type Customer_COS_Exclusion_EditRequest struct {
 	Id        int64     `bson:"Id" json:"Id"`
 	AddTime   time.Time `bson:"AddTime" json:"AddTime"`
 	AddReason string    `bson:"AddReason" json:"AddReason"`
+}
+
+type Loyalty_Level_Change_log struct {
+	Level_Change_Date time.Time `bson:"Level_Change_Date" json:"Level_Change_Date"`
+	MSISDN            string    `bson:"MSISDN" json:"MSISDN"` //MSISDN
+	COS               string    `bson:"COS" json:"COS"`
+	Joining_Date      time.Time `bson:"Joining_Date" json:"Joining_Date"` //
+	ARPU              float64   `bson:"ARPU" json:"ARPU"`
+	Customer_Id       int64     `bson:"Customer_Id" json:"Customer_Id"`
+	Creation_date     time.Time `bson:"Creation_date" json:"Creation_date"`
+
+	Previous_Loyalty_Level_Key  string    `bson:"Previous_Loyalty_Level_Key" json:"Previous_Loyalty_Level_Key"`
+	Previous_Loyalty_Level_Date time.Time `bson:"Previous_Loyalty_Level_Date" json:"Previous_Loyalty_Level_Date"`
+
+	New_Loyalty_Level_Key       string    `bson:"New_Loyalty_Level_Key" json:"New_Loyalty_Level_Key"`
+	New_Loyalty_Level_Date      time.Time `bson:"New_Loyalty_Level_Date" json:"New_Loyalty_Level_Date"`
+	New_Loyalty_Level_Direction string    `bson:"New_Loyalty_Level_Direction" json:"New_Loyalty_Level_Direction"` //last change: Up or Down
+	New_Loyalty_Level_SetBy     string    `bson:"New_Loyalty_Level_SetBy" json:"New_Loyalty_Level_SetBy"`         //program or admin, if admin program cannot change anymore
+
+	Loyalty_Account_Segment_Key       string    `bson:"Loyalty_Account_Segment_Key" json:"Loyalty_Account_Segment_Key"`
+	Loyalty_Account_Segment_Date      time.Time `bson:"Loyalty_Account_Segment_Date" json:"Loyalty_Account_Segment_Date"`
+	Loyalty_Account_Segment_Direction string    `bson:"Loyalty_Account_Segment_Direction" json:"Loyalty_Account_Segment_Direction"` //last change: Up or Down
+	Loyalty_Account_Segment_SetBy     string    `bson:"Loyalty_Account_Segment_SetBy" json:"Loyalty_Account_Segment_SetBy"`         //program or admin, if admin program cannot change anymore
+
+	Awarded_Points   float64   `bson:"Awarded_Points" json:"Awarded_Points"`
+	Redeemed_Points  float64   `bson:"Redeemed_Points" json:"Redeemed_Points"`
+	Available_Points float64   `bson:"Available_Points" json:"Available_Points"` //Awarded_Points - Redeemed_Points
+	Last_Award_Date  time.Time `bson:"Last_Award_Date" json:"Last_Award_Date"`
+	Last_Redeem_Date time.Time `bson:"Last_Redeem_Date" json:"Last_Redeem_Date"`
 }

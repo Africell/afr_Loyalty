@@ -16,6 +16,7 @@ var DAO_Loyalty_Governance daoc.DAO
 
 var Map_Loyalty_Level daoc.Cache_Synch
 var DAO_Loyalty_Level daoc.DAO
+var DAO_Loyalty_Level_Change_log daoc.DAO
 
 var Map_Loyalty_Account_Segment daoc.Cache_Synch
 var DAO_Loyalty_Account_Segment daoc.DAO
@@ -87,6 +88,7 @@ func (uc *UserControl) InitializeLoyaltyDAO() {
 	DAO_Loyalty_AutoIncrement.Initialize("Loyalty_AutoIncrement", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(daoc.AutoIncrement{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_AutoIncrement", "")
 	DAO_Loyalty_Governance.Initialize("Loyalty_Governance", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Governance{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Governance", "")
 	DAO_Loyalty_Level.Initialize("Loyalty_Level", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Level{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Level", "")
+	DAO_Loyalty_Level_Change_log.Initialize("Loyalty_Level_Change_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Level_Change_log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Level_Change_log", "")
 	DAO_Loyalty_Account_Segment.Initialize("Loyalty_Account_Segment", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Account_Segment{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Account_Segment", "")
 	DAO_Loyalty_Point_Earning_Rules.Initialize("Loyalty_Point_Earning_Rules", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Point_Earning_Rules{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Point_Earning_Rules", "")
 	DAO_Loyalty_Point_Expiry_Rules.Initialize("Loyalty_Point_Expiry_Rules", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Point_Expiry_Rules{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Point_Expiry_Rules", "")
@@ -222,9 +224,20 @@ func (uc *UserControl) LoyaltyIndexesMaintenanceProcess() {
 
 func (Uc *UserControl) Write_Loyalty_Event_Log(record Loyalty_Event_Log) {
 	YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.Event_Time)
+	Db := DAO_Loyalty_Event_Log.DB + "_" + YYYY + MM
+	Col := DAO_Loyalty_Event_Log.Collection + "_" + DD
+	_, err := DAO_Loyalty_Event_Log.PutOneLogs(record, Db, Col)
+	if err != nil {
+		log.Println("Error in Write_Lendme_log:", err, " (", record, ")")
+		return
+	}
+}
+
+func (Uc *UserControl) Write_Loyalty_Level_Change_log(record Loyalty_Level_Change_log) {
+	YYYY, MM, _, _, _, _, _ := GetTimeParts(record.Level_Change_Date)
 	Db := DAO_Lendme_log.DB + "_" + YYYY + MM
-	Col := DAO_Lendme_log.Collection + "_" + DD
-	_, err := DAO_Lendme_log.PutOneLogs(record, Db, Col)
+	Col := DAO_Loyalty_Level_Change_log.Collection //+ "_" + DD
+	_, err := DAO_Loyalty_Level_Change_log.PutOneLogs(record, Db, Col)
 	if err != nil {
 		log.Println("Error in Write_Lendme_log:", err, " (", record, ")")
 		return
@@ -3040,11 +3053,38 @@ func (Uc *UserControl) EvaluateAndUpdate_CustomerLoyaltyLevel(Login string, Acco
 		if New_Loyalty_Level.Min_Accumulated_Points > current_level.Min_Accumulated_Points &&
 			New_Loyalty_Level.Max_Accumulated_Points > current_level.Max_Accumulated_Points {
 			//Upgrade level
+			loyalty_account.Previous_Loyalty_Level_Key = loyalty_account.Loyalty_Level_Key
+			loyalty_account.Previous_Loyalty_Level_Date = loyalty_account.Loyalty_Level_Date
 			loyalty_account.Loyalty_Level_Key = New_Loyalty_Level.Key
 			loyalty_account.Loyalty_Level_Date = time.Now()
 			loyalty_account.Loyalty_Level_Direction = "Upgrade"
 			loyalty_account.Loyalty_Level_SetBy = Login
 			Map_Customer_Loyalty_Account.Put(loyalty_account.Key, loyalty_account)
+			//write change log
+			Uc.Write_Loyalty_Level_Change_log(Loyalty_Level_Change_log{
+				Level_Change_Date:                 time.Now(),
+				MSISDN:                            loyalty_account.Key,
+				COS:                               loyalty_account.COS,
+				Joining_Date:                      loyalty_account.Joining_Date,
+				ARPU:                              loyalty_account.ARPU,
+				Customer_Id:                       loyalty_account.Customer_Id,
+				Creation_date:                     loyalty_account.Creation_date,
+				Previous_Loyalty_Level_Key:        loyalty_account.Previous_Loyalty_Level_Key,
+				Previous_Loyalty_Level_Date:       loyalty_account.Previous_Loyalty_Level_Date,
+				New_Loyalty_Level_Key:             loyalty_account.Loyalty_Level_Key,
+				New_Loyalty_Level_Date:            loyalty_account.Loyalty_Level_Date,
+				New_Loyalty_Level_Direction:       loyalty_account.Loyalty_Level_Direction,
+				New_Loyalty_Level_SetBy:           loyalty_account.Loyalty_Level_SetBy,
+				Loyalty_Account_Segment_Key:       loyalty_account.Loyalty_Account_Segment_Key,
+				Loyalty_Account_Segment_Date:      loyalty_account.Loyalty_Account_Segment_Date,
+				Loyalty_Account_Segment_Direction: loyalty_account.Loyalty_Account_Segment_Direction,
+				Loyalty_Account_Segment_SetBy:     loyalty_account.Loyalty_Account_Segment_SetBy,
+				Awarded_Points:                    loyalty_account.Awarded_Points,
+				Redeemed_Points:                   loyalty_account.Redeemed_Points,
+				Available_Points:                  loyalty_account.Available_Points,
+				Last_Award_Date:                   loyalty_account.Last_Award_Date,
+				Last_Redeem_Date:                  loyalty_account.Last_Redeem_Date,
+			})
 		}
 		//else {
 		//downgrade ==> to be done within the points expiry process
