@@ -231,6 +231,109 @@ func (Uc *UserControl) Write_Loyalty_Event_Log(record Loyalty_Event_Log) {
 	}
 }
 
+func (Uc *UserControl) InitializeLoyaltyDefaultUAT() {
+	Uc.Loyalty_Governance_Add("Default", Loyalty_Governance_AddRequest{
+		Key:                             LOYALTY_GOVERNANCE_KEY,
+		Available_Points_Pool:           5000000000,
+		Distributed_Points_Pool:         0,
+		Redeemed_Points_Pool:            0,
+		Expired_Points_Pool:             0,
+		MaxAllowedPoints_PerTransaction: 100,
+		MaxSubsAwardedPoints_PerMonth:   10000,
+		MaxSubsAwardedPoints:            100000,
+	})
+	Uc.Loyalty_Level_Add("Default", Loyalty_Level_AddRequest{
+		Key:                    "Member",
+		Description:            "Member",
+		Min_Accumulated_Points: 0,
+		Max_Accumulated_Points: 100,
+	})
+	Uc.Loyalty_Level_Add("Default", Loyalty_Level_AddRequest{
+		Key:                    "Silver",
+		Description:            "Silver",
+		Min_Accumulated_Points: 101,
+		Max_Accumulated_Points: 500,
+	})
+	Uc.Loyalty_Level_Add("Default", Loyalty_Level_AddRequest{
+		Key:                    "Gold",
+		Description:            "Gold",
+		Min_Accumulated_Points: 501,
+		Max_Accumulated_Points: 1000,
+	})
+	Uc.Loyalty_Level_Add("Default", Loyalty_Level_AddRequest{
+		Key:                    "Platinum",
+		Description:            "Platinum",
+		Min_Accumulated_Points: 1001,
+		Max_Accumulated_Points: 999999999,
+	})
+	Uc.Loyalty_Account_Segment_Add("Default", Loyalty_Account_Segment_AddRequest{
+		Key:         "Main_Segment",
+		Description: "Main_Segment",
+		Amount_From: 0,
+		Amount_Till: 999999999,
+		AON_From:    0,
+		AON_Till:    999999999,
+	})
+	Uc.Loyalty_Point_Earning_Rules_Add("Default", Loyalty_Point_Earning_Rules_AddRequest{
+		Key:                                   "Default_Earning_Rules",
+		Description:                           "Default_Earning_Rules",
+		Welcome_Points:                        5,
+		MobileAppDaily_Login:                  1,
+		MainGSMBalance_AmountConsumedPerPoint: 10,
+		MobileMoney_AmountConsumedPerPoint:    10,
+	})
+	Uc.Loyalty_Point_Expiry_Rules_Add("Default", Loyalty_Point_Expiry_Rules_AddRequest{
+		Key:               "Default_Expiry_Rules",
+		Description:       "Default_Expiry_Rules",
+		Validity_Unit:     "Monthly", //Monthly, yearly
+		Validity_Duration: 12,
+	})
+	Uc.Loyalty_Point_Redemption_Rules_Add("Default", Loyalty_Point_Redemption_Rules_AddRequest{
+		Key:                             "Default_Redemption_Rules",
+		Description:                     "Default_Redemption_Rules",
+		Min_Accumulated_Points:          100,
+		Allow_Negative_Balance_ToRedeem: false,
+		Allow_PendingLendme_ToRedeem:    false,
+		Product_Catalogue:               "Loyalty_Default",
+	})
+	Uc.Loyalty_Plan_Add("Default", Loyalty_Plan_AddRequest{
+		Key:                         "Member|Main_Segment", //Loyalty_Level_Key + "|" + Loyalty_Account_Segment_Key
+		Description:                 "",
+		Loyalty_Level_Key:           "Member",
+		Loyalty_Account_Segment_Key: "Main_Segment",
+		Earning_Rules_Key:           "Default_Earning_Rules",
+		Expiry_Rules_Key:            "Default_Expiry_Rules",
+		Redemption_Rules_Key:        "Default_Redemption_Rules",
+	})
+	Uc.Loyalty_Plan_Add("Default", Loyalty_Plan_AddRequest{
+		Key:                         "Silver|Main_Segment", //Loyalty_Level_Key + "|" + Loyalty_Account_Segment_Key
+		Description:                 "",
+		Loyalty_Level_Key:           "Silver",
+		Loyalty_Account_Segment_Key: "Main_Segment",
+		Earning_Rules_Key:           "Default_Earning_Rules",
+		Expiry_Rules_Key:            "Default_Expiry_Rules",
+		Redemption_Rules_Key:        "Default_Redemption_Rules",
+	})
+	Uc.Loyalty_Plan_Add("Default", Loyalty_Plan_AddRequest{
+		Key:                         "Gold|Main_Segment", //Loyalty_Level_Key + "|" + Loyalty_Account_Segment_Key
+		Description:                 "",
+		Loyalty_Level_Key:           "Gold",
+		Loyalty_Account_Segment_Key: "Main_Segment",
+		Earning_Rules_Key:           "Default_Earning_Rules",
+		Expiry_Rules_Key:            "Default_Expiry_Rules",
+		Redemption_Rules_Key:        "Default_Redemption_Rules",
+	})
+	Uc.Loyalty_Plan_Add("Default", Loyalty_Plan_AddRequest{
+		Key:                         "Platinum|Main_Segment", //Loyalty_Level_Key + "|" + Loyalty_Account_Segment_Key
+		Description:                 "",
+		Loyalty_Level_Key:           "Platinum",
+		Loyalty_Account_Segment_Key: "Main_Segment",
+		Earning_Rules_Key:           "Default_Earning_Rules",
+		Expiry_Rules_Key:            "Default_Expiry_Rules",
+		Redemption_Rules_Key:        "Default_Redemption_Rules",
+	})
+}
+
 // ***********************************************************************
 // Loyalty_Governance functions
 // ***********************************************************************
@@ -2503,12 +2606,12 @@ func (Uc *UserControl) Customer_Loyalty_Account_Add(Login string, request Custom
 			Event_Entry_After:  NewEntry,
 		})
 	}
-	Uc.Customer_Loyalty_Account_AwardPoints(Login, Customer_Loyalty_Account_AwardRequest{
-		MSISDN:      NewEntry.Key,
-		EventSource: request.EventSource,
-		EventType:   "NewJoining",
-		Amount:      0,
-	})
+	// Uc.Customer_Loyalty_Account_AwardPoints(Login, Customer_Loyalty_Account_AwardRequest{
+	// 	MSISDN:      NewEntry.Key,
+	// 	EventSource: request.EventSource,
+	// 	EventType:   "NewJoining",
+	// 	Amount:      0,
+	// })
 	return Id, nil
 }
 
@@ -2534,8 +2637,15 @@ func (Uc *UserControl) Customer_Loyalty_Account_Edit(Login string, request Custo
 	//check exclusion list
 	exists_exclusion := Map_Customer_Exclusion.Check(request.Key)
 	if exists_exclusion {
-		Uc.Customer_Loyalty_Account_Delete("Program", request.Key)
+		Uc.Customer_Loyalty_Account_Delete(Login, request.Key)
 		err = errors.New("customer is included in the exclusion list")
+		return Id, err
+	}
+	//check COS exclusion list
+	exists_exclusion_cos := Map_Customer_COS_Exclusion.Check(request.COS)
+	if exists_exclusion_cos {
+		Uc.Customer_Loyalty_Account_Delete(Login, request.Key)
+		err = errors.New("customer is included in the cos exclusion list")
 		return Id, err
 	}
 	//Prepare new entry
@@ -2546,17 +2656,6 @@ func (Uc *UserControl) Customer_Loyalty_Account_Edit(Login string, request Custo
 		//entry.Loyalty_Level_Direction =
 		entry.Loyalty_Level_SetBy = Login
 	}
-	if entry.COS != request.COS {
-		//check COS exclusion list
-		exists_exclusion_cos := Map_Customer_COS_Exclusion.Check(request.COS)
-		if exists_exclusion_cos {
-			Uc.Customer_Loyalty_Account_Delete("Program", request.Key)
-			err = errors.New("customer is included in the cos exclusion list")
-			return Id, err
-		}
-		entry.COS = request.COS
-	}
-
 	if Login != "DWH_Import" {
 		entry.ARPU = request.ARPU
 		entry.Joining_Date = request.Joining_Date
@@ -2859,6 +2958,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_AwardPoints(Login string, reques
 		err := Uc.Loyalty_Governance_Available_Points_Debit(points)
 		if err == nil {
 			Map_Customer_Loyalty_Account.Put(loyalty_account.Key, loyalty_account)
+			Uc.EvaluateAndUpdate_CustomerLoyaltyLevel(Login, loyalty_account.Key)
 		}
 	}
 	return
@@ -2894,6 +2994,61 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request C
 		default:
 			return 0, mainGSM_CurrentPending, mobileMoney_CurrentPending
 		}
+	}
+	return
+}
+
+func (Uc *UserControl) EvaluateAndUpdate_CustomerLoyaltyLevel(Login string, Account_Key string) (err error) {
+	loyalty_account_na, subexist := Map_Customer_Loyalty_Account.CheckThenGet(Account_Key)
+	if !subexist {
+		return errors.New("loyalty account does not exist")
+	}
+	loyalty_account, ok := loyalty_account_na.(Customer_Loyalty_Account)
+	if !ok {
+		return errors.New("type assertion issue with Customer_Loyalty_Account")
+	}
+	//evaluate loyalty level
+	var New_Loyalty_Level Loyalty_Level
+	loyalty_Level_na := Map_Loyalty_Level.ConvertToArray()
+	if len(loyalty_Level_na) > 0 {
+		for _, loyalty_Level_na := range loyalty_Level_na {
+			loyalty_Level, ok := loyalty_Level_na.(Loyalty_Level)
+			if !ok {
+				return errors.New("error in type assertion")
+			} else {
+				//evaluate
+				if loyalty_account.Awarded_Points >= loyalty_Level.Min_Accumulated_Points && loyalty_account.Awarded_Points < loyalty_Level.Max_Accumulated_Points {
+					New_Loyalty_Level = loyalty_Level
+					if New_Loyalty_Level.Key == loyalty_account.Loyalty_Level_Key {
+						//===>> no level change
+						return nil
+					} else {
+						break
+					}
+				}
+			}
+		}
+		//update customer level
+		current_level_na, lvlexist := Map_Loyalty_Level.CheckThenGet(loyalty_account.Loyalty_Level_Key)
+		if !lvlexist {
+			return errors.New("current level is invalid")
+		}
+		current_level, ok := current_level_na.(Loyalty_Level)
+		if !ok {
+			return errors.New("error in type assertion")
+		}
+		if New_Loyalty_Level.Min_Accumulated_Points > current_level.Min_Accumulated_Points &&
+			New_Loyalty_Level.Max_Accumulated_Points > current_level.Max_Accumulated_Points {
+			//Upgrade level
+			loyalty_account.Loyalty_Level_Key = New_Loyalty_Level.Key
+			loyalty_account.Loyalty_Level_Date = time.Now()
+			loyalty_account.Loyalty_Level_Direction = "Upgrade"
+			loyalty_account.Loyalty_Level_SetBy = Login
+			Map_Customer_Loyalty_Account.Put(loyalty_account.Key, loyalty_account)
+		}
+		//else {
+		//downgrade ==> to be done within the points expiry process
+		//}
 	}
 	return
 }
