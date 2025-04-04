@@ -210,7 +210,6 @@ func (Uc *UserControl) Subscriber_Update(request Sub_Update_Request) {
 			<-chan_SubQueueExecution_controler
 			return
 		}
-
 		Uc.Customer_Loyalty_Account_Edit("DWH_Import", Customer_Loyalty_Account_EditRequest{
 			Key:               loyalty_account.Key,
 			Customer_Id:       loyalty_account.Customer_Id,

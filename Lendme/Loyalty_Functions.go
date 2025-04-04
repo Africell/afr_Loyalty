@@ -2503,12 +2503,12 @@ func (Uc *UserControl) Customer_Loyalty_Account_Add(Login string, request Custom
 			Event_Entry_After:  NewEntry,
 		})
 	}
-	Uc.Customer_Loyalty_Account_AwardPoints(Login, Customer_Loyalty_Account_AwardRequest{
-		MSISDN:      NewEntry.Key,
-		EventSource: request.EventSource,
-		EventType:   "NewJoining",
-		Amount:      0,
-	})
+	// Uc.Customer_Loyalty_Account_AwardPoints(Login, Customer_Loyalty_Account_AwardRequest{
+	// 	MSISDN:      NewEntry.Key,
+	// 	EventSource: request.EventSource,
+	// 	EventType:   "NewJoining",
+	// 	Amount:      0,
+	// })
 	return Id, nil
 }
 
@@ -2534,8 +2534,15 @@ func (Uc *UserControl) Customer_Loyalty_Account_Edit(Login string, request Custo
 	//check exclusion list
 	exists_exclusion := Map_Customer_Exclusion.Check(request.Key)
 	if exists_exclusion {
-		Uc.Customer_Loyalty_Account_Delete("Program", request.Key)
+		Uc.Customer_Loyalty_Account_Delete(Login, request.Key)
 		err = errors.New("customer is included in the exclusion list")
+		return Id, err
+	}
+	//check COS exclusion list
+	exists_exclusion_cos := Map_Customer_COS_Exclusion.Check(request.COS)
+	if exists_exclusion_cos {
+		Uc.Customer_Loyalty_Account_Delete(Login, request.Key)
+		err = errors.New("customer is included in the cos exclusion list")
 		return Id, err
 	}
 	//Prepare new entry
@@ -2546,17 +2553,6 @@ func (Uc *UserControl) Customer_Loyalty_Account_Edit(Login string, request Custo
 		//entry.Loyalty_Level_Direction =
 		entry.Loyalty_Level_SetBy = Login
 	}
-	if entry.COS != request.COS {
-		//check COS exclusion list
-		exists_exclusion_cos := Map_Customer_COS_Exclusion.Check(request.COS)
-		if exists_exclusion_cos {
-			Uc.Customer_Loyalty_Account_Delete("Program", request.Key)
-			err = errors.New("customer is included in the cos exclusion list")
-			return Id, err
-		}
-		entry.COS = request.COS
-	}
-
 	if Login != "DWH_Import" {
 		entry.ARPU = request.ARPU
 		entry.Joining_Date = request.Joining_Date
@@ -2859,6 +2855,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_AwardPoints(Login string, reques
 		err := Uc.Loyalty_Governance_Available_Points_Debit(points)
 		if err == nil {
 			Map_Customer_Loyalty_Account.Put(loyalty_account.Key, loyalty_account)
+			Uc.EvaluateAndUpdate_CustomerLoyaltyLevel(Login, loyalty_account.Key)
 		}
 	}
 	return
@@ -2894,6 +2891,61 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request C
 		default:
 			return 0, mainGSM_CurrentPending, mobileMoney_CurrentPending
 		}
+	}
+	return
+}
+
+func (Uc *UserControl) EvaluateAndUpdate_CustomerLoyaltyLevel(Login string, Account_Key string) (err error) {
+	loyalty_account_na, subexist := Map_Customer_Loyalty_Account.CheckThenGet(Account_Key)
+	if !subexist {
+		return errors.New("loyalty account does not exist")
+	}
+	loyalty_account, ok := loyalty_account_na.(Customer_Loyalty_Account)
+	if !ok {
+		return errors.New("type assertion issue with Customer_Loyalty_Account")
+	}
+	//evaluate loyalty level
+	var New_Loyalty_Level Loyalty_Level
+	loyalty_Level_na := Map_Loyalty_Level.ConvertToArray()
+	if len(loyalty_Level_na) > 0 {
+		for _, loyalty_Level_na := range loyalty_Level_na {
+			loyalty_Level, ok := loyalty_Level_na.(Loyalty_Level)
+			if !ok {
+				return errors.New("error in type assertion")
+			} else {
+				//evaluate
+				if loyalty_account.Awarded_Points >= loyalty_Level.Min_Accumulated_Points && loyalty_account.Awarded_Points < loyalty_Level.Max_Accumulated_Points {
+					New_Loyalty_Level = loyalty_Level
+					if New_Loyalty_Level.Key == loyalty_account.Loyalty_Level_Key {
+						//===>> no level change
+						return nil
+					} else {
+						break
+					}
+				}
+			}
+		}
+		//update customer level
+		current_level_na, lvlexist := Map_Loyalty_Level.CheckThenGet(loyalty_account.Loyalty_Level_Key)
+		if !lvlexist {
+			return errors.New("current level is invalid")
+		}
+		current_level, ok := current_level_na.(Loyalty_Level)
+		if !ok {
+			return errors.New("error in type assertion")
+		}
+		if New_Loyalty_Level.Min_Accumulated_Points > current_level.Min_Accumulated_Points &&
+			New_Loyalty_Level.Max_Accumulated_Points > current_level.Max_Accumulated_Points {
+			//Upgrade level
+			loyalty_account.Loyalty_Level_Key = New_Loyalty_Level.Key
+			loyalty_account.Loyalty_Level_Date = time.Now()
+			loyalty_account.Loyalty_Level_Direction = "Upgrade"
+			loyalty_account.Loyalty_Level_SetBy = Login
+			Map_Customer_Loyalty_Account.Put(loyalty_account.Key, loyalty_account)
+		}
+		//else {
+		//downgrade ==> to be done within the points expiry process
+		//}
 	}
 	return
 }

@@ -18,6 +18,7 @@ type Loyalty_Governance struct {
 	Available_Points_Pool           float64 `bson:"Available_Points_Pool" json:"Available_Points_Pool"`
 	Distributed_Points_Pool         float64 `bson:"Distributed_Points_Pool" json:"Distributed_Points_Pool"`
 	Redeemed_Points_Pool            float64 `bson:"Redeemed_Points_Pool" json:"Redeemed_Points_Pool"`
+	Expired_Points_Pool             float64 `bson:"Expired_Points_Pool" json:"Expired_Points_Pool"`
 	MaxAllowedPoints_PerTransaction float64 `bson:"MaxAllowedPoints_PerTransaction" json:"MaxAllowedPoints_PerTransaction"`
 	MaxSubsAwardedPoints_PerMonth   float64 `bson:"MaxSubsAwardedPoints_PerMonth" json:"MaxSubsAwardedPoints_PerMonth"`
 	MaxSubsAwardedPoints            float64 `bson:"MaxSubsAwardedPoints" json:"MaxSubsAwardedPoints"`
@@ -29,6 +30,7 @@ type Loyalty_Governance_AddRequest struct {
 	Available_Points_Pool           float64 `bson:"Available_Points_Pool" json:"Available_Points_Pool"`
 	Distributed_Points_Pool         float64 `bson:"Distributed_Points_Pool" json:"Distributed_Points_Pool"`
 	Redeemed_Points_Pool            float64 `bson:"Redeemed_Points_Pool" json:"Redeemed_Points_Pool"`
+	Expired_Points_Pool             float64 `bson:"Expired_Points_Pool" json:"Expired_Points_Pool"`
 	MaxAllowedPoints_PerTransaction float64 `bson:"MaxAllowedPoints_PerTransaction" json:"MaxAllowedPoints_PerTransaction"`
 	MaxSubsAwardedPoints_PerMonth   float64 `bson:"MaxSubsAwardedPoints_PerMonth" json:"MaxSubsAwardedPoints_PerMonth"`
 	MaxSubsAwardedPoints            float64 `bson:"MaxSubsAwardedPoints" json:"MaxSubsAwardedPoints"`
@@ -41,6 +43,7 @@ type Loyalty_Governance_EditRequest struct {
 	Available_Points_Pool           float64 `bson:"Available_Points_Pool" json:"Available_Points_Pool"`
 	Distributed_Points_Pool         float64 `bson:"Distributed_Points_Pool" json:"Distributed_Points_Pool"`
 	Redeemed_Points_Pool            float64 `bson:"Redeemed_Points_Pool" json:"Redeemed_Points_Pool"`
+	Expired_Points_Pool             float64 `bson:"Expired_Points_Pool" json:"Expired_Points_Pool"`
 	MaxAllowedPoints_PerTransaction float64 `bson:"MaxAllowedPoints_PerTransaction" json:"MaxAllowedPoints_PerTransaction"`
 	MaxSubsAwardedPoints_PerMonth   float64 `bson:"MaxSubsAwardedPoints_PerMonth" json:"MaxSubsAwardedPoints_PerMonth"`
 	MaxSubsAwardedPoints            float64 `bson:"MaxSubsAwardedPoints" json:"MaxSubsAwardedPoints"`
