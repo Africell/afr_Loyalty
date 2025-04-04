@@ -231,6 +231,109 @@ func (Uc *UserControl) Write_Loyalty_Event_Log(record Loyalty_Event_Log) {
 	}
 }
 
+func (Uc *UserControl) InitializeLoyaltyDefaultUAT() {
+	Uc.Loyalty_Governance_Add("Default", Loyalty_Governance_AddRequest{
+		Key:                             LOYALTY_GOVERNANCE_KEY,
+		Available_Points_Pool:           5000000000,
+		Distributed_Points_Pool:         0,
+		Redeemed_Points_Pool:            0,
+		Expired_Points_Pool:             0,
+		MaxAllowedPoints_PerTransaction: 100,
+		MaxSubsAwardedPoints_PerMonth:   10000,
+		MaxSubsAwardedPoints:            100000,
+	})
+	Uc.Loyalty_Level_Add("Default", Loyalty_Level_AddRequest{
+		Key:                    "Member",
+		Description:            "Member",
+		Min_Accumulated_Points: 0,
+		Max_Accumulated_Points: 100,
+	})
+	Uc.Loyalty_Level_Add("Default", Loyalty_Level_AddRequest{
+		Key:                    "Silver",
+		Description:            "Silver",
+		Min_Accumulated_Points: 101,
+		Max_Accumulated_Points: 500,
+	})
+	Uc.Loyalty_Level_Add("Default", Loyalty_Level_AddRequest{
+		Key:                    "Gold",
+		Description:            "Gold",
+		Min_Accumulated_Points: 501,
+		Max_Accumulated_Points: 1000,
+	})
+	Uc.Loyalty_Level_Add("Default", Loyalty_Level_AddRequest{
+		Key:                    "Platinum",
+		Description:            "Platinum",
+		Min_Accumulated_Points: 1001,
+		Max_Accumulated_Points: 999999999,
+	})
+	Uc.Loyalty_Account_Segment_Add("Default", Loyalty_Account_Segment_AddRequest{
+		Key:         "Main_Segment",
+		Description: "Main_Segment",
+		Amount_From: 0,
+		Amount_Till: 999999999,
+		AON_From:    0,
+		AON_Till:    999999999,
+	})
+	Uc.Loyalty_Point_Earning_Rules_Add("Default", Loyalty_Point_Earning_Rules_AddRequest{
+		Key:                                   "Default_Earning_Rules",
+		Description:                           "Default_Earning_Rules",
+		Welcome_Points:                        5,
+		MobileAppDaily_Login:                  1,
+		MainGSMBalance_AmountConsumedPerPoint: 10,
+		MobileMoney_AmountConsumedPerPoint:    10,
+	})
+	Uc.Loyalty_Point_Expiry_Rules_Add("Default", Loyalty_Point_Expiry_Rules_AddRequest{
+		Key:               "Default_Expiry_Rules",
+		Description:       "Default_Expiry_Rules",
+		Validity_Unit:     "Monthly", //Monthly, yearly
+		Validity_Duration: 12,
+	})
+	Uc.Loyalty_Point_Redemption_Rules_Add("Default", Loyalty_Point_Redemption_Rules_AddRequest{
+		Key:                             "Default_Redemption_Rules",
+		Description:                     "Default_Redemption_Rules",
+		Min_Accumulated_Points:          100,
+		Allow_Negative_Balance_ToRedeem: false,
+		Allow_PendingLendme_ToRedeem:    false,
+		Product_Catalogue:               "Loyalty_Default",
+	})
+	Uc.Loyalty_Plan_Add("Default", Loyalty_Plan_AddRequest{
+		Key:                         "Member|Main_Segment", //Loyalty_Level_Key + "|" + Loyalty_Account_Segment_Key
+		Description:                 "",
+		Loyalty_Level_Key:           "Member",
+		Loyalty_Account_Segment_Key: "Main_Segment",
+		Earning_Rules_Key:           "Default_Earning_Rules",
+		Expiry_Rules_Key:            "Default_Expiry_Rules",
+		Redemption_Rules_Key:        "Default_Redemption_Rules",
+	})
+	Uc.Loyalty_Plan_Add("Default", Loyalty_Plan_AddRequest{
+		Key:                         "Silver|Main_Segment", //Loyalty_Level_Key + "|" + Loyalty_Account_Segment_Key
+		Description:                 "",
+		Loyalty_Level_Key:           "Silver",
+		Loyalty_Account_Segment_Key: "Main_Segment",
+		Earning_Rules_Key:           "Default_Earning_Rules",
+		Expiry_Rules_Key:            "Default_Expiry_Rules",
+		Redemption_Rules_Key:        "Default_Redemption_Rules",
+	})
+	Uc.Loyalty_Plan_Add("Default", Loyalty_Plan_AddRequest{
+		Key:                         "Gold|Main_Segment", //Loyalty_Level_Key + "|" + Loyalty_Account_Segment_Key
+		Description:                 "",
+		Loyalty_Level_Key:           "Gold",
+		Loyalty_Account_Segment_Key: "Main_Segment",
+		Earning_Rules_Key:           "Default_Earning_Rules",
+		Expiry_Rules_Key:            "Default_Expiry_Rules",
+		Redemption_Rules_Key:        "Default_Redemption_Rules",
+	})
+	Uc.Loyalty_Plan_Add("Default", Loyalty_Plan_AddRequest{
+		Key:                         "Platinum|Main_Segment", //Loyalty_Level_Key + "|" + Loyalty_Account_Segment_Key
+		Description:                 "",
+		Loyalty_Level_Key:           "Platinum",
+		Loyalty_Account_Segment_Key: "Main_Segment",
+		Earning_Rules_Key:           "Default_Earning_Rules",
+		Expiry_Rules_Key:            "Default_Expiry_Rules",
+		Redemption_Rules_Key:        "Default_Redemption_Rules",
+	})
+}
+
 // ***********************************************************************
 // Loyalty_Governance functions
 // ***********************************************************************
