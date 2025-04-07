@@ -247,7 +247,7 @@ func (Uc *UserControl) Write_Loyalty_Level_Change_log(record Loyalty_Level_Chang
 }
 
 func (Uc *UserControl) Write_Loyalty_Award_log(record Loyalty_Award_log) {
-	YYYY, MM, DD, _, _, _, _ := GetTimeParts(record.AwardTime)
+	YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.AwardTime)
 	Db := DAO_Lendme_log.DB + "_" + YYYY + MM
 	Col := DAO_Loyalty_Award_log.Collection + "_" + DD
 	_, err := DAO_Loyalty_Award_log.PutOneLogs(record, Db, Col)
