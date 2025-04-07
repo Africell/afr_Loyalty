@@ -345,6 +345,22 @@ type Customer_Loyalty_Account_AwardRequest struct {
 	Amount      float64 `bson:"Amount" json:"Amount"`
 }
 
+type Loyalty_Award_log struct {
+	AwardTime              time.Time `bson:"AwardTime" json:"AwardTime"`
+	MSISDN                 string    `bson:"MSISDN" json:"MSISDN"`           //MSISDN
+	EventSource            string    `bson:"EventSource" json:"EventSource"` //MobileApp, MobileMoney, USSD,...
+	EventType              string    `bson:"EventType" json:"EventType"`     //BundlePurchase, MOC,...
+	EventDetail            string    `bson:"EventDetail" json:"EventDetail"` //BundleName, ...
+	EventAmount            float64   `bson:"EventAmount" json:"EventAmount"`
+	PreviousLoyaltyLevel   string    `bson:"PreviousLoyaltyLevel" json:"PreviousLoyaltyLevel"`
+	CurrentLoyaltyLevel    string    `bson:"CurrentLoyaltyLevel" json:"CurrentLoyaltyLevel"`
+	OpeningAvailablePoints float64   `bson:"OpeningAvailablePoints" json:"OpeningAvailablePoints"`
+	ClosureAvailablePoints float64   `bson:"ClosureAvailablePoints" json:"ClosureAvailablePoints"`
+	AwardedPoints          float64   `bson:"AwardedPoints" json:"AwardedPoints"`
+	AwardStatus            string    `bson:"AwardStatus" json:"AwardStatus"`
+	AwardStatusDescription string    `bson:"AwardStatusDescription" json:"AwardStatusDescription"`
+}
+
 type Customer_Loyalty_Account_DeleteRequest struct {
 	Key         string `bson:"Key" json:"Key"` //MSISDN
 	Customer_Id int64  `bson:"Customer_Id" json:"Customer_Id"`
