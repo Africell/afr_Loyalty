@@ -2159,7 +2159,7 @@ func (Uc *UserControl) HTTP_INLiveFeed_Consuption(w http.ResponseWriter, r *http
 			Uc.HTTP_API_Standard_response(w, r, sr, false)
 			return
 		}
-		err = Uc.Customer_Loyalty_Account_AwardPoints(sr.Login, request)
+		err, _ = Uc.Customer_Loyalty_Account_AwardPoints(sr.Login, request)
 		if err != nil {
 			sr.Status = "failed"
 			sr.StatusCode = http.StatusBadRequest
