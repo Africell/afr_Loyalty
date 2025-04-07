@@ -203,7 +203,12 @@ type Loyalty_Point_Redemption_Rules struct {
 	Min_Accumulated_Points          float64 `bson:"Min_Accumulated_Points" json:"Min_Accumulated_Points"` //will be used for upgrade
 	Allow_Negative_Balance_ToRedeem bool    `bson:"Allow_Negative_Balance_ToRedeem" json:"Allow_Negative_Balance_ToRedeem"`
 	Allow_PendingLendme_ToRedeem    bool    `bson:"Allow_PendingLendme_ToRedeem" json:"Allow_PendingLendme_ToRedeem"`
-	Product_Catalogue               string  `bson:"Product_Catalogue" json:"Product_Catalogue"`
+	Airtime_MinPoints               float64 `bson:"Airtime_MinPoints" json:"Airtime_MinPoints"`
+	Airtime_AmountPerPoint          float64 `bson:"Airtime_AmountPerPoint" json:"Airtime_AmountPerPoint"`
+	MobileMoney_MinPoints           float64 `bson:"MobileMoney_MinPoints" json:"MobileMoney_MinPoints"`
+	MobileMoney_AmountPerPoint      float64 `bson:"MobileMoney_AmountPerPoint" json:"MobileMoney_AmountPerPoint"`
+	Bundles_MinPoints               float64 `bson:"Bundles_MinPoints" json:"Bundles_MinPoints"`
+	Bundles_Product_Catalogue       string  `bson:"Bundles_Product_Catalogue" json:"Bundles_Product_Catalogue"`
 }
 
 type Loyalty_Point_Redemption_Rules_AddRequest struct {
@@ -213,7 +218,12 @@ type Loyalty_Point_Redemption_Rules_AddRequest struct {
 	Min_Accumulated_Points          float64 `bson:"Min_Accumulated_Points" json:"Min_Accumulated_Points"` //will be used for upgrade
 	Allow_Negative_Balance_ToRedeem bool    `bson:"Allow_Negative_Balance_ToRedeem" json:"Allow_Negative_Balance_ToRedeem"`
 	Allow_PendingLendme_ToRedeem    bool    `bson:"Allow_PendingLendme_ToRedeem" json:"Allow_PendingLendme_ToRedeem"`
-	Product_Catalogue               string  `bson:"Product_Catalogue" json:"Product_Catalogue"`
+	Airtime_MinPoints               float64 `bson:"Airtime_MinPoints" json:"Airtime_MinPoints"`
+	Airtime_AmountPerPoint          float64 `bson:"Airtime_AmountPerPoint" json:"Airtime_AmountPerPoint"`
+	MobileMoney_MinPoints           float64 `bson:"MobileMoney_MinPoints" json:"MobileMoney_MinPoints"`
+	MobileMoney_AmountPerPoint      float64 `bson:"MobileMoney_AmountPerPoint" json:"MobileMoney_AmountPerPoint"`
+	Bundles_MinPoints               float64 `bson:"Bundles_MinPoints" json:"Bundles_MinPoints"`
+	Bundles_Product_Catalogue       string  `bson:"Bundles_Product_Catalogue" json:"Bundles_Product_Catalogue"`
 }
 
 type Loyalty_Point_Redemption_Rules_EditRequest struct {
@@ -224,7 +234,12 @@ type Loyalty_Point_Redemption_Rules_EditRequest struct {
 	Min_Accumulated_Points          float64 `bson:"Min_Accumulated_Points" json:"Min_Accumulated_Points"` //will be used for upgrade
 	Allow_Negative_Balance_ToRedeem bool    `bson:"Allow_Negative_Balance_ToRedeem" json:"Allow_Negative_Balance_ToRedeem"`
 	Allow_PendingLendme_ToRedeem    bool    `bson:"Allow_PendingLendme_ToRedeem" json:"Allow_PendingLendme_ToRedeem"`
-	Product_Catalogue               string  `bson:"Product_Catalogue" json:"Product_Catalogue"`
+	Airtime_MinPoints               float64 `bson:"Airtime_MinPoints" json:"Airtime_MinPoints"`
+	Airtime_AmountPerPoint          float64 `bson:"Airtime_AmountPerPoint" json:"Airtime_AmountPerPoint"`
+	MobileMoney_MinPoints           float64 `bson:"MobileMoney_MinPoints" json:"MobileMoney_MinPoints"`
+	MobileMoney_AmountPerPoint      float64 `bson:"MobileMoney_AmountPerPoint" json:"MobileMoney_AmountPerPoint"`
+	Bundles_MinPoints               float64 `bson:"Bundles_MinPoints" json:"Bundles_MinPoints"`
+	Bundles_Product_Catalogue       string  `bson:"Bundles_Product_Catalogue" json:"Bundles_Product_Catalogue"`
 }
 
 type Loyalty_Plan struct {

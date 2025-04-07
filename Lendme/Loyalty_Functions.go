@@ -307,7 +307,12 @@ func (Uc *UserControl) InitializeLoyaltyDefaultUAT() {
 		Min_Accumulated_Points:          100,
 		Allow_Negative_Balance_ToRedeem: false,
 		Allow_PendingLendme_ToRedeem:    false,
-		Product_Catalogue:               "Loyalty_Default",
+		Airtime_MinPoints:               100,
+		Airtime_AmountPerPoint:          0.5,
+		MobileMoney_MinPoints:           100,
+		MobileMoney_AmountPerPoint:      0.5,
+		Bundles_MinPoints:               100,
+		Bundles_Product_Catalogue:       "Loyalty_Default",
 	})
 	Uc.Loyalty_Plan_Add("Default", Loyalty_Plan_AddRequest{
 		Key:                         "Member|Main_Segment", //Loyalty_Level_Key + "|" + Loyalty_Account_Segment_Key
@@ -1388,7 +1393,13 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Add(Login string, request 
 	NewEntry.Min_Accumulated_Points = request.Min_Accumulated_Points
 	NewEntry.Allow_Negative_Balance_ToRedeem = request.Allow_Negative_Balance_ToRedeem
 	NewEntry.Allow_PendingLendme_ToRedeem = request.Allow_PendingLendme_ToRedeem
-	NewEntry.Product_Catalogue = request.Product_Catalogue
+	NewEntry.Airtime_MinPoints = request.Airtime_MinPoints
+	NewEntry.Airtime_AmountPerPoint = request.Airtime_AmountPerPoint
+	NewEntry.MobileMoney_MinPoints = request.MobileMoney_MinPoints
+	NewEntry.MobileMoney_AmountPerPoint = request.MobileMoney_AmountPerPoint
+	NewEntry.Bundles_MinPoints = request.Bundles_MinPoints
+	NewEntry.Bundles_Product_Catalogue = request.Bundles_Product_Catalogue
+
 	//add to cache and DB
 	Map_Loyalty_Point_Redemption_Rules.Put(NewEntry.Key, NewEntry)
 	//add logs
@@ -1429,7 +1440,12 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Edit(Login string, request
 	entry.Min_Accumulated_Points = request.Min_Accumulated_Points
 	entry.Allow_Negative_Balance_ToRedeem = request.Allow_Negative_Balance_ToRedeem
 	entry.Allow_PendingLendme_ToRedeem = request.Allow_PendingLendme_ToRedeem
-	entry.Product_Catalogue = request.Product_Catalogue
+	entry.Airtime_MinPoints = request.Airtime_MinPoints
+	entry.Airtime_AmountPerPoint = request.Airtime_AmountPerPoint
+	entry.MobileMoney_MinPoints = request.MobileMoney_MinPoints
+	entry.MobileMoney_AmountPerPoint = request.MobileMoney_AmountPerPoint
+	entry.Bundles_MinPoints = request.Bundles_MinPoints
+	entry.Bundles_Product_Catalogue = request.Bundles_Product_Catalogue
 	if request.NewKey != "" {
 		if request.NewKey != request.Key {
 			//delete old
@@ -2983,6 +2999,13 @@ func (Uc *UserControl) Customer_Loyalty_Account_AwardPoints(Login string, reques
 
 func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request Customer_Loyalty_Account_AwardRequest, mainGSM_CurrentPending, mobileMoney_CurrentPending float64) (points, mainGSM_pending, mobileMoney_pending float64) {
 	switch award_request.EventSource {
+	case "DWH_Import":
+		switch award_request.EventType {
+		case "NewJoining":
+			return rules.Welcome_Points, mainGSM_CurrentPending, mobileMoney_CurrentPending
+		default:
+			return 0, mainGSM_CurrentPending, mobileMoney_CurrentPending
+		}
 	case "IN_feed":
 		switch award_request.EventType {
 		case "NewJoining":
