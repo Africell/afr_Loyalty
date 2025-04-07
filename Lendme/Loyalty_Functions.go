@@ -2603,6 +2603,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_Add(Login string, request Custom
 			NewEntry.Loyalty_Account_Segment_SetBy = Login
 		}
 	}
+
 	NewEntry.LoyaltyPointsDetail = make(map[string]Loyalty_Points_Detail)
 
 	//add to cache and DB
@@ -2619,12 +2620,12 @@ func (Uc *UserControl) Customer_Loyalty_Account_Add(Login string, request Custom
 			Event_Entry_After:  NewEntry,
 		})
 	}
-	// Uc.Customer_Loyalty_Account_AwardPoints(Login, Customer_Loyalty_Account_AwardRequest{
-	// 	MSISDN:      NewEntry.Key,
-	// 	EventSource: request.EventSource,
-	// 	EventType:   "NewJoining",
-	// 	Amount:      0,
-	// })
+	Uc.Customer_Loyalty_Account_AwardPoints(Login, Customer_Loyalty_Account_AwardRequest{
+		MSISDN:      NewEntry.Key,
+		EventSource: request.EventSource,
+		EventType:   "NewJoining",
+		Amount:      0,
+	})
 	return Id, nil
 }
 
@@ -2669,7 +2670,8 @@ func (Uc *UserControl) Customer_Loyalty_Account_Edit(Login string, request Custo
 		//entry.Loyalty_Level_Direction =
 		entry.Loyalty_Level_SetBy = Login
 	}
-	if Login != "DWH_Import" {
+	//evaluate the loyalty Account segment
+	if Login == "DWH_Import" {
 		entry.ARPU = request.ARPU
 		entry.Joining_Date = request.Joining_Date
 		Loyalty_Account_Segment_Key := Loyalty_Account_Segment_Selection(request.ARPU, request.Joining_Date)
@@ -2971,7 +2973,9 @@ func (Uc *UserControl) Customer_Loyalty_Account_AwardPoints(Login string, reques
 		err := Uc.Loyalty_Governance_Available_Points_Debit(points)
 		if err == nil {
 			Map_Customer_Loyalty_Account.Put(loyalty_account.Key, loyalty_account)
-			Uc.EvaluateAndUpdate_CustomerLoyaltyLevel(Login, loyalty_account.Key)
+			if loyalty_account.Loyalty_Level_SetBy != "DWH_Import" && loyalty_account.Loyalty_Level_SetBy != "INLiveFeed" {
+				Uc.EvaluateAndUpdate_CustomerLoyaltyLevel(Login, loyalty_account.Key)
+			}
 		}
 	}
 	return
