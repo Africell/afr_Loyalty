@@ -175,7 +175,7 @@ type Loyalty_Point_Expiry_Rules struct {
 	Key               string `bson:"Key" json:"Key"`
 	Expiry_Rules_Id   int64  `bson:"Expiry_Rules_Id" json:"Expiry_Rules_Id"`
 	Description       string `bson:"Description" json:"Description"`
-	Validity_Unit     string `bson:"Validity_Unit" json:"Validity_Unit"` //Monthly, yearly
+	Validity_Unit     string `bson:"Validity_Unit" json:"Validity_Unit"` //Month, Year
 	Validity_Duration int    `bson:"Validity_Duration" json:"Validity_Duration"`
 }
 
@@ -183,7 +183,7 @@ type Loyalty_Point_Expiry_Rules_AddRequest struct {
 	Key               string `bson:"Key" json:"Key"`
 	Expiry_Rules_Id   int64  `bson:"Expiry_Rules_Id" json:"Expiry_Rules_Id"`
 	Description       string `bson:"Description" json:"Description"`
-	Validity_Unit     string `bson:"Validity_Unit" json:"Validity_Unit"` //Monthly, yearly
+	Validity_Unit     string `bson:"Validity_Unit" json:"Validity_Unit"` //Month, Year
 	Validity_Duration int    `bson:"Validity_Duration" json:"Validity_Duration"`
 }
 
@@ -192,7 +192,7 @@ type Loyalty_Point_Expiry_Rules_EditRequest struct {
 	NewKey            string `bson:"NewKey" json:"NewKey"`
 	Expiry_Rules_Id   int64  `bson:"Expiry_Rules_Id" json:"Expiry_Rules_Id"`
 	Description       string `bson:"Description" json:"Description"`
-	Validity_Unit     string `bson:"Validity_Unit" json:"Validity_Unit"` //Monthly, yearly
+	Validity_Unit     string `bson:"Validity_Unit" json:"Validity_Unit"` //Month, Year
 	Validity_Duration int    `bson:"Validity_Duration" json:"Validity_Duration"`
 }
 
@@ -209,6 +209,8 @@ type Loyalty_Point_Redemption_Rules struct {
 	MobileMoney_AmountPerPoint      float64 `bson:"MobileMoney_AmountPerPoint" json:"MobileMoney_AmountPerPoint"`
 	Bundles_MinPoints               float64 `bson:"Bundles_MinPoints" json:"Bundles_MinPoints"`
 	Bundles_Product_Catalogue       string  `bson:"Bundles_Product_Catalogue" json:"Bundles_Product_Catalogue"`
+	FreeSpinAndWin_MinPoints        float64 `bson:"FreeSpinAndWin_MinPoints" json:"FreeSpinAndWin_MinPoints"`
+	FreeSpinAndWin_PointsPerSpin    float64 `bson:"FreeSpinAndWin_PointsPerSpin" json:"FreeSpinAndWin_PointsPerSpin"`
 }
 
 type Loyalty_Point_Redemption_Rules_AddRequest struct {
@@ -224,6 +226,8 @@ type Loyalty_Point_Redemption_Rules_AddRequest struct {
 	MobileMoney_AmountPerPoint      float64 `bson:"MobileMoney_AmountPerPoint" json:"MobileMoney_AmountPerPoint"`
 	Bundles_MinPoints               float64 `bson:"Bundles_MinPoints" json:"Bundles_MinPoints"`
 	Bundles_Product_Catalogue       string  `bson:"Bundles_Product_Catalogue" json:"Bundles_Product_Catalogue"`
+	FreeSpinAndWin_MinPoints        float64 `bson:"FreeSpinAndWin_MinPoints" json:"FreeSpinAndWin_MinPoints"`
+	FreeSpinAndWin_PointsPerSpin    float64 `bson:"FreeSpinAndWin_PointsPerSpin" json:"FreeSpinAndWin_PointsPerSpin"`
 }
 
 type Loyalty_Point_Redemption_Rules_EditRequest struct {
@@ -240,6 +244,8 @@ type Loyalty_Point_Redemption_Rules_EditRequest struct {
 	MobileMoney_AmountPerPoint      float64 `bson:"MobileMoney_AmountPerPoint" json:"MobileMoney_AmountPerPoint"`
 	Bundles_MinPoints               float64 `bson:"Bundles_MinPoints" json:"Bundles_MinPoints"`
 	Bundles_Product_Catalogue       string  `bson:"Bundles_Product_Catalogue" json:"Bundles_Product_Catalogue"`
+	FreeSpinAndWin_MinPoints        float64 `bson:"FreeSpinAndWin_MinPoints" json:"FreeSpinAndWin_MinPoints"`
+	FreeSpinAndWin_PointsPerSpin    float64 `bson:"FreeSpinAndWin_PointsPerSpin" json:"FreeSpinAndWin_PointsPerSpin"`
 }
 
 type Loyalty_Plan struct {
@@ -301,9 +307,12 @@ type Customer_Loyalty_Account struct {
 
 	Awarded_Points   float64   `bson:"Awarded_Points" json:"Awarded_Points"`
 	Redeemed_Points  float64   `bson:"Redeemed_Points" json:"Redeemed_Points"`
-	Available_Points float64   `bson:"Available_Points" json:"Available_Points"` //Awarded_Points - Redeemed_Points
+	Available_Points float64   `bson:"Available_Points" json:"Available_Points"` //(Awarded_Points + Expired_Points) - Redeemed_Points
 	Last_Award_Date  time.Time `bson:"Last_Award_Date" json:"Last_Award_Date"`
 	Last_Redeem_Date time.Time `bson:"Last_Redeem_Date" json:"Last_Redeem_Date"`
+
+	Expired_Points float64   `bson:"Expired_Points" json:"Expired_Points"` //expired are deducted from Awarded_Points
+	Expiry_Date    time.Time `bson:"Expiry_Date" json:"Expiry_Date"`
 
 	MainGSMBalance_PendingAmount float64 `bson:"MainGSMBalance_PendingAmount" json:"MainGSMBalance_PendingAmount"`
 	MobileMoney_PendingAmount    float64 `bson:"MobileMoney_AmountConsumedPerPoint" json:"MobileMoney_AmountConsumedPerPoint"`
@@ -331,10 +340,13 @@ type Customer_Loyalty_Account_EditRequest struct {
 }
 
 type Loyalty_Points_Detail struct {
-	Year_Month       string  `bson:"Year_Month" json:"Year_Month"`
-	Awarded_Points   float64 `bson:"Awarded_Points" json:"Awarded_Points"`
-	Redeemed_Points  float64 `bson:"Redeemed_Points" json:"Redeemed_Points"`
-	Available_Points float64 `bson:"Available_Points" json:"Available_Points"` //Awarded_Points - Redeemed_Points
+	Year_Month       string    `bson:"Year_Month" json:"Year_Month"`
+	Creation_date    time.Time `bson:"Creation_date" json:"Creation_date"`
+	Awarded_Points   float64   `bson:"Awarded_Points" json:"Awarded_Points"`
+	Redeemed_Points  float64   `bson:"Redeemed_Points" json:"Redeemed_Points"`
+	Available_Points float64   `bson:"Available_Points" json:"Available_Points"` //(Awarded_Points + Expired_Points) - Redeemed_Points
+	Expired_Points   float64   `bson:"Expired_Points" json:"Expired_Points"`     //expired are deducted from Awarded_Points
+	Expiry_Date      time.Time `bson:"Expiry_Date" json:"Expiry_Date"`
 }
 
 type Customer_Loyalty_Account_AwardRequest struct {
@@ -359,6 +371,34 @@ type Loyalty_Award_log struct {
 	AwardedPoints          float64   `bson:"AwardedPoints" json:"AwardedPoints"`
 	AwardStatus            string    `bson:"AwardStatus" json:"AwardStatus"`
 	AwardStatusDescription string    `bson:"AwardStatusDescription" json:"AwardStatusDescription"`
+}
+
+type Loyalty_Expiry_log struct {
+	ExpiryTime       time.Time `bson:"ExpiryTime" json:"ExpiryTime"`
+	MSISDN           string    `bson:"MSISDN" json:"MSISDN"` //MSISDN
+	Expiry_Rules_Key string    `bson:"Expiry_Rules_Key" json:"Expiry_Rules_Key"`
+
+	Year_Month             string  `bson:"Year_Month" json:"Year_Month"`
+	Month_Awarded_Points   float64 `bson:"Month_Awarded_Points" json:"Month_Awarded_Points"`
+	Month_Redeemed_Points  float64 `bson:"Month_Redeemed_Points" json:"Month_Redeemed_Points"`
+	Month_Available_Points float64 `bson:"Month_Available_Points" json:"Month_Available_Points"` //(Awarded_Points + Expired_Points) - Redeemed_Points
+	Month_Expired_Points   float64 `bson:"Month_Expired_Points" json:"Month_Expired_Points"`     //expired are deducted from Awarded_Points
+
+	Opening_Awarded_Points   float64 `bson:"Opening_Awarded_Points" json:"Opening_Awarded_Points"`
+	Opening_Redeemed_Points  float64 `bson:"Opening_Redeemed_Points" json:"Opening_Redeemed_Points"`
+	Opening_Available_Points float64 `bson:"Opening_Available_Points" json:"Opening_Available_Points"` //(Awarded_Points + Expired_Points) - Redeemed_Points
+	Opening_Expired_Points   float64 `bson:"Opening_Expired_Points" json:"Opening_Expired_Points"`     //expired are deducted from Awarded_Points
+
+	End_Awarded_Points   float64 `bson:"End_Awarded_Points" json:"End_Awarded_Points"`
+	End_Redeemed_Points  float64 `bson:"End_Redeemed_Points" json:"End_Redeemed_Points"`
+	End_Available_Points float64 `bson:"End_Available_Points" json:"End_Available_Points"` //(Awarded_Points + Expired_Points) - Redeemed_Points
+	End_Expired_Points   float64 `bson:"End_Expired_Points" json:"End_Expired_Points"`     //expired are deducted from Awarded_Points
+
+	OpeningLoyaltyLevel string `bson:"OpeningLoyaltyLevel" json:"OpeningLoyaltyLevel"`
+	EndLoyaltyLevel     string `bson:"EndLoyaltyLevel" json:"EndLoyaltyLevel"`
+
+	ExpiryStatus            string `bson:"ExpiryStatus" json:"ExpiryStatus"`
+	ExpiryStatusDescription string `bson:"ExpiryStatusDescription" json:"ExpiryStatusDescription"`
 }
 
 type Customer_Loyalty_Account_DeleteRequest struct {

@@ -111,6 +111,44 @@ type ConfigType struct {
 		Login    string
 		Password string
 	}
+
+	CGW_AUC struct {
+		Description   string
+		Protocol      string
+		Hostname      string
+		Port          string
+		Module        string
+		Version       string
+		S2S_Username  string
+		S2S_Password  string
+		Timeout_After time.Duration
+	}
+
+	CGW struct {
+		Protocol        string //http or https
+		Hostname        string //name or IP
+		Port            string
+		Module          string
+		Version         string
+		S2S_AccessToken string        //system to system access token
+		Timeout         time.Duration //timeout if no reply after X seconds
+	}
+
+	Propylaea struct {
+		Description     string
+		Protocol        string
+		Hostname        string
+		Port            string
+		Module          string
+		Version         string
+		S2S_Username    string
+		S2S_Password    string
+		S2S_AccessToken string
+		Timeout_After   time.Duration
+		ChannelName     string
+		ChannelPlan     string
+		ChannelVersion  string
+	}
 }
 
 func GetDefaultConfiguration() (err error) {
@@ -236,6 +274,36 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 	Configuration.SMPP.Login = "lendme"
 	Configuration.SMPP.Password = "lendmeP@ssw0rd"
 
+	Configuration.CGW_AUC.Description = "UCGW AUC service"
+	Configuration.CGW_AUC.Protocol = "http"
+	Configuration.CGW_AUC.Hostname = "?.?.?.?"
+	Configuration.CGW_AUC.Port = "9994"
+	Configuration.CGW_AUC.Module = "AUC"
+	Configuration.CGW_AUC.Version = "V1"
+	Configuration.CGW_AUC.S2S_Username = "SAW_UCGW"
+	Configuration.CGW_AUC.S2S_Password = "uC@g$ASDKJH66&&&RiS6$2"
+	Configuration.CGW_AUC.Timeout_After = 5 * time.Second
+
+	Configuration.CGW.Protocol = "http"
+	Configuration.CGW.Hostname = "?.?.?.?"
+	Configuration.CGW.Port = "9991"
+	Configuration.CGW.Module = "UCGW"
+	Configuration.CGW.Version = "V1"
+	Configuration.CGW.Timeout = 15 * time.Second
+
+	Configuration.Propylaea.Description = "Product Design Center - Propylaea"
+	Configuration.Propylaea.Protocol = "https"
+	Configuration.Propylaea.Port = "443"
+	Configuration.Propylaea.Hostname = "sapp.africell.cd"
+	Configuration.Propylaea.Module = "Propylaea"
+	Configuration.Propylaea.Version = "V1"
+	Configuration.Propylaea.S2S_Username = "Propylaea_Admin"
+	Configuration.Propylaea.S2S_Password = "uC@g$W$iRiS6$2@333dd"
+	Configuration.Propylaea.Timeout_After = 5 * time.Second
+	Configuration.Propylaea.ChannelName = "Spin And Win"
+	Configuration.Propylaea.ChannelPlan = "Normal SIM"
+	Configuration.Propylaea.ChannelVersion = "1"
+
 	return
 }
 
@@ -342,6 +410,36 @@ func setDefaultConfiguration_GM_Live() (Configuration ConfigType) {
 	Configuration.SMPP.Port = "15403"
 	Configuration.SMPP.Login = "LendME2"
 	Configuration.SMPP.Password = "LendMEP@ssw0rd"
+
+	Configuration.CGW_AUC.Description = "UCGW AUC service"
+	Configuration.CGW_AUC.Protocol = "http"
+	Configuration.CGW_AUC.Hostname = "?.?.?.?"
+	Configuration.CGW_AUC.Port = "9994"
+	Configuration.CGW_AUC.Module = "AUC"
+	Configuration.CGW_AUC.Version = "V1"
+	Configuration.CGW_AUC.S2S_Username = "SAW_UCGW"
+	Configuration.CGW_AUC.S2S_Password = "uC@g$ASDKJH66&&&RiS6$2"
+	Configuration.CGW_AUC.Timeout_After = 5 * time.Second
+
+	Configuration.CGW.Protocol = "http"
+	Configuration.CGW.Hostname = "?.?.?.?"
+	Configuration.CGW.Port = "9991"
+	Configuration.CGW.Module = "UCGW"
+	Configuration.CGW.Version = "V1"
+	Configuration.CGW.Timeout = 15 * time.Second
+
+	Configuration.Propylaea.Description = "Product Design Center - Propylaea"
+	Configuration.Propylaea.Protocol = "https"
+	Configuration.Propylaea.Port = "443"
+	Configuration.Propylaea.Hostname = "sapp.africell.cd"
+	Configuration.Propylaea.Module = "Propylaea"
+	Configuration.Propylaea.Version = "V1"
+	Configuration.Propylaea.S2S_Username = "Propylaea_Admin"
+	Configuration.Propylaea.S2S_Password = "uC@g$W$iRiS6$2@333dd"
+	Configuration.Propylaea.Timeout_After = 5 * time.Second
+	Configuration.Propylaea.ChannelName = "Spin And Win"
+	Configuration.Propylaea.ChannelPlan = "Normal SIM"
+	Configuration.Propylaea.ChannelVersion = "1"
 
 	return
 }
@@ -453,5 +551,34 @@ func setDefaultConfiguration_SL_Live() (Configuration ConfigType) {
 	Configuration.SMPP.Login = "LendME2"
 	Configuration.SMPP.Password = "LendMEP@ssw0rd"
 
+	Configuration.CGW_AUC.Description = "UCGW AUC service"
+	Configuration.CGW_AUC.Protocol = "http"
+	Configuration.CGW_AUC.Hostname = "?.?.?.?"
+	Configuration.CGW_AUC.Port = "9994"
+	Configuration.CGW_AUC.Module = "AUC"
+	Configuration.CGW_AUC.Version = "V1"
+	Configuration.CGW_AUC.S2S_Username = "SAW_UCGW"
+	Configuration.CGW_AUC.S2S_Password = "uC@g$ASDKJH66&&&RiS6$2"
+	Configuration.CGW_AUC.Timeout_After = 5 * time.Second
+
+	Configuration.CGW.Protocol = "http"
+	Configuration.CGW.Hostname = "?.?.?.?"
+	Configuration.CGW.Port = "9991"
+	Configuration.CGW.Module = "UCGW"
+	Configuration.CGW.Version = "V1"
+	Configuration.CGW.Timeout = 15 * time.Second
+
+	Configuration.Propylaea.Description = "Product Design Center - Propylaea"
+	Configuration.Propylaea.Protocol = "https"
+	Configuration.Propylaea.Port = "443"
+	Configuration.Propylaea.Hostname = "sapp.africell.cd"
+	Configuration.Propylaea.Module = "Propylaea"
+	Configuration.Propylaea.Version = "V1"
+	Configuration.Propylaea.S2S_Username = "Propylaea_Admin"
+	Configuration.Propylaea.S2S_Password = "uC@g$W$iRiS6$2@333dd"
+	Configuration.Propylaea.Timeout_After = 5 * time.Second
+	Configuration.Propylaea.ChannelName = "Spin And Win"
+	Configuration.Propylaea.ChannelPlan = "Normal SIM"
+	Configuration.Propylaea.ChannelVersion = "1"
 	return
 }
