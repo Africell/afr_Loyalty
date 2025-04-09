@@ -2,9 +2,13 @@ package Lendme
 
 import (
 	AuthCenterClient "afr_auth_center/AuthCenterClient"
+	Prop "afr_propylaea/PropylaeaClient"
 	INClient "afr_sb_in"
+	UCGW_client "afr_unified_charging_gateway/Unified_charging_gateway_Client"
 	"daoc"
 )
+
+var CGWHostConfig UCGW_client.UC_GW_Client
 
 type UserControl struct {
 	MongoDB        *daoc.MongoDB
@@ -13,6 +17,8 @@ type UserControl struct {
 	AppAUC         *AuthCenterClient.AUC
 	OKAPIAUC       *AuthCenterClient.AUC
 	IN             *INClient.IN
+	CGW            *UCGW_client.UC_GW
+	Propylaea      *Prop.Propylaea
 }
 
 func NewUserControl() *UserControl {
@@ -74,6 +80,37 @@ func NewUserControl() *UserControl {
 		Configuration.IN.Timeout,
 		Configuration.IN.PrintLogs)
 
+	CGWAUC := AuthCenterClient.InitHostConfig(Configuration.CGW_AUC.Protocol,
+		Configuration.CGW_AUC.Hostname,
+		Configuration.CGW_AUC.Port,
+		Configuration.CGW_AUC.Module,
+		Configuration.CGW_AUC.Version,
+		"",
+		Configuration.CGW_AUC.S2S_Username,
+		Configuration.CGW_AUC.S2S_Password,
+		Configuration.CGW_AUC.Timeout_After)
+
+	CGWHostConfig = UCGW_client.UC_GW_Client{
+		Protocol:   Configuration.CGW.Protocol,
+		Hostname:   Configuration.CGW.Hostname,
+		Port:       Configuration.CGW.Port,
+		Module:     Configuration.CGW.Module,
+		Version:    Configuration.CGW.Version,
+		Timeout:    10 * Configuration.CGW.Timeout,
+		AUC_client: AuthCenterClient.NewAUCClient(CGWAUC).AUCClient,
+	}
+
+	// propylaea_config := Prop.Propylaea_Client{
+	// 	Protocol:        Configuration.Propylaea.Protocol, // or https
+	// 	Hostname:        Configuration.Propylaea.Hostname,
+	// 	Port:            Configuration.Propylaea.Port,
+	// 	Module:          Configuration.Propylaea.Module,
+	// 	Version:         Configuration.Propylaea.Version,
+	// 	S2S_AccessToken: Configuration.Propylaea.S2S_AccessToken,
+	// 	Timeout:         10 * Configuration.Propylaea.Timeout_After, //timeout if no reply after X seconds
+	// 	AUC_client:      AuthCenterClient.NewAUCClient(OKAPI_AUCHostConfig).AUCClient,
+	// }
+
 	UC := &UserControl{
 		MongoDB:        daoc.NewMongoDBClient(MongoHostConfig),
 		LoyaltyMongoDB: daoc.NewMongoDBClient(LoyaltyMongoHostConfig),
@@ -81,6 +118,8 @@ func NewUserControl() *UserControl {
 		OKAPIAUC:       AuthCenterClient.NewAUCClient(OKAPI_AUCHostConfig),
 		CacheDir:       daoc.NewCacheRegistry(),
 		IN:             INClient.NewINClient(INHostConfig),
+		// CGW:            UCGW_client.NewUC_GWClient(CGWHostConfig),
+		// Propylaea:      Prop.NewPropylaeaClient(propylaea_config),
 	}
 	return UC
 }
