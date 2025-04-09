@@ -21,7 +21,7 @@ var destinationHots []destinationHost
 func Init_DestinationHosts() {
 	if Configuration.MongoDB.HostIP_1 != "" {
 		host := destinationHost{
-			HostName: "MongoDB 01",
+			HostName: "Lendme MongoDB 01",
 			HostIP:   Configuration.MongoDB.HostIP_1,
 			HostPort: Configuration.MongoDB.HostPort_1,
 		}
@@ -29,7 +29,7 @@ func Init_DestinationHosts() {
 	}
 	if Configuration.MongoDB.HostIP_2 != "" {
 		host := destinationHost{
-			HostName: "MongoDB 02",
+			HostName: "Lendme MongoDB 02",
 			HostIP:   Configuration.MongoDB.HostIP_2,
 			HostPort: Configuration.MongoDB.HostPort_2,
 		}
@@ -37,18 +37,34 @@ func Init_DestinationHosts() {
 	}
 	if Configuration.MongoDB.HostIP_3 != "" {
 		host := destinationHost{
-			HostName: "MongoDB 03",
+			HostName: "Lendme MongoDB 03",
 			HostIP:   Configuration.MongoDB.HostIP_3,
 			HostPort: Configuration.MongoDB.HostPort_3,
 		}
 		destinationHots = append(destinationHots, host)
 	}
 
-	if Configuration.IN.IP != "" {
+	if Configuration.LoyaltyMongoDB.HostIP_1 != "" {
 		host := destinationHost{
-			HostName: "IN Web Services",
-			HostIP:   Configuration.IN.IP, //container name
-			HostPort: Configuration.IN.Port,
+			HostName: "Loyalty MongoDB 01",
+			HostIP:   Configuration.LoyaltyMongoDB.HostIP_1,
+			HostPort: Configuration.LoyaltyMongoDB.HostPort_1,
+		}
+		destinationHots = append(destinationHots, host)
+	}
+	if Configuration.LoyaltyMongoDB.HostIP_2 != "" {
+		host := destinationHost{
+			HostName: "Loyalty MongoDB 02",
+			HostIP:   Configuration.LoyaltyMongoDB.HostIP_2,
+			HostPort: Configuration.LoyaltyMongoDB.HostPort_2,
+		}
+		destinationHots = append(destinationHots, host)
+	}
+	if Configuration.LoyaltyMongoDB.HostIP_3 != "" {
+		host := destinationHost{
+			HostName: "Loyalty MongoDB 03",
+			HostIP:   Configuration.LoyaltyMongoDB.HostIP_3,
+			HostPort: Configuration.LoyaltyMongoDB.HostPort_3,
 		}
 		destinationHots = append(destinationHots, host)
 	}
@@ -58,6 +74,51 @@ func Init_DestinationHosts() {
 			HostName: "AUC",
 			HostIP:   Configuration.App_AUC.Hostname,
 			HostPort: Configuration.App_AUC.Port,
+		}
+		destinationHots = append(destinationHots, host)
+	}
+
+	if Configuration.CGW_AUC.Hostname != "" {
+		host := destinationHost{
+			HostName: "UCGW AUC",
+			HostIP:   Configuration.CGW_AUC.Hostname,
+			HostPort: Configuration.CGW_AUC.Port,
+		}
+		destinationHots = append(destinationHots, host)
+	}
+
+	if Configuration.CGW.Hostname != "" {
+		host := destinationHost{
+			HostName: "UCGW",
+			HostIP:   Configuration.CGW.Hostname,
+			HostPort: Configuration.CGW.Port,
+		}
+		destinationHots = append(destinationHots, host)
+	}
+
+	if Configuration.OKAPI_AUC.Hostname != "" {
+		host := destinationHost{
+			HostName: "OKAPI AUC",
+			HostIP:   Configuration.OKAPI_AUC.Hostname,
+			HostPort: Configuration.OKAPI_AUC.Port,
+		}
+		destinationHots = append(destinationHots, host)
+	}
+
+	if Configuration.Propylaea.Hostname != "" {
+		host := destinationHost{
+			HostName: "Propylaea",
+			HostIP:   Configuration.Propylaea.Hostname,
+			HostPort: Configuration.Propylaea.Port,
+		}
+		destinationHots = append(destinationHots, host)
+	}
+
+	if Configuration.IN.IP != "" {
+		host := destinationHost{
+			HostName: "IN Web Services",
+			HostIP:   Configuration.IN.IP, //container name
+			HostPort: Configuration.IN.Port,
 		}
 		destinationHots = append(destinationHots, host)
 	}

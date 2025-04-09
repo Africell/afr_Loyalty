@@ -10,7 +10,8 @@ import (
 )
 
 var (
-	PrometheusRegistry = prometheus.NewRegistry()
+	PrometheusRegistry        = prometheus.NewRegistry()
+	LoyaltyPrometheusRegistry = prometheus.NewRegistry()
 	//PortStatus.With(prometheus.Labels{"DestinationHost": "HHHH"}).Set(1)
 	PortStatus = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
@@ -19,7 +20,9 @@ var (
 		},
 		[]string{"DestinationHost"},
 	)
-
+	//*************************
+	//Lendme Metrics
+	//*************************
 	DailyImportSubsStats = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "DailyImportSubsStats",
@@ -88,6 +91,38 @@ var (
 	// 	},
 	// 	[]string{"Stream", "Type", "Description"},
 	// )
+
+	//*************************
+	//Loaylty Metrics
+	//*************************
+	LoyaltyGovernancePools = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "LoyaltyGovernancePools",
+			Help: "LoyaltyGovernancePools",
+		},
+		[]string{"Pool"},
+	)
+	NewJoiningsCount = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "NewJoiningsCount",
+			Help: "NewJoiningsCount",
+		},
+		[]string{"Source"},
+	)
+	AwardedTransactions = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "AwardedTransactions",
+			Help: "AwardedTransactions",
+		},
+		[]string{"EventSource", "EventType", "EventDetail"},
+	)
+	AwardedPoints = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "AwardedPoints",
+			Help: "AwardedPoints",
+		},
+		[]string{"EventSource", "EventType", "EventDetail"},
+	)
 )
 
 //DailyImportSubsStats.With(prometheus.Labels{"IsElligble":"", "Reason":"", "Scheme":""}).Inc()
@@ -96,6 +131,9 @@ var (
 func Init_Prometheus_Metrics() {
 	log.Println("Init Prometheus metrics")
 	PrometheusRegistry.Register(PortStatus)
+	//*************************
+	//Lendme Metrics
+	//*************************
 	PrometheusRegistry.Register(DailyImportSubsStats)
 	PrometheusRegistry.Register(LendMeRequestsCount)
 	PrometheusRegistry.Register(LendMeRequestsAmount)
@@ -104,8 +142,14 @@ func Init_Prometheus_Metrics() {
 	PrometheusRegistry.Register(SubsDumpFile)
 	PrometheusRegistry.Register(SubsDumpFileImportTime)
 	PrometheusRegistry.Register(LendMeOutstandingSummary)
-
-	//PrometheusRegistry.Register(TransactionsTotalAmount)
+	//*************************
+	//Loaylty Metrics
+	//*************************
+	LoyaltyPrometheusRegistry.Register(PortStatus)
+	LoyaltyPrometheusRegistry.Register(LoyaltyGovernancePools)
+	LoyaltyPrometheusRegistry.Register(NewJoiningsCount)
+	LoyaltyPrometheusRegistry.Register(AwardedPoints)
+	LoyaltyPrometheusRegistry.Register(AwardedTransactions)
 }
 
 func Reset_Prometheus_Metrics() {
@@ -117,6 +161,9 @@ func Reset_Prometheus_Metrics() {
 			if _mi == 0 {
 				if _se < 10 {
 					if exec == 0 {
+						//*************************
+						//Lendme Metrics
+						//*************************
 						DailyImportSubsStats.Reset()
 						LendMeRequestsCount.Reset()
 						LendMeRequestsAmount.Reset()
@@ -125,6 +172,12 @@ func Reset_Prometheus_Metrics() {
 						//LendMeOutstandingSummary.Reset()
 						//SubsDumpFile.Reset()
 						//TransactionsTotalAmount.Reset()
+						//*************************
+						//Loaylty Metrics
+						//*************************
+						NewJoiningsCount.Reset()
+						AwardedPoints.Reset()
+						AwardedTransactions.Reset()
 						exec = 1
 					}
 				} else {
@@ -140,6 +193,16 @@ func Reset_Prometheus_Metrics() {
 func CustomPrometheusHandler() http.Handler {
 	return promhttp.HandlerFor(
 		PrometheusRegistry,
+		promhttp.HandlerOpts{
+			// Opt into OpenMetrics to support exemplars.
+			EnableOpenMetrics: false,
+		},
+	)
+}
+
+func LoyaltyPrometheusHandler() http.Handler {
+	return promhttp.HandlerFor(
+		LoyaltyPrometheusRegistry,
 		promhttp.HandlerOpts{
 			// Opt into OpenMetrics to support exemplars.
 			EnableOpenMetrics: false,

@@ -100,16 +100,16 @@ func NewUserControl() *UserControl {
 		AUC_client: AuthCenterClient.NewAUCClient(CGWAUC).AUCClient,
 	}
 
-	propylaea_config := Prop.Propylaea_Client{
-		Protocol:        Configuration.Propylaea.Protocol, // or https
-		Hostname:        Configuration.Propylaea.Hostname,
-		Port:            Configuration.Propylaea.Port,
-		Module:          Configuration.Propylaea.Module,
-		Version:         Configuration.Propylaea.Version,
-		S2S_AccessToken: Configuration.Propylaea.S2S_AccessToken,
-		Timeout:         10 * Configuration.Propylaea.Timeout_After, //timeout if no reply after X seconds
-		AUC_client:      AuthCenterClient.NewAUCClient(OKAPI_AUCHostConfig).AUCClient,
-	}
+	// propylaea_config := Prop.Propylaea_Client{
+	// 	Protocol:        Configuration.Propylaea.Protocol, // or https
+	// 	Hostname:        Configuration.Propylaea.Hostname,
+	// 	Port:            Configuration.Propylaea.Port,
+	// 	Module:          Configuration.Propylaea.Module,
+	// 	Version:         Configuration.Propylaea.Version,
+	// 	S2S_AccessToken: Configuration.Propylaea.S2S_AccessToken,
+	// 	Timeout:         10 * Configuration.Propylaea.Timeout_After, //timeout if no reply after X seconds
+	// 	AUC_client:      AuthCenterClient.NewAUCClient(OKAPI_AUCHostConfig).AUCClient,
+	// }
 
 	UC := &UserControl{
 		MongoDB:        daoc.NewMongoDBClient(MongoHostConfig),
@@ -118,8 +118,8 @@ func NewUserControl() *UserControl {
 		OKAPIAUC:       AuthCenterClient.NewAUCClient(OKAPI_AUCHostConfig),
 		CacheDir:       daoc.NewCacheRegistry(),
 		IN:             INClient.NewINClient(INHostConfig),
-		CGW:            UCGW_client.NewUC_GWClient(CGWHostConfig),
-		Propylaea:      Prop.NewPropylaeaClient(propylaea_config),
+		// CGW:            UCGW_client.NewUC_GWClient(CGWHostConfig),
+		// Propylaea:      Prop.NewPropylaeaClient(propylaea_config),
 	}
 	return UC
 }

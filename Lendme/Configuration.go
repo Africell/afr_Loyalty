@@ -551,7 +551,7 @@ func setDefaultConfiguration_SL_Live() (Configuration ConfigType) {
 	Configuration.SMPP.Login = "LendME2"
 	Configuration.SMPP.Password = "LendMEP@ssw0rd"
 
-	Configuration.CGW_AUC.Description = "UCGW AUC service"
+	Configuration.CGW_AUC.Description = "UCGW AUC"
 	Configuration.CGW_AUC.Protocol = "http"
 	Configuration.CGW_AUC.Hostname = "?.?.?.?"
 	Configuration.CGW_AUC.Port = "9994"
