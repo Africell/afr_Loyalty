@@ -196,7 +196,7 @@ func (Uc *UserControl) AddToLoyaltyServiceRouter(router *mux.Router, UC *UserCon
 		}
 
 	}
-	router.Path("/Loyalty_metrics").Handler(CustomPrometheusHandler())
+	router.Path("/Loyalty_metrics").Handler(LoyaltyPrometheusHandler())
 	// router.Path("/metrics_latency").Handler(CustomPrometheusLatencyHandler())
 }
 
