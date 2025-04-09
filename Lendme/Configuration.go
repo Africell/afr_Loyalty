@@ -498,18 +498,37 @@ func setDefaultConfiguration_SL_Live() (Configuration ConfigType) {
 	Configuration.OKAPI_AUC.S2S_Password = "]W8#x3D1USKUyH@p]s&D_"
 	Configuration.OKAPI_AUC.Timeout_After = 5 * time.Second
 
+	// //mongoDB
+	// Configuration.MongoDB.ReplicaSet = "reps1"
+	// Configuration.MongoDB.UserName = "mongo-root"
+	// Configuration.MongoDB.Password = "Speci@LM0nG0P@ssw0rd_F0r_LeNdM#SL"
+	// Configuration.MongoDB.HostIP_1 = "10.10.247.21" //==>Primary
+	// Configuration.MongoDB.HostPort_1 = "9001"
+	// Configuration.MongoDB.HostIP_2 = "10.10.247.22" //==>Secondary
+	// Configuration.MongoDB.HostPort_2 = "9002"
+	// Configuration.MongoDB.HostIP_3 = "10.10.231.52" //==> Aribter
+	// Configuration.MongoDB.HostPort_3 = "9003"
+	// Configuration.MongoDB.HostIP_4 = ""
+	// Configuration.MongoDB.HostPort_4 = ""
+	////
+	// Configuration.MongoDB.ReplicaSet = ""
+	// Configuration.MongoDB.UserName = "mongo-root"
+	// Configuration.MongoDB.Password = "Speci@LM0nG0P@ssw0rd_F0r_LeNdM#SL"
+	// Configuration.MongoDB.HostIP_1 = "10.10.247.21" //==>Primary
+	// Configuration.MongoDB.HostPort_1 = "9001"
+	// Configuration.MongoDB.HostIP_2 = "" //==>Secondary
+	// Configuration.MongoDB.HostPort_2 = ""
+	// Configuration.MongoDB.HostIP_3 = "" //==> Aribter
+	// Configuration.MongoDB.HostPort_3 = ""
+	// Configuration.MongoDB.HostIP_4 = ""
+	// Configuration.MongoDB.HostPort_4 = ""
+
 	//mongoDB
-	Configuration.MongoDB.ReplicaSet = "reps1"
-	Configuration.MongoDB.UserName = "mongo-root"
-	Configuration.MongoDB.Password = "Speci@LM0nG0P@ssw0rd_F0r_LeNdM#SL"
-	Configuration.MongoDB.HostIP_1 = "10.10.247.21" //==>Primary
-	Configuration.MongoDB.HostPort_1 = "9001"
-	Configuration.MongoDB.HostIP_2 = "10.10.247.22" //==>Secondary
-	Configuration.MongoDB.HostPort_2 = "9002"
-	Configuration.MongoDB.HostIP_3 = "10.10.231.52" //==> Aribter
-	Configuration.MongoDB.HostPort_3 = "9003"
-	Configuration.MongoDB.HostIP_4 = ""
-	Configuration.MongoDB.HostPort_4 = ""
+	Configuration.MongoDB.UserName = "db_root"
+	Configuration.MongoDB.Password = "P@s54D0Brdara_r@75S"
+	Configuration.MongoDB.HostIP_1 = "LendMe_db" //"host.docker.internal"
+	Configuration.MongoDB.HostPort_1 = "27017"   //"27017"
+	///////////////////////////////////////MONGO DOCKER ///////////////////////////
 
 	Configuration.DB_Name_Loyalty = "Loyalty_DB"
 	Configuration.LoyaltyMongoDB.ReplicaSet = Configuration.MongoDB.ReplicaSet

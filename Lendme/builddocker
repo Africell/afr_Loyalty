@@ -3,6 +3,6 @@ docker save -o LendMe_v1.0.0.tar local:LendMe_v1.0.0
 
 docker image rm local:LendMe_v1.0.0
 
-docker run -d -p 9290:9290 -p 9291:9291 --restart always --net LendMe_Net --name LendMe -v /home/Subs_ARPU/:/home/Subs_ARPU/ local:LendMe_v1.0.0
+docker run -d -p 9290:9290 -p 9291:9291 -p 9280:9280 --restart always --net LendMe_Net --name LendMe -v /home/Subs_ARPU/:/home/Subs_ARPU/ local:LendMe_v1.0.0
 
 $env:GOOS = "linux"
