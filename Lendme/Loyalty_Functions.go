@@ -243,7 +243,7 @@ func (Uc *UserControl) Write_Loyalty_Event_Log(record Loyalty_Event_Log) {
 
 func (Uc *UserControl) Write_Loyalty_Level_Change_log(record Loyalty_Level_Change_log) {
 	YYYY, MM, _, _, _, _, _ := GetTimeParts(record.Level_Change_Date)
-	Db := DAO_Lendme_log.DB + "_" + YYYY + MM
+	Db := DAO_Loyalty_Level_Change_log.DB + "_" + YYYY + MM
 	Col := DAO_Loyalty_Level_Change_log.Collection //+ "_" + DD
 	_, err := DAO_Loyalty_Level_Change_log.PutOneLogs(record, Db, Col)
 	if err != nil {
@@ -254,7 +254,7 @@ func (Uc *UserControl) Write_Loyalty_Level_Change_log(record Loyalty_Level_Chang
 
 func (Uc *UserControl) Write_Loyalty_Award_log(record Loyalty_Award_log) {
 	YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.AwardTime)
-	Db := DAO_Lendme_log.DB + "_" + YYYY + MM
+	Db := DAO_Loyalty_Award_log.DB + "_" + YYYY + MM
 	Col := DAO_Loyalty_Award_log.Collection + "_" + DD
 	_, err := DAO_Loyalty_Award_log.PutOneLogs(record, Db, Col)
 	if err != nil {
@@ -265,7 +265,7 @@ func (Uc *UserControl) Write_Loyalty_Award_log(record Loyalty_Award_log) {
 
 func (Uc *UserControl) Write_Loyalty_Expiry_log(record Loyalty_Expiry_log) {
 	YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.ExpiryTime)
-	Db := DAO_Lendme_log.DB + "_" + YYYY + MM
+	Db := DAO_Loyalty_Expiry_log.DB + "_" + YYYY + MM
 	Col := DAO_Loyalty_Expiry_log.Collection + "_" + DD
 	_, err := DAO_Loyalty_Expiry_log.PutOneLogs(record, Db, Col)
 	if err != nil {
