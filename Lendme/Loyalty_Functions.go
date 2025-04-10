@@ -2961,6 +2961,7 @@ func Loyalty_Level_Selection(Accumulated_Points float64) (level_key string) {
 }
 
 func (Uc *UserControl) Customer_Loyalty_Account_AwardPoints(Login string, request Customer_Loyalty_Account_AwardRequest) (response Loyalty_Award_log, err error) {
+	return
 	response.AwardTime = time.Now()
 	response.MSISDN = request.MSISDN
 	response.EventSource = request.EventSource
