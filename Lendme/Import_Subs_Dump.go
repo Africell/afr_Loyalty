@@ -211,39 +211,38 @@ func (Uc *UserControl) Subscriber_Update(request Sub_Update_Request) {
 	//*******************************
 	//Update loyalty profile
 	//*******************************
-	// loyalty_account_na, cl_exits := Map_Customer_Loyalty_Account.CheckThenGet(subscriber.Key)
-	// if !cl_exits {
-	// 	_, errAdd := Uc.Customer_Loyalty_Account_Add("DWH_Import", Customer_Loyalty_Account_AddRequest{
-	// 		Key:          subscriber.Key,
-	// 		EventSource:  "DWH_Import",
-	// 		COS:          subscriber.COS,
-	// 		ARPU:         subscriber.ARPU,
-	// 		Joining_Date: subscriber.FirstUse_date,
-	// 	})
-	// 	if errAdd != nil {
-	// 		log.Println("DWH_Import Customer_Loyalty_Account_Add error: ", errAdd)
-	// 		log.Println("DWH_Import Customer_Loyalty_Account_Add error: ", subscriber)
-	// 	}
-
-	// } else {
-	// 	loyalty_account, ok := loyalty_account_na.(Customer_Loyalty_Account)
-	// 	if !ok {
-	// 		<-chan_SubQueueExecution_controler
-	// 		return
-	// 	}
-	// 	_, errEdit := Uc.Customer_Loyalty_Account_Edit("DWH_Import", Customer_Loyalty_Account_EditRequest{
-	// 		Key:               loyalty_account.Key,
-	// 		Customer_Id:       loyalty_account.Customer_Id,
-	// 		Loyalty_Level_Key: loyalty_account.Loyalty_Level_Key,
-	// 		COS:               subscriber.COS,
-	// 		ARPU:              subscriber.ARPU,
-	// 		Joining_Date:      subscriber.FirstUse_date,
-	// 	})
-	// 	if errEdit != nil {
-	// 		log.Println("DWH_Import Customer_Loyalty_Account_Edit error: ", errEdit)
-	// 		log.Println("DWH_Import Customer_Loyalty_Account_Add error: ", subscriber)
-	// 	}
-	// }
+	loyalty_account_na, cl_exits := Map_Customer_Loyalty_Account.CheckThenGet(subscriber.Key)
+	if !cl_exits {
+		_, errAdd := Uc.Customer_Loyalty_Account_Add("DWH_Import", Customer_Loyalty_Account_AddRequest{
+			Key:          subscriber.Key,
+			EventSource:  "DWH_Import",
+			COS:          subscriber.COS,
+			ARPU:         subscriber.ARPU,
+			Joining_Date: subscriber.FirstUse_date,
+		})
+		if errAdd != nil {
+			log.Println("DWH_Import Customer_Loyalty_Account_Add error: ", errAdd)
+			log.Println("DWH_Import Customer_Loyalty_Account_Add error: ", subscriber)
+		}
+	} else {
+		loyalty_account, ok := loyalty_account_na.(Customer_Loyalty_Account)
+		if !ok {
+			<-chan_SubQueueExecution_controler
+			return
+		}
+		_, errEdit := Uc.Customer_Loyalty_Account_Edit("DWH_Import", Customer_Loyalty_Account_EditRequest{
+			Key:               loyalty_account.Key,
+			Customer_Id:       loyalty_account.Customer_Id,
+			Loyalty_Level_Key: loyalty_account.Loyalty_Level_Key,
+			COS:               subscriber.COS,
+			ARPU:              subscriber.ARPU,
+			Joining_Date:      subscriber.FirstUse_date,
+		})
+		if errEdit != nil {
+			log.Println("DWH_Import Customer_Loyalty_Account_Edit error: ", errEdit)
+			log.Println("DWH_Import Customer_Loyalty_Account_Add error: ", subscriber)
+		}
+	}
 	<-chan_SubQueueExecution_controler
 }
 
