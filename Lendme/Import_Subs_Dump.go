@@ -80,11 +80,19 @@ func (Uc *UserControl) Import_Subscribers_Dump_LineByLine(FileName string) (err 
 				}
 				var firstUsed time.Time
 				if len(result[2]) == 10 {
-					firstUsed, _ = time.Parse("2006-01-02", result[2])
+					firstUsed, err = time.Parse("2006-01-02", result[2])
+					if err != nil {
+						log.Println("error parsing first used: ", err)
+						continue
+					}
 				}
 				var lastCredit time.Time
 				if len(result[3]) == 10 {
-					lastCredit, _ = time.Parse("2006-01-02", result[3])
+					lastCredit, err = time.Parse("2006-01-02", result[3])
+					if err != nil {
+						log.Println("error parsing last credit: ", err)
+						continue
+					}
 				}
 				Recharge_amnt_str := result[7]
 				if Recharge_amnt_str == "" {
@@ -97,7 +105,11 @@ func (Uc *UserControl) Import_Subscribers_Dump_LineByLine(FileName string) (err 
 				}
 				var lastRecharge time.Time
 				if len(result[8]) == 10 {
-					lastRecharge, _ = time.Parse("2006-01-02", result[8])
+					lastRecharge, err = time.Parse("2006-01-02", result[8])
+					if err != nil {
+						log.Println("error parsing last recharge: ", err)
+						continue
+					}
 				}
 				dealerPurchase_amnt_str := result[9]
 				if dealerPurchase_amnt_str == "" {
@@ -110,7 +122,11 @@ func (Uc *UserControl) Import_Subscribers_Dump_LineByLine(FileName string) (err 
 				}
 				var lastdealerPurchase time.Time
 				if len(result[10]) == 10 {
-					lastdealerPurchase, _ = time.Parse("2006-01-02", result[10])
+					lastdealerPurchase, err = time.Parse("2006-01-02", result[10])
+					if err != nil {
+						log.Println("error parsing last dealer purchase: ", err)
+						continue
+					}
 				}
 				request := Sub_Update_Request{
 					MSISDN:                           result[0],
