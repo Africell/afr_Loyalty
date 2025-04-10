@@ -95,6 +95,14 @@ var (
 	//*************************
 	//Loaylty Metrics
 	//*************************
+	LiveFeedCounters = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "LiveFeedCounters",
+			Help: "LiveFeedCounters",
+		},
+		[]string{"Stream", "Type", "Description"},
+	)
+
 	LoyaltyGovernancePools = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "LoyaltyGovernancePools",
@@ -146,6 +154,7 @@ func Init_Prometheus_Metrics() {
 	//Loaylty Metrics
 	//*************************
 	LoyaltyPrometheusRegistry.Register(PortStatus)
+	LoyaltyPrometheusRegistry.Register(LiveFeedCounters)
 	LoyaltyPrometheusRegistry.Register(LoyaltyGovernancePools)
 	LoyaltyPrometheusRegistry.Register(NewJoiningsCount)
 	LoyaltyPrometheusRegistry.Register(AwardedPoints)
@@ -175,9 +184,11 @@ func Reset_Prometheus_Metrics() {
 						//*************************
 						//Loaylty Metrics
 						//*************************
+						LiveFeedCounters.Reset()
 						NewJoiningsCount.Reset()
 						AwardedPoints.Reset()
 						AwardedTransactions.Reset()
+
 						exec = 1
 					}
 				} else {

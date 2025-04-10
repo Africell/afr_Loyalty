@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 func (Uc *UserControl) HTTP_Loyalty_Governance(w http.ResponseWriter, r *http.Request) {
@@ -2056,6 +2057,7 @@ func (Uc *UserControl) HTTP_INLiveFeed_NewJoining(w http.ResponseWriter, r *http
 		}
 		request.Customer_Id = Id
 		sr.Data = request
+		LiveFeedCounters.With(prometheus.Labels{"Stream": request.EventSource, "Type": "New Joining", "Description": "New Joining"}).Inc()
 	}
 	//successful response
 	sr.Status = "successful"
@@ -2112,6 +2114,7 @@ func (Uc *UserControl) HTTP_INLiveFeed_Churn(w http.ResponseWriter, r *http.Requ
 			Uc.HTTP_API_Standard_response(w, r, sr, false)
 			return
 		}
+		LiveFeedCounters.With(prometheus.Labels{"Stream": "IN_Feed", "Type": "Chrun", "Description": "Chrun"}).Inc()
 	}
 	//successful response
 	sr.Status = "successful"
@@ -2168,6 +2171,7 @@ func (Uc *UserControl) HTTP_INLiveFeed_Consuption(w http.ResponseWriter, r *http
 			Uc.HTTP_API_Standard_response(w, r, sr, true)
 			return
 		}
+		LiveFeedCounters.With(prometheus.Labels{"Stream": request.EventSource, "Type": request.EventType, "Description": "Consumption"}).Inc()
 	}
 	//successful response
 	sr.Status = "successful"
