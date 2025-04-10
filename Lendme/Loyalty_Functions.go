@@ -2687,7 +2687,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_Add(Login string, request Custom
 			Event_Entry_After:  NewEntry,
 		})
 	}
-	NewJoiningsCount.With(prometheus.Labels{"Source": request.EventSource}).Inc()
+	//NewJoiningsCount.With(prometheus.Labels{"Source": request.EventSource}).Inc()
 	Uc.Customer_Loyalty_Account_AwardPoints(Login, Customer_Loyalty_Account_AwardRequest{
 		MSISDN:      NewEntry.Key,
 		EventSource: request.EventSource,
@@ -3108,8 +3108,8 @@ func (Uc *UserControl) Customer_Loyalty_Account_AwardPoints(Login string, reques
 	response.AwardStatus = "successful"
 	response.AwardStatusDescription = ""
 	Uc.Write_Loyalty_Award_log(response)
-	AwardedTransactions.With(prometheus.Labels{"EventSource": request.EventSource, "EventType": request.EventType, "EventDetail": request.EventDetail}).Inc()
-	AwardedPoints.With(prometheus.Labels{"EventSource": request.EventSource, "EventType": request.EventType, "EventDetail": request.EventDetail}).Add(points)
+	//AwardedTransactions.With(prometheus.Labels{"EventSource": request.EventSource, "EventType": request.EventType, "EventDetail": request.EventDetail}).Inc()
+	//AwardedPoints.With(prometheus.Labels{"EventSource": request.EventSource, "EventType": request.EventType, "EventDetail": request.EventDetail}).Add(points)
 	return response, nil
 }
 
