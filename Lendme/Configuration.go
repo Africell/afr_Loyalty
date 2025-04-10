@@ -570,34 +570,34 @@ func setDefaultConfiguration_SL_Live() (Configuration ConfigType) {
 	Configuration.SMPP.Login = "LendME2"
 	Configuration.SMPP.Password = "LendMEP@ssw0rd"
 
-	Configuration.CGW_AUC.Description = "UCGW AUC"
-	Configuration.CGW_AUC.Protocol = "http"
-	Configuration.CGW_AUC.Hostname = "?.?.?.?"
-	Configuration.CGW_AUC.Port = "9994"
-	Configuration.CGW_AUC.Module = "AUC"
-	Configuration.CGW_AUC.Version = "V1"
-	Configuration.CGW_AUC.S2S_Username = "SAW_UCGW"
-	Configuration.CGW_AUC.S2S_Password = "uC@g$ASDKJH66&&&RiS6$2"
-	Configuration.CGW_AUC.Timeout_After = 5 * time.Second
-
+	//CGW
 	Configuration.CGW.Protocol = "http"
-	Configuration.CGW.Hostname = "?.?.?.?"
+	Configuration.CGW.Hostname = "10.10.231.51"
 	Configuration.CGW.Port = "9991"
 	Configuration.CGW.Module = "UCGW"
 	Configuration.CGW.Version = "V1"
 	Configuration.CGW.Timeout = 15 * time.Second
+	Configuration.CGW.S2S_AccessToken = ""
+
+	Configuration.CGW_AUC.Description = "UCGW AUC service"
+	Configuration.CGW_AUC.Protocol = "http"
+	Configuration.CGW_AUC.Hostname = "10.10.231.51"
+	Configuration.CGW_AUC.Port = "9994"
+	Configuration.CGW_AUC.Module = "AUC"
+	Configuration.CGW_AUC.Version = "V1"
+	Configuration.CGW_AUC.S2S_Username = "UCGW_Admin"
+	Configuration.CGW_AUC.S2S_Password = "uC@g$W$iRiS6$2"
+	Configuration.CGW_AUC.Timeout_After = 5 * time.Second
 
 	Configuration.Propylaea.Description = "Product Design Center - Propylaea"
-	Configuration.Propylaea.Protocol = "https"
-	Configuration.Propylaea.Port = "443"
-	Configuration.Propylaea.Hostname = "sapp.africell.cd"
+	Configuration.Propylaea.Protocol = "http"
+	Configuration.Propylaea.Port = "9900"
+	Configuration.Propylaea.Hostname = "10.10.231.51"
 	Configuration.Propylaea.Module = "Propylaea"
 	Configuration.Propylaea.Version = "V1"
 	Configuration.Propylaea.S2S_Username = "Propylaea_Admin"
 	Configuration.Propylaea.S2S_Password = "uC@g$W$iRiS6$2@333dd"
 	Configuration.Propylaea.Timeout_After = 5 * time.Second
-	Configuration.Propylaea.ChannelName = "Spin And Win"
-	Configuration.Propylaea.ChannelPlan = "Normal SIM"
-	Configuration.Propylaea.ChannelVersion = "1"
+
 	return
 }
