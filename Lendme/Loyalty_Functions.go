@@ -332,17 +332,19 @@ func (Uc *UserControl) InitializeLoyaltyDefaultUAT() {
 		Validity_Duration: 12,
 	})
 	Uc.Loyalty_Point_Redemption_Rules_Add("Default", Loyalty_Point_Redemption_Rules_AddRequest{
-		Key:                             "Default_Redemption_Rules",
-		Description:                     "Default_Redemption_Rules",
-		Min_Accumulated_Points:          100,
-		Allow_Negative_Balance_ToRedeem: false,
-		Allow_PendingLendme_ToRedeem:    false,
-		Airtime_MinPoints:               100,
-		Airtime_AmountPerPoint:          0.5,
-		MobileMoney_MinPoints:           100,
-		MobileMoney_AmountPerPoint:      0.5,
-		Bundles_MinPoints:               100,
-		Bundles_Product_Catalogue:       "Loyalty_Default",
+		Key:                               "Default_Redemption_Rules",
+		Description:                       "Default_Redemption_Rules",
+		Min_Accumulated_Points:            100,
+		Allow_Negative_Balance_ToRedeem:   false,
+		Allow_PendingLendme_ToRedeem:      false,
+		Airtime_MinPoints:                 100,
+		Airtime_AmountPerPoint:            0.5,
+		MobileMoney_MinPoints:             100,
+		MobileMoney_AmountPerPoint:        0.5,
+		Bundles_MinPoints:                 100,
+		Bundles_Product_Catalogue_Channel: "Loyalty_Default_Channel",
+		Bundles_Product_Catalogue_Plan:    "Loyalty_Default_Plan",
+		Bundles_Product_Catalogue_Version: "1",
 	})
 	Uc.Loyalty_Plan_Add("Default", Loyalty_Plan_AddRequest{
 		Key:                         "Member|Main_Segment", //Loyalty_Level_Key + "|" + Loyalty_Account_Segment_Key
@@ -1446,7 +1448,9 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Add(Login string, request 
 	NewEntry.MobileMoney_MinPoints = request.MobileMoney_MinPoints
 	NewEntry.MobileMoney_AmountPerPoint = request.MobileMoney_AmountPerPoint
 	NewEntry.Bundles_MinPoints = request.Bundles_MinPoints
-	NewEntry.Bundles_Product_Catalogue = request.Bundles_Product_Catalogue
+	NewEntry.Bundles_Product_Catalogue_Channel = request.Bundles_Product_Catalogue_Channel
+	NewEntry.Bundles_Product_Catalogue_Plan = request.Bundles_Product_Catalogue_Plan
+	NewEntry.Bundles_Product_Catalogue_Version = request.Bundles_Product_Catalogue_Version
 	NewEntry.FreeSpinAndWin_MinPoints = request.FreeSpinAndWin_MinPoints
 	NewEntry.FreeSpinAndWin_PointsPerSpin = request.FreeSpinAndWin_PointsPerSpin
 	//add to cache and DB
@@ -1494,7 +1498,9 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Edit(Login string, request
 	entry.MobileMoney_MinPoints = request.MobileMoney_MinPoints
 	entry.MobileMoney_AmountPerPoint = request.MobileMoney_AmountPerPoint
 	entry.Bundles_MinPoints = request.Bundles_MinPoints
-	entry.Bundles_Product_Catalogue = request.Bundles_Product_Catalogue
+	entry.Bundles_Product_Catalogue_Channel = request.Bundles_Product_Catalogue_Channel
+	entry.Bundles_Product_Catalogue_Plan = request.Bundles_Product_Catalogue_Plan
+	entry.Bundles_Product_Catalogue_Version = request.Bundles_Product_Catalogue_Version
 	entry.FreeSpinAndWin_MinPoints = request.FreeSpinAndWin_MinPoints
 	entry.FreeSpinAndWin_PointsPerSpin = request.FreeSpinAndWin_PointsPerSpin
 	if request.NewKey != "" {

@@ -1185,7 +1185,7 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_Gambia() {
 }
 
 func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_SierraLeone() {
-	log.Println("Loading credit limit scheme default values for Gambia")
+	log.Println("Loading credit limit scheme default values for SierraLeone")
 	//
 	request := Credit_Limit_Scheme_Add_Request{
 		Key:                 "0_33_3_6",

@@ -197,55 +197,61 @@ type Loyalty_Point_Expiry_Rules_EditRequest struct {
 }
 
 type Loyalty_Point_Redemption_Rules struct {
-	Key                             string  `bson:"Key" json:"Key"`
-	Redemption_Rules_Id             int64   `bson:"Redemption_Rules_Id" json:"Redemption_Rules_Id"`
-	Description                     string  `bson:"Description" json:"Description"`
-	Min_Accumulated_Points          float64 `bson:"Min_Accumulated_Points" json:"Min_Accumulated_Points"` //will be used for upgrade
-	Allow_Negative_Balance_ToRedeem bool    `bson:"Allow_Negative_Balance_ToRedeem" json:"Allow_Negative_Balance_ToRedeem"`
-	Allow_PendingLendme_ToRedeem    bool    `bson:"Allow_PendingLendme_ToRedeem" json:"Allow_PendingLendme_ToRedeem"`
-	Airtime_MinPoints               float64 `bson:"Airtime_MinPoints" json:"Airtime_MinPoints"`
-	Airtime_AmountPerPoint          float64 `bson:"Airtime_AmountPerPoint" json:"Airtime_AmountPerPoint"`
-	MobileMoney_MinPoints           float64 `bson:"MobileMoney_MinPoints" json:"MobileMoney_MinPoints"`
-	MobileMoney_AmountPerPoint      float64 `bson:"MobileMoney_AmountPerPoint" json:"MobileMoney_AmountPerPoint"`
-	Bundles_MinPoints               float64 `bson:"Bundles_MinPoints" json:"Bundles_MinPoints"`
-	Bundles_Product_Catalogue       string  `bson:"Bundles_Product_Catalogue" json:"Bundles_Product_Catalogue"`
-	FreeSpinAndWin_MinPoints        float64 `bson:"FreeSpinAndWin_MinPoints" json:"FreeSpinAndWin_MinPoints"`
-	FreeSpinAndWin_PointsPerSpin    float64 `bson:"FreeSpinAndWin_PointsPerSpin" json:"FreeSpinAndWin_PointsPerSpin"`
+	Key                               string  `bson:"Key" json:"Key"`
+	Redemption_Rules_Id               int64   `bson:"Redemption_Rules_Id" json:"Redemption_Rules_Id"`
+	Description                       string  `bson:"Description" json:"Description"`
+	Min_Accumulated_Points            float64 `bson:"Min_Accumulated_Points" json:"Min_Accumulated_Points"` //will be used for upgrade
+	Allow_Negative_Balance_ToRedeem   bool    `bson:"Allow_Negative_Balance_ToRedeem" json:"Allow_Negative_Balance_ToRedeem"`
+	Allow_PendingLendme_ToRedeem      bool    `bson:"Allow_PendingLendme_ToRedeem" json:"Allow_PendingLendme_ToRedeem"`
+	Airtime_MinPoints                 float64 `bson:"Airtime_MinPoints" json:"Airtime_MinPoints"`
+	Airtime_AmountPerPoint            float64 `bson:"Airtime_AmountPerPoint" json:"Airtime_AmountPerPoint"`
+	MobileMoney_MinPoints             float64 `bson:"MobileMoney_MinPoints" json:"MobileMoney_MinPoints"`
+	MobileMoney_AmountPerPoint        float64 `bson:"MobileMoney_AmountPerPoint" json:"MobileMoney_AmountPerPoint"`
+	Bundles_MinPoints                 float64 `bson:"Bundles_MinPoints" json:"Bundles_MinPoints"`
+	Bundles_Product_Catalogue_Channel string  `bson:"Bundles_Product_Catalogue_Channel" json:"Bundles_Product_Catalogue_Channel"`
+	Bundles_Product_Catalogue_Plan    string  `bson:"Bundles_Product_Catalogue_Plan" json:"Bundles_Product_Catalogue_Plan"`
+	Bundles_Product_Catalogue_Version string  `bson:"Bundles_Product_Catalogue_Version" json:"Bundles_Product_Catalogue_Version"`
+	FreeSpinAndWin_MinPoints          float64 `bson:"FreeSpinAndWin_MinPoints" json:"FreeSpinAndWin_MinPoints"`
+	FreeSpinAndWin_PointsPerSpin      float64 `bson:"FreeSpinAndWin_PointsPerSpin" json:"FreeSpinAndWin_PointsPerSpin"`
 }
 
 type Loyalty_Point_Redemption_Rules_AddRequest struct {
-	Key                             string  `bson:"Key" json:"Key"`
-	Redemption_Rules_Id             int64   `bson:"Redemption_Rules_Id" json:"Redemption_Rules_Id"`
-	Description                     string  `bson:"Description" json:"Description"`
-	Min_Accumulated_Points          float64 `bson:"Min_Accumulated_Points" json:"Min_Accumulated_Points"` //will be used for upgrade
-	Allow_Negative_Balance_ToRedeem bool    `bson:"Allow_Negative_Balance_ToRedeem" json:"Allow_Negative_Balance_ToRedeem"`
-	Allow_PendingLendme_ToRedeem    bool    `bson:"Allow_PendingLendme_ToRedeem" json:"Allow_PendingLendme_ToRedeem"`
-	Airtime_MinPoints               float64 `bson:"Airtime_MinPoints" json:"Airtime_MinPoints"`
-	Airtime_AmountPerPoint          float64 `bson:"Airtime_AmountPerPoint" json:"Airtime_AmountPerPoint"`
-	MobileMoney_MinPoints           float64 `bson:"MobileMoney_MinPoints" json:"MobileMoney_MinPoints"`
-	MobileMoney_AmountPerPoint      float64 `bson:"MobileMoney_AmountPerPoint" json:"MobileMoney_AmountPerPoint"`
-	Bundles_MinPoints               float64 `bson:"Bundles_MinPoints" json:"Bundles_MinPoints"`
-	Bundles_Product_Catalogue       string  `bson:"Bundles_Product_Catalogue" json:"Bundles_Product_Catalogue"`
-	FreeSpinAndWin_MinPoints        float64 `bson:"FreeSpinAndWin_MinPoints" json:"FreeSpinAndWin_MinPoints"`
-	FreeSpinAndWin_PointsPerSpin    float64 `bson:"FreeSpinAndWin_PointsPerSpin" json:"FreeSpinAndWin_PointsPerSpin"`
+	Key                               string  `bson:"Key" json:"Key"`
+	Redemption_Rules_Id               int64   `bson:"Redemption_Rules_Id" json:"Redemption_Rules_Id"`
+	Description                       string  `bson:"Description" json:"Description"`
+	Min_Accumulated_Points            float64 `bson:"Min_Accumulated_Points" json:"Min_Accumulated_Points"` //will be used for upgrade
+	Allow_Negative_Balance_ToRedeem   bool    `bson:"Allow_Negative_Balance_ToRedeem" json:"Allow_Negative_Balance_ToRedeem"`
+	Allow_PendingLendme_ToRedeem      bool    `bson:"Allow_PendingLendme_ToRedeem" json:"Allow_PendingLendme_ToRedeem"`
+	Airtime_MinPoints                 float64 `bson:"Airtime_MinPoints" json:"Airtime_MinPoints"`
+	Airtime_AmountPerPoint            float64 `bson:"Airtime_AmountPerPoint" json:"Airtime_AmountPerPoint"`
+	MobileMoney_MinPoints             float64 `bson:"MobileMoney_MinPoints" json:"MobileMoney_MinPoints"`
+	MobileMoney_AmountPerPoint        float64 `bson:"MobileMoney_AmountPerPoint" json:"MobileMoney_AmountPerPoint"`
+	Bundles_MinPoints                 float64 `bson:"Bundles_MinPoints" json:"Bundles_MinPoints"`
+	Bundles_Product_Catalogue_Channel string  `bson:"Bundles_Product_Catalogue_Channel" json:"Bundles_Product_Catalogue_Channel"`
+	Bundles_Product_Catalogue_Plan    string  `bson:"Bundles_Product_Catalogue_Plan" json:"Bundles_Product_Catalogue_Plan"`
+	Bundles_Product_Catalogue_Version string  `bson:"Bundles_Product_Catalogue_Version" json:"Bundles_Product_Catalogue_Version"`
+	FreeSpinAndWin_MinPoints          float64 `bson:"FreeSpinAndWin_MinPoints" json:"FreeSpinAndWin_MinPoints"`
+	FreeSpinAndWin_PointsPerSpin      float64 `bson:"FreeSpinAndWin_PointsPerSpin" json:"FreeSpinAndWin_PointsPerSpin"`
 }
 
 type Loyalty_Point_Redemption_Rules_EditRequest struct {
-	Key                             string  `bson:"Key" json:"Key"`
-	NewKey                          string  `bson:"NewKey" json:"NewKey"`
-	Redemption_Rules_Id             int64   `bson:"Redemption_Rules_Id" json:"Redemption_Rules_Id"`
-	Description                     string  `bson:"Description" json:"Description"`
-	Min_Accumulated_Points          float64 `bson:"Min_Accumulated_Points" json:"Min_Accumulated_Points"` //will be used for upgrade
-	Allow_Negative_Balance_ToRedeem bool    `bson:"Allow_Negative_Balance_ToRedeem" json:"Allow_Negative_Balance_ToRedeem"`
-	Allow_PendingLendme_ToRedeem    bool    `bson:"Allow_PendingLendme_ToRedeem" json:"Allow_PendingLendme_ToRedeem"`
-	Airtime_MinPoints               float64 `bson:"Airtime_MinPoints" json:"Airtime_MinPoints"`
-	Airtime_AmountPerPoint          float64 `bson:"Airtime_AmountPerPoint" json:"Airtime_AmountPerPoint"`
-	MobileMoney_MinPoints           float64 `bson:"MobileMoney_MinPoints" json:"MobileMoney_MinPoints"`
-	MobileMoney_AmountPerPoint      float64 `bson:"MobileMoney_AmountPerPoint" json:"MobileMoney_AmountPerPoint"`
-	Bundles_MinPoints               float64 `bson:"Bundles_MinPoints" json:"Bundles_MinPoints"`
-	Bundles_Product_Catalogue       string  `bson:"Bundles_Product_Catalogue" json:"Bundles_Product_Catalogue"`
-	FreeSpinAndWin_MinPoints        float64 `bson:"FreeSpinAndWin_MinPoints" json:"FreeSpinAndWin_MinPoints"`
-	FreeSpinAndWin_PointsPerSpin    float64 `bson:"FreeSpinAndWin_PointsPerSpin" json:"FreeSpinAndWin_PointsPerSpin"`
+	Key                               string  `bson:"Key" json:"Key"`
+	NewKey                            string  `bson:"NewKey" json:"NewKey"`
+	Redemption_Rules_Id               int64   `bson:"Redemption_Rules_Id" json:"Redemption_Rules_Id"`
+	Description                       string  `bson:"Description" json:"Description"`
+	Min_Accumulated_Points            float64 `bson:"Min_Accumulated_Points" json:"Min_Accumulated_Points"` //will be used for upgrade
+	Allow_Negative_Balance_ToRedeem   bool    `bson:"Allow_Negative_Balance_ToRedeem" json:"Allow_Negative_Balance_ToRedeem"`
+	Allow_PendingLendme_ToRedeem      bool    `bson:"Allow_PendingLendme_ToRedeem" json:"Allow_PendingLendme_ToRedeem"`
+	Airtime_MinPoints                 float64 `bson:"Airtime_MinPoints" json:"Airtime_MinPoints"`
+	Airtime_AmountPerPoint            float64 `bson:"Airtime_AmountPerPoint" json:"Airtime_AmountPerPoint"`
+	MobileMoney_MinPoints             float64 `bson:"MobileMoney_MinPoints" json:"MobileMoney_MinPoints"`
+	MobileMoney_AmountPerPoint        float64 `bson:"MobileMoney_AmountPerPoint" json:"MobileMoney_AmountPerPoint"`
+	Bundles_MinPoints                 float64 `bson:"Bundles_MinPoints" json:"Bundles_MinPoints"`
+	Bundles_Product_Catalogue_Channel string  `bson:"Bundles_Product_Catalogue_Channel" json:"Bundles_Product_Catalogue_Channel"`
+	Bundles_Product_Catalogue_Plan    string  `bson:"Bundles_Product_Catalogue_Plan" json:"Bundles_Product_Catalogue_Plan"`
+	Bundles_Product_Catalogue_Version string  `bson:"Bundles_Product_Catalogue_Version" json:"Bundles_Product_Catalogue_Version"`
+	FreeSpinAndWin_MinPoints          float64 `bson:"FreeSpinAndWin_MinPoints" json:"FreeSpinAndWin_MinPoints"`
+	FreeSpinAndWin_PointsPerSpin      float64 `bson:"FreeSpinAndWin_PointsPerSpin" json:"FreeSpinAndWin_PointsPerSpin"`
 }
 
 type Loyalty_Plan struct {
