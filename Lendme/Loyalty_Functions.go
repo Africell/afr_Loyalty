@@ -7,6 +7,8 @@ import (
 	"reflect"
 	"time"
 
+	PropC "afr_propylaea/PropylaeaClient"
+
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -2917,6 +2919,79 @@ func (Uc *UserControl) Customer_Loyalty_Account_Delete(Login, Key string) (err e
 		Event_Entry_After:  entry,
 	})
 	return nil
+}
+
+func (Uc *UserControl) Customer_Loyalty_Account_GetRedemption_Rules(MSISDN string) (Redemption_Rules Loyalty_Point_Redemption_Rules, err error) {
+	//get loyalty account detail
+	loyalty_account_na, subexist := Map_Customer_Loyalty_Account.CheckThenGet(MSISDN)
+	if !subexist {
+		return Redemption_Rules, errors.New("loyalty account does not exist")
+	}
+	loyalty_account, ok := loyalty_account_na.(Customer_Loyalty_Account)
+	if !ok {
+		return Redemption_Rules, errors.New("type assertion issue with Customer_Loyalty_Account")
+	}
+	if loyalty_account.Loyalty_Account_Segment_Key == "" {
+		return Redemption_Rules, errors.New("type assertion issue with Customer_Loyalty_Account")
+	}
+	if loyalty_account.Loyalty_Level_Key == "" {
+		return Redemption_Rules, errors.New("loyalty account level is not assigned")
+	}
+	//get the loyalty plan
+	plan_na, planexist := Map_Loyalty_Plan.CheckThenGet(loyalty_account.Loyalty_Level_Key + "|" + loyalty_account.Loyalty_Account_Segment_Key)
+	if !planexist {
+		return Redemption_Rules, errors.New("loyalty plan does not exist")
+	}
+	plan, ok := plan_na.(Loyalty_Plan)
+	if !ok {
+		return Redemption_Rules, errors.New("type assertion issue with Loyalty_Plan")
+	}
+	//validate earning rules
+	if plan.Redemption_Rules_Key == "" {
+		return Redemption_Rules, errors.New("redemption rules is not defined")
+	}
+	redemption_Rules_na, redemptionexist := Map_Loyalty_Point_Redemption_Rules.CheckThenGet(plan.Redemption_Rules_Key)
+	if !redemptionexist {
+		return Redemption_Rules, errors.New("redemption rules is not defined")
+	}
+	Redemption_Rules, ok = redemption_Rules_na.(Loyalty_Point_Redemption_Rules)
+	if !ok {
+		return Redemption_Rules, errors.New("type assertion issue with Loyalty_Point_Redemption_Rules")
+	}
+	return Redemption_Rules, nil
+}
+
+func (Uc *UserControl) Customer_Loyalty_Account_GetRedemptionProductCatalogue(MSISDN string) (response PropC.Catalogue_WithBundleDetail_response, err error) {
+	//get redemption plan
+	redemption_Rules, err := Uc.Customer_Loyalty_Account_GetRedemption_Rules(MSISDN)
+	if err != nil {
+		return response, err
+	}
+	if redemption_Rules.Bundles_Product_Catalogue_Channel == "" {
+		return response, errors.New("channel for product catalogue is not defined in redemption rules")
+	}
+	if redemption_Rules.Bundles_Product_Catalogue_Plan == "" {
+		return response, errors.New("plan for product catalogue is not defined in redemption rules")
+	}
+	if redemption_Rules.Bundles_Product_Catalogue_Version == "" {
+		return response, errors.New("version for product catalogue is not defined in redemption rules")
+	}
+	//Get catalogue
+	response, err = Uc.Propylaea.PropylaeaClient.Get_Catalogue_WithBundleDetail_WithoutLocationRestriction(
+		redemption_Rules.Bundles_Product_Catalogue_Channel,
+		redemption_Rules.Bundles_Product_Catalogue_Plan,
+		redemption_Rules.Bundles_Product_Catalogue_Version)
+	if err != nil {
+		return response, err
+	}
+	// for _, catalog := range bundles.Data {
+	// 	for _, catalogEntry := range catalog.Catalogue_Entries {
+	// 		for _, bundle := range catalogEntry.Bundles {
+	// 			bundlesToReturn = append(bundlesToReturn, bundle)
+	// 		}
+	// 	}
+	// }
+	return response, nil
 }
 
 func Loyalty_Account_Segment_Selection(Amount float64, FirstUse_date time.Time) (scheme_name string) {

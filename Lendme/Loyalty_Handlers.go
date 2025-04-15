@@ -2009,6 +2009,43 @@ func (Uc *UserControl) HTTP_Customer_Loyalty_Account(w http.ResponseWriter, r *h
 	Uc.HTTP_API_Standard_response(w, r, sr, true)
 }
 
+func (Uc *UserControl) HTTP_Loyalty_Products_Catalogue(w http.ResponseWriter, r *http.Request) {
+	var sr API_Standard_response
+	//**fill response source detail
+	SourceIp, _ := GetRequestIP(r)
+	sr.SourceIP = SourceIp
+	sr.Login = r.Header.Get("Login")
+	sr.SourceApp = r.Header.Get("SourceApp")
+	sr.AccessKey = r.URL.Path
+	sr.AccessMethod = r.Method
+	sr.HostId = Configuration.HostId
+	sr.ReceiveDate = time.Now()
+	sr.TransactionType = "Loyalty Products Catalogue"
+
+	method := r.Method
+	switch method {
+	case "GET":
+		sr.TransactionType = sr.TransactionType + " - Read"
+		MSISDN := r.URL.Query().Get("MSISDN")
+		productCatalogue, err := Uc.Customer_Loyalty_Account_GetRedemptionProductCatalogue(MSISDN)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		sr.Data = productCatalogue
+	}
+	//successful response
+	sr.Status = "successful"
+	sr.StatusCode = http.StatusOK
+	sr.StatusDescription = ""
+	sr.ErrorDescription = ""
+	Uc.HTTP_API_Standard_response(w, r, sr, true)
+}
+
 func (Uc *UserControl) HTTP_INLiveFeed_NewJoining(w http.ResponseWriter, r *http.Request) {
 	var sr API_Standard_response
 	//**fill response source detail
