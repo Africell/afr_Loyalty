@@ -674,6 +674,7 @@ func (Uc *UserControl) Loyalty_Level_Add(Login string, request Loyalty_Level_Add
 	NewEntry.Min_Accumulated_Points = request.Min_Accumulated_Points
 	NewEntry.Max_Accumulated_Points = request.Max_Accumulated_Points
 	NewEntry.EnableRedeem = request.EnableRedeem
+	NewEntry.DowngradeToLevel_Key = request.DowngradeToLevel_Key
 	//add to cache and DB
 	Map_Loyalty_Level.Put(NewEntry.Key, NewEntry)
 	//add logs
@@ -715,6 +716,7 @@ func (Uc *UserControl) Loyalty_Level_Edit(Login string, request Loyalty_Level_Ed
 	entry.Min_Accumulated_Points = request.Min_Accumulated_Points
 	entry.Max_Accumulated_Points = request.Max_Accumulated_Points
 	entry.EnableRedeem = request.EnableRedeem
+	entry.DowngradeToLevel_Key = request.DowngradeToLevel_Key
 	if request.NewKey != "" {
 		if request.NewKey != request.Key {
 			//delete old

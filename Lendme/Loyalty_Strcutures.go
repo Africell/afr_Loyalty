@@ -72,6 +72,7 @@ type Loyalty_Level struct {
 	Min_Accumulated_Points float64 `bson:"Min_Accumulated_Points" json:"Min_Accumulated_Points"` //will be used for upgrade
 	Max_Accumulated_Points float64 `bson:"Max_Accumulated_Points" json:"Max_Accumulated_Points"` //will be used for downgrade
 	EnableRedeem           bool    `bson:"EnableRedeem" json:"EnableRedeem"`
+	DowngradeToLevel_Key   string  `bson:"DowngradeToLevel_Key" json:"DowngradeToLevel_Key"`
 }
 
 type Loyalty_Level_AddRequest struct {
@@ -81,6 +82,7 @@ type Loyalty_Level_AddRequest struct {
 	Min_Accumulated_Points float64 `bson:"Min_Accumulated_Points" json:"Min_Accumulated_Points"` //will be used for upgrade
 	Max_Accumulated_Points float64 `bson:"Max_Accumulated_Points" json:"Max_Accumulated_Points"` //will be used for downgrade
 	EnableRedeem           bool    `bson:"EnableRedeem" json:"EnableRedeem"`
+	DowngradeToLevel_Key   string  `bson:"DowngradeToLevel_Key" json:"DowngradeToLevel_Key"`
 }
 
 type Loyalty_Level_EditRequest struct {
@@ -91,6 +93,7 @@ type Loyalty_Level_EditRequest struct {
 	Min_Accumulated_Points float64 `bson:"Min_Accumulated_Points" json:"Min_Accumulated_Points"` //will be used for upgrade
 	Max_Accumulated_Points float64 `bson:"Max_Accumulated_Points" json:"Max_Accumulated_Points"` //will be used for downgrade
 	EnableRedeem           bool    `bson:"EnableRedeem" json:"EnableRedeem"`
+	DowngradeToLevel_Key   string  `bson:"DowngradeToLevel_Key" json:"DowngradeToLevel_Key"`
 }
 
 type Loyalty_Account_Segment struct {
