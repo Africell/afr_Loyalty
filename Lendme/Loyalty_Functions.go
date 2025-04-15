@@ -4,10 +4,12 @@ import (
 	"daoc"
 	"errors"
 	"log"
+	"net/http"
 	"reflect"
 	"time"
 
 	PropC "afr_propylaea/PropylaeaClient"
+	"afr_unified_charging_gateway/Unified_charging_gateway_Client"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -55,6 +57,7 @@ var DAO_Customer_UAT daoc.DAO
 var DAO_Loyalty_Event_Log daoc.DAO
 var DAO_Loyalty_Award_log daoc.DAO
 var DAO_Loyalty_Expiry_log daoc.DAO
+var DAO_Loyalty_Redemption_log daoc.DAO
 
 var chan_LoyaltyGovernance_Controler = make(chan int, 1)
 
@@ -110,6 +113,8 @@ func (uc *UserControl) InitializeLoyaltyDAO() {
 	DAO_Customer_UAT.Initialize("Customer_UAT", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Customer_UAT{}), Configuration.DB_Name_Loyalty, "Col_Customer_UAT", "")
 	DAO_Loyalty_Award_log.Initialize("Loyalty_Award_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Award_log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Award_log", "")
 	DAO_Loyalty_Expiry_log.Initialize("Loyalty_Expiry_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Expiry_log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Expiry_log", "")
+	DAO_Loyalty_Redemption_log.Initialize("Loyalty_Redemption_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Redemption_log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Redemption_log", "")
+
 }
 
 func (uc *UserControl) LoyaltyIndexesMaintenanceProcess() {
@@ -276,6 +281,17 @@ func (Uc *UserControl) Write_Loyalty_Expiry_log(record Loyalty_Expiry_log) {
 	}
 }
 
+func (Uc *UserControl) Write_Loyalty_Redemption_log(record Loyalty_Redemption_log) {
+	YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.ReceiveDate)
+	Db := DAO_Loyalty_Redemption_log.DB + "_" + YYYY + MM
+	Col := DAO_Loyalty_Redemption_log.Collection + "_" + DD
+	_, err := DAO_Loyalty_Redemption_log.PutOneLogs(record, Db, Col)
+	if err != nil {
+		log.Println("Error in Write_Loyalty_Redemption_log:", err, " (", record, ")")
+		return
+	}
+}
+
 func (Uc *UserControl) InitializeLoyaltyDefaultUAT() {
 	Uc.Loyalty_Governance_Add("Default", Loyalty_Governance_AddRequest{
 		Key:                             LOYALTY_GOVERNANCE_KEY,
@@ -292,24 +308,28 @@ func (Uc *UserControl) InitializeLoyaltyDefaultUAT() {
 		Description:            "Member",
 		Min_Accumulated_Points: 0,
 		Max_Accumulated_Points: 100,
+		EnableRedeem:           true,
 	})
 	Uc.Loyalty_Level_Add("Default", Loyalty_Level_AddRequest{
 		Key:                    "Silver",
 		Description:            "Silver",
 		Min_Accumulated_Points: 101,
 		Max_Accumulated_Points: 500,
+		EnableRedeem:           true,
 	})
 	Uc.Loyalty_Level_Add("Default", Loyalty_Level_AddRequest{
 		Key:                    "Gold",
 		Description:            "Gold",
 		Min_Accumulated_Points: 501,
 		Max_Accumulated_Points: 1000,
+		EnableRedeem:           true,
 	})
 	Uc.Loyalty_Level_Add("Default", Loyalty_Level_AddRequest{
 		Key:                    "Platinum",
 		Description:            "Platinum",
 		Min_Accumulated_Points: 1001,
 		Max_Accumulated_Points: 999999999,
+		EnableRedeem:           true,
 	})
 	Uc.Loyalty_Account_Segment_Add("Default", Loyalty_Account_Segment_AddRequest{
 		Key:         "Main_Segment",
@@ -653,6 +673,7 @@ func (Uc *UserControl) Loyalty_Level_Add(Login string, request Loyalty_Level_Add
 	NewEntry.Description = request.Description
 	NewEntry.Min_Accumulated_Points = request.Min_Accumulated_Points
 	NewEntry.Max_Accumulated_Points = request.Max_Accumulated_Points
+	NewEntry.EnableRedeem = request.EnableRedeem
 	//add to cache and DB
 	Map_Loyalty_Level.Put(NewEntry.Key, NewEntry)
 	//add logs
@@ -693,7 +714,7 @@ func (Uc *UserControl) Loyalty_Level_Edit(Login string, request Loyalty_Level_Ed
 	entry.Description = request.Description
 	entry.Min_Accumulated_Points = request.Min_Accumulated_Points
 	entry.Max_Accumulated_Points = request.Max_Accumulated_Points
-
+	entry.EnableRedeem = request.EnableRedeem
 	if request.NewKey != "" {
 		if request.NewKey != request.Key {
 			//delete old
@@ -1447,6 +1468,8 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Add(Login string, request 
 	NewEntry.Allow_PendingLendme_ToRedeem = request.Allow_PendingLendme_ToRedeem
 	NewEntry.Airtime_MinPoints = request.Airtime_MinPoints
 	NewEntry.Airtime_AmountPerPoint = request.Airtime_AmountPerPoint
+	NewEntry.Airtime_EVC_Account = request.Airtime_EVC_Account
+	NewEntry.Airtime_EVC_PIN = request.Airtime_EVC_PIN
 	NewEntry.MobileMoney_MinPoints = request.MobileMoney_MinPoints
 	NewEntry.MobileMoney_AmountPerPoint = request.MobileMoney_AmountPerPoint
 	NewEntry.Bundles_MinPoints = request.Bundles_MinPoints
@@ -1497,6 +1520,8 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Edit(Login string, request
 	entry.Allow_PendingLendme_ToRedeem = request.Allow_PendingLendme_ToRedeem
 	entry.Airtime_MinPoints = request.Airtime_MinPoints
 	entry.Airtime_AmountPerPoint = request.Airtime_AmountPerPoint
+	entry.Airtime_EVC_Account = request.Airtime_EVC_Account
+	entry.Airtime_EVC_PIN = request.Airtime_EVC_PIN
 	entry.MobileMoney_MinPoints = request.MobileMoney_MinPoints
 	entry.MobileMoney_AmountPerPoint = request.MobileMoney_AmountPerPoint
 	entry.Bundles_MinPoints = request.Bundles_MinPoints
@@ -2994,6 +3019,211 @@ func (Uc *UserControl) Customer_Loyalty_Account_GetRedemptionProductCatalogue(MS
 	return response, nil
 }
 
+func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_Header, request Loyalty_Redemption_Request, response *Loyalty_Redemption_log) {
+	response.ReceiveDate = time.Now()
+	//fill the request header info
+	response.SourceIP = request_header.SourceIP
+	response.SourceApp = request_header.SourceApp
+	response.AppLogin = request_header.AppLogin
+	response.AppVersion = request_header.AppVersion
+	response.GPSLocation = request_header.GPSLocation
+	response.GSMLocation = request_header.GSMLocation
+	//fill the request info
+	response.MSISDN = request.MSISDN
+	response.ReceiveDate = time.Now()
+	response.Redemption_Type = request.Redemption_Type //Airtime, Bundle, MobileMoney, SpinAndWin
+	response.Redemption_Bunlde_Id = request.Redemption_Bunlde_Id
+	response.Redemption_Amount = request.Redemption_Amount
+
+	//get loyalty account detail
+	loyalty_Account_na, exits := Map_Customer_Loyalty_Account.CheckThenGet(request.MSISDN)
+	if !exits {
+		response.Status = "failed"
+		response.StatusCode = http.StatusBadRequest
+		response.StatusDescription = "loyalty account not found"
+		response.ErrorDescription = "loyalty account not found"
+		response.StatusDate = time.Now()
+		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+		Uc.Write_Loyalty_Redemption_log(*response)
+		return
+	}
+	loyalty_Account, ok := loyalty_Account_na.(Customer_Loyalty_Account)
+	if !ok {
+		response.Status = "failed"
+		response.StatusCode = http.StatusBadRequest
+		response.StatusDescription = "error in loyalty account type assertion"
+		response.ErrorDescription = "error in loyalty account type assertion"
+		response.StatusDate = time.Now()
+		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+		Uc.Write_Loyalty_Redemption_log(*response)
+		return
+	}
+	response.Customer_Id = loyalty_Account.Customer_Id
+	response.Account_Status = loyalty_Account.Account_Status
+	response.Loyalty_Level_Key = loyalty_Account.Loyalty_Level_Key
+	response.Loyalty_Account_Segment_Key = loyalty_Account.Loyalty_Account_Segment_Key
+	response.Available_Points = loyalty_Account.Available_Points
+	//get redemption rules
+	redemption_Rules, err := Uc.Customer_Loyalty_Account_GetRedemption_Rules(request.MSISDN)
+	if err != nil {
+		response.Status = "failed"
+		response.StatusCode = http.StatusBadRequest
+		response.StatusDescription = "failed to get redemption rules"
+		response.ErrorDescription = err.Error()
+		response.StatusDate = time.Now()
+		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+		Uc.Write_Loyalty_Redemption_log(*response)
+		return
+	}
+	response.Allow_Negative_Balance_ToRedeem = redemption_Rules.Allow_Negative_Balance_ToRedeem
+	response.Allow_PendingLendme_ToRedeem = redemption_Rules.Allow_PendingLendme_ToRedeem
+
+	//validate redemption request
+	switch request.Redemption_Type {
+	case "Airtime":
+		if request.Redemption_Amount < 0 {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "invalid redemption amount"
+			response.ErrorDescription = "invalid redemption airtime amount"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		response.MinRequiredPoints = redemption_Rules.Airtime_MinPoints
+		if response.Available_Points < response.MinRequiredPoints {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "no enough points"
+			response.ErrorDescription = "no enough points"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		airtimeTransferReply, err := Uc.CGW.UC_GWClient.AirtimePurchase(Unified_charging_gateway_Client.AirtimePurchase_Request{
+			PayerMSISDN:            redemption_Rules.Airtime_EVC_Account,
+			PayerPIN:               redemption_Rules.Airtime_EVC_PIN,
+			PaymentMethod:          "Loyalty Points",
+			TargetMSISDN:           request.MSISDN,
+			Amount:                 request.Redemption_Amount,
+			SendPayerNotification:  false,
+			SendTargetNotification: true,
+			Language:               "EN",
+		}, Configuration.Propylaea.ChannelName)
+		response.Airtime_PurchaseResult = airtimeTransferReply
+		if err != nil {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "failed to award airtime"
+			response.ErrorDescription = err.Error()
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		if airtimeTransferReply.StatusCode != http.StatusOK {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = airtimeTransferReply.StatusDescription
+			response.ErrorDescription = airtimeTransferReply.ErrorDescription
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+
+	case "Bundle":
+		if request.Redemption_Bunlde_Id == "" {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "bundle is not provided"
+			response.ErrorDescription = "bundle is not provided"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		response.MinRequiredPoints = redemption_Rules.Bundles_MinPoints
+		if response.Available_Points < response.MinRequiredPoints {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "no enough points"
+			response.ErrorDescription = "no enough points"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+
+	case "MobileMoney":
+		if request.Redemption_Amount < 0 {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "number of spins is not provided"
+			response.ErrorDescription = "number of spins is not provided"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		response.MinRequiredPoints = redemption_Rules.MobileMoney_MinPoints
+		if response.Available_Points < response.MinRequiredPoints {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "no enough points"
+			response.ErrorDescription = "no enough points"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+
+	case "SpinAndWin":
+		if request.Redemption_Amount < 0 {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "number of spins is not provided"
+			response.ErrorDescription = "number of spins is not provided"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		response.MinRequiredPoints = redemption_Rules.FreeSpinAndWin_MinPoints
+		if response.Available_Points < response.MinRequiredPoints {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "no enough points"
+			response.ErrorDescription = "no enough points"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+
+	default:
+		response.Status = "failed"
+		response.StatusCode = http.StatusBadRequest
+		response.StatusDescription = "invalid redemption type"
+		response.ErrorDescription = "invalid redemption type (accepted values: Airtime, Bundle, MobileMoney, SpinAndWin)"
+		response.StatusDate = time.Now()
+		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+		Uc.Write_Loyalty_Redemption_log(*response)
+		return
+	}
+
+	//successful reply
+	response.Status = "successful"
+	response.StatusCode = http.StatusOK
+	response.StatusDescription = ""
+	response.ErrorDescription = ""
+	response.StatusDate = time.Now()
+	response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+	Uc.Write_Loyalty_Redemption_log(*response)
+}
+
 func Loyalty_Account_Segment_Selection(Amount float64, FirstUse_date time.Time) (scheme_name string) {
 	//AON_Hours := time.Now().Sub(FirstUse_date).Hours()
 	AON_Hours := time.Since(FirstUse_date).Hours()
@@ -3077,6 +3307,28 @@ func (Uc *UserControl) Customer_Loyalty_Account_AwardPoints(Login string, reques
 	}
 	response.PreviousLoyaltyLevel = loyalty_account.Loyalty_Level_Key
 	response.CurrentLoyaltyLevel = loyalty_account.Loyalty_Level_Key
+	//validate loyalty level
+	loyalty_Level_na, exits := Map_Loyalty_Level.CheckThenGet(loyalty_account.Loyalty_Level_Key)
+	if !exits {
+		response.AwardStatus = "failed"
+		response.AwardStatusDescription = "loyalty account level is not defined"
+		Uc.Write_Loyalty_Award_log(response)
+		return response, errors.New(response.AwardStatusDescription)
+	}
+	loyalty_Level, ok := loyalty_Level_na.(Loyalty_Level)
+	if !ok {
+		response.AwardStatus = "failed"
+		response.AwardStatusDescription = "loyalty account level assertion issue"
+		Uc.Write_Loyalty_Award_log(response)
+		return response, errors.New(response.AwardStatusDescription)
+	}
+	if !loyalty_Level.EnableRedeem {
+		response.AwardStatus = "failed"
+		response.AwardStatusDescription = "loyalty account level redeemption is disabled"
+		Uc.Write_Loyalty_Award_log(response)
+		return response, errors.New(response.AwardStatusDescription)
+	}
+
 	//validate the loyalty plan
 	plan_na, planexist := Map_Loyalty_Plan.CheckThenGet(loyalty_account.Loyalty_Level_Key + "|" + loyalty_account.Loyalty_Account_Segment_Key)
 	if !planexist {
@@ -3178,7 +3430,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_AwardPoints(Login string, reques
 			if loyalty_account.Loyalty_Level_SetBy != "DWH_Import" &&
 				loyalty_account.Loyalty_Level_SetBy != "INLiveFeed" &&
 				loyalty_account.Loyalty_Level_SetBy != "Points_Expiry" {
-				errNL, new_Loyalty_level_key := Uc.EvaluateAndUpdate_CustomerLoyaltyLevel(Login, loyalty_account.Key)
+				new_Loyalty_level_key, errNL := Uc.EvaluateAndUpdate_CustomerLoyaltyLevel(Login, loyalty_account.Key)
 				if errNL != nil {
 					response.CurrentLoyaltyLevel = new_Loyalty_level_key
 				}
@@ -3235,14 +3487,14 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request C
 	return
 }
 
-func (Uc *UserControl) EvaluateAndUpdate_CustomerLoyaltyLevel(Login string, Account_Key string) (err error, New_Loyalty_Level_Key string) {
+func (Uc *UserControl) EvaluateAndUpdate_CustomerLoyaltyLevel(Login string, Account_Key string) (New_Loyalty_Level_Key string, err error) {
 	loyalty_account_na, subexist := Map_Customer_Loyalty_Account.CheckThenGet(Account_Key)
 	if !subexist {
-		return errors.New("loyalty account does not exist"), New_Loyalty_Level_Key
+		return New_Loyalty_Level_Key, errors.New("loyalty account does not exist")
 	}
 	loyalty_account, ok := loyalty_account_na.(Customer_Loyalty_Account)
 	if !ok {
-		return errors.New("type assertion issue with Customer_Loyalty_Account"), New_Loyalty_Level_Key
+		return New_Loyalty_Level_Key, errors.New("type assertion issue with Customer_Loyalty_Account")
 	}
 	//evaluate loyalty level
 	var New_Loyalty_Level Loyalty_Level
@@ -3251,7 +3503,7 @@ func (Uc *UserControl) EvaluateAndUpdate_CustomerLoyaltyLevel(Login string, Acco
 		for _, loyalty_Level_na := range loyalty_Level_na {
 			loyalty_Level, ok := loyalty_Level_na.(Loyalty_Level)
 			if !ok {
-				return errors.New("error in type assertion"), New_Loyalty_Level_Key
+				return New_Loyalty_Level_Key, errors.New("error in type assertion")
 			} else {
 				//evaluate
 				if loyalty_account.Awarded_Points >= loyalty_Level.Min_Accumulated_Points && loyalty_account.Awarded_Points < loyalty_Level.Max_Accumulated_Points {
@@ -3259,7 +3511,7 @@ func (Uc *UserControl) EvaluateAndUpdate_CustomerLoyaltyLevel(Login string, Acco
 					New_Loyalty_Level_Key = New_Loyalty_Level.Key
 					if New_Loyalty_Level.Key == loyalty_account.Loyalty_Level_Key {
 						//===>> no level change
-						return nil, New_Loyalty_Level_Key
+						return New_Loyalty_Level_Key, nil
 					} else {
 						break
 					}
@@ -3269,11 +3521,11 @@ func (Uc *UserControl) EvaluateAndUpdate_CustomerLoyaltyLevel(Login string, Acco
 		//update customer level
 		current_level_na, lvlexist := Map_Loyalty_Level.CheckThenGet(loyalty_account.Loyalty_Level_Key)
 		if !lvlexist {
-			return errors.New("current level is invalid"), New_Loyalty_Level_Key
+			return New_Loyalty_Level_Key, errors.New("current level is invalid")
 		}
 		current_level, ok := current_level_na.(Loyalty_Level)
 		if !ok {
-			return errors.New("error in type assertion"), New_Loyalty_Level_Key
+			return New_Loyalty_Level_Key, errors.New("error in type assertion")
 		}
 		if New_Loyalty_Level.Min_Accumulated_Points > current_level.Min_Accumulated_Points &&
 			New_Loyalty_Level.Max_Accumulated_Points > current_level.Max_Accumulated_Points {
@@ -3322,7 +3574,7 @@ func (Uc *UserControl) EvaluateAndUpdate_CustomerLoyaltyLevel(Login string, Acco
 			Last_Redeem_Date:                  loyalty_account.Last_Redeem_Date,
 		})
 	}
-	return nil, New_Loyalty_Level_Key
+	return New_Loyalty_Level_Key, nil
 }
 
 func (Uc *UserControl) PointsExpiry_Process() {
@@ -3474,7 +3726,7 @@ func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account
 		if account.Loyalty_Level_SetBy != "DWH_Import" &&
 			account.Loyalty_Level_SetBy != "INLiveFeed" &&
 			account.Loyalty_Level_SetBy != "Points_Expiry" {
-			errNL, new_Loyalty_level_key := Uc.EvaluateAndUpdate_CustomerLoyaltyLevel("Points_Expiry", account.Key)
+			new_Loyalty_level_key, errNL := Uc.EvaluateAndUpdate_CustomerLoyaltyLevel("Points_Expiry", account.Key)
 			if errNL != nil {
 				expiry_log.EndLoyaltyLevel = new_Loyalty_level_key
 			}
