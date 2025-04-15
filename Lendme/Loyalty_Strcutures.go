@@ -235,6 +235,8 @@ type Loyalty_Point_Redemption_Rules struct {
 	Bundles_Product_Catalogue_Channel string  `bson:"Bundles_Product_Catalogue_Channel" json:"Bundles_Product_Catalogue_Channel"`
 	Bundles_Product_Catalogue_Plan    string  `bson:"Bundles_Product_Catalogue_Plan" json:"Bundles_Product_Catalogue_Plan"`
 	Bundles_Product_Catalogue_Version string  `bson:"Bundles_Product_Catalogue_Version" json:"Bundles_Product_Catalogue_Version"`
+	Bundles_EVC_Account               string  `bson:"Bundles_EVC_Account" json:"Bundles_EVC_Account"`
+	Bundles_EVC_PIN                   string  `bson:"Bundles_EVC_PIN" json:"Bundles_EVC_PIN"`
 	FreeSpinAndWin_MinPoints          float64 `bson:"FreeSpinAndWin_MinPoints" json:"FreeSpinAndWin_MinPoints"`
 	FreeSpinAndWin_PointsPerSpin      float64 `bson:"FreeSpinAndWin_PointsPerSpin" json:"FreeSpinAndWin_PointsPerSpin"`
 }
@@ -253,6 +255,8 @@ type Loyalty_Point_Redemption_Rules_AddRequest struct {
 	MobileMoney_MinPoints             float64 `bson:"MobileMoney_MinPoints" json:"MobileMoney_MinPoints"`
 	MobileMoney_AmountPerPoint        float64 `bson:"MobileMoney_AmountPerPoint" json:"MobileMoney_AmountPerPoint"`
 	Bundles_MinPoints                 float64 `bson:"Bundles_MinPoints" json:"Bundles_MinPoints"`
+	Bundles_EVC_Account               string  `bson:"Bundles_EVC_Account" json:"Bundles_EVC_Account"`
+	Bundles_EVC_PIN                   string  `bson:"Bundles_EVC_PIN" json:"Bundles_EVC_PIN"`
 	Bundles_Product_Catalogue_Channel string  `bson:"Bundles_Product_Catalogue_Channel" json:"Bundles_Product_Catalogue_Channel"`
 	Bundles_Product_Catalogue_Plan    string  `bson:"Bundles_Product_Catalogue_Plan" json:"Bundles_Product_Catalogue_Plan"`
 	Bundles_Product_Catalogue_Version string  `bson:"Bundles_Product_Catalogue_Version" json:"Bundles_Product_Catalogue_Version"`
@@ -278,6 +282,8 @@ type Loyalty_Point_Redemption_Rules_EditRequest struct {
 	Bundles_Product_Catalogue_Channel string  `bson:"Bundles_Product_Catalogue_Channel" json:"Bundles_Product_Catalogue_Channel"`
 	Bundles_Product_Catalogue_Plan    string  `bson:"Bundles_Product_Catalogue_Plan" json:"Bundles_Product_Catalogue_Plan"`
 	Bundles_Product_Catalogue_Version string  `bson:"Bundles_Product_Catalogue_Version" json:"Bundles_Product_Catalogue_Version"`
+	Bundles_EVC_Account               string  `bson:"Bundles_EVC_Account" json:"Bundles_EVC_Account"`
+	Bundles_EVC_PIN                   string  `bson:"Bundles_EVC_PIN" json:"Bundles_EVC_PIN"`
 	FreeSpinAndWin_MinPoints          float64 `bson:"FreeSpinAndWin_MinPoints" json:"FreeSpinAndWin_MinPoints"`
 	FreeSpinAndWin_PointsPerSpin      float64 `bson:"FreeSpinAndWin_PointsPerSpin" json:"FreeSpinAndWin_PointsPerSpin"`
 }

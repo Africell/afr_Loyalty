@@ -1475,6 +1475,8 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Add(Login string, request 
 	NewEntry.MobileMoney_MinPoints = request.MobileMoney_MinPoints
 	NewEntry.MobileMoney_AmountPerPoint = request.MobileMoney_AmountPerPoint
 	NewEntry.Bundles_MinPoints = request.Bundles_MinPoints
+	NewEntry.Bundles_EVC_Account = request.Bundles_EVC_Account
+	NewEntry.Bundles_EVC_PIN = request.Bundles_EVC_PIN
 	NewEntry.Bundles_Product_Catalogue_Channel = request.Bundles_Product_Catalogue_Channel
 	NewEntry.Bundles_Product_Catalogue_Plan = request.Bundles_Product_Catalogue_Plan
 	NewEntry.Bundles_Product_Catalogue_Version = request.Bundles_Product_Catalogue_Version
@@ -1527,6 +1529,8 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Edit(Login string, request
 	entry.MobileMoney_MinPoints = request.MobileMoney_MinPoints
 	entry.MobileMoney_AmountPerPoint = request.MobileMoney_AmountPerPoint
 	entry.Bundles_MinPoints = request.Bundles_MinPoints
+	entry.Bundles_EVC_Account = request.Bundles_EVC_Account
+	entry.Bundles_EVC_PIN = request.Bundles_EVC_PIN
 	entry.Bundles_Product_Catalogue_Channel = request.Bundles_Product_Catalogue_Channel
 	entry.Bundles_Product_Catalogue_Plan = request.Bundles_Product_Catalogue_Plan
 	entry.Bundles_Product_Catalogue_Version = request.Bundles_Product_Catalogue_Version
@@ -3104,6 +3108,26 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			Uc.Write_Loyalty_Redemption_log(*response)
 			return
 		}
+		if redemption_Rules.Bundles_Product_Catalogue_Channel == "" {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "redemption product catalogue channel is not provided"
+			response.ErrorDescription = "redemption product catalogue channel is not provided"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		if redemption_Rules.Airtime_EVC_Account == "" {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "airtime payer account is not provided"
+			response.ErrorDescription = "airtime payer account is not provided"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
 		airtimeTransferReply, err := Uc.CGW.UC_GWClient.AirtimePurchase(Unified_charging_gateway_Client.AirtimePurchase_Request{
 			PayerMSISDN:            redemption_Rules.Airtime_EVC_Account,
 			PayerPIN:               redemption_Rules.Airtime_EVC_PIN,
@@ -3113,12 +3137,12 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			SendPayerNotification:  false,
 			SendTargetNotification: true,
 			Language:               "EN",
-		}, Configuration.Propylaea.ChannelName)
+		}, redemption_Rules.Bundles_Product_Catalogue_Channel)
 		response.Airtime_PurchaseResult = airtimeTransferReply
 		if err != nil {
 			response.Status = "failed"
 			response.StatusCode = http.StatusBadRequest
-			response.StatusDescription = "failed to award airtime"
+			response.StatusDescription = "failed to recharge airtime"
 			response.ErrorDescription = err.Error()
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
@@ -3159,6 +3183,37 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			return
 		}
 
+		bundlePurchaseReply, err := Uc.CGW.UC_GWClient.BundlePurchase(Unified_charging_gateway_Client.BundlePurchase_Request{
+			PayerMSISDN:            redemption_Rules.Bundles_EVC_Account,
+			PayerPIN:               redemption_Rules.Bundles_EVC_PIN,
+			PaymentMethod:          "Loyalty Points",
+			TargetMSISDN:           request.MSISDN,
+			BundleKey:              request.Redemption_Bunlde_Id,
+			SendPayerNotification:  false,
+			SendTargetNotification: true,
+			Language:               "EN",
+		}, redemption_Rules.Bundles_Product_Catalogue_Channel)
+		response.Bundle_PurchaseResult = bundlePurchaseReply
+		if err != nil {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "failed to recharge bundle"
+			response.ErrorDescription = err.Error()
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		if bundlePurchaseReply.StatusCode != http.StatusOK {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = bundlePurchaseReply.StatusDescription
+			response.ErrorDescription = bundlePurchaseReply.ErrorDescription
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
 	case "MobileMoney":
 		if request.Redemption_Amount < 0 {
 			response.Status = "failed"
