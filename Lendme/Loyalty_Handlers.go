@@ -11,6 +11,58 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
+func (Uc *UserControl) Validate_Headers(r *http.Request) (response Request_Header) {
+	SourceIp, _ := GetRequestIP(r)
+	response.SourceIP = SourceIp
+	response.SourceApp = r.Header.Get("SourceApp")
+	response.AppLogin = r.Header.Get("AppLogin")
+	response.HostId = Configuration.HostId
+	response.AppVersion = r.Header.Get("AppVersion")
+	response.GSMLocation = r.Header.Get("GSMLocation")
+	response.Authorization = r.Header.Get("Authorization")
+	// Latitude_str := r.Header.Get("Latitude")
+	// Longitude_str := r.Header.Get("Longitude")
+	//check token type
+	// TokenType := r.Header.Get("TokenType")
+	// if TokenType != "Access" {
+	// 	response.ValidationDescription = "token is not provided"
+	// 	return
+	// }
+	// if Latitude_str != "" && Longitude_str != "" {
+	// 	//valid latitude values are between -90 and 90, both inclusive
+	// 	Latitude, err := strconv.ParseFloat(Latitude_str, 64)
+	// 	if err != nil {
+	// 		response.ValidationDescription = "Invalid Latitude: " + err.Error()
+	// 		return
+	// 	}
+	// 	if Latitude == 0 {
+	// 		response.ValidationDescription = "latitude is not provided"
+	// 		return
+	// 	}
+	// 	if Latitude < -90 || Latitude > 90 {
+	// 		response.ValidationDescription = "invalid latitude value"
+	// 		return
+	// 	}
+	// 	//valid longitude values are between -180 and 180, both inclusive
+	// 	Longitude, err := strconv.ParseFloat(Longitude_str, 64)
+	// 	if err != nil {
+	// 		response.ValidationDescription = "Invalid Longitude: " + err.Error()
+	// 		return
+	// 	}
+	// 	if Longitude == 0 {
+	// 		response.ValidationDescription = "longitude is not provided"
+	// 		return
+	// 	}
+	// 	if Longitude < -180 || Latitude > 180 {
+	// 		response.ValidationDescription = "invalid longitude value"
+	// 		return
+	// 	}
+	// 	response.GPSLocation = daoc.NewGeospatialPoint(Longitude, Latitude)
+	// }
+	response.IsValid = true
+	return
+}
+
 func (Uc *UserControl) HTTP_Loyalty_Governance(w http.ResponseWriter, r *http.Request) {
 	var sr API_Standard_response
 	//**fill response source detail
@@ -2009,6 +2061,155 @@ func (Uc *UserControl) HTTP_Customer_Loyalty_Account(w http.ResponseWriter, r *h
 	Uc.HTTP_API_Standard_response(w, r, sr, true)
 }
 
+func (Uc *UserControl) HTTP_Customer_Loyalty_Account_DebitPoints(w http.ResponseWriter, r *http.Request) {
+	var transaction Loyalty_AccountDebitPoints_log
+	transaction.ReceiveDate = time.Now()
+	validated_Headers := Uc.Validate_Headers(r)
+	transaction.SourceIP = validated_Headers.SourceIP
+	transaction.SourceApp = validated_Headers.SourceApp
+	transaction.AppLogin = validated_Headers.AppLogin
+	transaction.AppVersion = validated_Headers.AppVersion
+	transaction.GPSLocation = validated_Headers.GPSLocation
+	transaction.GSMLocation = validated_Headers.GSMLocation
+	if !validated_Headers.IsValid {
+		transaction.Status = "failed"
+		transaction.StatusDescription = validated_Headers.ValidationDescription
+		Uc.HTTP_Customer_Loyalty_Account_DebitPoints_Response(w, r, &transaction, true)
+		return
+	}
+	//parse body
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		transaction.Status = "failed"
+		transaction.StatusDescription = "failed to read request body"
+		transaction.ErrorDescription = err.Error()
+		Uc.HTTP_Customer_Loyalty_Account_DebitPoints_Response(w, r, &transaction, true)
+		return
+	}
+	var Request Loyalty_AccountDebitPoints_Request
+	err = json.Unmarshal(body, &Request)
+	if err != nil {
+		transaction.Status = "failed"
+		transaction.StatusDescription = "failed to parse request body"
+		transaction.ErrorDescription = err.Error()
+		Uc.HTTP_Customer_Loyalty_Account_DebitPoints_Response(w, r, &transaction, true)
+		return
+	}
+	//execute the request
+	Uc.Loyalty_AccountDebitPoints(&validated_Headers, Request, &transaction)
+	Uc.HTTP_Customer_Loyalty_Account_DebitPoints_Response(w, r, &transaction, false)
+}
+
+func (Uc *UserControl) HTTP_Customer_Loyalty_Account_DebitPoints_Response(w http.ResponseWriter, r *http.Request, transaction *Loyalty_AccountDebitPoints_log, DB_Write bool) {
+	switch transaction.Status {
+	case "successful":
+		transaction.StatusCode = http.StatusOK
+	case "failed":
+		transaction.StatusCode = http.StatusBadRequest
+	}
+	transaction.StatusDate = time.Now()
+	transaction.E2E_Elapsedtime = (time.Since(transaction.ReceiveDate).Nanoseconds()) / 1000000
+	if DB_Write {
+		Uc.Write_Loyalty_AccountDebitPoints_log(*transaction)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(transaction.StatusCode)
+	json.NewEncoder(w).Encode(transaction)
+}
+
+func (Uc *UserControl) HTTP_Customer_Loyalty_Account_CreditPoints(w http.ResponseWriter, r *http.Request) {
+	var transaction Loyalty_AccountCreditPoints_log
+	transaction.ReceiveDate = time.Now()
+	validated_Headers := Uc.Validate_Headers(r)
+	transaction.SourceIP = validated_Headers.SourceIP
+	transaction.SourceApp = validated_Headers.SourceApp
+	transaction.AppLogin = validated_Headers.AppLogin
+	transaction.AppVersion = validated_Headers.AppVersion
+	transaction.GPSLocation = validated_Headers.GPSLocation
+	transaction.GSMLocation = validated_Headers.GSMLocation
+	if !validated_Headers.IsValid {
+		transaction.Status = "failed"
+		transaction.StatusDescription = validated_Headers.ValidationDescription
+		Uc.HTTP_Customer_Loyalty_Account_CreditPoints_Response(w, r, &transaction, true)
+		return
+	}
+	//parse body
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		transaction.Status = "failed"
+		transaction.StatusDescription = "failed to read request body"
+		transaction.ErrorDescription = err.Error()
+		Uc.HTTP_Customer_Loyalty_Account_CreditPoints_Response(w, r, &transaction, true)
+		return
+	}
+	var Request Loyalty_AccountCreditPoints_Request
+	err = json.Unmarshal(body, &Request)
+	if err != nil {
+		transaction.Status = "failed"
+		transaction.StatusDescription = "failed to parse request body"
+		transaction.ErrorDescription = err.Error()
+		Uc.HTTP_Customer_Loyalty_Account_CreditPoints_Response(w, r, &transaction, true)
+		return
+	}
+	//execute the request
+	Uc.Loyalty_AccountCreditPoints(&validated_Headers, Request, &transaction)
+	Uc.HTTP_Customer_Loyalty_Account_CreditPoints_Response(w, r, &transaction, false)
+}
+
+func (Uc *UserControl) HTTP_Customer_Loyalty_Account_CreditPoints_Response(w http.ResponseWriter, r *http.Request, transaction *Loyalty_AccountCreditPoints_log, DB_Write bool) {
+	switch transaction.Status {
+	case "successful":
+		transaction.StatusCode = http.StatusOK
+	case "failed":
+		transaction.StatusCode = http.StatusBadRequest
+	}
+	transaction.StatusDate = time.Now()
+	transaction.E2E_Elapsedtime = (time.Since(transaction.ReceiveDate).Nanoseconds()) / 1000000
+	if DB_Write {
+		Uc.Write_Loyalty_AccountCreditPoints_log(*transaction)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(transaction.StatusCode)
+	json.NewEncoder(w).Encode(transaction)
+}
+
+func (Uc *UserControl) HTTP_Loyalty_Products_Catalogue(w http.ResponseWriter, r *http.Request) {
+	var sr API_Standard_response
+	//**fill response source detail
+	SourceIp, _ := GetRequestIP(r)
+	sr.SourceIP = SourceIp
+	sr.Login = r.Header.Get("Login")
+	sr.SourceApp = r.Header.Get("SourceApp")
+	sr.AccessKey = r.URL.Path
+	sr.AccessMethod = r.Method
+	sr.HostId = Configuration.HostId
+	sr.ReceiveDate = time.Now()
+	sr.TransactionType = "Loyalty Products Catalogue"
+
+	method := r.Method
+	switch method {
+	case "GET":
+		sr.TransactionType = sr.TransactionType + " - Read"
+		MSISDN := r.URL.Query().Get("MSISDN")
+		productCatalogue, err := Uc.Customer_Loyalty_Account_GetRedemptionProductCatalogue(MSISDN)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		sr.Data = productCatalogue
+	}
+	//successful response
+	sr.Status = "successful"
+	sr.StatusCode = http.StatusOK
+	sr.StatusDescription = ""
+	sr.ErrorDescription = ""
+	Uc.HTTP_API_Standard_response(w, r, sr, true)
+}
+
 func (Uc *UserControl) HTTP_INLiveFeed_NewJoining(w http.ResponseWriter, r *http.Request) {
 	var sr API_Standard_response
 	//**fill response source detail
@@ -2152,7 +2353,7 @@ func (Uc *UserControl) HTTP_INLiveFeed_Consuption(w http.ResponseWriter, r *http
 			Uc.HTTP_API_Standard_response(w, r, sr, false)
 			return
 		}
-		var request Customer_Loyalty_Account_AwardRequest
+		var request Loyalty_AccountCreditPoints_Request
 		err = json.Unmarshal(body, &request)
 		if err != nil {
 			sr.Status = "failed"
@@ -2162,11 +2363,13 @@ func (Uc *UserControl) HTTP_INLiveFeed_Consuption(w http.ResponseWriter, r *http
 			Uc.HTTP_API_Standard_response(w, r, sr, false)
 			return
 		}
-		_, err = Uc.Customer_Loyalty_Account_AwardPoints(sr.Login, request)
-		if err != nil {
+		validated_Headers := Uc.Validate_Headers(r)
+		var loyalty_AccountCreditPoints_log Loyalty_AccountCreditPoints_log
+		Uc.Loyalty_AccountCreditPoints(&validated_Headers, request, &loyalty_AccountCreditPoints_log)
+		if loyalty_AccountCreditPoints_log.StatusCode == http.StatusBadRequest {
 			sr.Status = "failed"
 			sr.StatusCode = http.StatusBadRequest
-			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to add request"
+			sr.StatusDescription = "failed to add request"
 			sr.ErrorDescription = err.Error()
 			Uc.HTTP_API_Standard_response(w, r, sr, true)
 			return
