@@ -3,6 +3,7 @@ package Lendme
 import (
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -2235,6 +2236,7 @@ func (Uc *UserControl) HTTP_INLiveFeed_NewJoining(w http.ResponseWriter, r *http
 			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to read request body"
 			sr.ErrorDescription = err.Error()
 			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			log.Println("error in HTTP_INLiveFeed_NewJoining read body: ", err)
 			return
 		}
 		var request Customer_Loyalty_Account_AddRequest
@@ -2245,6 +2247,7 @@ func (Uc *UserControl) HTTP_INLiveFeed_NewJoining(w http.ResponseWriter, r *http
 			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to Unmarshal body"
 			sr.ErrorDescription = err.Error()
 			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			log.Println("error in HTTP_INLiveFeed_NewJoining Unmarshal body: ", err)
 			return
 		}
 		Id, err := Uc.Customer_Loyalty_Account_Add("INLiveFeed", request)
@@ -2254,6 +2257,7 @@ func (Uc *UserControl) HTTP_INLiveFeed_NewJoining(w http.ResponseWriter, r *http
 			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to add request"
 			sr.ErrorDescription = err.Error()
 			Uc.HTTP_API_Standard_response(w, r, sr, true)
+			log.Println("error in HTTP_INLiveFeed_NewJoining add account: ", err)
 			return
 		}
 		request.Customer_Id = Id
@@ -2370,7 +2374,7 @@ func (Uc *UserControl) HTTP_INLiveFeed_Consuption(w http.ResponseWriter, r *http
 			sr.Status = "failed"
 			sr.StatusCode = http.StatusBadRequest
 			sr.StatusDescription = "failed to add request"
-			sr.ErrorDescription = err.Error()
+			sr.ErrorDescription = loyalty_AccountCreditPoints_log.ErrorDescription
 			Uc.HTTP_API_Standard_response(w, r, sr, true)
 			return
 		}

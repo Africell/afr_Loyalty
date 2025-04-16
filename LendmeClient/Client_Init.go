@@ -37,8 +37,10 @@ func InitHostConfig(Protocol,
 }
 
 func NewLendmeClient(Config Lendme_Client) (conn *LendMe) {
-	conn = new(LendMe)
-	conn.createLendmeClient(Config)
+	if Config.Hostname != "" && Config.Port != "" {
+		conn = new(LendMe)
+		conn.createLendmeClient(Config)
+	}
 	// if !conn.LendmeClient.IsAuthenticated {
 	// 	log.Println("Failed to authenticate access: " + conn.LendmeClient.Auth_Err_Description)
 	// } else {
