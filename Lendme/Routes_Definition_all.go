@@ -404,6 +404,30 @@ func (UC *UserControl) Add_LoyaltyServiceRoutes(R *Routes) {
 	*R = append(*R, r)
 	DisplayOrder = DisplayOrder + 1
 
+	Level1 = "Customer Loyalty Account Debit Points"
+	Level1DisplayOrder = Level1DisplayOrder + 1
+	r = Route{
+		"HTTP_Customer_Loyalty_Account_DebitPoints",
+		"GET",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Customer_Loyalty_Account_DebitPoints/",
+		UC.HTTP_Customer_Loyalty_Account_DebitPoints,
+		true,
+		Level1 + " - Read", // DisplayName
+		DisplayOrder,       // DisplayOrder
+		Module,             // Module
+		ModuleDisplayOrder, //ModuleDisplayOrder
+		Level1,             // Level1
+		Level1DisplayOrder, // Level1DisplayOrder
+		"",                 // Level2
+		0,                  // Level2DisplayOrder
+		"",                 // Level3
+		0,                  // Level3DisplayOrder
+		true,               //AllowedFor_OKAPI
+		true,               //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
 }
 
 func (UC *UserControl) Add_LoyaltyManagementRoutes(R *Routes) {
@@ -1155,6 +1179,50 @@ func (UC *UserControl) Add_LoyaltyManagementRoutes(R *Routes) {
 		0,                    // Level3DisplayOrder
 		true,                 //AllowedFor_OKAPI
 		true,                 //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+	r = Route{
+		"HTTP_Customer_Loyalty_Account_DebitPoints",
+		"PUT",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Customer_Loyalty_Account_DebitPoints/",
+		Use(UC.HTTP_Customer_Loyalty_Account_DebitPoints, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
+		true,
+		Level1 + " - Debit Points", // DisplayName
+		DisplayOrder,               // DisplayOrder
+		Module,                     // Module
+		ModuleDisplayOrder,         //ModuleDisplayOrder
+		Level1,                     // Level1
+		Level1DisplayOrder,         // Level1DisplayOrder
+		"",                         // Level2
+		0,                          // Level2DisplayOrder
+		"",                         // Level3
+		0,                          // Level3DisplayOrder
+		true,                       //AllowedFor_OKAPI
+		true,                       //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+	r = Route{
+		"HTTP_Customer_Loyalty_Account_CreditPoints",
+		"PUT",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Customer_Loyalty_Account_CreditPoints/",
+		Use(UC.HTTP_Customer_Loyalty_Account_CreditPoints, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
+		true,
+		Level1 + " - Credit Points", // DisplayName
+		DisplayOrder,                // DisplayOrder
+		Module,                      // Module
+		ModuleDisplayOrder,          //ModuleDisplayOrder
+		Level1,                      // Level1
+		Level1DisplayOrder,          // Level1DisplayOrder
+		"",                          // Level2
+		0,                           // Level2DisplayOrder
+		"",                          // Level3
+		0,                           // Level3DisplayOrder
+		true,                        //AllowedFor_OKAPI
+		true,                        //AllowedFor_App
 	}
 	*R = append(*R, r)
 	DisplayOrder = DisplayOrder + 1
