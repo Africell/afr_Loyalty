@@ -26,6 +26,10 @@ type ConfigType struct {
 	LoyaltyVersion     string
 	LoyaltyModule      string
 
+	MSISDN_Prefix    string
+	MSISDN_Short_len int
+	CountryCode      string
+
 	//Lendme Config
 	Min_Allowed_Amnt float64
 	Service_FeePerc  float64
@@ -182,6 +186,10 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 
 	Configuration.LoyaltyVersion = "V1"
 	Configuration.LoyaltyModule = "Loyalty"
+
+	Configuration.MSISDN_Prefix = ""
+	Configuration.MSISDN_Short_len = 9
+	Configuration.CountryCode = "243"
 
 	Configuration.IsProduction = false
 	Configuration.Min_Allowed_Amnt = 10
@@ -469,6 +477,10 @@ func setDefaultConfiguration_GM_Loyalty() (Configuration ConfigType) {
 	Configuration.LoyaltyVersion = "V1"
 	Configuration.LoyaltyModule = "Loyalty"
 
+	Configuration.MSISDN_Prefix = ""
+	Configuration.MSISDN_Short_len = 7
+	Configuration.CountryCode = "220"
+
 	Configuration.IsProduction = false
 	Configuration.Min_Allowed_Amnt = 5
 	Configuration.Service_FeePerc = 0.04
@@ -612,6 +624,10 @@ func setDefaultConfiguration_SL_Live() (Configuration ConfigType) {
 
 	Configuration.LoyaltyVersion = "V1"
 	Configuration.LoyaltyModule = "Loyalty"
+
+	Configuration.MSISDN_Prefix = "0"
+	Configuration.MSISDN_Short_len = 8
+	Configuration.CountryCode = "232"
 
 	Configuration.IsProduction = false
 	Configuration.Min_Allowed_Amnt = 1

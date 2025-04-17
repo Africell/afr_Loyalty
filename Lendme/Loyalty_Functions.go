@@ -1906,6 +1906,7 @@ func (Uc *UserControl) Loyalty_Plan_Delete(Login, Key string) (err error) {
 // ***********************************************************************
 func (Uc *UserControl) Customer_UAT_Add(Login string, request Customer_UAT_AddRequest) (Id int64, err error) {
 	//check key if filled and if already used
+	request.Key = Normalize_International_MSISDN(request.Key)
 	if request.Key == "" {
 		err = errors.New("key cannot be empty")
 		return Id, err
@@ -2097,6 +2098,7 @@ func (Uc *UserControl) Customer_UAT_Delete(Login, Key string) (err error) {
 // Customer UAT functions
 // ***********************************************************************
 func (Uc *UserControl) Customer_DND_Add(Login string, request Customer_DND_AddRequest) (Id int64, err error) {
+	request.Key = Normalize_International_MSISDN(request.Key)
 	//check key if filled and if already used
 	if request.Key == "" {
 		err = errors.New("key cannot be empty")
@@ -2289,6 +2291,7 @@ func (Uc *UserControl) Customer_DND_Delete(Login, Key string) (err error) {
 // Customer Exclusion functions
 // ***********************************************************************
 func (Uc *UserControl) Customer_Exclusion_Add(Login string, request Customer_Exclusion_AddRequest) (Id int64, err error) {
+	request.Key = Normalize_International_MSISDN(request.Key)
 	//check key if filled and if already used
 	if request.Key == "" {
 		err = errors.New("key cannot be empty")
@@ -2674,6 +2677,7 @@ func (Uc *UserControl) Customer_COS_Exclusion_Delete(Login, Key string) (err err
 // ***********************************************************************
 func (Uc *UserControl) Customer_Loyalty_Account_Add(Login string, request Customer_Loyalty_Account_AddRequest) (Id int64, err error) {
 	//check key if filled and if already used
+	request.Key = Normalize_International_MSISDN(request.Key)
 	if request.Key == "" {
 		err = errors.New("key cannot be empty")
 		return Id, err
@@ -2964,6 +2968,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_GetPaginated(Page, Limit int64) 
 }
 
 func (Uc *UserControl) Customer_Loyalty_Account_Delete(Login, Key string) (err error) {
+	Key = Normalize_International_MSISDN(Key)
 	if Key == "" {
 		err = errors.New("key cannot be empty")
 		return err
@@ -3370,6 +3375,7 @@ func Loyalty_Level_Selection(Accumulated_Points float64) (level_key string) {
 
 func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Header, request Loyalty_AccountCreditPoints_Request, response *Loyalty_AccountCreditPoints_log) {
 	response.ReceiveDate = time.Now()
+	request.MSISDN = Normalize_International_MSISDN(request.MSISDN)
 	//fill the request header info
 	response.SourceIP = request_header.SourceIP
 	response.SourceApp = request_header.SourceApp
@@ -3639,6 +3645,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 
 func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header, request Loyalty_AccountDebitPoints_Request, response *Loyalty_AccountDebitPoints_log) {
 	response.ReceiveDate = time.Now()
+	request.MSISDN = Normalize_International_MSISDN(request.MSISDN)
 	//fill the request header info
 	response.SourceIP = request_header.SourceIP
 	response.SourceApp = request_header.SourceApp
@@ -4037,4 +4044,18 @@ func (Uc *UserControl) LoyaltyGovernancePools_Metrics_Process() {
 		}
 	}
 
+}
+
+func Normalize_International_MSISDN(MSISDN string) (N_MSISDN string) {
+	if len(MSISDN) < Configuration.MSISDN_Short_len {
+		return ""
+	} else {
+		if len(MSISDN) == len(Configuration.CountryCode)+Configuration.MSISDN_Short_len {
+			return MSISDN
+		} else if len(MSISDN) == Configuration.MSISDN_Short_len {
+			return Configuration.CountryCode + MSISDN
+		} else {
+			return MSISDN[len(MSISDN)-Configuration.MSISDN_Short_len:] + Configuration.CountryCode
+		}
+	}
 }

@@ -211,6 +211,11 @@ func (Uc *UserControl) Subscriber_Update(request Sub_Update_Request) {
 	//*******************************
 	//Update loyalty profile
 	//*******************************
+	subscriber.Key = Normalize_International_MSISDN(subscriber.Key)
+	if subscriber.Key == "" {
+		<-chan_SubQueueExecution_controler
+		return
+	}
 	loyalty_account_na, cl_exits := Map_Customer_Loyalty_Account.CheckThenGet(subscriber.Key)
 	if !cl_exits {
 		_, errAdd := Uc.Customer_Loyalty_Account_Add("DWH_Import", Customer_Loyalty_Account_AddRequest{
@@ -230,17 +235,22 @@ func (Uc *UserControl) Subscriber_Update(request Sub_Update_Request) {
 			<-chan_SubQueueExecution_controler
 			return
 		}
-		_, errEdit := Uc.Customer_Loyalty_Account_Edit("DWH_Import", Customer_Loyalty_Account_EditRequest{
-			Key:               loyalty_account.Key,
-			Customer_Id:       loyalty_account.Customer_Id,
-			Loyalty_Level_Key: loyalty_account.Loyalty_Level_Key,
-			COS:               subscriber.COS,
-			ARPU:              subscriber.ARPU,
-			Joining_Date:      subscriber.FirstUse_date,
-		})
-		if errEdit != nil {
-			log.Println("DWH_Import Customer_Loyalty_Account_Edit error: ", errEdit)
-			log.Println("DWH_Import Customer_Loyalty_Account_Add error: ", subscriber)
+		if subscriber.COS == loyalty_account.COS && subscriber.ARPU == loyalty_account.ARPU {
+			<-chan_SubQueueExecution_controler
+			return
+		} else {
+			_, errEdit := Uc.Customer_Loyalty_Account_Edit("DWH_Import", Customer_Loyalty_Account_EditRequest{
+				Key:               loyalty_account.Key,
+				Customer_Id:       loyalty_account.Customer_Id,
+				Loyalty_Level_Key: loyalty_account.Loyalty_Level_Key,
+				COS:               subscriber.COS,
+				ARPU:              subscriber.ARPU,
+				Joining_Date:      subscriber.FirstUse_date,
+			})
+			if errEdit != nil {
+				log.Println("DWH_Import Customer_Loyalty_Account_Edit error: ", errEdit)
+				log.Println("DWH_Import Customer_Loyalty_Account_Add error: ", subscriber)
+			}
 		}
 	}
 	<-chan_SubQueueExecution_controler
