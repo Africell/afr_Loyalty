@@ -198,6 +198,7 @@ func (Uc *UserControl) AddToLoyaltyServiceRouter(router *mux.Router, UC *UserCon
 	}
 	router.Path("/Loyalty_metrics").Handler(LoyaltyPrometheusHandler())
 	// router.Path("/metrics_latency").Handler(CustomPrometheusLatencyHandler())
+	Uc.Create_UCGW_AUCUser()
 }
 
 func (Uc *UserControl) AddToLoyaltyManagementRouter(router *mux.Router, UC *UserControl) {
@@ -300,4 +301,46 @@ func Use(h http.HandlerFunc, middleware ...func(http.HandlerFunc) http.HandlerFu
 		h = m(h)
 	}
 	return h
+}
+
+func (Uc *UserControl) Create_UCGW_AUCUser() {
+	// Create User in AUC
+	auc_user := AuthCenter.User{
+		Key:                      "UCGW_Loyalty",
+		FirstName:                "UCGW_Loyalty",
+		MiddleName:               "UCGW_Loyalty",
+		LastName:                 "UCGW_Loyalty",
+		BirthDate:                time.Now(),
+		Company:                  "Africell",
+		Email:                    "UCGW_Loyalty",
+		Phone:                    "UCGW_Loyalty",
+		Login:                    "UCGW_Loyalty",
+		Password:                 "Tles$h!s$w0P@$rd!$p0397",
+		LastPasswordSetDate:      time.Now(),
+		PasswordExpiryDate:       time.Now().AddDate(50, 0, 0),
+		EnableMFA:                false,
+		OTPBySMS:                 false,
+		SkipOTPByMail:            true,
+		LoginWithoutCaptcha:      true,
+		JWEOverwriteDefault:      true,
+		JWEOTPValidationValidity: 6000,
+		JWEAccessValidity:        3600,
+		JWERefreshValidity:       900000000,
+		KeepMeLoggedIn:           true,
+		PreferedLanguage:         "en",
+		AddUser:                  "LoyaltyBE",
+		AddDate:                  time.Now(),
+		LastModifyUser:           "LoyaltyBE",
+		LastModifyDate:           time.Now(),
+	}
+	sr, err := Uc.AppAUC.AUCClient.ReadUser(auc_user.Key)
+	if err == nil && sr.StatusCode != http.StatusOK && sr.ErrorDescription == "login does not exist" {
+		sr, err := Uc.AppAUC.AUCClient.CreateUser(auc_user)
+		if err != nil {
+			log.Println("error creating UCGW_Loyalty user: " + err.Error())
+		} else if sr.StatusCode != http.StatusOK {
+			log.Println("error creating UCGW_Loyalty user: " + sr.StatusDescription)
+		}
+	}
+	return
 }
