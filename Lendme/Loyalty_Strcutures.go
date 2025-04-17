@@ -9,7 +9,7 @@ type Loyalty_Event_Log struct {
 	Event_User         string      `bson:"Event_User" json:"Event_User"`
 	Event_Time         time.Time   `bson:"Event_Time" json:"Event_Time"`
 	Event_AffectedType string      `bson:"Event_AffectedType" json:"Event_AffectedType"`
-	Event_ActionType   string      `bson:"Event_AffectedType" json:"Event_AffectedType"`
+	Event_ActionType   string      `bson:"Event_ActionType" json:"Event_ActionType"`
 	Event_Description  string      `bson:"Event_Description" json:"Event_Description"`
 	Event_Entry_Before interface{} `bson:"Event_Entry_Before" json:"Event_Entry_Before"`
 	Event_Entry_After  interface{} `bson:"Event_Entry_After" json:"Event_Entry_After"`
