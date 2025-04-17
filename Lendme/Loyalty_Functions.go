@@ -3072,6 +3072,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_GetRedemptionProductCatalogue(MS
 
 func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_Header, request Loyalty_Redemption_Request, response *Loyalty_Redemption_log) {
 	response.ReceiveDate = time.Now()
+	request.MSISDN = Normalize_International_MSISDN(request.MSISDN)
 	//fill the request header info
 	response.SourceIP = request_header.SourceIP
 	response.SourceApp = request_header.SourceApp
@@ -3173,6 +3174,50 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			Uc.Write_Loyalty_Redemption_log(*response)
 			return
 		}
+		//debit loyalty points
+		if redemption_Rules.Airtime_AmountPerPoint < 0 {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "airtime redeem rules are not defined"
+			response.ErrorDescription = "airtime redeem rules are not defined"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		Max_Allowed_Amount := loyalty_Account.Available_Points * redemption_Rules.Airtime_AmountPerPoint
+		if response.Redemption_Amount > Max_Allowed_Amount {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "no enough points"
+			response.ErrorDescription = "no enough points"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		var Debit_Request Loyalty_AccountDebitPoints_Request
+		Debit_Request.MSISDN = response.MSISDN
+		Debit_Request.Debit_Amount = response.Redemption_Amount / redemption_Rules.Airtime_AmountPerPoint
+		Debit_Request.Debit_Reason = "Redeem Request"
+		Debit_Request.Redemption_Type = "Airtime" //Airtime, Bundle, MobileMoney, SpinAndWin
+		Debit_Request.Redemption_Bunlde_Id = ""
+		Debit_Request.Redemption_Amount = response.Redemption_Amount
+
+		var debit_Log Loyalty_AccountDebitPoints_log
+		Uc.Loyalty_AccountDebitPoints(request_header, Debit_Request, &debit_Log)
+		response.Points_Debit_Result = debit_Log
+		if debit_Log.StatusCode != http.StatusOK {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = debit_Log.StatusDescription
+			response.ErrorDescription = debit_Log.ErrorDescription
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		//credit airtime
 		airtimeTransferReply, err := Uc.CGW.UC_GWClient.AirtimePurchase(Unified_charging_gateway_Client.AirtimePurchase_Request{
 			PayerMSISDN:            redemption_Rules.Airtime_EVC_Account,
 			PayerPIN:               redemption_Rules.Airtime_EVC_PIN,
