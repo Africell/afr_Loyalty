@@ -362,7 +362,7 @@ func (UC *UserControl) Add_LoyaltyServiceRoutes(R *Routes) {
 		"HTTP_Customer_Loyalty_Account",
 		"GET",
 		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Customer_Loyalty_Account/",
-		UC.HTTP_Customer_Loyalty_Account,
+		Use(UC.HTTP_Customer_Loyalty_Account, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
 		true,
 		Level1 + " - Read", // DisplayName
 		DisplayOrder,       // DisplayOrder
@@ -386,7 +386,7 @@ func (UC *UserControl) Add_LoyaltyServiceRoutes(R *Routes) {
 		"HTTP_Loyalty_Products_Catalogue",
 		"GET",
 		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Products_Catalogue/",
-		UC.HTTP_Loyalty_Products_Catalogue,
+		Use(UC.HTTP_Loyalty_Products_Catalogue, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
 		true,
 		Level1 + " - Read", // DisplayName
 		DisplayOrder,       // DisplayOrder
@@ -410,7 +410,7 @@ func (UC *UserControl) Add_LoyaltyServiceRoutes(R *Routes) {
 		"HTTP_Customer_Loyalty_Account_DebitPoints",
 		"GET",
 		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Customer_Loyalty_Account_DebitPoints/",
-		UC.HTTP_Customer_Loyalty_Account_DebitPoints,
+		Use(UC.HTTP_Customer_Loyalty_Account_DebitPoints, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
 		true,
 		Level1 + " - Read", // DisplayName
 		DisplayOrder,       // DisplayOrder

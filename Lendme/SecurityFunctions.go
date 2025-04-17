@@ -73,17 +73,17 @@ func (Uc *UserControl) ValidateJWEToken(h http.HandlerFunc) http.HandlerFunc {
 			// r.Header.Set("TokenType", sra.TokenType)
 			h.ServeHTTP(w, r)
 		case Configuration.HttpAppLoyaltyServicePort:
-			// sra, err := Uc.FCDM_App_AUC.AUCClient.ValidateToken(AuthorizationSplit[1])
-			// if err != nil {
-			// 	sr.Status = sra.Status
-			// 	sr.StatusCode = sra.StatusCode
-			// 	sr.ErrorDescription = sra.ErrorDescription
-			// 	Uc.HTTP_API_Standard_response(w, r, sr, false)
-			// 	return
-			// }
-			// r.Header.Set("Login", sra.Login)
-			// r.Header.Set("DestinationPort", port)
-			// r.Header.Set("TokenType", sra.TokenType)
+			sra, err := Uc.AppAUC.AUCClient.ValidateToken(AuthorizationSplit[1])
+			if err != nil {
+				sr.Status = sra.Status
+				sr.StatusCode = sra.StatusCode
+				sr.ErrorDescription = sra.ErrorDescription
+				Uc.HTTP_API_Standard_response(w, r, sr, false)
+				return
+			}
+			r.Header.Set("Login", sra.Login)
+			r.Header.Set("DestinationPort", port)
+			r.Header.Set("TokenType", sra.TokenType)
 			h.ServeHTTP(w, r)
 		case Configuration.HttpAppLoyaltyManagementPort:
 			sra, err := Uc.OKAPIAUC.AUCClient.ValidateToken(AuthorizationSplit[1])
