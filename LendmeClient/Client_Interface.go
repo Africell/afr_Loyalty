@@ -1,57 +1,86 @@
 package LendmeClient
 
 import (
-	"afr_lendme/Lendme"
+	"bytes"
 	"crypto/tls"
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
+	"time"
 )
 
-func (cl *Lendme_Client) Get_Catalogue_WithBundleDetail(token string, Channel, Plan, Version, TargetLocation string) (response Lendme.API_Standard_response, err error) {
+func (GWClient *Lendme_Client) Loyalty_Account_Get(MSISDN string) (response Customer_Loyalty_Account, err error) {
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-	url := cl.Protocol + "://" + cl.Hostname + ":" + cl.Port + "/" + cl.Module + "/" + cl.Version + "/HTTP_Catalogue_WithBundleDetail/"
-	if Channel != "" {
-		url = url + "?Channel=" + UrlQueryEscape(Channel)
-	} else {
-		url = url + "?Channel"
-	}
-	if Plan != "" {
-		url = url + "&Plan=" + UrlQueryEscape(Plan)
-	} else {
-		url = url + "&Plan"
-	}
-	if Version != "" {
-		url = url + "&Version=" + UrlQueryEscape(Version)
-	} else {
-		url = url + "&Version"
-	}
-	if TargetLocation != "" {
-		url = url + "&TargetLocation=" + UrlQueryEscape(TargetLocation)
-	} else {
-		url = url + "&TargetLocation"
-	}
-	method := "GET"
-	req, err := http.NewRequest(method, url, nil)
+	var http_req Generic_http_call_Request
+	var http_request http.Request
+	http_req.Req = &http_request
+	http_req.Url = GWClient.Protocol + "://" + GWClient.Hostname + ":" + GWClient.Port + "/" + GWClient.Module + "/" + GWClient.Version
+	http_req.Url = http_req.Url + "/HTTP_Customer_Loyalty_Account/"
+	http_req.Method = "GET"
+	http_req.Token = GWClient.S2S_AccessToken
+	q := http_req.Req.URL.Query()
+	q.Add("Key", MSISDN)
+	http_req.Req.URL.RawQuery = q.Encode()
+	response_generic, err := GWClient.generic_http_call(http_req)
 	if err != nil {
+		log.Println("generic_http_call failed : ", err)
 		return response, err
+	} else {
+		err = json.Unmarshal(response_generic.Body, &response)
+		if err != nil {
+			log.Println("generic_http_call boby unmarshal error : ", err)
+			return
+		}
+		if response_generic.Statuscode == http.StatusUnauthorized {
+			srl, err := GWClient.AUC_client.Login(GWClient.AUC_client.S2S_Username, GWClient.AUC_client.S2S_Password) // try to get a new token using login if token is unauthenticated
+			if err != nil {
+				log.Println("AUC init - FAILED :: ", err)
+				return response, err
+			}
+			rt, err := GWClient.AUC_client.RefreshToken(srl.Token)
+			if err != nil {
+				log.Println("AUC init - FAILED :: ", err)
+				return response, err
+			} else {
+				GWClient.AUC_client.S2S_AccessToken = rt.Token // save token global variable to re-use
+				GWClient.S2S_AccessToken = rt.Token            // save token global variable to re-use
+				response_generic, err = GWClient.generic_http_call(http_req)
+				err = json.Unmarshal(response_generic.Body, &response)
+				if err != nil {
+					log.Println("generic_http_call boby unmarshal error : ", err)
+					return response, err
+				}
+				return response, err
+			}
+		}
 	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Connection", "close")
-	req.Header.Set("Authorization", "Bearer "+token)
-	client := &http.Client{Timeout: cl.Timeout}
-	resp, err := client.Do(req)
+	return
+}
+
+func (GWClient *Lendme_Client) generic_http_call(request Generic_http_call_Request) (response Generic_http_call_Response, err error) {
+	if len(request.Load) > 0 {
+		request.Req, err = http.NewRequest(request.Method, request.Url, bytes.NewBuffer(request.Load))
+	} else {
+		request.Req, err = http.NewRequest(request.Method, request.Url, nil)
+	}
 	if err != nil {
-		return response, err
+		return
+	}
+	request.Req.Header.Set("Content-Type", "application/json")
+	request.Req.Header.Set("Connection", "close")
+	request.Req.Header.Set("Authorization", "Bearer "+request.Token)
+	client := &http.Client{Timeout: GWClient.Timeout * time.Second}
+	resp, err := client.Do(request.Req)
+	if err != nil {
+		return
 	}
 	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
+	response.Body, err = io.ReadAll(resp.Body)
 	if err != nil {
-		return response, err
+		return
 	}
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		return response, err
-	}
+	response.Header = resp.Request.Header
+	response.Statuscode = resp.StatusCode
 	return response, nil
 }
