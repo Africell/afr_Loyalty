@@ -2211,7 +2211,6 @@ func (Uc *UserControl) HTTP_Loyalty_Products_Catalogue(w http.ResponseWriter, r 
 }
 
 func (Uc *UserControl) HTTP_INLiveFeed_NewJoining(w http.ResponseWriter, r *http.Request) {
-	LiveFeedCounters.With(prometheus.Labels{"Stream": "Livefeed", "Type": "New Joining", "Description": "received"}).Inc()
 	var sr API_Standard_response
 	//**fill response source detail
 	SourceIp, _ := GetRequestIP(r)
@@ -2236,7 +2235,6 @@ func (Uc *UserControl) HTTP_INLiveFeed_NewJoining(w http.ResponseWriter, r *http
 			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to read request body"
 			sr.ErrorDescription = err.Error()
 			Uc.HTTP_API_Standard_response(w, r, sr, false)
-			LiveFeedCounters.With(prometheus.Labels{"Stream": "Livefeed", "Type": "New Joining", "Description": "body read error"}).Inc()
 			return
 		}
 		var request Customer_Loyalty_Account_AddRequest
@@ -2247,7 +2245,6 @@ func (Uc *UserControl) HTTP_INLiveFeed_NewJoining(w http.ResponseWriter, r *http
 			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to Unmarshal body"
 			sr.ErrorDescription = err.Error()
 			Uc.HTTP_API_Standard_response(w, r, sr, false)
-			LiveFeedCounters.With(prometheus.Labels{"Stream": "Livefeed", "Type": "New Joining", "Description": "body unmarshal error"}).Inc()
 			return
 		}
 		Id, err := Uc.Customer_Loyalty_Account_Add("INLiveFeed", request)
@@ -2257,7 +2254,6 @@ func (Uc *UserControl) HTTP_INLiveFeed_NewJoining(w http.ResponseWriter, r *http
 			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to add request"
 			sr.ErrorDescription = err.Error()
 			Uc.HTTP_API_Standard_response(w, r, sr, true)
-			LiveFeedCounters.With(prometheus.Labels{"Stream": "Livefeed", "Type": "New Joining", "Description": "add error"}).Inc()
 			return
 		}
 		request.Customer_Id = Id
@@ -2331,7 +2327,6 @@ func (Uc *UserControl) HTTP_INLiveFeed_Churn(w http.ResponseWriter, r *http.Requ
 }
 
 func (Uc *UserControl) HTTP_INLiveFeed_Consuption(w http.ResponseWriter, r *http.Request) {
-	LiveFeedCounters.With(prometheus.Labels{"Stream": "Live feed", "Type": "consumption", "Description": "recevied"}).Inc()
 	var sr API_Standard_response
 	//**fill response source detail
 	SourceIp, _ := GetRequestIP(r)
@@ -2356,7 +2351,6 @@ func (Uc *UserControl) HTTP_INLiveFeed_Consuption(w http.ResponseWriter, r *http
 			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to read request body"
 			sr.ErrorDescription = err.Error()
 			Uc.HTTP_API_Standard_response(w, r, sr, false)
-			LiveFeedCounters.With(prometheus.Labels{"Stream": "Live feed", "Type": "consumption", "Description": "nody read error"}).Inc()
 			return
 		}
 		var request Loyalty_AccountCreditPoints_Request
@@ -2367,7 +2361,6 @@ func (Uc *UserControl) HTTP_INLiveFeed_Consuption(w http.ResponseWriter, r *http
 			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to Unmarshal body"
 			sr.ErrorDescription = err.Error()
 			Uc.HTTP_API_Standard_response(w, r, sr, false)
-			LiveFeedCounters.With(prometheus.Labels{"Stream": "Live feed", "Type": "consumption", "Description": "body unmarshal error"}).Inc()
 			return
 		}
 		validated_Headers := Uc.Validate_Headers(r)

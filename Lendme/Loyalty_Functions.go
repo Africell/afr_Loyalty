@@ -4204,7 +4204,7 @@ func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account
 		return
 	}
 	expiry_log.Expiry_Rules_Key = plan.Expiry_Rules_Key
-	//validate earning rules
+	//validate expiry rules
 	if plan.Expiry_Rules_Key == "" {
 		expiry_log.ExpiryStatus = "failed"
 		expiry_log.ExpiryStatusDescription = "points expiry rules not defined"
@@ -4229,59 +4229,66 @@ func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account
 		<-chan_PointsExpiry_Controler
 		return
 	}
-	var Expiry_Date time.Time
-	if point_Expiry_Rules.Validity_Unit == "Month" {
-		Expiry_Date = account.Creation_date.AddDate(0, -1*point_Expiry_Rules.Validity_Duration, 0)
-	} else if point_Expiry_Rules.Validity_Unit == "Year" {
-		Expiry_Date = account.Creation_date.AddDate(-1*point_Expiry_Rules.Validity_Duration, 0, 0)
-	} else {
-		expiry_log.ExpiryStatus = "failed"
-		expiry_log.ExpiryStatusDescription = "points expiry validity unit is not defined"
-		Uc.Write_Loyalty_Expiry_log(expiry_log)
-		<-chan_PointsExpiry_Controler
-		return
-	}
-	YYYY, MM, _, _, _, _, _ := GetTimeParts(Expiry_Date)
-	var PointsDetail Loyalty_Points_Detail
-	var lpdexist bool
-	PointsDetail, lpdexist = account.LoyaltyPointsDetail[YYYY+MM]
-	if !lpdexist {
-		<-chan_PointsExpiry_Controler
-		return
-	} else {
-		expired_Points := PointsDetail.Available_Points
-		expiry_log.Year_Month = YYYY + MM
-		expiry_log.Month_Awarded_Points = PointsDetail.Awarded_Points
-		expiry_log.Month_Redeemed_Points = PointsDetail.Redeemed_Points
-		expiry_log.Month_Available_Points = PointsDetail.Available_Points
-		expiry_log.Month_Expired_Points = PointsDetail.Available_Points
-		delete(account.LoyaltyPointsDetail, YYYY+MM)
-		account.Expired_Points = account.Expired_Points + PointsDetail.Available_Points
-		account.Expiry_Date = time.Now()
-		account.Awarded_Points = account.Awarded_Points - PointsDetail.Available_Points
-		account.Available_Points = (account.Awarded_Points + account.Expired_Points) - account.Redeemed_Points //(Awarded_Points + Expired_Points) - Redeemed_Points
-		Map_Customer_Loyalty_Account.Put(account.Key, account)
-		//update governance expiry
-		Uc.Loyalty_Governance_Expiry_Points_Credit(expired_Points)
-		//update logs
-		expiry_log.End_Awarded_Points = account.Awarded_Points
-		expiry_log.End_Redeemed_Points = account.Redeemed_Points
-		expiry_log.End_Available_Points = account.Available_Points
-		expiry_log.End_Expired_Points = account.Expired_Points
-		//check level downgrade
-		if account.Loyalty_Level_SetBy != "DWH_Import" &&
-			account.Loyalty_Level_SetBy != "INLiveFeed" &&
-			account.Loyalty_Level_SetBy != "Points_Expiry" {
-			new_Loyalty_level_key, errNL := Uc.EvaluateAndUpdate_CustomerLoyaltyLevel("Points_Expiry", account.Key)
-			if errNL != nil {
-				expiry_log.EndLoyaltyLevel = new_Loyalty_level_key
+	if point_Expiry_Rules.Rolling_Expiration {
+		var Expiry_Date time.Time
+		if point_Expiry_Rules.Validity_Unit == "Month" {
+			Expiry_Date = account.Creation_date.AddDate(0, -1*point_Expiry_Rules.Validity_Duration, 0)
+		} else if point_Expiry_Rules.Validity_Unit == "Year" {
+			Expiry_Date = account.Creation_date.AddDate(-1*point_Expiry_Rules.Validity_Duration, 0, 0)
+		} else {
+			expiry_log.ExpiryStatus = "failed"
+			expiry_log.ExpiryStatusDescription = "points expiry validity unit is not defined"
+			Uc.Write_Loyalty_Expiry_log(expiry_log)
+			<-chan_PointsExpiry_Controler
+			return
+		}
+		YYYY, MM, _, _, _, _, _ := GetTimeParts(Expiry_Date)
+		var PointsDetail Loyalty_Points_Detail
+		var lpdexist bool
+		PointsDetail, lpdexist = account.LoyaltyPointsDetail[YYYY+MM]
+		if !lpdexist {
+			<-chan_PointsExpiry_Controler
+			return
+		} else {
+			expired_Points := PointsDetail.Available_Points
+			expiry_log.Year_Month = YYYY + MM
+			expiry_log.Month_Awarded_Points = PointsDetail.Awarded_Points
+			expiry_log.Month_Redeemed_Points = PointsDetail.Redeemed_Points
+			expiry_log.Month_Available_Points = PointsDetail.Available_Points
+			expiry_log.Month_Expired_Points = PointsDetail.Available_Points
+			delete(account.LoyaltyPointsDetail, YYYY+MM)
+			account.Expired_Points = account.Expired_Points + PointsDetail.Available_Points
+			account.Expiry_Date = time.Now()
+			account.Awarded_Points = account.Awarded_Points - PointsDetail.Available_Points
+			account.Available_Points = (account.Awarded_Points + account.Expired_Points) - account.Redeemed_Points //(Awarded_Points + Expired_Points) - Redeemed_Points
+			Map_Customer_Loyalty_Account.Put(account.Key, account)
+			//update governance expiry
+			Uc.Loyalty_Governance_Expiry_Points_Credit(expired_Points)
+			//update logs
+			expiry_log.End_Awarded_Points = account.Awarded_Points
+			expiry_log.End_Redeemed_Points = account.Redeemed_Points
+			expiry_log.End_Available_Points = account.Available_Points
+			expiry_log.End_Expired_Points = account.Expired_Points
+			//check level downgrade
+			if account.Loyalty_Level_SetBy != "DWH_Import" &&
+				account.Loyalty_Level_SetBy != "INLiveFeed" &&
+				account.Loyalty_Level_SetBy != "Points_Expiry" {
+				new_Loyalty_level_key, errNL := Uc.EvaluateAndUpdate_CustomerLoyaltyLevel("Points_Expiry", account.Key)
+				if errNL != nil {
+					expiry_log.EndLoyaltyLevel = new_Loyalty_level_key
+				}
 			}
 		}
+		expiry_log.ExpiryStatus = "successful"
+		expiry_log.ExpiryStatusDescription = ""
+		Uc.Write_Loyalty_Expiry_log(expiry_log)
+		<-chan_PointsExpiry_Controler
+	} else if point_Expiry_Rules.Fix_Date_Expiration {
+
+		<-chan_PointsExpiry_Controler
+	} else {
+		<-chan_PointsExpiry_Controler
 	}
-	expiry_log.ExpiryStatus = "successful"
-	expiry_log.ExpiryStatusDescription = ""
-	Uc.Write_Loyalty_Expiry_log(expiry_log)
-	<-chan_PointsExpiry_Controler
 }
 
 func (Uc *UserControl) LoyaltyGovernancePools_Metrics_Process() {
