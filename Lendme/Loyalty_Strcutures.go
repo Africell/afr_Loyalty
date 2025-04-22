@@ -194,28 +194,40 @@ type Loyalty_Point_Earning_Rules_EditRequest struct {
 }
 
 type Loyalty_Point_Expiry_Rules struct {
-	Key               string `bson:"Key" json:"Key"`
-	Expiry_Rules_Id   int64  `bson:"Expiry_Rules_Id" json:"Expiry_Rules_Id"`
-	Description       string `bson:"Description" json:"Description"`
-	Validity_Unit     string `bson:"Validity_Unit" json:"Validity_Unit"` //Month, Year
-	Validity_Duration int    `bson:"Validity_Duration" json:"Validity_Duration"`
+	Key                     string    `bson:"Key" json:"Key"`
+	Expiry_Rules_Id         int64     `bson:"Expiry_Rules_Id" json:"Expiry_Rules_Id"`
+	Description             string    `bson:"Description" json:"Description"`
+	Rolling_Expiration      bool      `bson:"Rolling_Expiration" json:"Rolling_Expiration"`
+	Validity_Unit           string    `bson:"Validity_Unit" json:"Validity_Unit"`         //Month, Year --> only when Rolling_Expiration is true
+	Validity_Duration       int       `bson:"Validity_Duration" json:"Validity_Duration"` //only when Rolling_Expiration is true
+	Fix_Date_Expiration     bool      `bson:"Fix_Date_Expiration" json:"Fix_Date_Expiration"`
+	Expiration_Trigger_date time.Time `bson:"Expiration_Trigger_date" json:"Expiration_Trigger_date"` //when the expiry process will run
+	Expiration_Point_Before time.Time `bson:"Expiration_Point_Before" json:"Expiration_Point_Before"` //expiry all points before this date
 }
 
 type Loyalty_Point_Expiry_Rules_AddRequest struct {
-	Key               string `bson:"Key" json:"Key"`
-	Expiry_Rules_Id   int64  `bson:"Expiry_Rules_Id" json:"Expiry_Rules_Id"`
-	Description       string `bson:"Description" json:"Description"`
-	Validity_Unit     string `bson:"Validity_Unit" json:"Validity_Unit"` //Month, Year
-	Validity_Duration int    `bson:"Validity_Duration" json:"Validity_Duration"`
+	Key                     string    `bson:"Key" json:"Key"`
+	Expiry_Rules_Id         int64     `bson:"Expiry_Rules_Id" json:"Expiry_Rules_Id"`
+	Description             string    `bson:"Description" json:"Description"`
+	Rolling_Expiration      bool      `bson:"Rolling_Expiration" json:"Rolling_Expiration"`
+	Validity_Unit           string    `bson:"Validity_Unit" json:"Validity_Unit"`         //Month, Year --> only when Rolling_Expiration is true
+	Validity_Duration       int       `bson:"Validity_Duration" json:"Validity_Duration"` //only when Rolling_Expiration is true
+	Fix_Date_Expiration     bool      `bson:"Fix_Date_Expiration" json:"Fix_Date_Expiration"`
+	Expiration_Trigger_date time.Time `bson:"Expiration_Trigger_date" json:"Expiration_Trigger_date"` //when the expiry process will run
+	Expiration_Point_Before time.Time `bson:"Expiration_Point_Before" json:"Expiration_Point_Before"` //expiry all points before this date
 }
 
 type Loyalty_Point_Expiry_Rules_EditRequest struct {
-	Key               string `bson:"Key" json:"Key"`
-	NewKey            string `bson:"NewKey" json:"NewKey"`
-	Expiry_Rules_Id   int64  `bson:"Expiry_Rules_Id" json:"Expiry_Rules_Id"`
-	Description       string `bson:"Description" json:"Description"`
-	Validity_Unit     string `bson:"Validity_Unit" json:"Validity_Unit"` //Month, Year
-	Validity_Duration int    `bson:"Validity_Duration" json:"Validity_Duration"`
+	Key                     string    `bson:"Key" json:"Key"`
+	NewKey                  string    `bson:"NewKey" json:"NewKey"`
+	Expiry_Rules_Id         int64     `bson:"Expiry_Rules_Id" json:"Expiry_Rules_Id"`
+	Description             string    `bson:"Description" json:"Description"`
+	Rolling_Expiration      bool      `bson:"Rolling_Expiration" json:"Rolling_Expiration"`
+	Validity_Unit           string    `bson:"Validity_Unit" json:"Validity_Unit"`         //Month, Year --> only when Rolling_Expiration is true
+	Validity_Duration       int       `bson:"Validity_Duration" json:"Validity_Duration"` //only when Rolling_Expiration is true
+	Fix_Date_Expiration     bool      `bson:"Fix_Date_Expiration" json:"Fix_Date_Expiration"`
+	Expiration_Trigger_date time.Time `bson:"Expiration_Trigger_date" json:"Expiration_Trigger_date"` //when the expiry process will run
+	Expiration_Point_Before time.Time `bson:"Expiration_Point_Before" json:"Expiration_Point_Before"` //expiry all points before this date
 }
 
 type Loyalty_Point_Redemption_Rules struct {

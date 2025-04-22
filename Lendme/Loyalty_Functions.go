@@ -363,10 +363,14 @@ func (Uc *UserControl) InitializeLoyaltyDefaultUAT() {
 		MobileMoney_AmountConsumedPerPoint:    10,
 	})
 	Uc.Loyalty_Point_Expiry_Rules_Add("Default", Loyalty_Point_Expiry_Rules_AddRequest{
-		Key:               "Default_Expiry_Rules",
-		Description:       "Default_Expiry_Rules",
-		Validity_Unit:     "Monthly", //Monthly, yearly
-		Validity_Duration: 12,
+		Key:                     "Default_Expiry_Rules",
+		Description:             "Default_Expiry_Rules",
+		Rolling_Expiration:      false,
+		Validity_Unit:           "", //Month, Year --> only when Rolling_Expiration is true
+		Validity_Duration:       0,  //only when Rolling_Expiration is true
+		Fix_Date_Expiration:     true,
+		Expiration_Trigger_date: time.Date(2026, 01, 31, 00, 00, 59, 0, time.UTC), //when the expiry process will run
+		Expiration_Point_Before: time.Date(2025, 12, 31, 00, 00, 59, 0, time.UTC), //expiry all points before this date
 	})
 	Uc.Loyalty_Point_Redemption_Rules_Add("Default", Loyalty_Point_Redemption_Rules_AddRequest{
 		Key:                               "Default_Redemption_Rules",
@@ -1303,9 +1307,12 @@ func (Uc *UserControl) Loyalty_Point_Expiry_Rules_Add(Login string, request Loya
 	Id = NewEntry.Expiry_Rules_Id
 	NewEntry.Key = request.Key
 	NewEntry.Description = request.Description
+	NewEntry.Rolling_Expiration = request.Rolling_Expiration
 	NewEntry.Validity_Unit = request.Validity_Unit
 	NewEntry.Validity_Duration = request.Validity_Duration
-
+	NewEntry.Fix_Date_Expiration = request.Fix_Date_Expiration
+	NewEntry.Expiration_Trigger_date = request.Expiration_Trigger_date
+	NewEntry.Expiration_Point_Before = request.Expiration_Point_Before
 	//add to cache and DB
 	Map_Loyalty_Point_Expiry_Rules.Put(NewEntry.Key, NewEntry)
 	//add logs
@@ -1343,8 +1350,12 @@ func (Uc *UserControl) Loyalty_Point_Expiry_Rules_Edit(Login string, request Loy
 	//Prepare new entry
 	entry.Key = request.Key
 	entry.Description = request.Description
+	entry.Rolling_Expiration = request.Rolling_Expiration
 	entry.Validity_Unit = request.Validity_Unit
 	entry.Validity_Duration = request.Validity_Duration
+	entry.Fix_Date_Expiration = request.Fix_Date_Expiration
+	entry.Expiration_Trigger_date = request.Expiration_Trigger_date
+	entry.Expiration_Point_Before = request.Expiration_Point_Before
 	if request.NewKey != "" {
 		if request.NewKey != request.Key {
 			//delete old
