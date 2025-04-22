@@ -231,6 +231,8 @@ type Loyalty_Point_Redemption_Rules struct {
 	Airtime_EVC_PIN                   string  `bson:"Airtime_EVC_PIN" json:"Airtime_EVC_PIN"`
 	MobileMoney_MinPoints             float64 `bson:"MobileMoney_MinPoints" json:"MobileMoney_MinPoints"`
 	MobileMoney_AmountPerPoint        float64 `bson:"MobileMoney_AmountPerPoint" json:"MobileMoney_AmountPerPoint"`
+	MobileMoney_MerchantAccount       string  `bson:"MobileMoney_MerchantAccount" json:"MobileMoney_MerchantAccount"`
+	MobileMoney_MerchantPIN           string  `bson:"MobileMoney_MerchantPIN" json:"MobileMoney_MerchantPIN"`
 	Bundles_MinPoints                 float64 `bson:"Bundles_MinPoints" json:"Bundles_MinPoints"`
 	Bundles_Product_Catalogue_Channel string  `bson:"Bundles_Product_Catalogue_Channel" json:"Bundles_Product_Catalogue_Channel"`
 	Bundles_Product_Catalogue_Plan    string  `bson:"Bundles_Product_Catalogue_Plan" json:"Bundles_Product_Catalogue_Plan"`
@@ -387,6 +389,7 @@ type Loyalty_Points_Detail struct {
 	Available_Points float64   `bson:"Available_Points" json:"Available_Points"` //(Awarded_Points + Expired_Points) - Redeemed_Points
 	Expired_Points   float64   `bson:"Expired_Points" json:"Expired_Points"`     //expired are deducted from Awarded_Points
 	Expiry_Date      time.Time `bson:"Expiry_Date" json:"Expiry_Date"`
+	Last_Redeem_Date time.Time `bson:"Last_Redeem_Date" json:"Last_Redeem_Date"`
 }
 
 type Loyalty_AccountCreditPoints_Request struct {
@@ -598,7 +601,8 @@ type Loyalty_Redemption_Request struct {
 	MSISDN               string  `bson:"MSISDN" json:"MSISDN"`                   //MSISDN
 	Redemption_Type      string  `bson:"Redemption_Type" json:"Redemption_Type"` //Airtime, Bundle, MobileMoney, SpinAndWin
 	Redemption_Bunlde_Id string  `bson:"Redemption_Bunlde_Id" json:"Redemption_Bunlde_Id"`
-	Redemption_Amount    float64 `bson:"Redemption_Amount" json:"Redemption_Amount"`
+	Redemption_Amount    float64 `bson:"Redemption_Amount" json:"Redemption_Amount"` //airtime or money amount the subscriber wish to redeem
+	Points_To_Redeem     float64 `bson:"Points_To_Redeem" json:"Points_To_Redeem"`   //the amount of points the subscriber wish to redeem
 }
 
 type Loyalty_Redemption_log struct {
@@ -615,19 +619,28 @@ type Loyalty_Redemption_log struct {
 	ReceiveDate          time.Time `bson:"ReceiveDate" json:"ReceiveDate"`
 	Redemption_Type      string    `bson:"Redemption_Type" json:"Redemption_Type"` //Airtime, Bundle, MobileMoney, SpinAndWin
 	Redemption_Bunlde_Id string    `bson:"Redemption_Bunlde_Id" json:"Redemption_Bunlde_Id"`
-	Redemption_Amount    float64   `bson:"Redemption_Amount" json:"Redemption_Amount"`
+	Redemption_Amount    float64   `bson:"Redemption_Amount" json:"Redemption_Amount"` //airtime or money amount the subscriber wish to redeem
+	Points_To_Redeem     float64   `bson:"Points_To_Redeem" json:"Points_To_Redeem"`   //the amount of points the subscriber wish to redeem
 
 	Customer_Id                 int64   `bson:"Customer_Id" json:"Customer_Id"`
 	Account_Status              string  `bson:"Account_Status" json:"Account_Status"`
 	Loyalty_Level_Key           string  `bson:"Loyalty_Level_Key" json:"Loyalty_Level_Key"`
 	Loyalty_Account_Segment_Key string  `bson:"Loyalty_Account_Segment_Key" json:"Loyalty_Account_Segment_Key"`
-	Available_Points            float64 `bson:"Available_Points" json:"Available_Points"`
+	Opening_Awarded_Points      float64 `bson:"Opening_Awarded_Points" json:"Opening_Awarded_Points"`
+	Opening_Redeemed_Points     float64 `bson:"Opening_Redeemed_Points" json:"Opening_Redeemed_Points"`
+	Opening_Available_Points    float64 `bson:"Opening_Available_Points" json:"Opening_Available_Points"` //(Awarded_Points + Expired_Points) - Redeemed_Points
+	Closure_Awarded_Points      float64 `bson:"Closure_Awarded_Points" json:"Closure_Awarded_Points"`
+	Closure_Redeemed_Points     float64 `bson:"Closure_Redeemed_Points" json:"Closure_Redeemed_Points"`
+	Closure_Available_Points    float64 `bson:"Closure_Available_Points" json:"Closure_Available_Points"` //(Awarded_Points + Expired_Points) - Redeemed_Points
 
 	MinRequiredPoints               float64 `bson:"MinRequiredPoints" json:"MinRequiredPoints"`
 	Allow_Negative_Balance_ToRedeem bool    `bson:"Allow_Negative_Balance_ToRedeem" json:"Allow_Negative_Balance_ToRedeem"`
 	Allow_PendingLendme_ToRedeem    bool    `bson:"Allow_PendingLendme_ToRedeem" json:"Allow_PendingLendme_ToRedeem"`
 
-	Points_Debit_Result        interface{} `bson:"Airtime_PurchaseResult" json:"Airtime_PurchaseResult"`
+	//Bundle Redeem detail
+	Price_Loyalty_Points float64 `bson:"Price_Loyalty_Points" json:"Price_Loyalty_Points"`
+
+	Points_Debit_Result        interface{} `bson:"Points_Debit_Result" json:"Points_Debit_Result"`
 	Airtime_PurchaseResult     interface{} `bson:"Airtime_PurchaseResult" json:"Airtime_PurchaseResult"`
 	Bundle_PurchaseResult      interface{} `bson:"Bundle_PurchaseResult" json:"Bundle_PurchaseResult"`
 	MobileMoney_PurchaseResult interface{} `bson:"MobileMoney_PurchaseResult" json:"MobileMoney_PurchaseResult"`
@@ -644,12 +657,12 @@ type Loyalty_Redemption_log struct {
 }
 
 type Loyalty_AccountDebitPoints_Request struct {
-	MSISDN               string  `bson:"MSISDN" json:"MSISDN"` //MSISDN
-	Debit_Amount         float64 `bson:"Debit_Amount" json:"Debit_Amount"`
+	MSISDN               string  `bson:"MSISDN" json:"MSISDN"`             //MSISDN
+	Debit_Amount         float64 `bson:"Debit_Amount" json:"Debit_Amount"` //loyalty points to be deducted
 	Debit_Reason         string  `bson:"Debit_Reason" json:"Debit_Reason"`
 	Redemption_Type      string  `bson:"Redemption_Type" json:"Redemption_Type"` //Airtime, Bundle, MobileMoney, SpinAndWin
 	Redemption_Bunlde_Id string  `bson:"Redemption_Bunlde_Id" json:"Redemption_Bunlde_Id"`
-	Redemption_Amount    float64 `bson:"Redemption_Amount" json:"Redemption_Amount"`
+	Redemption_Amount    float64 `bson:"Redemption_Amount" json:"Redemption_Amount"` //airtime or money amount redeemed to customer
 }
 
 type Loyalty_AccountDebitPoints_log struct {
@@ -669,14 +682,21 @@ type Loyalty_AccountDebitPoints_log struct {
 	Redemption_Bunlde_Id string  `bson:"Redemption_Bunlde_Id" json:"Redemption_Bunlde_Id"`
 	Redemption_Amount    float64 `bson:"Redemption_Amount" json:"Redemption_Amount"`
 
-	Customer_Id                 int64   `bson:"Customer_Id" json:"Customer_Id"`
-	Account_Status              string  `bson:"Account_Status" json:"Account_Status"`
-	Loyalty_Level_Key           string  `bson:"Loyalty_Level_Key" json:"Loyalty_Level_Key"`
-	Loyalty_Account_Segment_Key string  `bson:"Loyalty_Account_Segment_Key" json:"Loyalty_Account_Segment_Key"`
-	Awarded_Points              float64 `bson:"Awarded_Points" json:"Awarded_Points"`
-	Opening_Redeemed_Points     float64 `bson:"Opening_Redeemed_Points" json:"Opening_Redeemed_Points"`
-	Closure_Redeemed_Points     float64 `bson:"Closure_Redeemed_Points" json:"Closure_Redeemed_Points"`
-	Available_Points            float64 `bson:"Available_Points" json:"Available_Points"` //(Awarded_Points + Expired_Points) - Redeemed_Points
+	Customer_Id                 int64  `bson:"Customer_Id" json:"Customer_Id"`
+	Account_Status              string `bson:"Account_Status" json:"Account_Status"`
+	Loyalty_Level_Key           string `bson:"Loyalty_Level_Key" json:"Loyalty_Level_Key"`
+	Loyalty_Account_Segment_Key string `bson:"Loyalty_Account_Segment_Key" json:"Loyalty_Account_Segment_Key"`
+	// Awarded_Points              float64 `bson:"Awarded_Points" json:"Awarded_Points"`
+	// Opening_Redeemed_Points     float64 `bson:"Opening_Redeemed_Points" json:"Opening_Redeemed_Points"`
+	// Closure_Redeemed_Points     float64 `bson:"Closure_Redeemed_Points" json:"Closure_Redeemed_Points"`
+	// Available_Points            float64 `bson:"Available_Points" json:"Available_Points"` //(Awarded_Points + Expired_Points) - Redeemed_Points
+
+	Opening_Awarded_Points   float64 `bson:"Opening_Awarded_Points" json:"Opening_Awarded_Points"`
+	Opening_Redeemed_Points  float64 `bson:"Opening_Redeemed_Points" json:"Opening_Redeemed_Points"`
+	Opening_Available_Points float64 `bson:"Opening_Available_Points" json:"Opening_Available_Points"` //(Awarded_Points + Expired_Points) - Redeemed_Points
+	Closure_Awarded_Points   float64 `bson:"Closure_Awarded_Points" json:"Closure_Awarded_Points"`
+	Closure_Redeemed_Points  float64 `bson:"Closure_Redeemed_Points" json:"Closure_Redeemed_Points"`
+	Closure_Available_Points float64 `bson:"Closure_Available_Points" json:"Closure_Available_Points"` //(Awarded_Points + Expired_Points) - Redeemed_Points
 
 	MinRequiredPoints               float64 `bson:"MinRequiredPoints" json:"MinRequiredPoints"`
 	Allow_Negative_Balance_ToRedeem bool    `bson:"Allow_Negative_Balance_ToRedeem" json:"Allow_Negative_Balance_ToRedeem"`

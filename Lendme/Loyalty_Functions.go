@@ -3086,6 +3086,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 	response.Redemption_Type = request.Redemption_Type //Airtime, Bundle, MobileMoney, SpinAndWin
 	response.Redemption_Bunlde_Id = request.Redemption_Bunlde_Id
 	response.Redemption_Amount = request.Redemption_Amount
+	response.Points_To_Redeem = request.Points_To_Redeem
 
 	//get loyalty account detail
 	loyalty_Account_na, exits := Map_Customer_Loyalty_Account.CheckThenGet(request.MSISDN)
@@ -3114,7 +3115,10 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 	response.Account_Status = loyalty_Account.Account_Status
 	response.Loyalty_Level_Key = loyalty_Account.Loyalty_Level_Key
 	response.Loyalty_Account_Segment_Key = loyalty_Account.Loyalty_Account_Segment_Key
-	response.Available_Points = loyalty_Account.Available_Points
+	response.Opening_Awarded_Points = loyalty_Account.Available_Points
+	response.Opening_Redeemed_Points = loyalty_Account.Redeemed_Points
+	response.Opening_Available_Points = loyalty_Account.Available_Points
+
 	//get redemption rules
 	redemption_Rules, err := Uc.Customer_Loyalty_Account_GetRedemption_Rules(request.MSISDN)
 	if err != nil {
@@ -3129,11 +3133,12 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 	}
 	response.Allow_Negative_Balance_ToRedeem = redemption_Rules.Allow_Negative_Balance_ToRedeem
 	response.Allow_PendingLendme_ToRedeem = redemption_Rules.Allow_PendingLendme_ToRedeem
+	//***To do: validate nagtive balance and pending lendme
 
-	//validate redemption request
+	//validate and execute redemption request
 	switch request.Redemption_Type {
 	case "Airtime":
-		if request.Redemption_Amount < 0 {
+		if request.Redemption_Amount <= 0 && request.Points_To_Redeem <= 0 {
 			response.Status = "failed"
 			response.StatusCode = http.StatusBadRequest
 			response.StatusDescription = "invalid redemption amount"
@@ -3144,7 +3149,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			return
 		}
 		response.MinRequiredPoints = redemption_Rules.Airtime_MinPoints
-		if response.Available_Points < response.MinRequiredPoints {
+		if response.Opening_Available_Points < response.MinRequiredPoints {
 			response.Status = "failed"
 			response.StatusCode = http.StatusBadRequest
 			response.StatusDescription = "no enough points"
@@ -3175,7 +3180,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			return
 		}
 		//debit loyalty points
-		if redemption_Rules.Airtime_AmountPerPoint < 0 {
+		if redemption_Rules.Airtime_AmountPerPoint <= 0 {
 			response.Status = "failed"
 			response.StatusCode = http.StatusBadRequest
 			response.StatusDescription = "airtime redeem rules are not defined"
@@ -3185,8 +3190,28 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			Uc.Write_Loyalty_Redemption_log(*response)
 			return
 		}
-		Max_Allowed_Amount := loyalty_Account.Available_Points * redemption_Rules.Airtime_AmountPerPoint
-		if response.Redemption_Amount > Max_Allowed_Amount {
+		//do the calculation
+		if response.Points_To_Redeem > 0 {
+			//calculate Redemption_Amount
+			response.Redemption_Amount = response.Points_To_Redeem * redemption_Rules.Airtime_AmountPerPoint
+		} else {
+			if response.Redemption_Amount > 0 {
+				//calculate Points_To_Redeem
+				response.Points_To_Redeem = response.Redemption_Amount / redemption_Rules.Airtime_AmountPerPoint
+			} else {
+				//return error
+				response.Status = "failed"
+				response.StatusCode = http.StatusBadRequest
+				response.StatusDescription = "invalid redemption amount"
+				response.ErrorDescription = "invalid redemption airtime amount"
+				response.StatusDate = time.Now()
+				response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+				Uc.Write_Loyalty_Redemption_log(*response)
+				return
+			}
+		}
+		//check if subscriber have enough points
+		if response.Points_To_Redeem > response.Opening_Available_Points {
 			response.Status = "failed"
 			response.StatusCode = http.StatusBadRequest
 			response.StatusDescription = "no enough points"
@@ -3198,12 +3223,11 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 		}
 		var Debit_Request Loyalty_AccountDebitPoints_Request
 		Debit_Request.MSISDN = response.MSISDN
-		Debit_Request.Debit_Amount = response.Redemption_Amount / redemption_Rules.Airtime_AmountPerPoint
+		Debit_Request.Debit_Amount = response.Points_To_Redeem
 		Debit_Request.Debit_Reason = "Redeem Request"
 		Debit_Request.Redemption_Type = "Airtime" //Airtime, Bundle, MobileMoney, SpinAndWin
 		Debit_Request.Redemption_Bunlde_Id = ""
 		Debit_Request.Redemption_Amount = response.Redemption_Amount
-
 		var debit_Log Loyalty_AccountDebitPoints_log
 		Uc.Loyalty_AccountDebitPoints(request_header, Debit_Request, &debit_Log)
 		response.Points_Debit_Result = debit_Log
@@ -3217,6 +3241,9 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			Uc.Write_Loyalty_Redemption_log(*response)
 			return
 		}
+		response.Closure_Awarded_Points = debit_Log.Closure_Awarded_Points
+		response.Closure_Redeemed_Points = debit_Log.Closure_Redeemed_Points
+		response.Closure_Available_Points = debit_Log.Closure_Available_Points
 		//credit airtime
 		airtimeTransferReply, err := Uc.CGW.UC_GWClient.AirtimePurchase(Unified_charging_gateway_Client.AirtimePurchase_Request{
 			PayerMSISDN:            redemption_Rules.Airtime_EVC_Account,
@@ -3262,7 +3289,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			return
 		}
 		response.MinRequiredPoints = redemption_Rules.Bundles_MinPoints
-		if response.Available_Points < response.MinRequiredPoints {
+		if response.Opening_Available_Points < response.MinRequiredPoints {
 			response.Status = "failed"
 			response.StatusCode = http.StatusBadRequest
 			response.StatusDescription = "no enough points"
@@ -3272,7 +3299,70 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			Uc.Write_Loyalty_Redemption_log(*response)
 			return
 		}
+		//get bundles detail
+		bundle_response, err := Uc.Propylaea.PropylaeaClient.Get_Bundle(
+			request.Redemption_Bunlde_Id,
+			"", "", "")
+		if err != nil {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "failed to get bundle detail"
+			response.ErrorDescription = err.Error()
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		if len(bundle_response.Data) < 1 {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "bundle not found"
+			response.ErrorDescription = "bundle not found"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
 
+		//check if subscriber have enough points
+		response.Price_Loyalty_Points = bundle_response.Data[0].Price_Loyalty_Points
+		response.Points_To_Redeem = response.Price_Loyalty_Points
+		//check if subscriber have enough points
+		if response.Points_To_Redeem > response.Opening_Available_Points {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "no enough points"
+			response.ErrorDescription = "no enough points"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		//debit the loyalty points
+		var Debit_Request Loyalty_AccountDebitPoints_Request
+		Debit_Request.MSISDN = response.MSISDN
+		Debit_Request.Debit_Amount = response.Points_To_Redeem
+		Debit_Request.Debit_Reason = "Redeem Request"
+		Debit_Request.Redemption_Type = "Bundle" //Airtime, Bundle, MobileMoney, SpinAndWin
+		Debit_Request.Redemption_Bunlde_Id = request.Redemption_Bunlde_Id
+		Debit_Request.Redemption_Amount = response.Price_Loyalty_Points
+		var debit_Log Loyalty_AccountDebitPoints_log
+		Uc.Loyalty_AccountDebitPoints(request_header, Debit_Request, &debit_Log)
+		response.Points_Debit_Result = debit_Log
+		if debit_Log.StatusCode != http.StatusOK {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = debit_Log.StatusDescription
+			response.ErrorDescription = debit_Log.ErrorDescription
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		response.Closure_Awarded_Points = debit_Log.Closure_Awarded_Points
+		response.Closure_Redeemed_Points = debit_Log.Closure_Redeemed_Points
+		response.Closure_Available_Points = debit_Log.Closure_Available_Points
+		//recharge the bundle
 		bundlePurchaseReply, err := Uc.CGW.UC_GWClient.BundlePurchase(Unified_charging_gateway_Client.BundlePurchase_Request{
 			PayerMSISDN:            redemption_Rules.Bundles_EVC_Account,
 			PayerPIN:               redemption_Rules.Bundles_EVC_PIN,
@@ -3305,18 +3395,18 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			return
 		}
 	case "MobileMoney":
-		if request.Redemption_Amount < 0 {
+		if request.Redemption_Amount <= 0 && request.Points_To_Redeem <= 0 {
 			response.Status = "failed"
 			response.StatusCode = http.StatusBadRequest
-			response.StatusDescription = "number of spins is not provided"
-			response.ErrorDescription = "number of spins is not provided"
+			response.StatusDescription = "invalid redemption amount"
+			response.ErrorDescription = "invalid redemption airtime amount"
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
 			return
 		}
 		response.MinRequiredPoints = redemption_Rules.MobileMoney_MinPoints
-		if response.Available_Points < response.MinRequiredPoints {
+		if response.Opening_Available_Points < response.MinRequiredPoints {
 			response.Status = "failed"
 			response.StatusCode = http.StatusBadRequest
 			response.StatusDescription = "no enough points"
@@ -3326,6 +3416,82 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			Uc.Write_Loyalty_Redemption_log(*response)
 			return
 		}
+		if redemption_Rules.MobileMoney_MerchantAccount == "" {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "mobile money payer account is not provided"
+			response.ErrorDescription = "mobile money payer account is not provided"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		//debit loyalty points
+		if redemption_Rules.MobileMoney_AmountPerPoint <= 0 {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "mobile money redeem rules are not defined"
+			response.ErrorDescription = "mobile money redeem rules are not defined"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		//do the calculation
+		if response.Points_To_Redeem > 0 {
+			//calculate Redemption_Amount
+			response.Redemption_Amount = response.Points_To_Redeem * redemption_Rules.MobileMoney_AmountPerPoint
+		} else {
+			if response.Redemption_Amount > 0 {
+				//calculate Points_To_Redeem
+				response.Points_To_Redeem = response.Redemption_Amount / redemption_Rules.MobileMoney_AmountPerPoint
+			} else {
+				//return error
+				response.Status = "failed"
+				response.StatusCode = http.StatusBadRequest
+				response.StatusDescription = "invalid redemption amount"
+				response.ErrorDescription = "invalid redemption mobile money amount"
+				response.StatusDate = time.Now()
+				response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+				Uc.Write_Loyalty_Redemption_log(*response)
+				return
+			}
+		}
+		//check if subscriber have enough points
+		if response.Points_To_Redeem > response.Opening_Available_Points {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "no enough points"
+			response.ErrorDescription = "no enough points"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		var Debit_Request Loyalty_AccountDebitPoints_Request
+		Debit_Request.MSISDN = response.MSISDN
+		Debit_Request.Debit_Amount = response.Points_To_Redeem
+		Debit_Request.Debit_Reason = "Redeem Request"
+		Debit_Request.Redemption_Type = "MobileMoney" //Airtime, Bundle, MobileMoney, SpinAndWin
+		Debit_Request.Redemption_Bunlde_Id = ""
+		Debit_Request.Redemption_Amount = response.Redemption_Amount
+		var debit_Log Loyalty_AccountDebitPoints_log
+		Uc.Loyalty_AccountDebitPoints(request_header, Debit_Request, &debit_Log)
+		response.Points_Debit_Result = debit_Log
+		if debit_Log.StatusCode != http.StatusOK {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = debit_Log.StatusDescription
+			response.ErrorDescription = debit_Log.ErrorDescription
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		response.Closure_Awarded_Points = debit_Log.Closure_Awarded_Points
+		response.Closure_Redeemed_Points = debit_Log.Closure_Redeemed_Points
+		response.Closure_Available_Points = debit_Log.Closure_Available_Points
+		//to do: credit mobile money amount --> merchant transfer
 
 	case "SpinAndWin":
 		if request.Redemption_Amount < 0 {
@@ -3339,7 +3505,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			return
 		}
 		response.MinRequiredPoints = redemption_Rules.FreeSpinAndWin_MinPoints
-		if response.Available_Points < response.MinRequiredPoints {
+		if response.Opening_Available_Points < response.MinRequiredPoints {
 			response.Status = "failed"
 			response.StatusCode = http.StatusBadRequest
 			response.StatusDescription = "no enough points"
@@ -3360,7 +3526,6 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 		Uc.Write_Loyalty_Redemption_log(*response)
 		return
 	}
-
 	//successful reply
 	response.Status = "successful"
 	response.StatusCode = http.StatusOK
@@ -3700,11 +3865,12 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 	response.GSMLocation = request_header.GSMLocation
 	//fill the request info
 	response.MSISDN = request.MSISDN
+	response.Debit_Amount = request.Debit_Amount
 	response.ReceiveDate = time.Now()
 	response.Redemption_Type = request.Redemption_Type //Airtime, Bundle, MobileMoney, SpinAndWin
 	response.Redemption_Bunlde_Id = request.Redemption_Bunlde_Id
 	response.Redemption_Amount = request.Redemption_Amount
-	if response.Redemption_Amount < 0 {
+	if response.Debit_Amount < 0 {
 		response.Status = "failed"
 		response.StatusCode = http.StatusBadRequest
 		response.StatusDescription = "invalid amount"
@@ -3741,11 +3907,11 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 	response.Account_Status = loyalty_Account.Account_Status
 	response.Loyalty_Level_Key = loyalty_Account.Loyalty_Level_Key
 	response.Loyalty_Account_Segment_Key = loyalty_Account.Loyalty_Account_Segment_Key
-	response.Awarded_Points = loyalty_Account.Awarded_Points
+	response.Opening_Awarded_Points = loyalty_Account.Awarded_Points
 	response.Opening_Redeemed_Points = loyalty_Account.Redeemed_Points
-	response.Available_Points = loyalty_Account.Available_Points
+	response.Opening_Available_Points = loyalty_Account.Available_Points
 	//check if available balance is enough
-	if response.Available_Points < response.Redemption_Amount {
+	if response.Opening_Available_Points < request.Debit_Amount {
 		response.Status = "failed"
 		response.StatusCode = http.StatusBadRequest
 		response.StatusDescription = "no enough points"
@@ -3756,10 +3922,53 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 		return
 	}
 	//debit the account
-	loyalty_Account.Redeemed_Points = loyalty_Account.Redeemed_Points + request.Redemption_Amount
+	loyalty_Account.Redeemed_Points = loyalty_Account.Redeemed_Points + request.Debit_Amount
+	loyalty_Account.Available_Points = (loyalty_Account.Awarded_Points + loyalty_Account.Expired_Points) - loyalty_Account.Redeemed_Points //(Awarded_Points + Expired_Points) - Redeemed_Points
 	loyalty_Account.Last_Redeem_Date = time.Now()
+	//update Monthly points
+	var start_date time.Time
+	start_date = time.Date(2025, 04, 01, 00, 00, 59, 0, time.UTC)
+	end_date := start_date.AddDate(50, 0, 0)
+	Amount_to_debit := request.Debit_Amount
+	for d := start_date; d.After(end_date) == false; d = d.AddDate(0, 1, 0) {
+		if d.Before(time.Now().AddDate(0, 0, 1)) {
+			//fmt.Println(d.Format("2006-01-02"))
+			YYYY, MM, _, _, _, _, _ := GetTimeParts(d)
+			var PointsDetail Loyalty_Points_Detail
+			var exist bool
+			PointsDetail, exist = loyalty_Account.LoyaltyPointsDetail[YYYY+MM]
+			if exist {
+				if PointsDetail.Available_Points > 0 {
+					if PointsDetail.Available_Points >= Amount_to_debit {
+						//full amount available
+						PointsDetail.Redeemed_Points = PointsDetail.Redeemed_Points + Amount_to_debit
+						PointsDetail.Available_Points = (PointsDetail.Awarded_Points + PointsDetail.Expired_Points) - PointsDetail.Redeemed_Points //(Awarded_Points + Expired_Points) - Redeemed_Points
+						PointsDetail.Last_Redeem_Date = time.Now()
+						Amount_to_debit = 0
+					} else {
+						//partial amount available
+						partial_debit_amount := PointsDetail.Available_Points
+						PointsDetail.Redeemed_Points = PointsDetail.Redeemed_Points + partial_debit_amount
+						PointsDetail.Available_Points = 0
+						PointsDetail.Last_Redeem_Date = time.Now()
+						Amount_to_debit = Amount_to_debit - partial_debit_amount
+					}
+					loyalty_Account.LoyaltyPointsDetail[YYYY+MM] = PointsDetail
+					if Amount_to_debit == 0 {
+						break
+					}
+				}
+			} else {
+				continue
+			}
+		} else {
+			break
+		}
+	}
 	Map_Customer_Loyalty_Account.Put(loyalty_Account.Key, loyalty_Account)
+	response.Closure_Awarded_Points = loyalty_Account.Awarded_Points
 	response.Closure_Redeemed_Points = loyalty_Account.Redeemed_Points
+	response.Closure_Available_Points = loyalty_Account.Available_Points
 	//update goveranance
 	Uc.Loyalty_Governance_Redeem_Points_Debit(request.Redemption_Amount)
 	//successful reply
