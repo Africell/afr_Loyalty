@@ -377,7 +377,7 @@ type Customer_Loyalty_Account struct {
 type Customer_Loyalty_Account_AddRequest struct {
 	Key          string    `bson:"Key" json:"Key"` //MSISDN
 	Customer_Id  int64     `bson:"Customer_Id" json:"Customer_Id"`
-	EventSource  string    `bson:"EventSource" json:"EventSource"` //MSISDN
+	EventSource  string    `bson:"EventSource" json:"EventSource"`
 	COS          string    `bson:"COS" json:"COS"`
 	ARPU         float64   `bson:"ARPU" json:"ARPU"`
 	Joining_Date time.Time `bson:"Joining_Date" json:"Joining_Date"`
@@ -748,3 +748,36 @@ type Loyalty_AccountDebitPoints_log struct {
 // 	FreeSpinAndWin_MinPoints          float64 `bson:"FreeSpinAndWin_MinPoints" json:"FreeSpinAndWin_MinPoints"`
 // 	FreeSpinAndWin_PointsPerSpin      float64 `bson:"FreeSpinAndWin_PointsPerSpin" json:"FreeSpinAndWin_PointsPerSpin"`
 // }
+
+type Loyalty_Campaign struct {
+	Key             string    `bson:"Key" json:"Key"` //Campaign Name
+	Campaign_Id     int64     `bson:"Campaign_Id" json:"Campaign_Id"`
+	Description     string    `bson:"Description" json:"Description"`
+	Start_Date      time.Time `bson:"Start_Date" json:"Start_Date"`
+	End_Date        time.Time `bson:"End_Date" json:"End_Date"`
+	Campaign_Status string    `bson:"Campaign_Status" json:"Campaign_Status"` //launched, paused, resumed, cancelled, or stopped
+
+	//target rules
+	Target_All_Subs     bool              `bson:"Target_All_Subs" json:"Target_All_Subs"` //if true, all target features will be ignored
+	Target_Level_Key    map[string]bool   `bson:"Target_Level_Key" json:"Target_Level_Key"`
+	Target_Segment_Key  map[string]bool   `bson:"Target_Segment_Key" json:"Target_Segment_Key"`
+	Target_List         map[string]string `bson:"Target_List" json:"Target_List"` //we need to be able to define target list
+	LoyaltyPoints_From  float64           `bson:"LoyaltyPoints_From" json:"LoyaltyPoints_From"`
+	LoyaltyPoints_Till  float64           `bson:"LoyaltyPoints_Till" json:"LoyaltyPoints_Till"`
+	AON_From            float64           `bson:"AON_From" json:"AON_From"` //months
+	AON_Till            float64           `bson:"AON_Till" json:"AON_Till"` //months
+	BundlesPurchase     map[string]string `bson:"BundlesPurchase" json:"BundlesPurchase"`
+	MobileAppDailyUsage bool              `bson:"MobileAppDailyUsage" json:"MobileAppDailyUsage"`
+	//Points earned scheme
+	Multiplier       float64 `bson:"Multiplier" json:"Multiplier"`
+	Fixed_Points     float64 `bson:"Fixed_Points" json:"Fixed_Points"`
+	Action_Frequency string  `bson:"Action_Frequency" json:"Action_Frequency"` //Once, Once_Daily, Each time
+}
+
+type Loyalty_Campaign_Target_List struct {
+	Key          string    `bson:"Key" json:"Key"` //Target List Name|MSISDN
+	Campaign_Key int64     `bson:"Campaign_Key" json:"Campaign_Key"`
+	MSISDN       string    `bson:"MSISDN" json:"MSISDN"`
+	Start_Date   time.Time `bson:"Start_Date" json:"Start_Date"`
+	End_Date     time.Time `bson:"End_Date" json:"End_Date"`
+}

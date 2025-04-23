@@ -3841,6 +3841,15 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 				loyalty_account.Loyalty_Level_Key = new_Loyalty_level_key
 			}
 		}
+	} else {
+		response.Status = "failed"
+		response.StatusCode = http.StatusBadRequest
+		response.StatusDescription = "failed to credit loyalty account"
+		response.ErrorDescription = "points to credit must be greater than 0"
+		response.StatusDate = time.Now()
+		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+		Uc.Write_Loyalty_AccountCreditPoints_log(*response)
+		return
 	}
 	//response.ClosureAvailablePoints = (loyalty_account.Awarded_Points + loyalty_account.Expired_Points) - loyalty_account.Redeemed_Points
 	response.Closure_Loyalty_Level_Key = loyalty_account.Loyalty_Level_Key
@@ -4002,6 +4011,25 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 			return 0, mainGSM_CurrentPending, mobileMoney_CurrentPending
 		}
 	case "IN_feed":
+		switch award_request.EventType {
+		case "NewJoining":
+			return rules.Welcome_Points, mainGSM_CurrentPending, mobileMoney_CurrentPending
+		default:
+			//award points based amount
+			if award_request.EventAmount > 0 {
+				if rules.MainGSMBalance_AmountConsumedPerPoint > 0 {
+					flt_points := (award_request.EventAmount + mainGSM_CurrentPending) / rules.MainGSMBalance_AmountConsumedPerPoint
+					int_points := int(flt_points)
+					mainGSM_pending = (award_request.EventAmount + mainGSM_CurrentPending) - (float64(int_points) * rules.MainGSMBalance_AmountConsumedPerPoint)
+					return float64(int_points), mainGSM_pending, mobileMoney_CurrentPending
+				} else {
+					return 0, mainGSM_CurrentPending, mobileMoney_CurrentPending
+				}
+			} else { //to do: award points based transaction
+				return 0, mainGSM_CurrentPending, mobileMoney_CurrentPending
+			}
+		}
+	case "WebPortal":
 		switch award_request.EventType {
 		case "NewJoining":
 			return rules.Welcome_Points, mainGSM_CurrentPending, mobileMoney_CurrentPending
