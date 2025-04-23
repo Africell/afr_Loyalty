@@ -169,7 +169,20 @@ type Loyalty_Point_Earning_Rules struct {
 	Welcome_Points                        float64 `bson:"Welcome_Points" json:"Welcome_Points"`
 	MobileAppDaily_Login                  float64 `bson:"MobileAppDaily_Login" json:"MobileAppDaily_Login"`
 	MainGSMBalance_AmountConsumedPerPoint float64 `bson:"MainGSMBalance_AmountConsumedPerPoint" json:"MainGSMBalance_AmountConsumedPerPoint"`
-	MobileMoney_AmountConsumedPerPoint    float64 `bson:"MobileMoney_AmountConsumedPerPoint" json:"MobileMoney_AmountConsumedPerPoint"`
+	MM_P2P_Award_Type                     string  `bson:"MM_P2P_Award_Type" json:"MM_P2P_Award_Type"` //"Transaction" or "Amount"
+	MM_P2P                                float64 `bson:"MM_P2P" json:"MM_P2P"`
+	MM_CASHIN_Award_Type                  string  `bson:"MM_CASHIN_Award_Type" json:"MM_CASHIN_Award_Type"` //"Transaction" or "Amount"
+	MM_CASHIN                             float64 `bson:"MM_CASHIN" json:"MM_CASHIN"`
+	MM_CASHOUT_Award_Type                 string  `bson:"MM_CASHOUT_Award_Type" json:"MM_CASHOUT_Award_Type"` //"Transaction" or "Amount"
+	MM_CASHOUT                            float64 `bson:"MM_CASHOUT" json:"MM_CASHOUT"`
+	MM_MERCHPAY_Award_Type                string  `bson:"MM_MERCHPAY_Award_Type" json:"MM_MERCHPAY_Award_Type"` //"Transaction" or "Amount"
+	MM_MERCHPAY                           float64 `bson:"MM_MERCHPAY" json:"MM_MERCHPAY"`
+	MM_BILLPAY_Award_Type                 string  `bson:"MM_BILLPAY_Award_Type" json:"MM_BILLPAY_Award_Type"` //"Transaction" or "Amount"
+	MM_BILLPAY                            float64 `bson:"MM_BILLPAY" json:"MM_BILLPAY"`
+	MM_RC_Award_Type                      string  `bson:"MM_RC_Award_Type" json:"MM_RC_Award_Type"` //"Transaction" or "Amount"
+	MM_RC                                 float64 `bson:"MM_RC" json:"MM_RC"`
+	MM_CTMMOREQ_Award_Type                string  `bson:"MM_CTMMOREQ_Award_Type" json:"MM_CTMMOREQ_Award_Type"` //"Transaction" or "Amount"
+	MM_CTMMOREQ                           float64 `bson:"MM_CTMMOREQ" json:"MM_CTMMOREQ"`
 }
 
 type Loyalty_Point_Earning_Rules_AddRequest struct {
@@ -179,7 +192,20 @@ type Loyalty_Point_Earning_Rules_AddRequest struct {
 	Welcome_Points                        float64 `bson:"Welcome_Points" json:"Welcome_Points"`
 	MobileAppDaily_Login                  float64 `bson:"MobileAppDaily_Login" json:"MobileAppDaily_Login"`
 	MainGSMBalance_AmountConsumedPerPoint float64 `bson:"MainGSMBalance_AmountConsumedPerPoint" json:"MainGSMBalance_AmountConsumedPerPoint"`
-	MobileMoney_AmountConsumedPerPoint    float64 `bson:"MobileMoney_AmountConsumedPerPoint" json:"MobileMoney_AmountConsumedPerPoint"`
+	MM_P2P_Award_Type                     string  `bson:"MM_P2P_Award_Type" json:"MM_P2P_Award_Type"` //"Transaction" or "Amount"
+	MM_P2P                                float64 `bson:"MM_P2P" json:"MM_P2P"`
+	MM_CASHIN_Award_Type                  string  `bson:"MM_CASHIN_Award_Type" json:"MM_CASHIN_Award_Type"` //"Transaction" or "Amount"
+	MM_CASHIN                             float64 `bson:"MM_CASHIN" json:"MM_CASHIN"`
+	MM_CASHOUT_Award_Type                 string  `bson:"MM_CASHOUT_Award_Type" json:"MM_CASHOUT_Award_Type"` //"Transaction" or "Amount"
+	MM_CASHOUT                            float64 `bson:"MM_CASHOUT" json:"MM_CASHOUT"`
+	MM_MERCHPAY_Award_Type                string  `bson:"MM_MERCHPAY_Award_Type" json:"MM_MERCHPAY_Award_Type"` //"Transaction" or "Amount"
+	MM_MERCHPAY                           float64 `bson:"MM_MERCHPAY" json:"MM_MERCHPAY"`
+	MM_BILLPAY_Award_Type                 string  `bson:"MM_BILLPAY_Award_Type" json:"MM_BILLPAY_Award_Type"` //"Transaction" or "Amount"
+	MM_BILLPAY                            float64 `bson:"MM_BILLPAY" json:"MM_BILLPAY"`
+	MM_RC_Award_Type                      string  `bson:"MM_RC_Award_Type" json:"MM_RC_Award_Type"` //"Transaction" or "Amount"
+	MM_RC                                 float64 `bson:"MM_RC" json:"MM_RC"`
+	MM_CTMMOREQ_Award_Type                string  `bson:"MM_CTMMOREQ_Award_Type" json:"MM_CTMMOREQ_Award_Type"` //"Transaction" or "Amount"
+	MM_CTMMOREQ                           float64 `bson:"MM_CTMMOREQ" json:"MM_CTMMOREQ"`
 }
 
 type Loyalty_Point_Earning_Rules_EditRequest struct {
@@ -190,7 +216,20 @@ type Loyalty_Point_Earning_Rules_EditRequest struct {
 	Welcome_Points                        float64 `bson:"Welcome_Points" json:"Welcome_Points"`
 	MobileAppDaily_Login                  float64 `bson:"MobileAppDaily_Login" json:"MobileAppDaily_Login"`
 	MainGSMBalance_AmountConsumedPerPoint float64 `bson:"MainGSMBalance_AmountConsumedPerPoint" json:"MainGSMBalance_AmountConsumedPerPoint"`
-	MobileMoney_AmountConsumedPerPoint    float64 `bson:"MobileMoney_AmountConsumedPerPoint" json:"MobileMoney_AmountConsumedPerPoint"`
+	MM_P2P_Award_Type                     string  `bson:"MM_P2P_Award_Type" json:"MM_P2P_Award_Type"` //"Transaction" or "Amount"
+	MM_P2P                                float64 `bson:"MM_P2P" json:"MM_P2P"`
+	MM_CASHIN_Award_Type                  string  `bson:"MM_CASHIN_Award_Type" json:"MM_CASHIN_Award_Type"` //"Transaction" or "Amount"
+	MM_CASHIN                             float64 `bson:"MM_CASHIN" json:"MM_CASHIN"`
+	MM_CASHOUT_Award_Type                 string  `bson:"MM_CASHOUT_Award_Type" json:"MM_CASHOUT_Award_Type"` //"Transaction" or "Amount"
+	MM_CASHOUT                            float64 `bson:"MM_CASHOUT" json:"MM_CASHOUT"`
+	MM_MERCHPAY_Award_Type                string  `bson:"MM_MERCHPAY_Award_Type" json:"MM_MERCHPAY_Award_Type"` //"Transaction" or "Amount"
+	MM_MERCHPAY                           float64 `bson:"MM_MERCHPAY" json:"MM_MERCHPAY"`
+	MM_BILLPAY_Award_Type                 string  `bson:"MM_BILLPAY_Award_Type" json:"MM_BILLPAY_Award_Type"` //"Transaction" or "Amount"
+	MM_BILLPAY                            float64 `bson:"MM_BILLPAY" json:"MM_BILLPAY"`
+	MM_RC_Award_Type                      string  `bson:"MM_RC_Award_Type" json:"MM_RC_Award_Type"` //"Transaction" or "Amount"
+	MM_RC                                 float64 `bson:"MM_RC" json:"MM_RC"`
+	MM_CTMMOREQ_Award_Type                string  `bson:"MM_CTMMOREQ_Award_Type" json:"MM_CTMMOREQ_Award_Type"` //"Transaction" or "Amount"
+	MM_CTMMOREQ                           float64 `bson:"MM_CTMMOREQ" json:"MM_CTMMOREQ"`
 }
 
 type Loyalty_Point_Expiry_Rules struct {

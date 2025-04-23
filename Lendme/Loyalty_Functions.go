@@ -360,7 +360,20 @@ func (Uc *UserControl) InitializeLoyaltyDefaultUAT() {
 		Welcome_Points:                        5,
 		MobileAppDaily_Login:                  1,
 		MainGSMBalance_AmountConsumedPerPoint: 10,
-		MobileMoney_AmountConsumedPerPoint:    10,
+		MM_P2P_Award_Type:                     "Transaction",
+		MM_P2P:                                1,
+		MM_CASHIN_Award_Type:                  "Transaction",
+		MM_CASHIN:                             1,
+		MM_CASHOUT_Award_Type:                 "Transaction",
+		MM_CASHOUT:                            1,
+		MM_MERCHPAY_Award_Type:                "Transaction",
+		MM_MERCHPAY:                           1,
+		MM_BILLPAY_Award_Type:                 "Transaction",
+		MM_BILLPAY:                            1,
+		MM_RC_Award_Type:                      "Amount",
+		MM_RC:                                 0.15,
+		MM_CTMMOREQ_Award_Type:                "Amount",
+		MM_CTMMOREQ:                           0.15,
 	})
 	Uc.Loyalty_Point_Expiry_Rules_Add("Default", Loyalty_Point_Expiry_Rules_AddRequest{
 		Key:                     "Default_Expiry_Rules",
@@ -1109,8 +1122,20 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Add(Login string, request Loy
 	NewEntry.Welcome_Points = request.Welcome_Points
 	NewEntry.MobileAppDaily_Login = request.MobileAppDaily_Login
 	NewEntry.MainGSMBalance_AmountConsumedPerPoint = request.MainGSMBalance_AmountConsumedPerPoint
-	NewEntry.MobileMoney_AmountConsumedPerPoint = request.MobileMoney_AmountConsumedPerPoint
-
+	NewEntry.MM_P2P_Award_Type = request.MM_P2P_Award_Type
+	NewEntry.MM_P2P = request.MM_P2P
+	NewEntry.MM_CASHIN_Award_Type = request.MM_CASHIN_Award_Type
+	NewEntry.MM_CASHIN = request.MM_CASHIN
+	NewEntry.MM_CASHOUT_Award_Type = request.MM_CASHOUT_Award_Type
+	NewEntry.MM_CASHOUT = request.MM_CASHOUT
+	NewEntry.MM_MERCHPAY_Award_Type = request.MM_MERCHPAY_Award_Type
+	NewEntry.MM_MERCHPAY = request.MM_MERCHPAY
+	NewEntry.MM_BILLPAY_Award_Type = request.MM_BILLPAY_Award_Type
+	NewEntry.MM_BILLPAY = request.MM_BILLPAY
+	NewEntry.MM_RC_Award_Type = request.MM_RC_Award_Type
+	NewEntry.MM_RC = request.MM_RC
+	NewEntry.MM_CTMMOREQ_Award_Type = request.MM_CTMMOREQ_Award_Type
+	NewEntry.MM_CTMMOREQ = request.MM_CTMMOREQ
 	//add to cache and DB
 	Map_Loyalty_Point_Earning_Rules.Put(NewEntry.Key, NewEntry)
 	//add logs
@@ -1152,7 +1177,20 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Edit(Login string, request Lo
 	entry.Welcome_Points = request.Welcome_Points
 	entry.MobileAppDaily_Login = request.MobileAppDaily_Login
 	entry.MainGSMBalance_AmountConsumedPerPoint = request.MainGSMBalance_AmountConsumedPerPoint
-	entry.MobileMoney_AmountConsumedPerPoint = request.MobileMoney_AmountConsumedPerPoint
+	entry.MM_P2P_Award_Type = request.MM_P2P_Award_Type
+	entry.MM_P2P = request.MM_P2P
+	entry.MM_CASHIN_Award_Type = request.MM_CASHIN_Award_Type
+	entry.MM_CASHIN = request.MM_CASHIN
+	entry.MM_CASHOUT_Award_Type = request.MM_CASHOUT_Award_Type
+	entry.MM_CASHOUT = request.MM_CASHOUT
+	entry.MM_MERCHPAY_Award_Type = request.MM_MERCHPAY_Award_Type
+	entry.MM_MERCHPAY = request.MM_MERCHPAY
+	entry.MM_BILLPAY_Award_Type = request.MM_BILLPAY_Award_Type
+	entry.MM_BILLPAY = request.MM_BILLPAY
+	entry.MM_RC_Award_Type = request.MM_RC_Award_Type
+	entry.MM_RC = request.MM_RC
+	entry.MM_CTMMOREQ_Award_Type = request.MM_CTMMOREQ_Award_Type
+	entry.MM_CTMMOREQ = request.MM_CTMMOREQ
 
 	if request.NewKey != "" {
 		if request.NewKey != request.Key {
