@@ -783,3 +783,11 @@ type Loyalty_Campaign_Target_List struct {
 	Start_Date   time.Time `bson:"Start_Date" json:"Start_Date"`
 	End_Date     time.Time `bson:"End_Date" json:"End_Date"`
 }
+
+type Loyalty_Campaign_Action_Frequency_Control struct {
+	Key          string    `bson:"Key" json:"Key"` //Target List Name|MSISDN
+	Campaign_Key int64     `bson:"Campaign_Key" json:"Campaign_Key"`
+	MSISDN       string    `bson:"MSISDN" json:"MSISDN"`
+	Action_Date  time.Time `bson:"Action_Date" json:"Action_Date"`
+	End_Date     time.Time `bson:"End_Date" json:"End_Date"` //when the control will be removed
+}
