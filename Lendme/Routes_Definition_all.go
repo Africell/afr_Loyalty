@@ -1192,34 +1192,31 @@ func (UC *UserControl) Add_LoyaltyManagementRoutes(R *Routes) {
 		true,                        //AllowedFor_App
 	}
 	*R = append(*R, r)
-	DisplayOrder = DisplayOrder + 1
 
 	//*****************************
 	// Customer_UAT
 	//*****************************
 	Level1 = "Customer UAT"
-	Level1DisplayOrder = Level1DisplayOrder + 1
 	r = Route{
 		"HTTP_Customer_UAT",
 		"GET",
 		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Customer_UAT/",
 		Use(UC.HTTP_Customer_UAT, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
 		true,
-		Level1 + " - Read", // DisplayName
-		DisplayOrder,       // DisplayOrder
-		Module,             // Module
-		ModuleDisplayOrder, //ModuleDisplayOrder
-		Level1,             // Level1
-		Level1DisplayOrder, // Level1DisplayOrder
-		"",                 // Level2
-		0,                  // Level2DisplayOrder
-		"",                 // Level3
-		0,                  // Level3DisplayOrder
-		true,               //AllowedFor_OKAPI
-		true,               //AllowedFor_App
+		"Customer UAT - Read", // DisplayName
+		1,                     // DisplayOrder
+		Module,                // Module
+		ModuleDisplayOrder,    //ModuleDisplayOrder
+		Level1,                // Level1
+		Level1DisplayOrder,    // Level1DisplayOrder
+		"",                    // Level2
+		0,                     // Level2DisplayOrder
+		"",                    // Level3
+		0,                     // Level3DisplayOrder
+		true,                  //AllowedFor_OKAPI
+		true,                  //AllowedFor_App
 	}
 	*R = append(*R, r)
-	DisplayOrder = DisplayOrder + 1
 
 	r = Route{
 		"HTTP_Customer_UAT",
@@ -1227,21 +1224,20 @@ func (UC *UserControl) Add_LoyaltyManagementRoutes(R *Routes) {
 		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Customer_UAT/",
 		Use(UC.HTTP_Customer_UAT, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
 		true,
-		Level1 + " - Add",  // DisplayName
-		DisplayOrder,       // DisplayOrder
-		Module,             // Module
-		ModuleDisplayOrder, //ModuleDisplayOrder
-		Level1,             // Level1
-		Level1DisplayOrder, // Level1DisplayOrder
-		"",                 // Level2
-		0,                  // Level2DisplayOrder
-		"",                 // Level3
-		0,                  // Level3DisplayOrder
-		true,               //AllowedFor_OKAPI
-		true,               //AllowedFor_App
+		"Customer UAT  - Add", // DisplayName
+		2,                     // DisplayOrder
+		Module,                // Module
+		ModuleDisplayOrder,    //ModuleDisplayOrder
+		Level1,                // Level1
+		Level1DisplayOrder,    // Level1DisplayOrder
+		"",                    // Level2
+		0,                     // Level2DisplayOrder
+		"",                    // Level3
+		0,                     // Level3DisplayOrder
+		true,                  //AllowedFor_OKAPI
+		true,                  //AllowedFor_App
 	}
 	*R = append(*R, r)
-	DisplayOrder = DisplayOrder + 1
 
 	r = Route{
 		"HTTP_Customer_UAT",
@@ -1249,21 +1245,20 @@ func (UC *UserControl) Add_LoyaltyManagementRoutes(R *Routes) {
 		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Customer_UAT/",
 		Use(UC.HTTP_Customer_UAT, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
 		true,
-		Level1 + " - Edit", // DisplayName
-		DisplayOrder,       // DisplayOrder
-		Module,             // Module
-		ModuleDisplayOrder, //ModuleDisplayOrder
-		Level1,             // Level1
-		Level1DisplayOrder, // Level1DisplayOrder
-		"",                 // Level2
-		0,                  // Level2DisplayOrder
-		"",                 // Level3
-		0,                  // Level3DisplayOrder
-		true,               //AllowedFor_OKAPI
-		true,               //AllowedFor_App
+		"Customer UAT  - Edit", // DisplayName
+		3,                      // DisplayOrder
+		Module,                 // Module
+		ModuleDisplayOrder,     //ModuleDisplayOrder
+		Level1,                 // Level1
+		Level1DisplayOrder,     // Level1DisplayOrder
+		"",                     // Level2
+		0,                      // Level2DisplayOrder
+		"",                     // Level3
+		0,                      // Level3DisplayOrder
+		true,                   //AllowedFor_OKAPI
+		true,                   //AllowedFor_App
 	}
 	*R = append(*R, r)
-	DisplayOrder = DisplayOrder + 1
 
 	r = Route{
 		"HTTP_Customer_UAT",
@@ -1271,21 +1266,20 @@ func (UC *UserControl) Add_LoyaltyManagementRoutes(R *Routes) {
 		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Customer_UAT/{KeyDelete}/",
 		Use(UC.HTTP_Customer_UAT, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
 		true,
-		Level1 + " - Delete", // DisplayName
-		DisplayOrder,         // DisplayOrder
-		Module,               // Module
-		ModuleDisplayOrder,   //ModuleDisplayOrder
-		Level1,               // Level1
-		Level1DisplayOrder,   // Level1DisplayOrder
-		"",                   // Level2
-		0,                    // Level2DisplayOrder
-		"",                   // Level3
-		0,                    // Level3DisplayOrder
-		true,                 //AllowedFor_OKAPI
-		true,                 //AllowedFor_App
+		"Customer UAT  - Delete", // DisplayName
+		4,                        // DisplayOrder
+		Module,                   // Module
+		ModuleDisplayOrder,       //ModuleDisplayOrder
+		Level1,                   // Level1
+		Level1DisplayOrder,       // Level1DisplayOrder
+		"",                       // Level2
+		0,                        // Level2DisplayOrder
+		"",                       // Level3
+		0,                        // Level3DisplayOrder
+		true,                     //AllowedFor_OKAPI
+		true,                     //AllowedFor_App
 	}
 	*R = append(*R, r)
-	DisplayOrder = DisplayOrder + 1
 
 	//*****************************
 	// Customer_DND
@@ -1298,21 +1292,20 @@ func (UC *UserControl) Add_LoyaltyManagementRoutes(R *Routes) {
 		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Customer_DND/",
 		Use(UC.HTTP_Customer_DND, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
 		true,
-		Level1 + " - Read", // DisplayName
-		DisplayOrder,       // DisplayOrder
-		Module,             // Module
-		ModuleDisplayOrder, //ModuleDisplayOrder
-		Level1,             // Level1
-		Level1DisplayOrder, // Level1DisplayOrder
-		"",                 // Level2
-		0,                  // Level2DisplayOrder
-		"",                 // Level3
-		0,                  // Level3DisplayOrder
-		true,               //AllowedFor_OKAPI
-		true,               //AllowedFor_App
+		"Customer DND - Read", // DisplayName
+		1,                     // DisplayOrder
+		Module,                // Module
+		ModuleDisplayOrder,    //ModuleDisplayOrder
+		Level1,                // Level1
+		Level1DisplayOrder,    // Level1DisplayOrder
+		"",                    // Level2
+		0,                     // Level2DisplayOrder
+		"",                    // Level3
+		0,                     // Level3DisplayOrder
+		true,                  //AllowedFor_OKAPI
+		true,                  //AllowedFor_App
 	}
 	*R = append(*R, r)
-	DisplayOrder = DisplayOrder + 1
 
 	r = Route{
 		"HTTP_Customer_DND",
@@ -1320,52 +1313,8 @@ func (UC *UserControl) Add_LoyaltyManagementRoutes(R *Routes) {
 		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Customer_DND/",
 		Use(UC.HTTP_Customer_DND, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
 		true,
-		Level1 + " - Add",  // DisplayName
-		DisplayOrder,       // DisplayOrder
-		Module,             // Module
-		ModuleDisplayOrder, //ModuleDisplayOrder
-		Level1,             // Level1
-		Level1DisplayOrder, // Level1DisplayOrder
-		"",                 // Level2
-		0,                  // Level2DisplayOrder
-		"",                 // Level3
-		0,                  // Level3DisplayOrder
-		true,               //AllowedFor_OKAPI
-		true,               //AllowedFor_App
-	}
-	*R = append(*R, r)
-	DisplayOrder = DisplayOrder + 1
-
-	r = Route{
-		"HTTP_Customer_DND",
-		"PUT",
-		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Customer_DND/",
-		Use(UC.HTTP_Customer_DND, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
-		true,
-		Level1 + " - Edit", // DisplayName
-		DisplayOrder,       // DisplayOrder
-		Module,             // Module
-		ModuleDisplayOrder, //ModuleDisplayOrder
-		Level1,             // Level1
-		Level1DisplayOrder, // Level1DisplayOrder
-		"",                 // Level2
-		0,                  // Level2DisplayOrder
-		"",                 // Level3
-		0,                  // Level3DisplayOrder
-		true,               //AllowedFor_OKAPI
-		true,               //AllowedFor_App
-	}
-	*R = append(*R, r)
-	DisplayOrder = DisplayOrder + 1
-
-	r = Route{
-		"HTTP_Customer_DND",
-		"DELETE",
-		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Customer_DND/{KeyDelete}/",
-		Use(UC.HTTP_Customer_DND, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
-		true,
-		Level1 + " - Delete", // DisplayName
-		DisplayOrder,         // DisplayOrder
+		"Customer DND - Add", // DisplayName
+		2,                    // DisplayOrder
 		Module,               // Module
 		ModuleDisplayOrder,   //ModuleDisplayOrder
 		Level1,               // Level1
@@ -1376,6 +1325,48 @@ func (UC *UserControl) Add_LoyaltyManagementRoutes(R *Routes) {
 		0,                    // Level3DisplayOrder
 		true,                 //AllowedFor_OKAPI
 		true,                 //AllowedFor_App
+	}
+	*R = append(*R, r)
+
+	r = Route{
+		"HTTP_Customer_DND",
+		"PUT",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Customer_DND/",
+		Use(UC.HTTP_Customer_DND, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
+		true,
+		"Customer DND - Edit", // DisplayName
+		3,                     // DisplayOrder
+		Module,                // Module
+		ModuleDisplayOrder,    //ModuleDisplayOrder
+		Level1,                // Level1
+		Level1DisplayOrder,    // Level1DisplayOrder
+		"",                    // Level2
+		0,                     // Level2DisplayOrder
+		"",                    // Level3
+		0,                     // Level3DisplayOrder
+		true,                  //AllowedFor_OKAPI
+		true,                  //AllowedFor_App
+	}
+	*R = append(*R, r)
+
+	r = Route{
+		"HTTP_Customer_DND",
+		"DELETE",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Customer_DND/{KeyDelete}/",
+		Use(UC.HTTP_Customer_DND, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
+		true,
+		"Customer DND - Delete", // DisplayName
+		4,                       // DisplayOrder
+		Module,                  // Module
+		ModuleDisplayOrder,      //ModuleDisplayOrder
+		Level1,                  // Level1
+		Level1DisplayOrder,      // Level1DisplayOrder
+		"",                      // Level2
+		0,                       // Level2DisplayOrder
+		"",                      // Level3
+		0,                       // Level3DisplayOrder
+		true,                    //AllowedFor_OKAPI
+		true,                    //AllowedFor_App
 	}
 	*R = append(*R, r)
 	DisplayOrder = DisplayOrder + 1
@@ -1391,21 +1382,20 @@ func (UC *UserControl) Add_LoyaltyManagementRoutes(R *Routes) {
 		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Customer_Exclusion/",
 		Use(UC.HTTP_Customer_Exclusion, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
 		true,
-		Level1 + " - Read", // DisplayName
-		DisplayOrder,       // DisplayOrder
-		Module,             // Module
-		ModuleDisplayOrder, //ModuleDisplayOrder
-		Level1,             // Level1
-		Level1DisplayOrder, // Level1DisplayOrder
-		"",                 // Level2
-		0,                  // Level2DisplayOrder
-		"",                 // Level3
-		0,                  // Level3DisplayOrder
-		true,               //AllowedFor_OKAPI
-		true,               //AllowedFor_App
+		"Customer Exclusion - Read", // DisplayName
+		1,                           // DisplayOrder
+		Module,                      // Module
+		ModuleDisplayOrder,          //ModuleDisplayOrder
+		Level1,                      // Level1
+		Level1DisplayOrder,          // Level1DisplayOrder
+		"",                          // Level2
+		0,                           // Level2DisplayOrder
+		"",                          // Level3
+		0,                           // Level3DisplayOrder
+		true,                        //AllowedFor_OKAPI
+		true,                        //AllowedFor_App
 	}
 	*R = append(*R, r)
-	DisplayOrder = DisplayOrder + 1
 
 	r = Route{
 		"HTTP_Customer_Exclusion",
@@ -1413,21 +1403,20 @@ func (UC *UserControl) Add_LoyaltyManagementRoutes(R *Routes) {
 		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Customer_Exclusion/",
 		Use(UC.HTTP_Customer_Exclusion, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
 		true,
-		Level1 + " - Add",  // DisplayName
-		DisplayOrder,       // DisplayOrder
-		Module,             // Module
-		ModuleDisplayOrder, //ModuleDisplayOrder
-		Level1,             // Level1
-		Level1DisplayOrder, // Level1DisplayOrder
-		"",                 // Level2
-		0,                  // Level2DisplayOrder
-		"",                 // Level3
-		0,                  // Level3DisplayOrder
-		true,               //AllowedFor_OKAPI
-		true,               //AllowedFor_App
+		"Customer Exclusion - Add", // DisplayName
+		2,                          // DisplayOrder
+		Module,                     // Module
+		ModuleDisplayOrder,         //ModuleDisplayOrder
+		Level1,                     // Level1
+		Level1DisplayOrder,         // Level1DisplayOrder
+		"",                         // Level2
+		0,                          // Level2DisplayOrder
+		"",                         // Level3
+		0,                          // Level3DisplayOrder
+		true,                       //AllowedFor_OKAPI
+		true,                       //AllowedFor_App
 	}
 	*R = append(*R, r)
-	DisplayOrder = DisplayOrder + 1
 
 	r = Route{
 		"HTTP_Customer_Exclusion",
@@ -1435,21 +1424,20 @@ func (UC *UserControl) Add_LoyaltyManagementRoutes(R *Routes) {
 		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Customer_Exclusion/",
 		Use(UC.HTTP_Customer_Exclusion, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
 		true,
-		Level1 + " - Edit", // DisplayName
-		DisplayOrder,       // DisplayOrder
-		Module,             // Module
-		ModuleDisplayOrder, //ModuleDisplayOrder
-		Level1,             // Level1
-		Level1DisplayOrder, // Level1DisplayOrder
-		"",                 // Level2
-		0,                  // Level2DisplayOrder
-		"",                 // Level3
-		0,                  // Level3DisplayOrder
-		true,               //AllowedFor_OKAPI
-		true,               //AllowedFor_App
+		"Customer Exclusion - Edit", // DisplayName
+		3,                           // DisplayOrder
+		Module,                      // Module
+		ModuleDisplayOrder,          //ModuleDisplayOrder
+		Level1,                      // Level1
+		Level1DisplayOrder,          // Level1DisplayOrder
+		"",                          // Level2
+		0,                           // Level2DisplayOrder
+		"",                          // Level3
+		0,                           // Level3DisplayOrder
+		true,                        //AllowedFor_OKAPI
+		true,                        //AllowedFor_App
 	}
 	*R = append(*R, r)
-	DisplayOrder = DisplayOrder + 1
 
 	r = Route{
 		"HTTP_Customer_Exclusion",
@@ -1457,21 +1445,20 @@ func (UC *UserControl) Add_LoyaltyManagementRoutes(R *Routes) {
 		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Customer_Exclusion/{KeyDelete}/",
 		Use(UC.HTTP_Customer_Exclusion, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
 		true,
-		Level1 + " - Delete", // DisplayName
-		DisplayOrder,         // DisplayOrder
-		Module,               // Module
-		ModuleDisplayOrder,   //ModuleDisplayOrder
-		Level1,               // Level1
-		Level1DisplayOrder,   // Level1DisplayOrder
-		"",                   // Level2
-		0,                    // Level2DisplayOrder
-		"",                   // Level3
-		0,                    // Level3DisplayOrder
-		true,                 //AllowedFor_OKAPI
-		true,                 //AllowedFor_App
+		"Customer Exclusion - Delete", // DisplayName
+		4,                             // DisplayOrder
+		Module,                        // Module
+		ModuleDisplayOrder,            //ModuleDisplayOrder
+		Level1,                        // Level1
+		Level1DisplayOrder,            // Level1DisplayOrder
+		"",                            // Level2
+		0,                             // Level2DisplayOrder
+		"",                            // Level3
+		0,                             // Level3DisplayOrder
+		true,                          //AllowedFor_OKAPI
+		true,                          //AllowedFor_App
 	}
 	*R = append(*R, r)
-	DisplayOrder = DisplayOrder + 1
 
 	//*****************************
 	// Customer_COS_Exclusion
@@ -1484,18 +1471,18 @@ func (UC *UserControl) Add_LoyaltyManagementRoutes(R *Routes) {
 		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Customer_COS_Exclusion/",
 		Use(UC.HTTP_Customer_COS_Exclusion, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
 		true,
-		Level1 + " - Read", // DisplayName
-		DisplayOrder,       // DisplayOrder
-		Module,             // Module
-		ModuleDisplayOrder, //ModuleDisplayOrder
-		Level1,             // Level1
-		Level1DisplayOrder, // Level1DisplayOrder
-		"",                 // Level2
-		0,                  // Level2DisplayOrder
-		"",                 // Level3
-		0,                  // Level3DisplayOrder
-		true,               //AllowedFor_OKAPI
-		true,               //AllowedFor_App
+		"Customer COS Exclusion - Read", // DisplayName
+		1,                               // DisplayOrder
+		Module,                          // Module
+		ModuleDisplayOrder,              //ModuleDisplayOrder
+		Level1,                          // Level1
+		Level1DisplayOrder,              // Level1DisplayOrder
+		"",                              // Level2
+		0,                               // Level2DisplayOrder
+		"",                              // Level3
+		0,                               // Level3DisplayOrder
+		true,                            //AllowedFor_OKAPI
+		true,                            //AllowedFor_App
 	}
 	*R = append(*R, r)
 	DisplayOrder = DisplayOrder + 1
@@ -1506,18 +1493,18 @@ func (UC *UserControl) Add_LoyaltyManagementRoutes(R *Routes) {
 		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Customer_COS_Exclusion/",
 		Use(UC.HTTP_Customer_COS_Exclusion, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
 		true,
-		Level1 + " - Add",  // DisplayName
-		DisplayOrder,       // DisplayOrder
-		Module,             // Module
-		ModuleDisplayOrder, //ModuleDisplayOrder
-		Level1,             // Level1
-		Level1DisplayOrder, // Level1DisplayOrder
-		"",                 // Level2
-		0,                  // Level2DisplayOrder
-		"",                 // Level3
-		0,                  // Level3DisplayOrder
-		true,               //AllowedFor_OKAPI
-		true,               //AllowedFor_App
+		"Customer COS Exclusion - Add", // DisplayName
+		2,                              // DisplayOrder
+		Module,                         // Module
+		ModuleDisplayOrder,             //ModuleDisplayOrder
+		Level1,                         // Level1
+		Level1DisplayOrder,             // Level1DisplayOrder
+		"",                             // Level2
+		0,                              // Level2DisplayOrder
+		"",                             // Level3
+		0,                              // Level3DisplayOrder
+		true,                           //AllowedFor_OKAPI
+		true,                           //AllowedFor_App
 	}
 	*R = append(*R, r)
 	DisplayOrder = DisplayOrder + 1
@@ -1528,18 +1515,18 @@ func (UC *UserControl) Add_LoyaltyManagementRoutes(R *Routes) {
 		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Customer_COS_Exclusion/",
 		Use(UC.HTTP_Customer_COS_Exclusion, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
 		true,
-		Level1 + " - Edit", // DisplayName
-		DisplayOrder,       // DisplayOrder
-		Module,             // Module
-		ModuleDisplayOrder, //ModuleDisplayOrder
-		Level1,             // Level1
-		Level1DisplayOrder, // Level1DisplayOrder
-		"",                 // Level2
-		0,                  // Level2DisplayOrder
-		"",                 // Level3
-		0,                  // Level3DisplayOrder
-		true,               //AllowedFor_OKAPI
-		true,               //AllowedFor_App
+		"Customer COS Exclusion - Edit", // DisplayName
+		3,                               // DisplayOrder
+		Module,                          // Module
+		ModuleDisplayOrder,              //ModuleDisplayOrder
+		Level1,                          // Level1
+		Level1DisplayOrder,              // Level1DisplayOrder
+		"",                              // Level2
+		0,                               // Level2DisplayOrder
+		"",                              // Level3
+		0,                               // Level3DisplayOrder
+		true,                            //AllowedFor_OKAPI
+		true,                            //AllowedFor_App
 	}
 	*R = append(*R, r)
 	DisplayOrder = DisplayOrder + 1
@@ -1550,18 +1537,18 @@ func (UC *UserControl) Add_LoyaltyManagementRoutes(R *Routes) {
 		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Customer_COS_Exclusion/{KeyDelete}/",
 		Use(UC.HTTP_Customer_COS_Exclusion, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
 		true,
-		Level1 + " - Delete", // DisplayName
-		DisplayOrder,         // DisplayOrder
-		Module,               // Module
-		ModuleDisplayOrder,   //ModuleDisplayOrder
-		Level1,               // Level1
-		Level1DisplayOrder,   // Level1DisplayOrder
-		"",                   // Level2
-		0,                    // Level2DisplayOrder
-		"",                   // Level3
-		0,                    // Level3DisplayOrder
-		true,                 //AllowedFor_OKAPI
-		true,                 //AllowedFor_App
+		"Customer COS Exclusion - Delete", // DisplayName
+		4,                                 // DisplayOrder
+		Module,                            // Module
+		ModuleDisplayOrder,                //ModuleDisplayOrder
+		Level1,                            // Level1
+		Level1DisplayOrder,                // Level1DisplayOrder
+		"",                                // Level2
+		0,                                 // Level2DisplayOrder
+		"",                                // Level3
+		0,                                 // Level3DisplayOrder
+		true,                              //AllowedFor_OKAPI
+		true,                              //AllowedFor_App
 	}
 	*R = append(*R, r)
 	DisplayOrder = DisplayOrder + 1

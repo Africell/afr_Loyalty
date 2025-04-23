@@ -352,6 +352,26 @@ func (Uc *UserControl) AddToLoyaltyManagementRouter(router *mux.Router, UC *User
 			{AccessKey: "HTTP_Customer_Loyalty_Account", AccessMethod: "POST", Allowed: true},
 			{AccessKey: "HTTP_Customer_Loyalty_Account", AccessMethod: "PUT", Allowed: true},
 			{AccessKey: "HTTP_Customer_Loyalty_Account", AccessMethod: "DELETE", Allowed: true},
+			{AccessKey: "Customer UAT", AccessMethod: "Module Sub Menu L1", Allowed: true},
+			{AccessKey: "HTTP_Customer_UAT", AccessMethod: "GET", Allowed: true},
+			{AccessKey: "HTTP_Customer_UAT", AccessMethod: "POST", Allowed: true},
+			{AccessKey: "HTTP_Customer_UAT", AccessMethod: "PUT", Allowed: true},
+			{AccessKey: "HTTP_Customer_UAT", AccessMethod: "DELETE", Allowed: true},
+			{AccessKey: "Customer DND", AccessMethod: "Module Sub Menu L1", Allowed: true},
+			{AccessKey: "HTTP_Customer_DND", AccessMethod: "GET", Allowed: true},
+			{AccessKey: "HTTP_Customer_DND", AccessMethod: "POST", Allowed: true},
+			{AccessKey: "HTTP_Customer_DND", AccessMethod: "PUT", Allowed: true},
+			{AccessKey: "HTTP_Customer_DND", AccessMethod: "DELETE", Allowed: true},
+			{AccessKey: "Customer Exclusion", AccessMethod: "Module Sub Menu L1", Allowed: true},
+			{AccessKey: "HTTP_Customer_Exclusion", AccessMethod: "GET", Allowed: true},
+			{AccessKey: "HTTP_Customer_Exclusion", AccessMethod: "POST", Allowed: true},
+			{AccessKey: "HTTP_Customer_Exclusion", AccessMethod: "PUT", Allowed: true},
+			{AccessKey: "HTTP_Customer_Exclusion", AccessMethod: "DELETE", Allowed: true},
+			{AccessKey: "Customer COS Exclusion", AccessMethod: "Module Sub Menu L1", Allowed: true},
+			{AccessKey: "HTTP_Customer_COS_Exclusion", AccessMethod: "GET", Allowed: true},
+			{AccessKey: "HTTP_Customer_COS_Exclusion", AccessMethod: "POST", Allowed: true},
+			{AccessKey: "HTTP_Customer_COS_Exclusion", AccessMethod: "PUT", Allowed: true},
+			{AccessKey: "HTTP_Customer_COS_Exclusion", AccessMethod: "DELETE", Allowed: true},
 		}
 		_, err = Uc.OKAPIAUC.AUCClient.GroupAccessEntriesForGroup_Comprehensive("VAS - Loyalty", AccessEntries_to_add)
 
@@ -582,6 +602,74 @@ func (Uc *UserControl) Add_Loyalty_ToAccessEntry(existing map[string]AuthCenter.
 		Level1DisplayOrder:   Level1DisplayOrder,
 		Level2:               "Customer Loyalty Account",
 		Level2DisplayOrder:   8,
+		Level3:               "",
+		Level3DisplayOrder:   0,
+	}
+	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
+
+	sd_ae = AuthCenter.AccessEntry{
+		AccessKey:            "Customer UAT",
+		AccessMethod:         "Module Sub Menu L1",
+		AccessKeyDescription: "Customer UAT",
+		DisplayName:          "Customer UAT",
+		DisplayOrder:         13,
+		Module:               Module,
+		ModuleDisplayOrder:   ModuleDisplayOrder,
+		Level1:               Level1,
+		Level1DisplayOrder:   Level1DisplayOrder,
+		Level2:               "Customer UAT",
+		Level2DisplayOrder:   9,
+		Level3:               "",
+		Level3DisplayOrder:   0,
+	}
+	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
+
+	sd_ae = AuthCenter.AccessEntry{
+		AccessKey:            "Customer DND",
+		AccessMethod:         "Module Sub Menu L1",
+		AccessKeyDescription: "Customer DND",
+		DisplayName:          "Customer DND",
+		DisplayOrder:         13,
+		Module:               Module,
+		ModuleDisplayOrder:   ModuleDisplayOrder,
+		Level1:               Level1,
+		Level1DisplayOrder:   Level1DisplayOrder,
+		Level2:               "Customer DND",
+		Level2DisplayOrder:   10,
+		Level3:               "",
+		Level3DisplayOrder:   0,
+	}
+	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
+
+	sd_ae = AuthCenter.AccessEntry{
+		AccessKey:            "Customer Exclusion",
+		AccessMethod:         "Module Sub Menu L1",
+		AccessKeyDescription: "Customer Exclusion",
+		DisplayName:          "Customer Exclusion",
+		DisplayOrder:         13,
+		Module:               Module,
+		ModuleDisplayOrder:   ModuleDisplayOrder,
+		Level1:               Level1,
+		Level1DisplayOrder:   Level1DisplayOrder,
+		Level2:               "Customer Exclusion",
+		Level2DisplayOrder:   11,
+		Level3:               "",
+		Level3DisplayOrder:   0,
+	}
+	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
+
+	sd_ae = AuthCenter.AccessEntry{
+		AccessKey:            "Customer COS Exclusion",
+		AccessMethod:         "Module Sub Menu L1",
+		AccessKeyDescription: "Customer COS Exclusion",
+		DisplayName:          "Customer COS Exclusion",
+		DisplayOrder:         13,
+		Module:               Module,
+		ModuleDisplayOrder:   ModuleDisplayOrder,
+		Level1:               Level1,
+		Level1DisplayOrder:   Level1DisplayOrder,
+		Level2:               "Customer ExclCOS Exclusionusion",
+		Level2DisplayOrder:   12,
 		Level3:               "",
 		Level3DisplayOrder:   0,
 	}
