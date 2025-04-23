@@ -410,6 +410,7 @@ type Loyalty_AccountCreditPoints_Request struct {
 	EventType        string  `bson:"EventType" json:"EventType"`     //BundlePurchase, MOC,...
 	EventDetail      string  `bson:"EventDetail" json:"EventDetail"` //BundleName, ...
 	EventAmount      float64 `bson:"EventAmount" json:"EventAmount"`
+	PointsToCredit   float64 `bson:"PointsToCredit" json:"PointsToCredit"`
 	EventDescription string  `bson:"EventDescription" json:"EventDescription"`
 }
 
@@ -428,6 +429,7 @@ type Loyalty_AccountCreditPoints_log struct {
 	EventType        string  `bson:"EventType" json:"EventType"`     //BundlePurchase, MOC,...
 	EventDetail      string  `bson:"EventDetail" json:"EventDetail"` //BundleName, ...
 	EventAmount      float64 `bson:"EventAmount" json:"EventAmount"`
+	PointsToCredit   float64 `bson:"PointsToCredit" json:"PointsToCredit"`
 	EventDescription string  `bson:"EventDescription" json:"EventDescription"`
 
 	Opening_Loyalty_Level_Key           string `bson:"Opening_Loyalty_Level_Key" json:"Opening_Loyalty_Level_Key"`

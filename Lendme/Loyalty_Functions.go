@@ -3610,6 +3610,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 	response.EventType = request.EventType
 	response.EventDetail = request.EventDetail
 	response.EventAmount = request.EventAmount
+	response.PointsToCredit = request.PointsToCredit
 	response.EventDescription = request.EventDescription
 
 	//validate loyalty account
@@ -3754,8 +3755,14 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 		return
 	}
 	//calucate points
-	points, mainGSM_pending, mobileMoney_pending := Calculate_Loyalty_Points(point_earning_rules, request, loyalty_account.MainGSMBalance_PendingAmount, loyalty_account.MobileMoney_PendingAmount)
-
+	var points, mainGSM_pending, mobileMoney_pending float64
+	if response.EventAmount > 0 {
+		points, mainGSM_pending, mobileMoney_pending = Calculate_Loyalty_Points(point_earning_rules, request, loyalty_account.MainGSMBalance_PendingAmount, loyalty_account.MobileMoney_PendingAmount)
+	} else {
+		points = response.PointsToCredit
+		mainGSM_pending = loyalty_account.MainGSMBalance_PendingAmount
+		mobileMoney_pending = loyalty_account.MobileMoney_PendingAmount
+	}
 	if points > 0 {
 		//response.OpeningAvailablePoints = (loyalty_account.Awarded_Points + loyalty_account.Expired_Points) - loyalty_account.Redeemed_Points
 		response.AwardedPoints = points
