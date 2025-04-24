@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"reflect"
+	"strconv"
 	"time"
 
 	PropC "afr_propylaea/PropylaeaClient"
@@ -3125,7 +3126,6 @@ func (Uc *UserControl) Customer_Loyalty_Account_GetRedemptionProductCatalogue(MS
 
 func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_Header, request Loyalty_Redemption_Request, response *Loyalty_Redemption_log) {
 	response.ReceiveDate = time.Now()
-	request.MSISDN = Normalize_International_MSISDN(request.MSISDN)
 	//fill the request header info
 	response.SourceIP = request_header.SourceIP
 	response.SourceApp = request_header.SourceApp
@@ -3133,6 +3133,17 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 	response.AppVersion = request_header.AppVersion
 	response.GPSLocation = request_header.GPSLocation
 	response.GSMLocation = request_header.GSMLocation
+	request.MSISDN = Normalize_International_MSISDN(request.MSISDN)
+	if request.MSISDN == "" {
+		response.Status = "failed"
+		response.StatusCode = http.StatusBadRequest
+		response.StatusDescription = "incorrect msisdn"
+		response.ErrorDescription = "incorrect msisdn"
+		response.StatusDate = time.Now()
+		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+		Uc.Write_Loyalty_Redemption_log(*response)
+		return
+	}
 	//fill the request info
 	response.MSISDN = request.MSISDN
 	response.ReceiveDate = time.Now()
@@ -3638,7 +3649,6 @@ func Loyalty_Level_Selection(Accumulated_Points float64) (level_key string) {
 
 func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Header, request Loyalty_AccountCreditPoints_Request, response *Loyalty_AccountCreditPoints_log) {
 	response.ReceiveDate = time.Now()
-	request.MSISDN = Normalize_International_MSISDN(request.MSISDN)
 	//fill the request header info
 	response.SourceIP = request_header.SourceIP
 	response.SourceApp = request_header.SourceApp
@@ -3646,6 +3656,18 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 	response.AppVersion = request_header.AppVersion
 	response.GPSLocation = request_header.GPSLocation
 	response.GSMLocation = request_header.GSMLocation
+	response.MSISDN = request.MSISDN
+	request.MSISDN = Normalize_International_MSISDN(request.MSISDN)
+	if request.MSISDN == "" {
+		response.Status = "failed"
+		response.StatusCode = http.StatusBadRequest
+		response.StatusDescription = "invalid msisdn"
+		response.ErrorDescription = "invalid msisdn"
+		response.StatusDate = time.Now()
+		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+		Uc.Write_Loyalty_AccountCreditPoints_log(*response)
+		return
+	}
 	//fill the request info
 	response.MSISDN = request.MSISDN
 	response.EventSource = request.EventSource
@@ -3924,7 +3946,6 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 
 func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header, request Loyalty_AccountDebitPoints_Request, response *Loyalty_AccountDebitPoints_log) {
 	response.ReceiveDate = time.Now()
-	request.MSISDN = Normalize_International_MSISDN(request.MSISDN)
 	//fill the request header info
 	response.SourceIP = request_header.SourceIP
 	response.SourceApp = request_header.SourceApp
@@ -3932,6 +3953,18 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 	response.AppVersion = request_header.AppVersion
 	response.GPSLocation = request_header.GPSLocation
 	response.GSMLocation = request_header.GSMLocation
+	response.MSISDN = request.MSISDN
+	request.MSISDN = Normalize_International_MSISDN(request.MSISDN)
+	if request.MSISDN == "" {
+		response.Status = "failed"
+		response.StatusCode = http.StatusBadRequest
+		response.StatusDescription = "incorrect msisdn"
+		response.ErrorDescription = "incorrect msisdn"
+		response.StatusDate = time.Now()
+		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+		Uc.Write_Loyalty_AccountDebitPoints_log(*response)
+		return
+	}
 	//fill the request info
 	response.MSISDN = request.MSISDN
 	response.Debit_Amount = request.Debit_Amount
@@ -4501,6 +4534,12 @@ func Normalize_International_MSISDN(MSISDN string) (N_MSISDN string) {
 	if len(MSISDN) < Configuration.MSISDN_Short_len {
 		return ""
 	} else {
+		//check if msisdn contain character
+		_, err := strconv.Atoi(MSISDN)
+		if err != nil {
+			return ""
+		}
+		//normalize
 		if len(MSISDN) == len(Configuration.CountryCode)+Configuration.MSISDN_Short_len {
 			return MSISDN
 		} else if len(MSISDN) == Configuration.MSISDN_Short_len {

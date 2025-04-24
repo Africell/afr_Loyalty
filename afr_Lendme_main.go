@@ -108,7 +108,7 @@ func (p *program) run() {
 		log.Println("Loyalty Feed WS listen and serve on port: " + HttpLoyaltyFeedPort) //auc.Configuration.HttpServicePort
 		go http.ListenAndServe(":"+HttpLoyaltyFeedPort, corsOpts.Handler(Loyalty_Feed_router))
 
-		go UserControl.PointsExpiry_Process()
+		//go UserControl.PointsExpiry_Process()
 		go UserControl.LoyaltyGovernancePools_Metrics_Process()
 	}
 
