@@ -3047,6 +3047,10 @@ func (Uc *UserControl) Customer_Loyalty_Account_Delete(Login, Key string) (err e
 }
 
 func (Uc *UserControl) Customer_Loyalty_Account_GetRedemption_Rules(MSISDN string) (Redemption_Rules Loyalty_Point_Redemption_Rules, err error) {
+	MSISDN = Normalize_International_MSISDN(MSISDN)
+	if MSISDN == "" {
+		return Redemption_Rules, errors.New("msisdn cannot be empty")
+	}
 	//get loyalty account detail
 	loyalty_account_na, subexist := Map_Customer_Loyalty_Account.CheckThenGet(MSISDN)
 	if !subexist {
