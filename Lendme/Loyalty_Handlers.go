@@ -2444,9 +2444,6 @@ func (Uc *UserControl) HTTP_INLiveFeed_Consuption(w http.ResponseWriter, r *http
 			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to read request body"
 			sr.ErrorDescription = err.Error()
 			Uc.HTTP_API_Standard_response(w, r, sr, false)
-			if sr.SourceApp == "MM LiveFeed" {
-				log.Println(sr.StatusDescription)
-			}
 			return
 		}
 		var request Loyalty_AccountCreditPoints_Request
@@ -2457,9 +2454,6 @@ func (Uc *UserControl) HTTP_INLiveFeed_Consuption(w http.ResponseWriter, r *http
 			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to Unmarshal body"
 			sr.ErrorDescription = err.Error()
 			Uc.HTTP_API_Standard_response(w, r, sr, false)
-			if sr.SourceApp == "MM LiveFeed" {
-				log.Println(sr.StatusDescription)
-			}
 			return
 		}
 		validated_Headers := Uc.Validate_Headers(r)
@@ -2474,6 +2468,7 @@ func (Uc *UserControl) HTTP_INLiveFeed_Consuption(w http.ResponseWriter, r *http
 			LiveFeedCounters.With(prometheus.Labels{"Stream": "Live feed", "Type": "consumption", "Description": "award issue"}).Inc()
 			if sr.SourceApp == "MM LiveFeed" {
 				log.Println(sr.StatusDescription)
+				log.Println(sr.ErrorDescription)
 			}
 			return
 		}
