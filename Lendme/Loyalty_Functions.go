@@ -4098,6 +4098,108 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 			}
 		}
 	case "MobileMoney_feed":
+		switch award_request.EventType {
+		case "P2P":
+			if rules.MM_P2P_Award_Type == "Transaction" {
+				if rules.MM_P2P > 0 {
+					return rules.MM_P2P, mainGSM_CurrentPending, mobileMoney_CurrentPending
+				}
+			} else if rules.MM_P2P_Award_Type == "Amount" {
+				if rules.MM_P2P > 0 && award_request.EventAmount > 0 {
+					flt_points := (award_request.EventAmount + mobileMoney_CurrentPending) / rules.MM_P2P
+					int_points := int(flt_points)
+					mobileMoney_CurrentPending = (award_request.EventAmount + mobileMoney_CurrentPending) - (float64(int_points) * rules.MM_P2P)
+					return float64(int_points), mainGSM_pending, mobileMoney_CurrentPending
+				}
+			}
+			return 0, mainGSM_CurrentPending, mobileMoney_CurrentPending
+		case "CASHIN":
+			if rules.MM_CASHIN_Award_Type == "Transaction" {
+				if rules.MM_CASHIN > 0 {
+					return rules.MM_CASHIN, mainGSM_CurrentPending, mobileMoney_CurrentPending
+				}
+			} else if rules.MM_CASHIN_Award_Type == "Amount" {
+				if rules.MM_CASHIN > 0 && award_request.EventAmount > 0 {
+					flt_points := (award_request.EventAmount + mobileMoney_CurrentPending) / rules.MM_CASHIN
+					int_points := int(flt_points)
+					mobileMoney_CurrentPending = (award_request.EventAmount + mobileMoney_CurrentPending) - (float64(int_points) * rules.MM_CASHIN)
+					return float64(int_points), mainGSM_pending, mobileMoney_CurrentPending
+				}
+			}
+			return 0, mainGSM_CurrentPending, mobileMoney_CurrentPending
+		case "CASHOUT":
+			if rules.MM_CASHOUT_Award_Type == "Transaction" {
+				if rules.MM_CASHOUT > 0 {
+					return rules.MM_CASHOUT, mainGSM_CurrentPending, mobileMoney_CurrentPending
+				}
+			} else if rules.MM_CASHOUT_Award_Type == "Amount" {
+				if rules.MM_CASHOUT > 0 && award_request.EventAmount > 0 {
+					flt_points := (award_request.EventAmount + mobileMoney_CurrentPending) / rules.MM_CASHOUT
+					int_points := int(flt_points)
+					mobileMoney_CurrentPending = (award_request.EventAmount + mobileMoney_CurrentPending) - (float64(int_points) * rules.MM_CASHOUT)
+					return float64(int_points), mainGSM_pending, mobileMoney_CurrentPending
+				}
+			}
+			return 0, mainGSM_CurrentPending, mobileMoney_CurrentPending
+		case "MERCHPAY":
+			if rules.MM_MERCHPAY_Award_Type == "Transaction" {
+				if rules.MM_MERCHPAY > 0 {
+					return rules.MM_MERCHPAY, mainGSM_CurrentPending, mobileMoney_CurrentPending
+				}
+			} else if rules.MM_MERCHPAY_Award_Type == "Amount" {
+				if rules.MM_MERCHPAY > 0 && award_request.EventAmount > 0 {
+					flt_points := (award_request.EventAmount + mobileMoney_CurrentPending) / rules.MM_MERCHPAY
+					int_points := int(flt_points)
+					mobileMoney_CurrentPending = (award_request.EventAmount + mobileMoney_CurrentPending) - (float64(int_points) * rules.MM_MERCHPAY)
+					return float64(int_points), mainGSM_pending, mobileMoney_CurrentPending
+				}
+			}
+			return 0, mainGSM_CurrentPending, mobileMoney_CurrentPending
+		case "BILLPAY":
+			if rules.MM_BILLPAY_Award_Type == "Transaction" {
+				if rules.MM_BILLPAY > 0 {
+					return rules.MM_BILLPAY, mainGSM_CurrentPending, mobileMoney_CurrentPending
+				}
+			} else if rules.MM_BILLPAY_Award_Type == "Amount" {
+				if rules.MM_BILLPAY > 0 && award_request.EventAmount > 0 {
+					flt_points := (award_request.EventAmount + mobileMoney_CurrentPending) / rules.MM_BILLPAY
+					int_points := int(flt_points)
+					mobileMoney_CurrentPending = (award_request.EventAmount + mobileMoney_CurrentPending) - (float64(int_points) * rules.MM_BILLPAY)
+					return float64(int_points), mainGSM_pending, mobileMoney_CurrentPending
+				}
+			}
+			return 0, mainGSM_CurrentPending, mobileMoney_CurrentPending
+		case "RC":
+			if rules.MM_RC_Award_Type == "Transaction" {
+				if rules.MM_RC > 0 {
+					return rules.MM_RC, mainGSM_CurrentPending, mobileMoney_CurrentPending
+				}
+			} else if rules.MM_RC_Award_Type == "Amount" {
+				if rules.MM_RC > 0 && award_request.EventAmount > 0 {
+					flt_points := (award_request.EventAmount + mobileMoney_CurrentPending) / rules.MM_RC
+					int_points := int(flt_points)
+					mobileMoney_CurrentPending = (award_request.EventAmount + mobileMoney_CurrentPending) - (float64(int_points) * rules.MM_RC)
+					return float64(int_points), mainGSM_pending, mobileMoney_CurrentPending
+				}
+			}
+			return 0, mainGSM_CurrentPending, mobileMoney_CurrentPending
+		case "CTMMOREQ":
+			if rules.MM_CTMMOREQ_Award_Type == "Transaction" {
+				if rules.MM_CTMMOREQ > 0 {
+					return rules.MM_CTMMOREQ, mainGSM_CurrentPending, mobileMoney_CurrentPending
+				}
+			} else if rules.MM_CTMMOREQ_Award_Type == "Amount" {
+				if rules.MM_CTMMOREQ > 0 && award_request.EventAmount > 0 {
+					flt_points := (award_request.EventAmount + mobileMoney_CurrentPending) / rules.MM_CTMMOREQ
+					int_points := int(flt_points)
+					mobileMoney_CurrentPending = (award_request.EventAmount + mobileMoney_CurrentPending) - (float64(int_points) * rules.MM_CTMMOREQ)
+					return float64(int_points), mainGSM_pending, mobileMoney_CurrentPending
+				}
+			}
+			return 0, mainGSM_CurrentPending, mobileMoney_CurrentPending
+		default:
+
+		}
 		return 0, mainGSM_CurrentPending, mobileMoney_CurrentPending
 	case "MyAfricellApp":
 		switch award_request.EventType {
