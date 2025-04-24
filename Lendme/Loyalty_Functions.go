@@ -3889,11 +3889,13 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 			PointsDetail.Creation_date = time.Now()
 			PointsDetail.Awarded_Points = points
 			PointsDetail.Available_Points = PointsDetail.Awarded_Points
+			loyalty_account.LoyaltyPointsDetail[YYYY+MM] = PointsDetail
 		} else {
 			PointsDetail.Awarded_Points = PointsDetail.Awarded_Points + points
 			PointsDetail.Available_Points = PointsDetail.Awarded_Points - PointsDetail.Redeemed_Points
+			delete(loyalty_account.LoyaltyPointsDetail, YYYY+MM)
+			loyalty_account.LoyaltyPointsDetail[YYYY+MM] = PointsDetail
 		}
-		loyalty_account.LoyaltyPointsDetail[YYYY+MM] = PointsDetail
 		if PointsDetail.Awarded_Points > loyalty_governance.MaxSubsAwardedPoints_PerMonth {
 			response.Status = "failed"
 			response.StatusCode = http.StatusBadRequest
