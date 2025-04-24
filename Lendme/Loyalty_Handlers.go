@@ -3,6 +3,7 @@ package Lendme
 import (
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -2430,7 +2431,6 @@ func (Uc *UserControl) HTTP_INLiveFeed_Consuption(w http.ResponseWriter, r *http
 	sr.AccessMethod = r.Method
 	sr.HostId = Configuration.HostId
 	sr.ReceiveDate = time.Now()
-
 	method := r.Method
 	switch method {
 
@@ -2444,6 +2444,9 @@ func (Uc *UserControl) HTTP_INLiveFeed_Consuption(w http.ResponseWriter, r *http
 			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to read request body"
 			sr.ErrorDescription = err.Error()
 			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			if sr.SourceApp == "MM LiveFeed" {
+				log.Println(sr.StatusDescription)
+			}
 			return
 		}
 		var request Loyalty_AccountCreditPoints_Request
@@ -2454,6 +2457,9 @@ func (Uc *UserControl) HTTP_INLiveFeed_Consuption(w http.ResponseWriter, r *http
 			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to Unmarshal body"
 			sr.ErrorDescription = err.Error()
 			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			if sr.SourceApp == "MM LiveFeed" {
+				log.Println(sr.StatusDescription)
+			}
 			return
 		}
 		validated_Headers := Uc.Validate_Headers(r)
@@ -2466,6 +2472,9 @@ func (Uc *UserControl) HTTP_INLiveFeed_Consuption(w http.ResponseWriter, r *http
 			sr.ErrorDescription = loyalty_AccountCreditPoints_log.ErrorDescription
 			Uc.HTTP_API_Standard_response(w, r, sr, true)
 			LiveFeedCounters.With(prometheus.Labels{"Stream": "Live feed", "Type": "consumption", "Description": "award issue"}).Inc()
+			if sr.SourceApp == "MM LiveFeed" {
+				log.Println(sr.StatusDescription)
+			}
 			return
 		}
 		LiveFeedCounters.With(prometheus.Labels{"Stream": request.EventSource, "Type": request.EventType, "Description": "Consumption"}).Inc()
