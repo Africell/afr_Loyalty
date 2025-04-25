@@ -80,25 +80,25 @@ func NewUserControl() *UserControl {
 		Configuration.IN.Timeout,
 		Configuration.IN.PrintLogs)
 
-	// CGWAUC := AuthCenterClient.InitHostConfig(Configuration.CGW_AUC.Protocol,
-	// 	Configuration.CGW_AUC.Hostname,
-	// 	Configuration.CGW_AUC.Port,
-	// 	Configuration.CGW_AUC.Module,
-	// 	Configuration.CGW_AUC.Version,
-	// 	"",
-	// 	Configuration.CGW_AUC.S2S_Username,
-	// 	Configuration.CGW_AUC.S2S_Password,
-	// 	Configuration.CGW_AUC.Timeout_After)
+	CGWAUC := AuthCenterClient.InitHostConfig(Configuration.CGW_AUC.Protocol,
+		Configuration.CGW_AUC.Hostname,
+		Configuration.CGW_AUC.Port,
+		Configuration.CGW_AUC.Module,
+		Configuration.CGW_AUC.Version,
+		"",
+		Configuration.CGW_AUC.S2S_Username,
+		Configuration.CGW_AUC.S2S_Password,
+		Configuration.CGW_AUC.Timeout_After)
 
-	// CGWHostConfig = UCGW_client.UC_GW_Client{
-	// 	Protocol:   Configuration.CGW.Protocol,
-	// 	Hostname:   Configuration.CGW.Hostname,
-	// 	Port:       Configuration.CGW.Port,
-	// 	Module:     Configuration.CGW.Module,
-	// 	Version:    Configuration.CGW.Version,
-	// 	Timeout:    10 * Configuration.CGW.Timeout,
-	// 	AUC_client: AuthCenterClient.NewAUCClient(CGWAUC).AUCClient,
-	// }
+	CGWHostConfig = UCGW_client.UC_GW_Client{
+		Protocol:   Configuration.CGW.Protocol,
+		Hostname:   Configuration.CGW.Hostname,
+		Port:       Configuration.CGW.Port,
+		Module:     Configuration.CGW.Module,
+		Version:    Configuration.CGW.Version,
+		Timeout:    10 * Configuration.CGW.Timeout,
+		AUC_client: AuthCenterClient.NewAUCClient(CGWAUC).AUCClient,
+	}
 
 	propylaea_config := Prop.Propylaea_Client{
 		Protocol:        Configuration.Propylaea.Protocol, // or https
@@ -118,8 +118,8 @@ func NewUserControl() *UserControl {
 		OKAPIAUC:       AuthCenterClient.NewAUCClient(OKAPI_AUCHostConfig),
 		CacheDir:       daoc.NewCacheRegistry(),
 		IN:             INClient.NewINClient(INHostConfig),
-		//CGW:            UCGW_client.NewUC_GWClient(CGWHostConfig),
-		Propylaea: Prop.NewPropylaeaClient(propylaea_config),
+		CGW:            UCGW_client.NewUC_GWClient(CGWHostConfig),
+		Propylaea:      Prop.NewPropylaeaClient(propylaea_config),
 	}
 	return UC
 }
