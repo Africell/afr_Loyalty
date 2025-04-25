@@ -43,6 +43,9 @@ var DAO_Loyalty_Plan daoc.DAO
 var Map_Customer_Loyalty_Account daoc.Cache_Synch
 var DAO_Customer_Loyalty_Account daoc.DAO
 
+var Map_Customer_Loyalty_Account_Points_Detail daoc.Cache_Synch
+var DAO_Customer_Loyalty_Account_Points_Detail daoc.DAO
+
 var Map_Customer_DND daoc.Cache_Synch
 var DAO_Customer_DND daoc.DAO
 
@@ -88,6 +91,8 @@ func (uc *UserControl) InitializeLoyaltyCache() {
 	Map_Loyalty_Plan.Initialize("Loyalty_Plan", "Loyalty_Plan", reflect.TypeOf(Loyalty_Plan{}), loyalty_Plan, true, &DAO_Loyalty_Plan, uc.CacheDir.List)
 	var customer_Loyalty_Account Customer_Loyalty_Account
 	Map_Customer_Loyalty_Account.Initialize("Customer_Loyalty_Account", "Customer_Loyalty_Account", reflect.TypeOf(Customer_Loyalty_Account{}), customer_Loyalty_Account, true, &DAO_Customer_Loyalty_Account, uc.CacheDir.List)
+	var customer_Loyalty_Account_Points_Detail Customer_Loyalty_Account_Points_Detail
+	Map_Customer_Loyalty_Account_Points_Detail.Initialize("Customer_Loyalty_Account_Points_Detail", "Customer_Loyalty_Account_Points_Detail", reflect.TypeOf(Customer_Loyalty_Account_Points_Detail{}), customer_Loyalty_Account_Points_Detail, true, &DAO_Customer_Loyalty_Account_Points_Detail, uc.CacheDir.List)
 	var customer_DND Customer_DND
 	Map_Customer_DND.Initialize("Customer_DND", "Customer_DND", reflect.TypeOf(Customer_DND{}), customer_DND, true, &DAO_Customer_DND, uc.CacheDir.List)
 	var customer_Exclusion Customer_Exclusion
@@ -110,6 +115,7 @@ func (uc *UserControl) InitializeLoyaltyDAO() {
 	DAO_Loyalty_Point_Redemption_Rules.Initialize("Loyalty_Point_Redemption_Rules", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Point_Redemption_Rules{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Point_Redemption_Rules", "")
 	DAO_Loyalty_Plan.Initialize("Loyalty_Plan", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Plan{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Plan", "")
 	DAO_Customer_Loyalty_Account.Initialize("Customer_Loyalty_Account", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Customer_Loyalty_Account{}), Configuration.DB_Name_Loyalty, "Col_Customer_Loyalty_Account", "")
+	DAO_Customer_Loyalty_Account_Points_Detail.Initialize("Customer_Loyalty_Account_Points_Detail", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Customer_Loyalty_Account_Points_Detail{}), Configuration.DB_Name_Loyalty, "Col_Customer_Loyalty_Account_Points_Detail", "")
 	DAO_Loyalty_Event_Log.Initialize("Loyalty_Event_Log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Event_Log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Event_Log", "")
 	DAO_Customer_DND.Initialize("Customer_DND", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Customer_DND{}), Configuration.DB_Name_Loyalty, "Col_Customer_DND", "")
 	DAO_Customer_Exclusion.Initialize("Customer_Exclusion", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Customer_Exclusion{}), Configuration.DB_Name_Loyalty, "Col_Customer_Exclusion", "")
@@ -202,6 +208,15 @@ func (uc *UserControl) LoyaltyIndexesMaintenanceProcess() {
 	} else {
 		if !exists {
 			log.Println("Index Idx_Customer_Loyalty_Account_Key created")
+		}
+	}
+
+	exists, err = DAO_Customer_Loyalty_Account_Points_Detail.CheckAndCreateIndex("Idx_Customer_Loyalty_Account_Points_Detail", []string{"Key"}, true)
+	if err != nil {
+		log.Println("Error creating index Idx_Customer_Loyalty_Account_Points_Detail: ", err)
+	} else {
+		if !exists {
+			log.Println("Index Idx_Customer_Loyalty_Account_Points_Detail created")
 		}
 	}
 
@@ -2797,8 +2812,6 @@ func (Uc *UserControl) Customer_Loyalty_Account_Add(Login string, request Custom
 		}
 	}
 
-	NewEntry.LoyaltyPointsDetail = make(map[string]Loyalty_Points_Detail)
-
 	//add to cache and DB
 	Map_Customer_Loyalty_Account.Put(NewEntry.Key, NewEntry)
 	//add logs
@@ -3879,22 +3892,33 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 		loyalty_account.Last_Award_Date = time.Now()
 		loyalty_account.MainGSMBalance_PendingAmount = mainGSM_pending
 		loyalty_account.MobileMoney_PendingAmount = mobileMoney_pending
-
 		YYYY, MM, _, _, _, _, _ := GetTimeParts(time.Now())
-		var PointsDetail Loyalty_Points_Detail
-		var exist bool
-		PointsDetail, exist = loyalty_account.LoyaltyPointsDetail[YYYY+MM]
+		//prepare the monthly points detail
+		var PointsDetail Customer_Loyalty_Account_Points_Detail
+		PointsDetail_na, exist := Map_Customer_Loyalty_Account_Points_Detail.CheckThenGet(request.MSISDN + "|" + YYYY + MM)
 		if !exist {
+			PointsDetail.Key = request.MSISDN + "|" + YYYY + MM
 			PointsDetail.Year_Month = YYYY + MM
 			PointsDetail.Creation_date = time.Now()
 			PointsDetail.Awarded_Points = points
 			PointsDetail.Available_Points = PointsDetail.Awarded_Points
-			loyalty_account.LoyaltyPointsDetail[YYYY+MM] = PointsDetail
+			PointsDetail.Last_Credit_Date = time.Now()
+			loyalty_account.Points_Detail_Keys = append(loyalty_account.Points_Detail_Keys, request.MSISDN+"|"+YYYY+MM)
 		} else {
+			PointsDetail, ok := PointsDetail_na.(Customer_Loyalty_Account_Points_Detail)
+			if !ok {
+				response.Status = "failed"
+				response.StatusCode = http.StatusBadRequest
+				response.StatusDescription = "failed to credit loyalty account"
+				response.ErrorDescription = "issue with Customer_Loyalty_Account_Points_Detail type assertion"
+				response.StatusDate = time.Now()
+				response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+				Uc.Write_Loyalty_AccountCreditPoints_log(*response)
+				return
+			}
 			PointsDetail.Awarded_Points = PointsDetail.Awarded_Points + points
-			PointsDetail.Available_Points = PointsDetail.Awarded_Points - PointsDetail.Redeemed_Points
-			delete(loyalty_account.LoyaltyPointsDetail, YYYY+MM)
-			loyalty_account.LoyaltyPointsDetail[YYYY+MM] = PointsDetail
+			PointsDetail.Available_Points = (PointsDetail.Awarded_Points + PointsDetail.Expired_Points) - PointsDetail.Redeemed_Points
+			PointsDetail.Last_Credit_Date = time.Now()
 		}
 		if PointsDetail.Awarded_Points > loyalty_governance.MaxSubsAwardedPoints_PerMonth {
 			response.Status = "failed"
@@ -3909,6 +3933,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 		err := Uc.Loyalty_Governance_Available_Points_Debit(points)
 		if err == nil {
 			Map_Customer_Loyalty_Account.Put(loyalty_account.Key, loyalty_account)
+			Map_Customer_Loyalty_Account_Points_Detail.Put(PointsDetail.Key, PointsDetail)
 			new_Loyalty_level_key, errNL := Uc.EvaluateAndUpdate_CustomerLoyaltyLevel(response.AppLogin, loyalty_account.Key)
 			if errNL != nil {
 				loyalty_account.Loyalty_Level_Key = new_Loyalty_level_key
@@ -4038,10 +4063,22 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 		if d.Before(time.Now().AddDate(0, 0, 1)) {
 			//fmt.Println(d.Format("2006-01-02"))
 			YYYY, MM, _, _, _, _, _ := GetTimeParts(d)
-			var PointsDetail Loyalty_Points_Detail
-			var exist bool
-			PointsDetail, exist = loyalty_Account.LoyaltyPointsDetail[YYYY+MM]
+			//prepare the monthly points detail
+			var PointsDetail Customer_Loyalty_Account_Points_Detail
+			PointsDetail_na, exist := Map_Customer_Loyalty_Account_Points_Detail.CheckThenGet(request.MSISDN + "|" + YYYY + MM)
 			if exist {
+				var ok bool
+				PointsDetail, ok = PointsDetail_na.(Customer_Loyalty_Account_Points_Detail)
+				if !ok {
+					response.Status = "failed"
+					response.StatusCode = http.StatusBadRequest
+					response.StatusDescription = "failed to credit loyalty account"
+					response.ErrorDescription = "issue with Customer_Loyalty_Account_Points_Detail type assertion"
+					response.StatusDate = time.Now()
+					response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+					Uc.Write_Loyalty_AccountDebitPoints_log(*response)
+					return
+				}
 				if PointsDetail.Available_Points > 0 {
 					if PointsDetail.Available_Points >= Amount_to_debit {
 						//full amount available
@@ -4057,7 +4094,7 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 						PointsDetail.Last_Redeem_Date = time.Now()
 						Amount_to_debit = Amount_to_debit - partial_debit_amount
 					}
-					loyalty_Account.LoyaltyPointsDetail[YYYY+MM] = PointsDetail
+					Map_Customer_Loyalty_Account_Points_Detail.Put(PointsDetail.Key, PointsDetail)
 					if Amount_to_debit == 0 {
 						break
 					}
@@ -4457,20 +4494,29 @@ func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account
 			return
 		}
 		YYYY, MM, _, _, _, _, _ := GetTimeParts(Expiry_Date)
-		var PointsDetail Loyalty_Points_Detail
+
+		var PointsDetail Customer_Loyalty_Account_Points_Detail
 		var lpdexist bool
-		PointsDetail, lpdexist = account.LoyaltyPointsDetail[YYYY+MM]
+		PointsDetail_na, lpdexist := Map_Customer_Loyalty_Account_Points_Detail.CheckThenGet(account.Key + "|" + YYYY + MM)
 		if !lpdexist {
 			<-chan_PointsExpiry_Controler
 			return
 		} else {
+			var ok bool
+			PointsDetail, ok = PointsDetail_na.(Customer_Loyalty_Account_Points_Detail)
+			if !ok {
+				<-chan_PointsExpiry_Controler
+				return
+			}
 			expired_Points := PointsDetail.Available_Points
 			expiry_log.Year_Month = YYYY + MM
 			expiry_log.Month_Awarded_Points = PointsDetail.Awarded_Points
 			expiry_log.Month_Redeemed_Points = PointsDetail.Redeemed_Points
 			expiry_log.Month_Available_Points = PointsDetail.Available_Points
 			expiry_log.Month_Expired_Points = PointsDetail.Available_Points
-			delete(account.LoyaltyPointsDetail, YYYY+MM)
+			Map_Customer_Loyalty_Account_Points_Detail.Delete(account.Key + "|" + YYYY + MM)
+			//remove detail key from account
+			account.Points_Detail_Keys = removeStringFromArray(account.Points_Detail_Keys, account.Key+"|"+YYYY+MM)
 			account.Expired_Points = account.Expired_Points + PointsDetail.Available_Points
 			account.Expiry_Date = time.Now()
 			account.Awarded_Points = account.Awarded_Points - PointsDetail.Available_Points
@@ -4484,13 +4530,9 @@ func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account
 			expiry_log.End_Available_Points = account.Available_Points
 			expiry_log.End_Expired_Points = account.Expired_Points
 			//check level downgrade
-			if account.Loyalty_Level_SetBy != "DWH_Import" &&
-				account.Loyalty_Level_SetBy != "INLiveFeed" &&
-				account.Loyalty_Level_SetBy != "Points_Expiry" {
-				new_Loyalty_level_key, errNL := Uc.EvaluateAndUpdate_CustomerLoyaltyLevel("Points_Expiry", account.Key)
-				if errNL != nil {
-					expiry_log.EndLoyaltyLevel = new_Loyalty_level_key
-				}
+			new_Loyalty_level_key, errNL := Uc.EvaluateAndUpdate_CustomerLoyaltyLevel("Points_Expiry", account.Key)
+			if errNL != nil {
+				expiry_log.EndLoyaltyLevel = new_Loyalty_level_key
 			}
 		}
 		expiry_log.ExpiryStatus = "successful"
@@ -4503,6 +4545,15 @@ func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account
 	} else {
 		<-chan_PointsExpiry_Controler
 	}
+}
+
+func removeStringFromArray(s []string, r string) []string {
+	for i, v := range s {
+		if v == r {
+			return append(s[:i], s[i+1:]...)
+		}
+	}
+	return s
 }
 
 func (Uc *UserControl) LoyaltyGovernancePools_Metrics_Process() {

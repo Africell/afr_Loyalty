@@ -410,7 +410,7 @@ type Customer_Loyalty_Account struct {
 	MainGSMBalance_PendingAmount float64 `bson:"MainGSMBalance_PendingAmount" json:"MainGSMBalance_PendingAmount"`
 	MobileMoney_PendingAmount    float64 `bson:"MobileMoney_AmountConsumedPerPoint" json:"MobileMoney_AmountConsumedPerPoint"`
 
-	LoyaltyPointsDetail map[string]Loyalty_Points_Detail `bson:"LoyaltyPointsDetail" json:"LoyaltyPointsDetail"`
+	Points_Detail_Keys []string `bson:"Points_Detail_Keys" json:"Points_Detail_Keys"`
 }
 
 type Customer_Loyalty_Account_AddRequest struct {
@@ -432,7 +432,8 @@ type Customer_Loyalty_Account_EditRequest struct {
 	Joining_Date      time.Time `bson:"Joining_Date" json:"Joining_Date"`
 }
 
-type Loyalty_Points_Detail struct {
+type Customer_Loyalty_Account_Points_Detail struct {
+	Key              string    `bson:"Key" json:"Key"` //MSISDN + "|"+Year_Month
 	Year_Month       string    `bson:"Year_Month" json:"Year_Month"`
 	Creation_date    time.Time `bson:"Creation_date" json:"Creation_date"`
 	Awarded_Points   float64   `bson:"Awarded_Points" json:"Awarded_Points"`
@@ -441,6 +442,7 @@ type Loyalty_Points_Detail struct {
 	Expired_Points   float64   `bson:"Expired_Points" json:"Expired_Points"`     //expired are deducted from Awarded_Points
 	Expiry_Date      time.Time `bson:"Expiry_Date" json:"Expiry_Date"`
 	Last_Redeem_Date time.Time `bson:"Last_Redeem_Date" json:"Last_Redeem_Date"`
+	Last_Credit_Date time.Time `bson:"Last_Credit_Date" json:"Last_Credit_Date"`
 }
 
 type Loyalty_AccountCreditPoints_Request struct {
