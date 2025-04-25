@@ -574,8 +574,8 @@ func setDefaultConfiguration_GM_Loyalty() (Configuration ConfigType) {
 	Configuration.CGW_AUC.Port = "9994"
 	Configuration.CGW_AUC.Module = "AUC"
 	Configuration.CGW_AUC.Version = "V1"
-	Configuration.CGW_AUC.S2S_Username = "SAW_UCGW"
-	Configuration.CGW_AUC.S2S_Password = "uC@g$ASDKJH66&&&RiS6$2"
+	Configuration.CGW_AUC.S2S_Username = "UCGW_Admin"
+	Configuration.CGW_AUC.S2S_Password = "uC@g$W$iRiS6$2"
 	Configuration.CGW_AUC.Timeout_After = 5 * time.Second
 
 	Configuration.CGW.Protocol = "http"
