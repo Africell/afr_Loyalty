@@ -3833,7 +3833,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 	}
 	//calucate points
 	var points, mainGSM_pending, mobileMoney_pending float64
-	if response.EventAmount > 0 {
+	if response.PointsToCredit == 0 {
 		points, mainGSM_pending, mobileMoney_pending = Calculate_Loyalty_Points(point_earning_rules, request, loyalty_account.MainGSMBalance_PendingAmount, loyalty_account.MobileMoney_PendingAmount)
 	} else {
 		points = response.PointsToCredit
