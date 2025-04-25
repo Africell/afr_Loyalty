@@ -70,7 +70,7 @@ func (Uc *UserControl) AddToAppRouter(router *mux.Router, UC *UserControl) {
 	}
 
 	log.Println("Read existing routes: #", len(accessEntries.Data))
-
+	MapAccessEntry.Clear()
 	for _, acc := range accessEntries.Data {
 		MapAccessEntry.Put(acc.Key, acc)
 	}
@@ -140,7 +140,7 @@ func (Uc *UserControl) AddToLoyaltyServiceRouter(router *mux.Router, UC *UserCon
 	if err != nil {
 		log.Fatalln("Error Reading Existing Access Entries from AUC !!!")
 	}
-
+	MapAccessEntry.Clear()
 	log.Println("Read existing routes: #", len(accessEntries.Data))
 
 	for _, acc := range accessEntries.Data {
@@ -213,6 +213,7 @@ func (Uc *UserControl) AddToLoyaltyManagementRouter(router *mux.Router, UC *User
 	if err != nil {
 		log.Fatalln("Error Reading Existing Access Entries from AUC !!!")
 	}
+	MapAccessEntry.Clear()
 
 	fmt.Println("Read existing routes: #", len(accessEntries.Data))
 	var existingEntries = make(map[string]AuthCenter.AccessEntry)
