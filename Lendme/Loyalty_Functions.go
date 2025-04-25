@@ -3327,7 +3327,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			PayerPIN:               redemption_Rules.Airtime_EVC_PIN,
 			PaymentMethod:          "Loyalty Points",
 			TargetMSISDN:           request.MSISDN,
-			Amount:                 request.Redemption_Amount,
+			Amount:                 response.Redemption_Amount,
 			SendPayerNotification:  false,
 			SendTargetNotification: true,
 			Language:               "EN",
