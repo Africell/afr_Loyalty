@@ -3905,7 +3905,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 			PointsDetail.Last_Credit_Date = time.Now()
 			loyalty_account.Points_Detail_Keys = append(loyalty_account.Points_Detail_Keys, request.MSISDN+"|"+YYYY+MM)
 		} else {
-			PointsDetail, ok := PointsDetail_na.(Customer_Loyalty_Account_Points_Detail)
+			PointsDetail, ok = PointsDetail_na.(Customer_Loyalty_Account_Points_Detail)
 			if !ok {
 				response.Status = "failed"
 				response.StatusCode = http.StatusBadRequest
