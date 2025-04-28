@@ -3743,7 +3743,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 		response.ErrorDescription = "invalid msisdn"
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
-		Uc.Write_Loyalty_AccountCreditPoints_log(*response)
+		//Uc.Write_Loyalty_AccountCreditPoints_log(*response)
 		return
 	}
 	//fill the request info
@@ -4350,7 +4350,7 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 			}
 			return 0, mainGSM_CurrentPending, mobileMoney_CurrentPending
 		default:
-
+			return 0, mainGSM_CurrentPending, mobileMoney_CurrentPending
 		}
 		return 0, mainGSM_CurrentPending, mobileMoney_CurrentPending
 	case "MyAfricellApp":

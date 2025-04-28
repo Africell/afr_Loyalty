@@ -19,6 +19,7 @@ require (
 	afr_unified_charging_gateway v0.0.0-00010101000000-000000000000
 	daoc v0.0.0-00010101000000-000000000000
 	github.com/gorilla/mux v1.8.1
+	github.com/jinzhu/copier v0.4.0
 	github.com/kardianos/service v1.2.2
 	github.com/prometheus/client_golang v1.20.5
 	github.com/rs/cors v1.11.1
