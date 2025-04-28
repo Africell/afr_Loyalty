@@ -3,7 +3,6 @@ package Lendme
 import (
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -2466,10 +2465,10 @@ func (Uc *UserControl) HTTP_INLiveFeed_Consuption(w http.ResponseWriter, r *http
 			sr.ErrorDescription = loyalty_AccountCreditPoints_log.ErrorDescription
 			Uc.HTTP_API_Standard_response(w, r, sr, true)
 			LiveFeedCounters.With(prometheus.Labels{"Stream": "Live feed", "Type": "consumption", "Description": "award issue"}).Inc()
-			if sr.SourceApp == "MM LiveFeed" {
-				log.Println(sr.StatusDescription)
-				log.Println(sr.ErrorDescription)
-			}
+			// if sr.SourceApp == "MM LiveFeed" {
+			// 	log.Println(sr.StatusDescription)
+			// 	log.Println(sr.ErrorDescription)
+			// }
 			return
 		}
 		LiveFeedCounters.With(prometheus.Labels{"Stream": request.EventSource, "Type": request.EventType, "Description": "Consumption"}).Inc()
