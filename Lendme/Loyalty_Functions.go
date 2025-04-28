@@ -390,6 +390,8 @@ func (Uc *UserControl) InitializeLoyaltyDefaultUAT() {
 		MM_RC:                                 0.15,
 		MM_CTMMOREQ_Award_Type:                "Amount",
 		MM_CTMMOREQ:                           0.15,
+		MM_CBWREQ_Award_Type:                  "Transaction",
+		MM_CBWREQ:                             1,
 	})
 	Uc.Loyalty_Point_Expiry_Rules_Add("Default", Loyalty_Point_Expiry_Rules_AddRequest{
 		Key:                     "Default_Expiry_Rules",
@@ -1152,6 +1154,9 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Add(Login string, request Loy
 	NewEntry.MM_RC = request.MM_RC
 	NewEntry.MM_CTMMOREQ_Award_Type = request.MM_CTMMOREQ_Award_Type
 	NewEntry.MM_CTMMOREQ = request.MM_CTMMOREQ
+	NewEntry.MM_CBWREQ_Award_Type = request.MM_CBWREQ_Award_Type
+	NewEntry.MM_CBWREQ = request.MM_CBWREQ
+
 	//add to cache and DB
 	Map_Loyalty_Point_Earning_Rules.Put(NewEntry.Key, NewEntry)
 	//add logs
@@ -1207,7 +1212,8 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Edit(Login string, request Lo
 	entry.MM_RC = request.MM_RC
 	entry.MM_CTMMOREQ_Award_Type = request.MM_CTMMOREQ_Award_Type
 	entry.MM_CTMMOREQ = request.MM_CTMMOREQ
-
+	entry.MM_CBWREQ_Award_Type = request.MM_CBWREQ_Award_Type
+	entry.MM_CBWREQ = request.MM_CBWREQ
 	if request.NewKey != "" {
 		if request.NewKey != request.Key {
 			//delete old
@@ -4241,7 +4247,7 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 				}
 			}
 			return 0, mainGSM_CurrentPending, mobileMoney_CurrentPending
-		case "RC":
+		case "RC": //self recharge
 			if rules.MM_RC_Award_Type == "Transaction" {
 				if rules.MM_RC > 0 {
 					return rules.MM_RC, mainGSM_CurrentPending, mobileMoney_CurrentPending
@@ -4255,7 +4261,7 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 				}
 			}
 			return 0, mainGSM_CurrentPending, mobileMoney_CurrentPending
-		case "CTMMOREQ":
+		case "CTMMOREQ": //recharge for others
 			if rules.MM_CTMMOREQ_Award_Type == "Transaction" {
 				if rules.MM_CTMMOREQ > 0 {
 					return rules.MM_CTMMOREQ, mainGSM_CurrentPending, mobileMoney_CurrentPending
@@ -4265,6 +4271,20 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 					flt_points := (award_request.EventAmount + mobileMoney_CurrentPending) / rules.MM_CTMMOREQ
 					int_points := int(flt_points)
 					mobileMoney_CurrentPending = (award_request.EventAmount + mobileMoney_CurrentPending) - (float64(int_points) * rules.MM_CTMMOREQ)
+					return float64(int_points), mainGSM_pending, mobileMoney_CurrentPending
+				}
+			}
+			return 0, mainGSM_CurrentPending, mobileMoney_CurrentPending
+		case "CBWREQ": //recharge for others
+			if rules.MM_CBWREQ_Award_Type == "Transaction" {
+				if rules.MM_CBWREQ > 0 {
+					return rules.MM_CBWREQ, mainGSM_CurrentPending, mobileMoney_CurrentPending
+				}
+			} else if rules.MM_CBWREQ_Award_Type == "Amount" {
+				if rules.MM_CBWREQ > 0 && award_request.EventAmount > 0 {
+					flt_points := (award_request.EventAmount + mobileMoney_CurrentPending) / rules.MM_CBWREQ
+					int_points := int(flt_points)
+					mobileMoney_CurrentPending = (award_request.EventAmount + mobileMoney_CurrentPending) - (float64(int_points) * rules.MM_CBWREQ)
 					return float64(int_points), mainGSM_pending, mobileMoney_CurrentPending
 				}
 			}

@@ -183,6 +183,8 @@ type Loyalty_Point_Earning_Rules struct {
 	MM_RC                                 float64 `bson:"MM_RC" json:"MM_RC"`
 	MM_CTMMOREQ_Award_Type                string  `bson:"MM_CTMMOREQ_Award_Type" json:"MM_CTMMOREQ_Award_Type"` //"Transaction" or "Amount"
 	MM_CTMMOREQ                           float64 `bson:"MM_CTMMOREQ" json:"MM_CTMMOREQ"`
+	MM_CBWREQ_Award_Type                  string  `bson:"MM_CBWREQ_Award_Type" json:"MM_CBWREQ_Award_Type"` //"Transaction" or "Amount"
+	MM_CBWREQ                             float64 `bson:"MM_CBWREQ" json:"MM_CBWREQ"`
 }
 
 type Loyalty_Point_Earning_Rules_AddRequest struct {
@@ -206,6 +208,8 @@ type Loyalty_Point_Earning_Rules_AddRequest struct {
 	MM_RC                                 float64 `bson:"MM_RC" json:"MM_RC"`
 	MM_CTMMOREQ_Award_Type                string  `bson:"MM_CTMMOREQ_Award_Type" json:"MM_CTMMOREQ_Award_Type"` //"Transaction" or "Amount"
 	MM_CTMMOREQ                           float64 `bson:"MM_CTMMOREQ" json:"MM_CTMMOREQ"`
+	MM_CBWREQ_Award_Type                  string  `bson:"MM_CBWREQ_Award_Type" json:"MM_CBWREQ_Award_Type"` //"Transaction" or "Amount"
+	MM_CBWREQ                             float64 `bson:"MM_CBWREQ" json:"MM_CBWREQ"`
 }
 
 type Loyalty_Point_Earning_Rules_EditRequest struct {
@@ -230,6 +234,8 @@ type Loyalty_Point_Earning_Rules_EditRequest struct {
 	MM_RC                                 float64 `bson:"MM_RC" json:"MM_RC"`
 	MM_CTMMOREQ_Award_Type                string  `bson:"MM_CTMMOREQ_Award_Type" json:"MM_CTMMOREQ_Award_Type"` //"Transaction" or "Amount"
 	MM_CTMMOREQ                           float64 `bson:"MM_CTMMOREQ" json:"MM_CTMMOREQ"`
+	MM_CBWREQ_Award_Type                  string  `bson:"MM_CBWREQ_Award_Type" json:"MM_CBWREQ_Award_Type"` //"Transaction" or "Amount"
+	MM_CBWREQ                             float64 `bson:"MM_CBWREQ" json:"MM_CBWREQ"`
 }
 
 type Loyalty_Point_Expiry_Rules struct {
