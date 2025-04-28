@@ -818,7 +818,7 @@ type Loyalty_Campaign struct {
 }
 
 type Loyalty_Campaign_Target_List struct {
-	Key          string    `bson:"Key" json:"Key"` //Target List Name|MSISDN
+	Key          string    `bson:"Key" json:"Key"` //Campaign_Key|MSISDN
 	Campaign_Key int64     `bson:"Campaign_Key" json:"Campaign_Key"`
 	MSISDN       string    `bson:"MSISDN" json:"MSISDN"`
 	Start_Date   time.Time `bson:"Start_Date" json:"Start_Date"`

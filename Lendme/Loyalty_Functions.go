@@ -4336,14 +4336,28 @@ func (Uc *UserControl) EvaluateAndUpdate_CustomerLoyaltyLevel(Login string, Acco
 			Map_Customer_Loyalty_Account.Put(loyalty_account.Key, loyalty_account)
 
 		} else {
-			//downgrade ==> Sof landing pending
-			loyalty_account.Previous_Loyalty_Level_Key = loyalty_account.Loyalty_Level_Key
-			loyalty_account.Previous_Loyalty_Level_Date = loyalty_account.Loyalty_Level_Date
-			loyalty_account.Loyalty_Level_Key = New_Loyalty_Level.Key
-			loyalty_account.Loyalty_Level_Date = time.Now()
-			loyalty_account.Loyalty_Level_Direction = "Downgrade"
-			loyalty_account.Loyalty_Level_SetBy = Login
-			Map_Customer_Loyalty_Account.Put(loyalty_account.Key, loyalty_account)
+			//downgrade ==> Sof landing (one downgrade during anniversary year)
+			if loyalty_account.Creation_date.AddDate(0, 12, 0).After(time.Now()) {
+				return loyalty_account.Loyalty_Level_Key, errors.New("downgrade is allowed after the first anniversary year")
+			}
+			//check if the last action was downgrade and allow 12 months for the next dowgrade
+			if loyalty_account.Loyalty_Level_Direction == "Downgrade" {
+				if loyalty_account.Loyalty_Level_Date.AddDate(0, 12, 0).After(time.Now()) {
+					return loyalty_account.Loyalty_Level_Key, errors.New("only one downgrade is allowed during one anniversary year")
+				}
+			}
+			if current_level.DowngradeToLevel_Key != "" {
+				New_Loyalty_Level_Key = current_level.DowngradeToLevel_Key
+				loyalty_account.Previous_Loyalty_Level_Key = loyalty_account.Loyalty_Level_Key
+				loyalty_account.Previous_Loyalty_Level_Date = loyalty_account.Loyalty_Level_Date
+				loyalty_account.Loyalty_Level_Key = New_Loyalty_Level_Key
+				loyalty_account.Loyalty_Level_Date = time.Now()
+				loyalty_account.Loyalty_Level_Direction = "Downgrade"
+				loyalty_account.Loyalty_Level_SetBy = Login
+				Map_Customer_Loyalty_Account.Put(loyalty_account.Key, loyalty_account)
+			} else {
+				return loyalty_account.Loyalty_Level_Key, errors.New("downgrade level is not defined")
+			}
 		}
 		//write change log
 		Uc.Write_Loyalty_Level_Change_log(Loyalty_Level_Change_log{
