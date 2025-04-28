@@ -1,8 +1,10 @@
 package Lendme
 
 import (
+	"context"
 	"daoc"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"reflect"
@@ -12,7 +14,10 @@ import (
 	PropC "afr_propylaea/PropylaeaClient"
 	"afr_unified_charging_gateway/Unified_charging_gateway_Client"
 
+	"github.com/jinzhu/copier"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var Map_Loyalty_AutoIncrement daoc.Cache_Synch
@@ -3065,7 +3070,61 @@ func (Uc *UserControl) Customer_Loyalty_Account_Delete(Login, Key string) (err e
 	})
 	return nil
 }
+func (Uc *UserControl) Customer_Loyalty_Account_Points_Details_Get(Key string) (entries []Customer_Loyalty_Account_Points_Detail, err error) {
+	if Key == "" {
+		entries_na := Map_Customer_Loyalty_Account_Points_Detail.ConvertToArray()
+		if len(entries_na) > 0 {
+			for _, entry_na := range entries_na {
+				entry, ok := entry_na.(Customer_Loyalty_Account_Points_Detail)
+				if !ok {
+					err = errors.New("error in type assertion")
+					return entries, err
+				} else {
+					entries = append(entries, entry)
+				}
+			}
+		}
+		return entries, nil
+	} else {
+		entry_na, exits := Map_Customer_Loyalty_Account_Points_Detail.CheckThenGet(Key)
+		if !exits {
+			err = errors.New("key does not exist")
+			return entries, err
+		}
+		entry, ok := entry_na.(Customer_Loyalty_Account_Points_Detail)
+		if !ok {
+			err = errors.New("error in type assertion")
+			return entries, err
+		}
+		entries = append(entries, entry)
+		return entries, nil
+	}
+}
 
+func (Uc *UserControl) Customer_Loyalty_Account_Points_Details_GetPaginated(Page, Limit int64) (entries []Customer_Loyalty_Account_Points_Detail, err error) {
+	if Page < 1 {
+		return entries, errors.New("invalid page")
+	}
+	if Limit < 1 || Limit > 50000 {
+		return entries, errors.New("invalid limit (accept value between 1 and 50000)")
+	}
+
+	var findparams daoc.DAOFindParams
+	var paginationparams daoc.DAOPaginate
+	paginationparams.Limit = Limit
+	paginationparams.Page = Page
+	findResult, err := DAO_Customer_Loyalty_Account_Points_Detail.FindPaginate(findparams, paginationparams)
+	if err != nil {
+		return entries, err
+	}
+	if len(findResult) > 0 {
+		for _, findres := range findResult {
+			InterfaceValue := reflect.ValueOf(findres).Elem().Interface().(Customer_Loyalty_Account_Points_Detail)
+			entries = append(entries, InterfaceValue)
+		}
+	}
+	return entries, nil
+}
 func (Uc *UserControl) Customer_Loyalty_Account_GetRedemption_Rules(MSISDN string) (Redemption_Rules Loyalty_Point_Redemption_Rules, err error) {
 	MSISDN = Normalize_International_MSISDN(MSISDN)
 	if MSISDN == "" {
@@ -3670,7 +3729,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 	response.ReceiveDate = time.Now()
 	//fill the request header info
 	response.SourceIP = request_header.SourceIP
-	response.SourceApp = request_header.SourceApp
+	response.SourceApp = request.EventSource
 	response.AppLogin = request_header.AppLogin
 	response.AppVersion = request_header.AppVersion
 	response.GPSLocation = request_header.GPSLocation
@@ -4001,6 +4060,7 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 	//fill the request info
 	response.MSISDN = request.MSISDN
 	response.Debit_Amount = request.Debit_Amount
+	response.Debit_Reason = request.Debit_Reason
 	response.ReceiveDate = time.Now()
 	response.Redemption_Type = request.Redemption_Type //Airtime, Bundle, MobileMoney, SpinAndWin
 	response.Redemption_Bunlde_Id = request.Redemption_Bunlde_Id
@@ -4304,6 +4364,94 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 	return
 }
 
+func (Uc *UserControl) Customer_Loyalty_Account_GetDebitPoints_log(startDate, endDate time.Time, MSISDN string, Filter string) (response []Loyalty_Redemption_log, err error) {
+
+	findResult, err := Uc.ReadAccountDebitPointsDetailsFromMongoDB(startDate, endDate, MSISDN, 1, 0)
+	if err != nil {
+		return response, err
+	}
+
+	if len(findResult) > 0 {
+		fmt.Println("am gusing am not here")
+		for _, InterfaceValue := range findResult {
+			//InterfaceValue := reflect.ValueOf(findres).Elem().Interface().(FCDM_MM_Account_History)
+			var Loyalty_Redemption_log_obj Loyalty_Redemption_log
+			copier.Copy(&InterfaceValue, &Loyalty_Redemption_log_obj)
+			response = append(response, Loyalty_Redemption_log_obj)
+		}
+	}
+	return response, nil
+}
+
+func (Uc *UserControl) ReadAccountDebitPointsDetailsFromMongoDB(startDate, endDate time.Time, MSISDN string, page, limit int64) (response []Loyalty_Redemption_log, err error) {
+	// Ensure startDate is before or equal to endDate
+
+	if startDate.After(endDate) {
+		return response, fmt.Errorf("start date cannot be after end date")
+	}
+
+	if page < 1 {
+		page = 1 // Default to first page if invalid page number
+	}
+
+	// Iterate over the range of dates
+	for currentDate := startDate; !currentDate.After(endDate); currentDate = currentDate.AddDate(0, 0, 1) {
+		monthStr := strconv.Itoa(int(currentDate.Month()))
+		if len(monthStr) < 2 {
+			monthStr = "0" + monthStr
+		}
+		MongoDB_DB_Name := "Loyalty_DB_" + strconv.Itoa(currentDate.Year()) + monthStr
+
+		var dayStr = strconv.Itoa(currentDate.Day())
+		if len(dayStr) < 2 {
+			dayStr = "0" + dayStr
+		}
+
+		collName := "Col_Loyalty_AccountDebitPoints_log_" + dayStr
+
+		// Fetch the collection
+		collection := Uc.LoyaltyMongoDB.MongoDBClient.Database(MongoDB_DB_Name).Collection(collName)
+		fmt.Println("collection", collection)
+		// Build the filter for the date range
+		filter := bson.D{
+			{Key: "MSISDN", Value: MSISDN},
+		}
+		/*filter := bson.M{
+		"payercreatedondate": bson.M{
+			"$gte": startDate,
+			"$lte": endDate,
+			},
+			}*/
+
+		// Calculate the skip value based on the page and limit
+		skip := (page - 1) * limit
+
+		// Fetch a paginated list of documents using limit and skip
+		cursor, err := collection.Find(
+			context.Background(),
+			filter,
+			options.Find().SetSkip(int64(skip)).SetLimit(int64(limit)),
+		)
+		if err != nil {
+			return response, err
+		}
+		defer cursor.Close(context.Background())
+
+		for cursor.Next(context.Background()) {
+			var result Loyalty_Redemption_log
+			if err := cursor.Decode(&result); err != nil {
+				return nil, fmt.Errorf("failed to decode result: %w", err)
+			}
+			response = append(response, result)
+		}
+
+		if err := cursor.Err(); err != nil {
+			return nil, fmt.Errorf("cursor error: %w", err)
+		}
+	}
+
+	return response, err
+}
 func (Uc *UserControl) EvaluateAndUpdate_CustomerLoyaltyLevel(Login string, Account_Key string) (New_Loyalty_Level_Key string, err error) {
 	loyalty_account_na, subexist := Map_Customer_Loyalty_Account.CheckThenGet(Account_Key)
 	if !subexist {

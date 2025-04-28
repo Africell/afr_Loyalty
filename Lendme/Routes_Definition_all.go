@@ -1199,6 +1199,28 @@ func (UC *UserControl) Add_LoyaltyManagementRoutes(R *Routes) {
 	*R = append(*R, r)
 
 	r = Route{
+		"HTTP_Customer_Loyalty_Account_Points_Details",
+		"GET",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Customer_Loyalty_Account_Points_Details/",
+		Use(UC.HTTP_Customer_Loyalty_Account_Points_Details, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
+		true,
+		"Customer Loyalty Account Points Details - Read", // DisplayName
+		DisplayOrder,       // DisplayOrder
+		Module,             // Module
+		ModuleDisplayOrder, //ModuleDisplayOrder
+		Level1,             // Level1
+		Level1DisplayOrder, // Level1DisplayOrder
+		"",                 // Level2
+		0,                  // Level2DisplayOrder
+		"",                 // Level3
+		0,                  // Level3DisplayOrder
+		true,               //AllowedFor_OKAPI
+		true,               //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+	r = Route{
 		"HTTP_Customer_Loyalty_Account_DebitPoints",
 		"PUT",
 		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Customer_Loyalty_Account_DebitPoints/",
@@ -1654,6 +1676,30 @@ func (UC *UserControl) Add_LoyaltyManagementRoutes(R *Routes) {
 		Use(UC.HTTP_Loyalty_Products_Catalogue, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
 		true,
 		Level1 + " - Read", // DisplayName
+		DisplayOrder,       // DisplayOrder
+		Module,             // Module
+		ModuleDisplayOrder, //ModuleDisplayOrder
+		Level1,             // Level1
+		Level1DisplayOrder, // Level1DisplayOrder
+		"",                 // Level2
+		0,                  // Level2DisplayOrder
+		"",                 // Level3
+		0,                  // Level3DisplayOrder
+		true,               //AllowedFor_OKAPI
+		true,               //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+	Level1 = "Loyalty Account Debit Points log"
+	Level1DisplayOrder = Level1DisplayOrder + 1
+	r = Route{
+		"HTTP_Loyalty_AccountDebitPoints_log",
+		"GET",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_AccountDebitPoints_log/",
+		Use(UC.HTTP_Loyalty_AccountDebitPoints_log, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
+		true,
+		"Loyalty Account Debit Points log - Read", // DisplayName
 		DisplayOrder,       // DisplayOrder
 		Module,             // Module
 		ModuleDisplayOrder, //ModuleDisplayOrder
