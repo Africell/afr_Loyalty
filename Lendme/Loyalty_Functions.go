@@ -392,9 +392,9 @@ func (Uc *UserControl) InitializeLoyaltyDefaultUAT() {
 		MM_BILLPAY_Award_Type:                 "Transaction",
 		MM_BILLPAY:                            1,
 		MM_RC_Award_Type:                      "Amount",
-		MM_RC:                                 0.15,
+		MM_RC:                                 15,
 		MM_CTMMOREQ_Award_Type:                "Amount",
-		MM_CTMMOREQ:                           0.15,
+		MM_CTMMOREQ:                           15,
 		MM_CBWREQ_Award_Type:                  "Transaction",
 		MM_CBWREQ:                             1,
 	})
