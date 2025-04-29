@@ -699,6 +699,7 @@ func (Uc *UserControl) Loyalty_Governance_Redeem_Points_Debit(points float64) (e
 		return errors.New("loyalty governance type assertion issue")
 	}
 	loyalty_governance.Redeemed_Points_Pool = loyalty_governance.Redeemed_Points_Pool + points
+	loyalty_governance.Distributed_Points_Pool = loyalty_governance.Distributed_Points_Pool - points
 	Map_Loyalty_Governance.Put(loyalty_governance.Key, loyalty_governance)
 	<-chan_LoyaltyGovernance_Controler
 	return
@@ -717,6 +718,7 @@ func (Uc *UserControl) Loyalty_Governance_Expiry_Points_Credit(points float64) (
 		return errors.New("loyalty governance type assertion issue")
 	}
 	loyalty_governance.Expired_Points_Pool = loyalty_governance.Expired_Points_Pool + points
+	loyalty_governance.Distributed_Points_Pool = loyalty_governance.Distributed_Points_Pool - points
 	Map_Loyalty_Governance.Put(loyalty_governance.Key, loyalty_governance)
 	<-chan_LoyaltyGovernance_Controler
 	return
@@ -1135,7 +1137,83 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Add(Login string, request Loy
 		err = errors.New("key already exist")
 		return Id, err
 	}
-
+	//check values
+	if request.MainGSMBalance_AmountConsumedPerPoint > 0 && request.MainGSMBalance_AmountConsumedPerPoint < 1 {
+		err = errors.New("invalid Main GSM value")
+		return Id, err
+	}
+	if request.MM_P2P_Award_Type == "Amount" {
+		if request.MM_P2P > 0 && request.MM_P2P < 1 {
+			err = errors.New("invalid MM P2P value")
+			return Id, err
+		}
+	} else if request.MM_P2P_Award_Type != "Transaction" {
+		err = errors.New("invalid MM P2P Award Type")
+		return Id, err
+	}
+	if request.MM_CASHIN_Award_Type == "Amount" {
+		if request.MM_CASHIN > 0 && request.MM_CASHIN < 1 {
+			err = errors.New("invalid MM CASHIN value")
+			return Id, err
+		}
+	} else if request.MM_CASHIN_Award_Type != "Transaction" {
+		err = errors.New("invalid MM CASHIN Award Type")
+		return Id, err
+	}
+	if request.MM_CASHOUT_Award_Type == "Amount" {
+		if request.MM_CASHOUT > 0 && request.MM_CASHOUT < 1 {
+			err = errors.New("invalid MM CASHOUT value")
+			return Id, err
+		}
+	} else if request.MM_CASHOUT_Award_Type != "Transaction" {
+		err = errors.New("invalid MM CASHOUT Award Type")
+		return Id, err
+	}
+	if request.MM_MERCHPAY_Award_Type == "Amount" {
+		if request.MM_MERCHPAY > 0 && request.MM_MERCHPAY < 1 {
+			err = errors.New("invalid MM MERCHPAY value")
+			return Id, err
+		}
+	} else if request.MM_MERCHPAY_Award_Type != "Transaction" {
+		err = errors.New("invalid MM MERCHPAY Award Type")
+		return Id, err
+	}
+	if request.MM_BILLPAY_Award_Type == "Amount" {
+		if request.MM_BILLPAY > 0 && request.MM_BILLPAY < 1 {
+			err = errors.New("invalid MM BILLPAY value")
+			return Id, err
+		}
+	} else if request.MM_BILLPAY_Award_Type != "Transaction" {
+		err = errors.New("invalid MM BILLPAY Award Type")
+		return Id, err
+	}
+	if request.MM_RC_Award_Type == "Amount" {
+		if request.MM_RC > 0 && request.MM_RC < 1 {
+			err = errors.New("invalid MM recharge for self value")
+			return Id, err
+		}
+	} else if request.MM_RC_Award_Type != "Transaction" {
+		err = errors.New("invalid MM recharge for self Award Type")
+		return Id, err
+	}
+	if request.MM_CTMMOREQ_Award_Type == "Amount" {
+		if request.MM_CTMMOREQ > 0 && request.MM_CTMMOREQ < 1 {
+			err = errors.New("invalid MM recharge for others value")
+			return Id, err
+		}
+	} else if request.MM_CTMMOREQ_Award_Type != "Transaction" {
+		err = errors.New("invalid MM recharge for others Award Type")
+		return Id, err
+	}
+	if request.MM_CBWREQ_Award_Type == "Amount" {
+		if request.MM_CBWREQ > 0 && request.MM_CBWREQ < 1 {
+			err = errors.New("invalid MM bank to wallet value")
+			return Id, err
+		}
+	} else if request.MM_CBWREQ_Award_Type != "Transaction" {
+		err = errors.New("invalid MM bank to wallet Award Type")
+		return Id, err
+	}
 	//Prepare new entry
 	var NewEntry Loyalty_Point_Earning_Rules
 	NewEntry.Earning_Rules_Id = Map_Loyalty_AutoIncrement.GetNextAI("Loyalty_Point_Earning_Rules-Id")
@@ -1181,6 +1259,83 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Edit(Login string, request Lo
 	//check and validate
 	if request.Key == "" {
 		err = errors.New("key cannot be empty")
+		return Id, err
+	}
+	//check values
+	if request.MainGSMBalance_AmountConsumedPerPoint > 0 && request.MainGSMBalance_AmountConsumedPerPoint < 1 {
+		err = errors.New("invalid Main GSM value")
+		return Id, err
+	}
+	if request.MM_P2P_Award_Type == "Amount" {
+		if request.MM_P2P > 0 && request.MM_P2P < 1 {
+			err = errors.New("invalid MM P2P value")
+			return Id, err
+		}
+	} else if request.MM_P2P_Award_Type != "Transaction" {
+		err = errors.New("invalid MM P2P Award Type")
+		return Id, err
+	}
+	if request.MM_CASHIN_Award_Type == "Amount" {
+		if request.MM_CASHIN > 0 && request.MM_CASHIN < 1 {
+			err = errors.New("invalid MM CASHIN value")
+			return Id, err
+		}
+	} else if request.MM_CASHIN_Award_Type != "Transaction" {
+		err = errors.New("invalid MM CASHIN Award Type")
+		return Id, err
+	}
+	if request.MM_CASHOUT_Award_Type == "Amount" {
+		if request.MM_CASHOUT > 0 && request.MM_CASHOUT < 1 {
+			err = errors.New("invalid MM CASHOUT value")
+			return Id, err
+		}
+	} else if request.MM_CASHOUT_Award_Type != "Transaction" {
+		err = errors.New("invalid MM CASHOUT Award Type")
+		return Id, err
+	}
+	if request.MM_MERCHPAY_Award_Type == "Amount" {
+		if request.MM_MERCHPAY > 0 && request.MM_MERCHPAY < 1 {
+			err = errors.New("invalid MM MERCHPAY value")
+			return Id, err
+		}
+	} else if request.MM_MERCHPAY_Award_Type != "Transaction" {
+		err = errors.New("invalid MM MERCHPAY Award Type")
+		return Id, err
+	}
+	if request.MM_BILLPAY_Award_Type == "Amount" {
+		if request.MM_BILLPAY > 0 && request.MM_BILLPAY < 1 {
+			err = errors.New("invalid MM BILLPAY value")
+			return Id, err
+		}
+	} else if request.MM_BILLPAY_Award_Type != "Transaction" {
+		err = errors.New("invalid MM BILLPAY Award Type")
+		return Id, err
+	}
+	if request.MM_RC_Award_Type == "Amount" {
+		if request.MM_RC > 0 && request.MM_RC < 1 {
+			err = errors.New("invalid MM recharge for self value")
+			return Id, err
+		}
+	} else if request.MM_RC_Award_Type != "Transaction" {
+		err = errors.New("invalid MM recharge for self Award Type")
+		return Id, err
+	}
+	if request.MM_CTMMOREQ_Award_Type == "Amount" {
+		if request.MM_CTMMOREQ > 0 && request.MM_CTMMOREQ < 1 {
+			err = errors.New("invalid MM recharge for others value")
+			return Id, err
+		}
+	} else if request.MM_CTMMOREQ_Award_Type != "Transaction" {
+		err = errors.New("invalid MM recharge for others Award Type")
+		return Id, err
+	}
+	if request.MM_CBWREQ_Award_Type == "Amount" {
+		if request.MM_CBWREQ > 0 && request.MM_CBWREQ < 1 {
+			err = errors.New("invalid MM bank to wallet value")
+			return Id, err
+		}
+	} else if request.MM_CBWREQ_Award_Type != "Transaction" {
+		err = errors.New("invalid MM bank to wallet Award Type")
 		return Id, err
 	}
 	entry_na, exits := Map_Loyalty_Point_Earning_Rules.CheckThenGet(request.Key)

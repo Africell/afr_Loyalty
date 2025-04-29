@@ -799,22 +799,27 @@ type Loyalty_AccountDebitPoints_log struct {
 // }
 
 type Loyalty_Campaign struct {
-	Key             string    `bson:"Key" json:"Key"` //Campaign Name
-	Campaign_Id     int64     `bson:"Campaign_Id" json:"Campaign_Id"`
-	Description     string    `bson:"Description" json:"Description"`
-	Start_Date      time.Time `bson:"Start_Date" json:"Start_Date"`
-	End_Date        time.Time `bson:"End_Date" json:"End_Date"`
-	Campaign_Status string    `bson:"Campaign_Status" json:"Campaign_Status"` //launched, paused, resumed, cancelled, or stopped
+	Key                  string    `bson:"Key" json:"Key"` //Campaign Name
+	Campaign_Id          int64     `bson:"Campaign_Id" json:"Campaign_Id"`
+	Description          string    `bson:"Description" json:"Description"`
+	Start_Date           time.Time `bson:"Start_Date" json:"Start_Date"`
+	End_Date             time.Time `bson:"End_Date" json:"End_Date"`
+	Campaign_Status      string    `bson:"Campaign_Status" json:"Campaign_Status"` //launched, paused, resumed, cancelled, or stopped
+	Campaign_Status_Date string    `bson:"Campaign_Status_Date" json:"Campaign_Status_Date"`
+	Campaign_Status_User string    `bson:"Campaign_Status_User" json:"Campaign_Status_User"`
 
 	//target rules
-	Target_All_Subs     bool              `bson:"Target_All_Subs" json:"Target_All_Subs"` //if true, all target features will be ignored
-	Target_Level_Key    map[string]bool   `bson:"Target_Level_Key" json:"Target_Level_Key"`
-	Target_Segment_Key  map[string]bool   `bson:"Target_Segment_Key" json:"Target_Segment_Key"`
-	Target_List         map[string]string `bson:"Target_List" json:"Target_List"` //we need to be able to define target list
-	LoyaltyPoints_From  float64           `bson:"LoyaltyPoints_From" json:"LoyaltyPoints_From"`
-	LoyaltyPoints_Till  float64           `bson:"LoyaltyPoints_Till" json:"LoyaltyPoints_Till"`
-	AON_From            float64           `bson:"AON_From" json:"AON_From"` //months
-	AON_Till            float64           `bson:"AON_Till" json:"AON_Till"` //months
+	Target_All_Subs    bool              `bson:"Target_All_Subs" json:"Target_All_Subs"` //if true, all target features will be ignored
+	Target_Level_Key   map[string]bool   `bson:"Target_Level_Key" json:"Target_Level_Key"`
+	Target_Segment_Key map[string]bool   `bson:"Target_Segment_Key" json:"Target_Segment_Key"`
+	Target_List        map[string]string `bson:"Target_List" json:"Target_List"` //we need to be able to define target list
+	LoyaltyPoints_From float64           `bson:"LoyaltyPoints_From" json:"LoyaltyPoints_From"`
+	LoyaltyPoints_Till float64           `bson:"LoyaltyPoints_Till" json:"LoyaltyPoints_Till"`
+	AON_From           float64           `bson:"AON_From" json:"AON_From"` //months
+	AON_Till           float64           `bson:"AON_Till" json:"AON_Till"` //months
+	ARPU_From          float64           `bson:"ARPU_From" json:"ARPU_From"`
+	ARPU_Till          float64           `bson:"ARPU_Till" json:"ARPU_Till"`
+
 	BundlesPurchase     map[string]string `bson:"BundlesPurchase" json:"BundlesPurchase"`
 	MobileAppDailyUsage bool              `bson:"MobileAppDailyUsage" json:"MobileAppDailyUsage"`
 	//Points earned scheme
