@@ -14,7 +14,6 @@ import (
 	PropC "afr_propylaea/PropylaeaClient"
 	"afr_unified_charging_gateway/Unified_charging_gateway_Client"
 
-	"github.com/jinzhu/copier"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -675,7 +674,7 @@ func (Uc *UserControl) Loyalty_Governance_Available_Points_Debit(points float64)
 		<-chan_LoyaltyGovernance_Controler
 		return errors.New("loyalty governance type assertion issue")
 	}
-	if (loyalty_governance.Available_Points_Pool - loyalty_governance.Distributed_Points_Pool) > points {
+	if (loyalty_governance.Available_Points_Pool - (loyalty_governance.Distributed_Points_Pool + loyalty_governance.Expired_Points_Pool + loyalty_governance.Redeemed_Points_Pool)) > points {
 		loyalty_governance.Distributed_Points_Pool = loyalty_governance.Distributed_Points_Pool + points
 		Map_Loyalty_Governance.Put(loyalty_governance.Key, loyalty_governance)
 		<-chan_LoyaltyGovernance_Controler
@@ -4521,24 +4520,26 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 
 func (Uc *UserControl) Customer_Loyalty_Account_GetDebitPoints_log(startDate, endDate time.Time, MSISDN string, Filter string) (response []Loyalty_Redemption_log, err error) {
 
-	findResult, err := Uc.ReadAccountDebitPointsDetailsFromMongoDB(startDate, endDate, MSISDN, 1, 0)
+	findResult, err := Uc.ReadAccountPointsDetailsFromMongoDB(startDate, endDate, MSISDN, 1, 0, "Col_Loyalty_AccountDebitPoints_log_")
 	if err != nil {
 		return response, err
 	}
 
-	if len(findResult) > 0 {
-		fmt.Println("am gusing am not here")
-		for _, InterfaceValue := range findResult {
-			//InterfaceValue := reflect.ValueOf(findres).Elem().Interface().(FCDM_MM_Account_History)
-			var Loyalty_Redemption_log_obj Loyalty_Redemption_log
-			copier.Copy(&InterfaceValue, &Loyalty_Redemption_log_obj)
-			response = append(response, Loyalty_Redemption_log_obj)
-		}
-	}
+	response = append(response, findResult...)
+
 	return response, nil
 }
 
-func (Uc *UserControl) ReadAccountDebitPointsDetailsFromMongoDB(startDate, endDate time.Time, MSISDN string, page, limit int64) (response []Loyalty_Redemption_log, err error) {
+func (Uc *UserControl) Customer_Loyalty_Account_GetCreditPoints_log(startDate, endDate time.Time, MSISDN string, Filter string) (response []Loyalty_Redemption_log, err error) {
+
+	findResult, err := Uc.ReadAccountPointsDetailsFromMongoDB(startDate, endDate, MSISDN, 1, 0, "Col_Loyalty_AccountCreditPoints_log_")
+	if err != nil {
+		return response, err
+	}
+	response = append(response, findResult...)
+	return response, nil
+}
+func (Uc *UserControl) ReadAccountPointsDetailsFromMongoDB(startDate, endDate time.Time, MSISDN string, page, limit int64, dbName string) (response []Loyalty_Redemption_log, err error) {
 	// Ensure startDate is before or equal to endDate
 
 	if startDate.After(endDate) {
@@ -4562,11 +4563,10 @@ func (Uc *UserControl) ReadAccountDebitPointsDetailsFromMongoDB(startDate, endDa
 			dayStr = "0" + dayStr
 		}
 
-		collName := "Col_Loyalty_AccountDebitPoints_log_" + dayStr
+		collName := dbName + dayStr
 
 		// Fetch the collection
 		collection := Uc.LoyaltyMongoDB.MongoDBClient.Database(MongoDB_DB_Name).Collection(collName)
-		fmt.Println("collection", collection)
 		// Build the filter for the date range
 		filter := bson.D{
 			{Key: "MSISDN", Value: MSISDN},

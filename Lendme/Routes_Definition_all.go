@@ -1713,7 +1713,29 @@ func (UC *UserControl) Add_LoyaltyManagementRoutes(R *Routes) {
 		true,               //AllowedFor_App
 	}
 	*R = append(*R, r)
-	DisplayOrder = DisplayOrder + 1
+
+	Level1 = "Loyalty Account Credit Points log"
+	Level1DisplayOrder = Level1DisplayOrder + 1
+	r = Route{
+		"HTTP_Loyalty_AccountCreditPoints_log",
+		"GET",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_AccountCreditPoints_log/",
+		Use(UC.HTTP_Loyalty_AccountCreditPoints_log, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
+		true,
+		"Loyalty Account Credit Points log - Read", // DisplayName
+		DisplayOrder,       // DisplayOrder
+		Module,             // Module
+		ModuleDisplayOrder, //ModuleDisplayOrder
+		Level1,             // Level1
+		Level1DisplayOrder, // Level1DisplayOrder
+		"",                 // Level2
+		0,                  // Level2DisplayOrder
+		"",                 // Level3
+		0,                  // Level3DisplayOrder
+		true,               //AllowedFor_OKAPI
+		true,               //AllowedFor_App
+	}
+	*R = append(*R, r)
 
 }
 
