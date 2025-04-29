@@ -200,6 +200,7 @@ func (Uc *UserControl) AddToLoyaltyServiceRouter(router *mux.Router, UC *UserCon
 	router.Path("/Loyalty_metrics").Handler(LoyaltyPrometheusHandler())
 	// router.Path("/metrics_latency").Handler(CustomPrometheusLatencyHandler())
 	Uc.Create_UCGW_AUCUser()
+	Uc.Create_USSD_AUCUser()
 }
 
 func (Uc *UserControl) AddToLoyaltyManagementRouter(router *mux.Router, UC *UserControl) {
@@ -716,6 +717,48 @@ func (Uc *UserControl) Create_UCGW_AUCUser() {
 		JWEOverwriteDefault:      true,
 		JWEOTPValidationValidity: 6000,
 		JWEAccessValidity:        3600,
+		JWERefreshValidity:       900000000,
+		KeepMeLoggedIn:           true,
+		PreferedLanguage:         "en",
+		AddUser:                  "LoyaltyBE",
+		AddDate:                  time.Now(),
+		LastModifyUser:           "LoyaltyBE",
+		LastModifyDate:           time.Now(),
+	}
+	sr, err := Uc.AppAUC.AUCClient.ReadUser(auc_user.Key)
+	if err == nil && sr.StatusCode != http.StatusOK && sr.ErrorDescription == "login does not exist" {
+		sr, err := Uc.AppAUC.AUCClient.CreateUser(auc_user)
+		if err != nil {
+			log.Println("error creating UCGW_Loyalty user: " + err.Error())
+		} else if sr.StatusCode != http.StatusOK {
+			log.Println("error creating UCGW_Loyalty user: " + sr.StatusDescription)
+		}
+	}
+	return
+}
+
+func (Uc *UserControl) Create_USSD_AUCUser() {
+	// Create User in AUC
+	auc_user := AuthCenter.User{
+		Key:                      "USSD_Loyalty",
+		FirstName:                "USSD_Loyalty",
+		MiddleName:               "USSD_Loyalty",
+		LastName:                 "USSD_Loyalty",
+		BirthDate:                time.Now(),
+		Company:                  "Africell",
+		Email:                    "USSD_Loyalty",
+		Phone:                    "USSD_Loyalty",
+		Login:                    "USSD_Loyalty",
+		Password:                 "Tles$h!s3$$w0P@$rd!$p0sdsef333227",
+		LastPasswordSetDate:      time.Now(),
+		PasswordExpiryDate:       time.Now().AddDate(50, 0, 0),
+		EnableMFA:                false,
+		OTPBySMS:                 false,
+		SkipOTPByMail:            true,
+		LoginWithoutCaptcha:      true,
+		JWEOverwriteDefault:      true,
+		JWEOTPValidationValidity: 6000,
+		JWEAccessValidity:        900000000,
 		JWERefreshValidity:       900000000,
 		KeepMeLoggedIn:           true,
 		PreferedLanguage:         "en",
