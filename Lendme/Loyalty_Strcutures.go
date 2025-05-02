@@ -65,6 +65,14 @@ type Loyalty_Governance_EditRequest struct {
 	MaxSubsAwardedPoints            float64 `bson:"MaxSubsAwardedPoints" json:"MaxSubsAwardedPoints"`
 }
 
+type Loyalty_Governance_log struct {
+	Log_Date                time.Time `bson:"Log_Date" json:"Log_Date"`
+	Available_Points_Pool   float64   `bson:"Available_Points_Pool" json:"Available_Points_Pool"`
+	Distributed_Points_Pool float64   `bson:"Distributed_Points_Pool" json:"Distributed_Points_Pool"`
+	Redeemed_Points_Pool    float64   `bson:"Redeemed_Points_Pool" json:"Redeemed_Points_Pool"`
+	Expired_Points_Pool     float64   `bson:"Expired_Points_Pool" json:"Expired_Points_Pool"`
+}
+
 type Loyalty_Level struct {
 	Key                    string  `bson:"Key" json:"Key"`
 	Level_Id               int64   `bson:"Level_Id" json:"Level_Id"`
@@ -802,30 +810,247 @@ type Loyalty_Campaign struct {
 	Key                  string    `bson:"Key" json:"Key"` //Campaign Name
 	Campaign_Id          int64     `bson:"Campaign_Id" json:"Campaign_Id"`
 	Description          string    `bson:"Description" json:"Description"`
+	Add_Date             time.Time `bson:"Add_Date" json:"Add_Date"`
 	Start_Date           time.Time `bson:"Start_Date" json:"Start_Date"`
 	End_Date             time.Time `bson:"End_Date" json:"End_Date"`
-	Campaign_Status      string    `bson:"Campaign_Status" json:"Campaign_Status"` //launched, paused, resumed, cancelled, or stopped
-	Campaign_Status_Date string    `bson:"Campaign_Status_Date" json:"Campaign_Status_Date"`
+	Campaign_Status      string    `bson:"Campaign_Status" json:"Campaign_Status"` //Created, Launched, Paused, Resumed, Cancelled, or Stopped
+	Campaign_Status_Date time.Time `bson:"Campaign_Status_Date" json:"Campaign_Status_Date"`
 	Campaign_Status_User string    `bson:"Campaign_Status_User" json:"Campaign_Status_User"`
 
 	//target rules
-	Target_All_Subs    bool              `bson:"Target_All_Subs" json:"Target_All_Subs"` //if true, all target features will be ignored
-	Target_Level_Key   map[string]bool   `bson:"Target_Level_Key" json:"Target_Level_Key"`
-	Target_Segment_Key map[string]bool   `bson:"Target_Segment_Key" json:"Target_Segment_Key"`
-	Target_List        map[string]string `bson:"Target_List" json:"Target_List"` //we need to be able to define target list
-	LoyaltyPoints_From float64           `bson:"LoyaltyPoints_From" json:"LoyaltyPoints_From"`
-	LoyaltyPoints_Till float64           `bson:"LoyaltyPoints_Till" json:"LoyaltyPoints_Till"`
-	AON_From           float64           `bson:"AON_From" json:"AON_From"` //months
-	AON_Till           float64           `bson:"AON_Till" json:"AON_Till"` //months
-	ARPU_From          float64           `bson:"ARPU_From" json:"ARPU_From"`
-	ARPU_Till          float64           `bson:"ARPU_Till" json:"ARPU_Till"`
+	Target_All_Subs    bool            `bson:"Target_All_Subs" json:"Target_All_Subs"` //if true, all target features will be ignored
+	Target_Level_Key   map[string]bool `bson:"Target_Level_Key" json:"Target_Level_Key"`
+	Target_Segment_Key map[string]bool `bson:"Target_Segment_Key" json:"Target_Segment_Key"`
+	LoyaltyPoints_From float64         `bson:"LoyaltyPoints_From" json:"LoyaltyPoints_From"`
+	LoyaltyPoints_Till float64         `bson:"LoyaltyPoints_Till" json:"LoyaltyPoints_Till"`
+	AON_From           float64         `bson:"AON_From" json:"AON_From"` //months
+	AON_Till           float64         `bson:"AON_Till" json:"AON_Till"` //months
+	ARPU_From          float64         `bson:"ARPU_From" json:"ARPU_From"`
+	ARPU_Till          float64         `bson:"ARPU_Till" json:"ARPU_Till"`
 
-	BundlesPurchase     map[string]string `bson:"BundlesPurchase" json:"BundlesPurchase"`
-	MobileAppDailyUsage bool              `bson:"MobileAppDailyUsage" json:"MobileAppDailyUsage"`
-	//Points earned scheme
-	Multiplier       float64 `bson:"Multiplier" json:"Multiplier"`
-	Fixed_Points     float64 `bson:"Fixed_Points" json:"Fixed_Points"`
-	Action_Frequency string  `bson:"Action_Frequency" json:"Action_Frequency"` //Once, Once_Daily, Each time
+	//campaign award rules
+	Welcome_Points_Award_type string  `bson:"Welcome_Points_Award_type" json:"Welcome_Points_Award_type"` //Multiplier or Fixed Amount
+	Welcome_Points_Frequency  string  `bson:"Welcome_Points_Frequency" json:"Welcome_Points_Frequency"`   //Once, Once Daily, Each time
+	Welcome_Points_Max_Award  float64 `bson:"Welcome_Points_Max_Award" json:"Welcome_Points_Max_Award"`
+	Welcome_Points            float64 `bson:"Welcome_Points" json:"Welcome_Points"`
+
+	MobileAppDaily_Login_Award_type string  `bson:"MobileAppDaily_Login_Award_type" json:"MobileAppDaily_Login_Award_type"` //Multiplier or Fixed Amount
+	MobileAppDaily_Login_Frequency  string  `bson:"MobileAppDaily_Login_Frequency" json:"MobileAppDaily_Login_Frequency"`   //Once, Once Daily, Each time
+	MobileAppDaily_Login_Max_Award  float64 `bson:"MobileAppDaily_Login_Max_Award" json:"MobileAppDaily_Login_Max_Award"`
+	MobileAppDaily_Login            float64 `bson:"MobileAppDaily_Login" json:"MobileAppDaily_Login"`
+
+	MainGSM_Award_type string  `bson:"MainGSM_Award_type" json:"MainGSM_Award_type"` //Multiplier or Fixed Amount
+	MainGSM_Frequency  string  `bson:"MainGSM_Frequency" json:"MainGSM_Frequency"`   //Once, Once Daily, Each time
+	MainGSM_Max_Award  float64 `bson:"MainGSM_Max_Award" json:"MainGSM_Max_Award"`
+	MainGSM            float64 `bson:"MainGSM" json:"MainGSM"`
+
+	MM_P2P_Award_type string  `bson:"MM_P2P_Award_type" json:"MM_P2P_Award_type"` //Multiplier or Fixed Amount
+	MM_P2P_Frequency  string  `bson:"MM_P2P_Frequency" json:"MM_P2P_Frequency"`   //Once, Once Daily, Each time
+	MM_P2P_Max_Award  float64 `bson:"MM_P2P_Max_Award" json:"MM_P2P_Max_Award"`
+	MM_P2P            float64 `bson:"MM_P2P" json:"MM_P2P"`
+
+	MM_CASHIN_Award_type string  `bson:"MM_CASHIN_Award_type" json:"MM_CASHIN_Award_type"` //Multiplier or Fixed Amount
+	MM_CASHIN_Frequency  string  `bson:"MM_CASHIN_Frequency" json:"MM_CASHIN_Frequency"`   //Once, Once Daily, Each time
+	MM_CASHIN_Max_Award  float64 `bson:"MM_CASHIN_Max_Award" json:"MM_CASHIN_Max_Award"`
+	MM_CASHIN            float64 `bson:"MM_CASHIN" json:"MM_CASHIN"`
+
+	MM_CASHOUT_Award_type string  `bson:"MM_CASHOUT_Award_type" json:"MM_CASHOUT_Award_type"` //Multiplier or Fixed Amount
+	MM_CASHOUT_Frequency  string  `bson:"MM_CASHOUT_Frequency" json:"MM_CASHOUT_Frequency"`   //Once, Once Daily, Each time
+	MM_CASHOUT_Max_Award  float64 `bson:"MM_CASHOUT_Max_Award" json:"MM_CASHOUT_Max_Award"`
+	MM_CASHOUT            float64 `bson:"MM_CASHOUT" json:"MM_CASHOUT"`
+
+	MM_MERCHPAY_Award_type string  `bson:"MM_MERCHPAY_Award_type" json:"MM_MERCHPAY_Award_type"` //Multiplier or Fixed Amount
+	MM_MERCHPAY_Frequency  string  `bson:"MM_MERCHPAY_Frequency" json:"MM_MERCHPAY_Frequency"`   //Once, Once Daily, Each time
+	MM_MERCHPAY_Max_Award  float64 `bson:"MM_MERCHPAY_Max_Award" json:"MM_MERCHPAY_Max_Award"`
+	MM_MERCHPAY            float64 `bson:"MM_MERCHPAY" json:"MM_MERCHPAY"`
+
+	MM_BILLPAY_Award_type string  `bson:"MM_BILLPAY_Award_type" json:"MM_BILLPAY_Award_type"` //Multiplier or Fixed Amount
+	MM_BILLPAY_Frequency  string  `bson:"MM_BILLPAY_Frequency" json:"MM_BILLPAY_Frequency"`   //Once, Once Daily, Each time
+	MM_BILLPAY_Max_Award  float64 `bson:"MM_BILLPAY_Max_Award" json:"MM_BILLPAY_Max_Award"`
+	MM_BILLPAY            float64 `bson:"MM_BILLPAY" json:"MM_BILLPAY"`
+
+	MM_RC_Award_type string  `bson:"MM_RC_Award_type" json:"MM_RC_Award_type"` //Multiplier or Fixed Amount
+	MM_RC_Frequency  string  `bson:"MM_RC_Frequency" json:"MM_RC_Frequency"`   //Once, Once Daily, Each time
+	MM_RC_Max_Award  float64 `bson:"MM_RC_Max_Award" json:"MM_RC_Max_Award"`
+	MM_RC            float64 `bson:"MM_RC" json:"MM_RC"`
+
+	MM_CTMMOREQ_Award_type string  `bson:"MM_CTMMOREQ_Award_type" json:"MM_CTMMOREQ_Award_type"` //Multiplier or Fixed Amount
+	MM_Frequency           string  `bson:"MM_Frequency" json:"MM_Frequency"`                     //Once, Once Daily, Each time
+	MM_Max_Award           float64 `bson:"MM_Max_Award" json:"MM_Max_Award"`
+	MM_CTMMOREQ            float64 `bson:"MM_CTMMOREQ" json:"MM_CTMMOREQ"`
+
+	MM_CBWREQ_Award_type string  `bson:"MM_CBWREQ_Award_type" json:"MM_CBWREQ_Award_type"` //Multiplier or Fixed Amount
+	MM_CBWREQ_Frequency  string  `bson:"MM_CBWREQ_Frequency" json:"MM_CBWREQ_Frequency"`   //Once, Once Daily, Each time
+	MM_CBWREQ_Max_Award  float64 `bson:"MM_CBWREQ_Max_Award" json:"MM_CBWREQ_Max_Award"`
+	MM_CBWREQ            float64 `bson:"MM_CBWREQ" json:"MM_CBWREQ"`
+
+	//campaign notification
+	Invitation_SMS_Sender string `bson:"Invitation_SMS_Sender" json:"Invitation_SMS_Sender"`
+	Invitation_SMS_Text   string `bson:"Invitation_SMS_Text" json:"Invitation_SMS_Text"`
+	PointsAward_SMS_Text  string `bson:"PointsAward_SMS_Text" json:"PointsAward_SMS_Text"`
+}
+
+type Loyalty_Campaign_AddRequest struct {
+	Key         string    `bson:"Key" json:"Key"` //Campaign Name
+	Campaign_Id int64     `bson:"Campaign_Id" json:"Campaign_Id"`
+	Description string    `bson:"Description" json:"Description"`
+	Start_Date  time.Time `bson:"Start_Date" json:"Start_Date"`
+	End_Date    time.Time `bson:"End_Date" json:"End_Date"`
+	//target rules
+	Target_All_Subs    bool            `bson:"Target_All_Subs" json:"Target_All_Subs"` //if true, all target features will be ignored
+	Target_Level_Key   map[string]bool `bson:"Target_Level_Key" json:"Target_Level_Key"`
+	Target_Segment_Key map[string]bool `bson:"Target_Segment_Key" json:"Target_Segment_Key"`
+	LoyaltyPoints_From float64         `bson:"LoyaltyPoints_From" json:"LoyaltyPoints_From"`
+	LoyaltyPoints_Till float64         `bson:"LoyaltyPoints_Till" json:"LoyaltyPoints_Till"`
+	AON_From           float64         `bson:"AON_From" json:"AON_From"` //months
+	AON_Till           float64         `bson:"AON_Till" json:"AON_Till"` //months
+	ARPU_From          float64         `bson:"ARPU_From" json:"ARPU_From"`
+	ARPU_Till          float64         `bson:"ARPU_Till" json:"ARPU_Till"`
+
+	//campaign award rules
+	Welcome_Points_Award_type string  `bson:"Welcome_Points_Award_type" json:"Welcome_Points_Award_type"` //Multiplier or Fixed Amount
+	Welcome_Points_Frequency  string  `bson:"Welcome_Points_Frequency" json:"Welcome_Points_Frequency"`   //Once, Once Daily, Each time
+	Welcome_Points_Max_Award  float64 `bson:"Welcome_Points_Max_Award" json:"Welcome_Points_Max_Award"`
+	Welcome_Points            float64 `bson:"Welcome_Points" json:"Welcome_Points"`
+
+	MobileAppDaily_Login_Award_type string  `bson:"MobileAppDaily_Login_Award_type" json:"MobileAppDaily_Login_Award_type"` //Multiplier or Fixed Amount
+	MobileAppDaily_Login_Frequency  string  `bson:"MobileAppDaily_Login_Frequency" json:"MobileAppDaily_Login_Frequency"`   //Once, Once Daily, Each time
+	MobileAppDaily_Login_Max_Award  float64 `bson:"MobileAppDaily_Login_Max_Award" json:"MobileAppDaily_Login_Max_Award"`
+	MobileAppDaily_Login            float64 `bson:"MobileAppDaily_Login" json:"MobileAppDaily_Login"`
+
+	MainGSM_Award_type string  `bson:"MainGSM_Award_type" json:"MainGSM_Award_type"` //Multiplier or Fixed Amount
+	MainGSM_Frequency  string  `bson:"MainGSM_Frequency" json:"MainGSM_Frequency"`   //Once, Once Daily, Each time
+	MainGSM_Max_Award  float64 `bson:"MainGSM_Max_Award" json:"MainGSM_Max_Award"`
+	MainGSM            float64 `bson:"MainGSM" json:"MainGSM"`
+
+	MM_P2P_Award_type string  `bson:"MM_P2P_Award_type" json:"MM_P2P_Award_type"` //Multiplier or Fixed Amount
+	MM_P2P_Frequency  string  `bson:"MM_P2P_Frequency" json:"MM_P2P_Frequency"`   //Once, Once Daily, Each time
+	MM_P2P_Max_Award  float64 `bson:"MM_P2P_Max_Award" json:"MM_P2P_Max_Award"`
+	MM_P2P            float64 `bson:"MM_P2P" json:"MM_P2P"`
+
+	MM_CASHIN_Award_type string  `bson:"MM_CASHIN_Award_type" json:"MM_CASHIN_Award_type"` //Multiplier or Fixed Amount
+	MM_CASHIN_Frequency  string  `bson:"MM_CASHIN_Frequency" json:"MM_CASHIN_Frequency"`   //Once, Once Daily, Each time
+	MM_CASHIN_Max_Award  float64 `bson:"MM_CASHIN_Max_Award" json:"MM_CASHIN_Max_Award"`
+	MM_CASHIN            float64 `bson:"MM_CASHIN" json:"MM_CASHIN"`
+
+	MM_CASHOUT_Award_type string  `bson:"MM_CASHOUT_Award_type" json:"MM_CASHOUT_Award_type"` //Multiplier or Fixed Amount
+	MM_CASHOUT_Frequency  string  `bson:"MM_CASHOUT_Frequency" json:"MM_CASHOUT_Frequency"`   //Once, Once Daily, Each time
+	MM_CASHOUT_Max_Award  float64 `bson:"MM_CASHOUT_Max_Award" json:"MM_CASHOUT_Max_Award"`
+	MM_CASHOUT            float64 `bson:"MM_CASHOUT" json:"MM_CASHOUT"`
+
+	MM_MERCHPAY_Award_type string  `bson:"MM_MERCHPAY_Award_type" json:"MM_MERCHPAY_Award_type"` //Multiplier or Fixed Amount
+	MM_MERCHPAY_Frequency  string  `bson:"MM_MERCHPAY_Frequency" json:"MM_MERCHPAY_Frequency"`   //Once, Once Daily, Each time
+	MM_MERCHPAY_Max_Award  float64 `bson:"MM_MERCHPAY_Max_Award" json:"MM_MERCHPAY_Max_Award"`
+	MM_MERCHPAY            float64 `bson:"MM_MERCHPAY" json:"MM_MERCHPAY"`
+
+	MM_BILLPAY_Award_type string  `bson:"MM_BILLPAY_Award_type" json:"MM_BILLPAY_Award_type"` //Multiplier or Fixed Amount
+	MM_BILLPAY_Frequency  string  `bson:"MM_BILLPAY_Frequency" json:"MM_BILLPAY_Frequency"`   //Once, Once Daily, Each time
+	MM_BILLPAY_Max_Award  float64 `bson:"MM_BILLPAY_Max_Award" json:"MM_BILLPAY_Max_Award"`
+	MM_BILLPAY            float64 `bson:"MM_BILLPAY" json:"MM_BILLPAY"`
+
+	MM_RC_Award_type string  `bson:"MM_RC_Award_type" json:"MM_RC_Award_type"` //Multiplier or Fixed Amount
+	MM_RC_Frequency  string  `bson:"MM_RC_Frequency" json:"MM_RC_Frequency"`   //Once, Once Daily, Each time
+	MM_RC_Max_Award  float64 `bson:"MM_RC_Max_Award" json:"MM_RC_Max_Award"`
+	MM_RC            float64 `bson:"MM_RC" json:"MM_RC"`
+
+	MM_CTMMOREQ_Award_type string  `bson:"MM_CTMMOREQ_Award_type" json:"MM_CTMMOREQ_Award_type"` //Multiplier or Fixed Amount
+	MM_Frequency           string  `bson:"MM_Frequency" json:"MM_Frequency"`                     //Once, Once Daily, Each time
+	MM_Max_Award           float64 `bson:"MM_Max_Award" json:"MM_Max_Award"`
+	MM_CTMMOREQ            float64 `bson:"MM_CTMMOREQ" json:"MM_CTMMOREQ"`
+
+	MM_CBWREQ_Award_type string  `bson:"MM_CBWREQ_Award_type" json:"MM_CBWREQ_Award_type"` //Multiplier or Fixed Amount
+	MM_CBWREQ_Frequency  string  `bson:"MM_CBWREQ_Frequency" json:"MM_CBWREQ_Frequency"`   //Once, Once Daily, Each time
+	MM_CBWREQ_Max_Award  float64 `bson:"MM_CBWREQ_Max_Award" json:"MM_CBWREQ_Max_Award"`
+	MM_CBWREQ            float64 `bson:"MM_CBWREQ" json:"MM_CBWREQ"`
+
+	//campaign notification
+	Invitation_SMS_Sender string `bson:"Invitation_SMS_Sender" json:"Invitation_SMS_Sender"`
+	Invitation_SMS_Text   string `bson:"Invitation_SMS_Text" json:"Invitation_SMS_Text"`
+	PointsAward_SMS_Text  string `bson:"PointsAward_SMS_Text" json:"PointsAward_SMS_Text"`
+}
+
+type Loyalty_Campaign_EditRequest struct {
+	Key                  string    `bson:"Key" json:"Key"` //Campaign Name
+	NewKey               string    `bson:"NewKey" json:"NewKey"`
+	Campaign_Id          int64     `bson:"Campaign_Id" json:"Campaign_Id"`
+	Description          string    `bson:"Description" json:"Description"`
+	Start_Date           time.Time `bson:"Start_Date" json:"Start_Date"`
+	End_Date             time.Time `bson:"End_Date" json:"End_Date"`
+	Campaign_Status      string    `bson:"Campaign_Status" json:"Campaign_Status"` //launched, paused, resumed, cancelled, or stopped
+	Campaign_Status_Date time.Time `bson:"Campaign_Status_Date" json:"Campaign_Status_Date"`
+	Campaign_Status_User string    `bson:"Campaign_Status_User" json:"Campaign_Status_User"`
+
+	//target rules
+	Target_All_Subs    bool            `bson:"Target_All_Subs" json:"Target_All_Subs"` //if true, all target features will be ignored
+	Target_Level_Key   map[string]bool `bson:"Target_Level_Key" json:"Target_Level_Key"`
+	Target_Segment_Key map[string]bool `bson:"Target_Segment_Key" json:"Target_Segment_Key"`
+	LoyaltyPoints_From float64         `bson:"LoyaltyPoints_From" json:"LoyaltyPoints_From"`
+	LoyaltyPoints_Till float64         `bson:"LoyaltyPoints_Till" json:"LoyaltyPoints_Till"`
+	AON_From           float64         `bson:"AON_From" json:"AON_From"` //months
+	AON_Till           float64         `bson:"AON_Till" json:"AON_Till"` //months
+	ARPU_From          float64         `bson:"ARPU_From" json:"ARPU_From"`
+	ARPU_Till          float64         `bson:"ARPU_Till" json:"ARPU_Till"`
+
+	//campaign award rules
+	Welcome_Points_Award_type string  `bson:"Welcome_Points_Award_type" json:"Welcome_Points_Award_type"` //Multiplier or Fixed Amount
+	Welcome_Points_Frequency  string  `bson:"Welcome_Points_Frequency" json:"Welcome_Points_Frequency"`   //Once, Once Daily, Each time
+	Welcome_Points_Max_Award  float64 `bson:"Welcome_Points_Max_Award" json:"Welcome_Points_Max_Award"`
+	Welcome_Points            float64 `bson:"Welcome_Points" json:"Welcome_Points"`
+
+	MobileAppDaily_Login_Award_type string  `bson:"MobileAppDaily_Login_Award_type" json:"MobileAppDaily_Login_Award_type"` //Multiplier or Fixed Amount
+	MobileAppDaily_Login_Frequency  string  `bson:"MobileAppDaily_Login_Frequency" json:"MobileAppDaily_Login_Frequency"`   //Once, Once Daily, Each time
+	MobileAppDaily_Login_Max_Award  float64 `bson:"MobileAppDaily_Login_Max_Award" json:"MobileAppDaily_Login_Max_Award"`
+	MobileAppDaily_Login            float64 `bson:"MobileAppDaily_Login" json:"MobileAppDaily_Login"`
+
+	MainGSM_Award_type string  `bson:"MainGSM_Award_type" json:"MainGSM_Award_type"` //Multiplier or Fixed Amount
+	MainGSM_Frequency  string  `bson:"MainGSM_Frequency" json:"MainGSM_Frequency"`   //Once, Once Daily, Each time
+	MainGSM_Max_Award  float64 `bson:"MainGSM_Max_Award" json:"MainGSM_Max_Award"`
+	MainGSM            float64 `bson:"MainGSM" json:"MainGSM"`
+
+	MM_P2P_Award_type string  `bson:"MM_P2P_Award_type" json:"MM_P2P_Award_type"` //Multiplier or Fixed Amount
+	MM_P2P_Frequency  string  `bson:"MM_P2P_Frequency" json:"MM_P2P_Frequency"`   //Once, Once Daily, Each time
+	MM_P2P_Max_Award  float64 `bson:"MM_P2P_Max_Award" json:"MM_P2P_Max_Award"`
+	MM_P2P            float64 `bson:"MM_P2P" json:"MM_P2P"`
+
+	MM_CASHIN_Award_type string  `bson:"MM_CASHIN_Award_type" json:"MM_CASHIN_Award_type"` //Multiplier or Fixed Amount
+	MM_CASHIN_Frequency  string  `bson:"MM_CASHIN_Frequency" json:"MM_CASHIN_Frequency"`   //Once, Once Daily, Each time
+	MM_CASHIN_Max_Award  float64 `bson:"MM_CASHIN_Max_Award" json:"MM_CASHIN_Max_Award"`
+	MM_CASHIN            float64 `bson:"MM_CASHIN" json:"MM_CASHIN"`
+
+	MM_CASHOUT_Award_type string  `bson:"MM_CASHOUT_Award_type" json:"MM_CASHOUT_Award_type"` //Multiplier or Fixed Amount
+	MM_CASHOUT_Frequency  string  `bson:"MM_CASHOUT_Frequency" json:"MM_CASHOUT_Frequency"`   //Once, Once Daily, Each time
+	MM_CASHOUT_Max_Award  float64 `bson:"MM_CASHOUT_Max_Award" json:"MM_CASHOUT_Max_Award"`
+	MM_CASHOUT            float64 `bson:"MM_CASHOUT" json:"MM_CASHOUT"`
+
+	MM_MERCHPAY_Award_type string  `bson:"MM_MERCHPAY_Award_type" json:"MM_MERCHPAY_Award_type"` //Multiplier or Fixed Amount
+	MM_MERCHPAY_Frequency  string  `bson:"MM_MERCHPAY_Frequency" json:"MM_MERCHPAY_Frequency"`   //Once, Once Daily, Each time
+	MM_MERCHPAY_Max_Award  float64 `bson:"MM_MERCHPAY_Max_Award" json:"MM_MERCHPAY_Max_Award"`
+	MM_MERCHPAY            float64 `bson:"MM_MERCHPAY" json:"MM_MERCHPAY"`
+
+	MM_BILLPAY_Award_type string  `bson:"MM_BILLPAY_Award_type" json:"MM_BILLPAY_Award_type"` //Multiplier or Fixed Amount
+	MM_BILLPAY_Frequency  string  `bson:"MM_BILLPAY_Frequency" json:"MM_BILLPAY_Frequency"`   //Once, Once Daily, Each time
+	MM_BILLPAY_Max_Award  float64 `bson:"MM_BILLPAY_Max_Award" json:"MM_BILLPAY_Max_Award"`
+	MM_BILLPAY            float64 `bson:"MM_BILLPAY" json:"MM_BILLPAY"`
+
+	MM_RC_Award_type string  `bson:"MM_RC_Award_type" json:"MM_RC_Award_type"` //Multiplier or Fixed Amount
+	MM_RC_Frequency  string  `bson:"MM_RC_Frequency" json:"MM_RC_Frequency"`   //Once, Once Daily, Each time
+	MM_RC_Max_Award  float64 `bson:"MM_RC_Max_Award" json:"MM_RC_Max_Award"`
+	MM_RC            float64 `bson:"MM_RC" json:"MM_RC"`
+
+	MM_CTMMOREQ_Award_type string  `bson:"MM_CTMMOREQ_Award_type" json:"MM_CTMMOREQ_Award_type"` //Multiplier or Fixed Amount
+	MM_Frequency           string  `bson:"MM_Frequency" json:"MM_Frequency"`                     //Once, Once Daily, Each time
+	MM_Max_Award           float64 `bson:"MM_Max_Award" json:"MM_Max_Award"`
+	MM_CTMMOREQ            float64 `bson:"MM_CTMMOREQ" json:"MM_CTMMOREQ"`
+
+	MM_CBWREQ_Award_type string  `bson:"MM_CBWREQ_Award_type" json:"MM_CBWREQ_Award_type"` //Multiplier or Fixed Amount
+	MM_CBWREQ_Frequency  string  `bson:"MM_CBWREQ_Frequency" json:"MM_CBWREQ_Frequency"`   //Once, Once Daily, Each time
+	MM_CBWREQ_Max_Award  float64 `bson:"MM_CBWREQ_Max_Award" json:"MM_CBWREQ_Max_Award"`
+	MM_CBWREQ            float64 `bson:"MM_CBWREQ" json:"MM_CBWREQ"`
+
+	//campaign notification
+	Invitation_SMS_Sender string `bson:"Invitation_SMS_Sender" json:"Invitation_SMS_Sender"`
+	Invitation_SMS_Text   string `bson:"Invitation_SMS_Text" json:"Invitation_SMS_Text"`
+	PointsAward_SMS_Text  string `bson:"PointsAward_SMS_Text" json:"PointsAward_SMS_Text"`
 }
 
 type Loyalty_Campaign_Target_List struct {
@@ -836,10 +1061,10 @@ type Loyalty_Campaign_Target_List struct {
 	End_Date     time.Time `bson:"End_Date" json:"End_Date"`
 }
 
-type Loyalty_Campaign_Action_Frequency_Control struct {
-	Key          string    `bson:"Key" json:"Key"` //Target List Name|MSISDN
-	Campaign_Key int64     `bson:"Campaign_Key" json:"Campaign_Key"`
-	MSISDN       string    `bson:"MSISDN" json:"MSISDN"`
-	Action_Date  time.Time `bson:"Action_Date" json:"Action_Date"`
-	End_Date     time.Time `bson:"End_Date" json:"End_Date"` //when the control will be removed
+type Loyalty_Campaign_Account struct {
+	Key                      string    `bson:"Key" json:"Key"` //Campaign_Key|MSISDN
+	Campaign_Key             int64     `bson:"Campaign_Key" json:"Campaign_Key"`
+	MSISDN                   string    `bson:"MSISDN" json:"MSISDN"`
+	Last_Award_Date          time.Time `bson:"Last_Award_Date" json:"Last_Award_Date"` //the last date when subscriber get benefit from the campaign
+	Cumulative_Points_Earned float64   `bson:"Cumulative_Points_Earned" json:"Cumulative_Points_Earned"`
 }

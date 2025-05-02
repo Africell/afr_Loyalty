@@ -24,6 +24,7 @@ var DAO_Loyalty_AutoIncrement daoc.DAO
 
 var Map_Loyalty_Governance daoc.Cache_Synch
 var DAO_Loyalty_Governance daoc.DAO
+var DAO_Loyalty_Governance_log daoc.DAO
 
 var Map_Loyalty_Level daoc.Cache_Synch
 var DAO_Loyalty_Level daoc.DAO
@@ -70,6 +71,13 @@ var DAO_Loyalty_Redemption_log daoc.DAO
 var DAO_Loyalty_AccountCreditPoints_log daoc.DAO
 var DAO_Loyalty_AccountDebitPoints_log daoc.DAO
 
+var Map_Loyalty_Campaign daoc.Cache_Synch
+var DAO_Loyalty_Campaign daoc.DAO
+var Map_Loyalty_Campaign_Target_List daoc.Cache_Synch
+var DAO_Loyalty_Campaign_Target_List daoc.DAO
+var Map_Loyalty_Campaign_Account daoc.Cache_Synch
+var DAO_Loyalty_Campaign_Account daoc.DAO
+
 var chan_LoyaltyGovernance_Controler = make(chan int, 1)
 
 var chan_PointsExpiry_Controler = make(chan int, 50)
@@ -105,12 +113,19 @@ func (uc *UserControl) InitializeLoyaltyCache() {
 	Map_Customer_COS_Exclusion.Initialize("Customer_COS_Exclusion", "Customer_COS_Exclusion", reflect.TypeOf(Customer_COS_Exclusion{}), customer_COS_Exclusion, true, &DAO_Customer_COS_Exclusion, uc.CacheDir.List)
 	var customer_UAT Customer_UAT
 	Map_Customer_UAT.Initialize("Customer_UAT", "Customer_UAT", reflect.TypeOf(Customer_UAT{}), customer_UAT, true, &DAO_Customer_UAT, uc.CacheDir.List)
+	var loyalty_Campaign Loyalty_Campaign
+	Map_Loyalty_Campaign.Initialize("Loyalty_Campaign", "Loyalty_Campaign", reflect.TypeOf(Loyalty_Campaign{}), loyalty_Campaign, true, &DAO_Loyalty_Campaign, uc.CacheDir.List)
+	var loyalty_Campaign_Target_List Loyalty_Campaign_Target_List
+	Map_Loyalty_Campaign_Target_List.Initialize("Loyalty_Campaign_Target_List", "Loyalty_Campaign_Target_List", reflect.TypeOf(Loyalty_Campaign_Target_List{}), loyalty_Campaign_Target_List, true, &DAO_Loyalty_Campaign_Target_List, uc.CacheDir.List)
+	var loyalty_Campaign_Account Loyalty_Campaign_Account
+	Map_Loyalty_Campaign_Account.Initialize("Loyalty_Campaign_Account", "Loyalty_Campaign_Account", reflect.TypeOf(Loyalty_Campaign_Account{}), loyalty_Campaign_Account, true, &DAO_Loyalty_Campaign_Account, uc.CacheDir.List)
 
 }
 
 func (uc *UserControl) InitializeLoyaltyDAO() {
 	DAO_Loyalty_AutoIncrement.Initialize("Loyalty_AutoIncrement", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(daoc.AutoIncrement{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_AutoIncrement", "")
 	DAO_Loyalty_Governance.Initialize("Loyalty_Governance", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Governance{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Governance", "")
+	DAO_Loyalty_Governance_log.Initialize("Loyalty_Governance_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Governance_log{}), Configuration.DB_Name_Loyalty, "Loyalty_Governance_log", "")
 	DAO_Loyalty_Level.Initialize("Loyalty_Level", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Level{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Level", "")
 	DAO_Loyalty_Level_Change_log.Initialize("Loyalty_Level_Change_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Level_Change_log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Level_Change_log", "")
 	DAO_Loyalty_Account_Segment.Initialize("Loyalty_Account_Segment", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Account_Segment{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Account_Segment", "")
@@ -129,7 +144,9 @@ func (uc *UserControl) InitializeLoyaltyDAO() {
 	DAO_Loyalty_Redemption_log.Initialize("Loyalty_Redemption_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Redemption_log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Redemption_log", "")
 	DAO_Loyalty_AccountCreditPoints_log.Initialize("Loyalty_AccountCreditPoints_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_AccountCreditPoints_log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_AccountCreditPoints_log", "")
 	DAO_Loyalty_AccountDebitPoints_log.Initialize("Loyalty_AccountDebitPoints_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_AccountDebitPoints_log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_AccountDebitPoints_log", "")
-
+	DAO_Loyalty_Campaign.Initialize("Loyalty_Campaign", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Campaign{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Campaign", "")
+	DAO_Loyalty_Campaign_Target_List.Initialize("Loyalty_Campaign_Target_List", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Campaign_Target_List{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Campaign_Target_List", "")
+	DAO_Loyalty_Campaign_Account.Initialize("Loyalty_Campaign_Account", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Campaign_Account{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Campaign_Account", "")
 }
 
 func (uc *UserControl) LoyaltyIndexesMaintenanceProcess() {
@@ -259,6 +276,34 @@ func (uc *UserControl) LoyaltyIndexesMaintenanceProcess() {
 			log.Println("Index Idx_Customer_UAT_Key created")
 		}
 	}
+
+	exists, err = DAO_Loyalty_Campaign.CheckAndCreateIndex("Idx_Loyalty_Campaign_Key", []string{"Key"}, true)
+	if err != nil {
+		log.Println("Error creating index Idx_Loyalty_Campaign_Key: ", err)
+	} else {
+		if !exists {
+			log.Println("Index Idx_Loyalty_Campaign_Key created")
+		}
+	}
+
+	exists, err = DAO_Loyalty_Campaign_Target_List.CheckAndCreateIndex("Idx_Loyalty_Campaign_Target_List_Key", []string{"Key"}, true)
+	if err != nil {
+		log.Println("Error creating index Idx_Loyalty_Campaign_Target_List_Key: ", err)
+	} else {
+		if !exists {
+			log.Println("Index Idx_Loyalty_Campaign_Target_List_Key created")
+		}
+	}
+
+	exists, err = DAO_Loyalty_Campaign_Account.CheckAndCreateIndex("Idx_Loyalty_Campaign_Account_Key", []string{"Key"}, true)
+	if err != nil {
+		log.Println("Error creating index Idx_Loyalty_Campaign_Account_Key: ", err)
+	} else {
+		if !exists {
+			log.Println("Index Idx_Loyalty_Campaign_Account_Key created")
+		}
+	}
+
 }
 
 func (Uc *UserControl) Write_Loyalty_Event_Log(record Loyalty_Event_Log) {
@@ -323,6 +368,17 @@ func (Uc *UserControl) Write_Loyalty_AccountDebitPoints_log(record Loyalty_Accou
 	_, err := DAO_Loyalty_AccountDebitPoints_log.PutOneLogs(record, Db, Col)
 	if err != nil {
 		log.Println("Error in Write_Loyalty_AccountDebitPoints_log:", err, " (", record, ")")
+		return
+	}
+}
+
+func (Uc *UserControl) Write_Loyalty_Governance_log(record Loyalty_Governance_log) {
+	//YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.ReceiveDate)
+	Db := DAO_Loyalty_Governance_log.DB          //+ "_" + YYYY + MM
+	Col := DAO_Loyalty_Governance_log.Collection //+ "_" + DD
+	_, err := DAO_Loyalty_Governance_log.PutOneLogs(record, Db, Col)
+	if err != nil {
+		log.Println("Error in Write_Loyalty_Governance_log:", err, " (", record, ")")
 		return
 	}
 }
@@ -721,6 +777,43 @@ func (Uc *UserControl) Loyalty_Governance_Expiry_Points_Credit(points float64) (
 	Map_Loyalty_Governance.Put(loyalty_governance.Key, loyalty_governance)
 	<-chan_LoyaltyGovernance_Controler
 	return
+}
+
+func (Uc *UserControl) Loyalty_Governance_DailyLog_Process() {
+	exec := 0
+	LOG_ID := "<<Loyalty Governance Daily Log Process>>"
+	for range time.Tick(time.Second * 1) {
+		_CurrentDateTime := time.Now()
+		_hr, _mi, _se := _CurrentDateTime.Clock()
+		if _hr == 00 {
+			if _mi == 00 {
+				if _se < 60 {
+					if exec == 0 {
+						exec = 1
+						log.Println(LOG_ID + " triggered")
+						loyalty_governance_na, exist := Map_Loyalty_Governance.CheckThenGet(LOYALTY_GOVERNANCE_KEY)
+						if exist {
+							loyalty_governance, ok := loyalty_governance_na.(Loyalty_Governance)
+							if ok {
+								var log_entry Loyalty_Governance_log
+								log_entry.Log_Date = time.Now()
+								log_entry.Available_Points_Pool = loyalty_governance.Available_Points_Pool
+								log_entry.Distributed_Points_Pool = loyalty_governance.Distributed_Points_Pool
+								log_entry.Redeemed_Points_Pool = loyalty_governance.Redeemed_Points_Pool
+								log_entry.Expired_Points_Pool = loyalty_governance.Expired_Points_Pool
+								Uc.Write_Loyalty_Governance_log(log_entry)
+							}
+						}
+						log.Println(LOG_ID + " finished")
+					}
+				}
+			} else {
+				if exec == 1 {
+					exec = 0
+				}
+			}
+		}
+	}
 }
 
 // ***********************************************************************
@@ -4938,4 +5031,321 @@ func Normalize_International_MSISDN(MSISDN string) (N_MSISDN string) {
 			return MSISDN[len(MSISDN)-Configuration.MSISDN_Short_len:] + Configuration.CountryCode
 		}
 	}
+}
+
+// ***********************************************************************
+// Loyalty Campaign
+// ***********************************************************************
+func (Uc *UserControl) Loyalty_Campaign_Add(Login string, request Loyalty_Campaign_AddRequest) (Id int64, err error) {
+	//check key if filled and if already used
+	if request.Key == "" {
+		err = errors.New("key cannot be empty")
+		return Id, err
+	}
+	//check if key already used
+	exits := Map_Loyalty_Campaign.Check(request.Key)
+	if exits {
+		err = errors.New("key already exist")
+		return Id, err
+	}
+
+	//Prepare new entry
+	var NewEntry Loyalty_Campaign
+	NewEntry.Campaign_Id = Map_Loyalty_AutoIncrement.GetNextAI("Loyalty_Campaign-Id")
+	Id = NewEntry.Campaign_Id
+	NewEntry.Key = request.Key
+	NewEntry.Description = request.Description
+	NewEntry.Add_Date = time.Now()
+	NewEntry.Start_Date = request.Start_Date
+	NewEntry.End_Date = request.End_Date
+	NewEntry.Campaign_Status = "Created"
+	NewEntry.Campaign_Status_Date = time.Now()
+	NewEntry.Campaign_Status_User = Login
+	NewEntry.Target_All_Subs = request.Target_All_Subs
+	NewEntry.Target_Level_Key = request.Target_Level_Key
+	NewEntry.Target_Segment_Key = request.Target_Segment_Key
+	NewEntry.LoyaltyPoints_From = request.LoyaltyPoints_From
+	NewEntry.LoyaltyPoints_Till = request.LoyaltyPoints_Till
+	NewEntry.AON_From = request.AON_From
+	NewEntry.AON_Till = request.AON_Till
+	NewEntry.ARPU_From = request.ARPU_From
+	NewEntry.ARPU_Till = request.ARPU_Till
+	NewEntry.Welcome_Points_Award_type = request.Welcome_Points_Award_type
+	NewEntry.Welcome_Points_Frequency = request.Welcome_Points_Frequency
+	NewEntry.Welcome_Points_Max_Award = request.Welcome_Points_Max_Award
+	NewEntry.Welcome_Points = request.Welcome_Points
+	NewEntry.MobileAppDaily_Login_Award_type = request.MobileAppDaily_Login_Award_type
+	NewEntry.MobileAppDaily_Login_Frequency = request.MobileAppDaily_Login_Frequency
+	NewEntry.MobileAppDaily_Login_Max_Award = request.MobileAppDaily_Login_Max_Award
+	NewEntry.MobileAppDaily_Login = request.MobileAppDaily_Login
+	NewEntry.MainGSM_Award_type = request.MainGSM_Award_type
+	NewEntry.MainGSM_Frequency = request.MainGSM_Frequency
+	NewEntry.MainGSM_Max_Award = request.MainGSM_Max_Award
+	NewEntry.MainGSM = request.MainGSM
+	NewEntry.MM_P2P_Award_type = request.MM_P2P_Award_type
+	NewEntry.MM_P2P_Frequency = request.MM_P2P_Frequency
+	NewEntry.MM_P2P_Max_Award = request.MM_P2P_Max_Award
+	NewEntry.MM_P2P = request.MM_P2P
+	NewEntry.MM_CASHIN_Award_type = request.MM_CASHIN_Award_type
+	NewEntry.MM_CASHIN_Frequency = request.MM_CASHIN_Frequency
+	NewEntry.MM_CASHIN_Max_Award = request.MM_CASHIN_Max_Award
+	NewEntry.MM_CASHIN = request.MM_CASHIN
+	NewEntry.MM_CASHOUT_Award_type = request.MM_CASHOUT_Award_type
+	NewEntry.MM_CASHOUT_Frequency = request.MM_CASHOUT_Frequency
+	NewEntry.MM_CASHOUT_Max_Award = request.MM_CASHOUT_Max_Award
+	NewEntry.MM_CASHOUT = request.MM_CASHOUT
+	NewEntry.MM_MERCHPAY_Award_type = request.MM_MERCHPAY_Award_type
+	NewEntry.MM_MERCHPAY_Frequency = request.MM_MERCHPAY_Frequency
+	NewEntry.MM_MERCHPAY_Max_Award = request.MM_MERCHPAY_Max_Award
+	NewEntry.MM_MERCHPAY = request.MM_MERCHPAY
+	NewEntry.MM_BILLPAY_Award_type = request.MM_BILLPAY_Award_type
+	NewEntry.MM_BILLPAY_Frequency = request.MM_BILLPAY_Frequency
+	NewEntry.MM_BILLPAY_Max_Award = request.MM_BILLPAY_Max_Award
+	NewEntry.MM_BILLPAY = request.MM_BILLPAY
+	NewEntry.MM_RC_Award_type = request.MM_RC_Award_type
+	NewEntry.MM_RC_Frequency = request.MM_RC_Frequency
+	NewEntry.MM_RC_Max_Award = request.MM_RC_Max_Award
+	NewEntry.MM_RC = request.MM_RC
+	NewEntry.MM_CTMMOREQ_Award_type = request.MM_CTMMOREQ_Award_type
+	NewEntry.MM_Frequency = request.MM_Frequency
+	NewEntry.MM_Max_Award = request.MM_Max_Award
+	NewEntry.MM_CTMMOREQ = request.MM_CTMMOREQ
+	NewEntry.MM_CBWREQ_Award_type = request.MM_CBWREQ_Award_type
+	NewEntry.MM_CBWREQ_Frequency = request.MM_CBWREQ_Frequency
+	NewEntry.MM_CBWREQ_Max_Award = request.MM_CBWREQ_Max_Award
+	NewEntry.MM_CBWREQ = request.MM_CBWREQ
+	NewEntry.Invitation_SMS_Sender = request.Invitation_SMS_Sender
+	NewEntry.Invitation_SMS_Text = request.Invitation_SMS_Text
+	NewEntry.PointsAward_SMS_Text = request.PointsAward_SMS_Text
+
+	//add to cache and DB
+	Map_Loyalty_Campaign.Put(NewEntry.Key, NewEntry)
+	//add logs
+	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
+		Event_User:         Login,
+		Event_Time:         time.Now(),
+		Event_AffectedType: "Loyalty_Campaign",
+		Event_ActionType:   "Add",
+		Event_Description:  "",
+		Event_Entry_Before: nil,
+		Event_Entry_After:  NewEntry,
+	})
+	return Id, nil
+}
+
+func (Uc *UserControl) Loyalty_Campaign_Edit(Login string, request Loyalty_Campaign_EditRequest) (Id int64, err error) {
+	//check and validate
+	if request.Key == "" {
+		err = errors.New("key cannot be empty")
+		return Id, err
+	}
+	entry_na, exits := Map_Loyalty_Campaign.CheckThenGet(request.Key)
+	if !exits {
+		err = errors.New("key is not created")
+		return Id, err
+	}
+	entry, ok := entry_na.(Loyalty_Campaign)
+	if !ok {
+		return Id, errors.New("error in type assertion")
+	}
+	if entry.Campaign_Id != request.Campaign_Id {
+		return Id, errors.New("id is not matching")
+	}
+	Current_Entry := entry
+
+	//Prepare new entry
+	entry.Key = request.Key
+	entry.Description = request.Description
+	entry.Start_Date = request.Start_Date
+	entry.End_Date = request.End_Date
+	if entry.Campaign_Status != request.Campaign_Status {
+		entry.Campaign_Status = request.Campaign_Status
+		entry.Campaign_Status_Date = time.Now()
+		entry.Campaign_Status_User = Login
+	}
+	entry.Target_All_Subs = request.Target_All_Subs
+	entry.Target_Level_Key = request.Target_Level_Key
+	entry.Target_Segment_Key = request.Target_Segment_Key
+	entry.LoyaltyPoints_From = request.LoyaltyPoints_From
+	entry.LoyaltyPoints_Till = request.LoyaltyPoints_Till
+	entry.AON_From = request.AON_From
+	entry.AON_Till = request.AON_Till
+	entry.ARPU_From = request.ARPU_From
+	entry.ARPU_Till = request.ARPU_Till
+	entry.Welcome_Points_Award_type = request.Welcome_Points_Award_type
+	entry.Welcome_Points_Frequency = request.Welcome_Points_Frequency
+	entry.Welcome_Points_Max_Award = request.Welcome_Points_Max_Award
+	entry.Welcome_Points = request.Welcome_Points
+	entry.MobileAppDaily_Login_Award_type = request.MobileAppDaily_Login_Award_type
+	entry.MobileAppDaily_Login_Frequency = request.MobileAppDaily_Login_Frequency
+	entry.MobileAppDaily_Login_Max_Award = request.MobileAppDaily_Login_Max_Award
+	entry.MobileAppDaily_Login = request.MobileAppDaily_Login
+	entry.MainGSM_Award_type = request.MainGSM_Award_type
+	entry.MainGSM_Frequency = request.MainGSM_Frequency
+	entry.MainGSM_Max_Award = request.MainGSM_Max_Award
+	entry.MainGSM = request.MainGSM
+	entry.MM_P2P_Award_type = request.MM_P2P_Award_type
+	entry.MM_P2P_Frequency = request.MM_P2P_Frequency
+	entry.MM_P2P_Max_Award = request.MM_P2P_Max_Award
+	entry.MM_P2P = request.MM_P2P
+	entry.MM_CASHIN_Award_type = request.MM_CASHIN_Award_type
+	entry.MM_CASHIN_Frequency = request.MM_CASHIN_Frequency
+	entry.MM_CASHIN_Max_Award = request.MM_CASHIN_Max_Award
+	entry.MM_CASHIN = request.MM_CASHIN
+	entry.MM_CASHOUT_Award_type = request.MM_CASHOUT_Award_type
+	entry.MM_CASHOUT_Frequency = request.MM_CASHOUT_Frequency
+	entry.MM_CASHOUT_Max_Award = request.MM_CASHOUT_Max_Award
+	entry.MM_CASHOUT = request.MM_CASHOUT
+	entry.MM_MERCHPAY_Award_type = request.MM_MERCHPAY_Award_type
+	entry.MM_MERCHPAY_Frequency = request.MM_MERCHPAY_Frequency
+	entry.MM_MERCHPAY_Max_Award = request.MM_MERCHPAY_Max_Award
+	entry.MM_MERCHPAY = request.MM_MERCHPAY
+	entry.MM_BILLPAY_Award_type = request.MM_BILLPAY_Award_type
+	entry.MM_BILLPAY_Frequency = request.MM_BILLPAY_Frequency
+	entry.MM_BILLPAY_Max_Award = request.MM_BILLPAY_Max_Award
+	entry.MM_BILLPAY = request.MM_BILLPAY
+	entry.MM_RC_Award_type = request.MM_RC_Award_type
+	entry.MM_RC_Frequency = request.MM_RC_Frequency
+	entry.MM_RC_Max_Award = request.MM_RC_Max_Award
+	entry.MM_RC = request.MM_RC
+	entry.MM_CTMMOREQ_Award_type = request.MM_CTMMOREQ_Award_type
+	entry.MM_Frequency = request.MM_Frequency
+	entry.MM_Max_Award = request.MM_Max_Award
+	entry.MM_CTMMOREQ = request.MM_CTMMOREQ
+	entry.MM_CBWREQ_Award_type = request.MM_CBWREQ_Award_type
+	entry.MM_CBWREQ_Frequency = request.MM_CBWREQ_Frequency
+	entry.MM_CBWREQ_Max_Award = request.MM_CBWREQ_Max_Award
+	entry.MM_CBWREQ = request.MM_CBWREQ
+	entry.Invitation_SMS_Sender = request.Invitation_SMS_Sender
+	entry.Invitation_SMS_Text = request.Invitation_SMS_Text
+	entry.PointsAward_SMS_Text = request.PointsAward_SMS_Text
+	if request.NewKey != "" {
+		if request.NewKey != request.Key {
+			//delete old
+			Map_Loyalty_Campaign.Delete(request.Key)
+			//update key
+			entry.Key = request.NewKey
+		}
+	}
+	//add to cache and DB
+	Map_Loyalty_Campaign.Put(entry.Key, entry)
+	//add logs
+	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
+		Event_User:         Login,
+		Event_Time:         time.Now(),
+		Event_AffectedType: "Loyalty_Campaign",
+		Event_ActionType:   "Edit",
+		Event_Description:  "",
+		Event_Entry_Before: Current_Entry,
+		Event_Entry_After:  entry,
+	})
+	return Id, nil
+}
+
+func (Uc *UserControl) Loyalty_Campaign_Get(Key string) (entries []Loyalty_Campaign, err error) {
+	if Key == "" {
+		entries_na := Map_Loyalty_Campaign.ConvertToArray()
+		if len(entries_na) > 0 {
+			for _, entry_na := range entries_na {
+				entry, ok := entry_na.(Loyalty_Campaign)
+				if !ok {
+					err = errors.New("error in type assertion")
+					return entries, err
+				} else {
+					entries = append(entries, entry)
+				}
+			}
+		}
+		return entries, nil
+	} else {
+		entry_na, exits := Map_Loyalty_Campaign.CheckThenGet(Key)
+		if !exits {
+			err = errors.New("key does not exist")
+			return entries, err
+		}
+		entry, ok := entry_na.(Loyalty_Campaign)
+		if !ok {
+			err = errors.New("error in type assertion")
+			return entries, err
+		}
+		entries = append(entries, entry)
+		return entries, nil
+	}
+}
+
+func (Uc *UserControl) Loyalty_Campaign_GetPaginated(Page, Limit int64) (entries []Loyalty_Campaign, err error) {
+	if Page < 1 {
+		return entries, errors.New("invalid page")
+	}
+	if Limit < 1 || Limit > 50000 {
+		return entries, errors.New("invalid limit (accept value between 1 and 50000)")
+	}
+
+	var findparams daoc.DAOFindParams
+	//var array []daoc.DAOFindCriteria
+	// if Outlet_Key != "" {
+	// 	//restrict access for records that belong to this user
+	// 	var criteria daoc.DAOFindCriteria = daoc.DAOFindCriteria{
+	// 		Field:    "Outlet_Key",
+	// 		Value:    Outlet_Key,
+	// 		Operator: "EQUAL",
+	// 	}
+	// 	array = append(array, criteria)
+	// }
+	// if Agent_Key != "" {
+	// 	//restrict access for records that belong to this user
+	// 	var criteria daoc.DAOFindCriteria = daoc.DAOFindCriteria{
+	// 		Field:    "Agent_Key",
+	// 		Value:    Agent_Key,
+	// 		Operator: "EQUAL",
+	// 	}
+	// 	array = append(array, criteria)
+	// }
+	// if len(array) > 0 {
+	// 	findparams.FindCriteria = array
+	// }
+	var paginationparams daoc.DAOPaginate
+	paginationparams.Limit = Limit
+	paginationparams.Page = Page
+	findResult, err := DAO_Loyalty_Campaign.FindPaginate(findparams, paginationparams)
+	if err != nil {
+		return entries, err
+	}
+	if len(findResult) > 0 {
+		for _, findres := range findResult {
+			InterfaceValue := reflect.ValueOf(findres).Elem().Interface().(Loyalty_Campaign)
+			entries = append(entries, InterfaceValue)
+		}
+	}
+	return entries, nil
+
+}
+
+func (Uc *UserControl) Loyalty_Campaign_Delete(Login, Key string) (err error) {
+	if Key == "" {
+		err = errors.New("key cannot be empty")
+		return err
+	}
+	entry_na, exits := Map_Loyalty_Campaign.CheckThenGet(Key)
+	if !exits {
+		err = errors.New("entry does not exist")
+		return err
+	}
+	entry, ok := entry_na.(Loyalty_Campaign)
+	if !ok {
+		err = errors.New("error in type assertion")
+		return err
+	}
+	Map_Loyalty_Campaign.Delete(Key)
+	//add logs
+	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
+		Event_User:         Login,
+		Event_Time:         time.Now(),
+		Event_AffectedType: "Loyalty_Campaign",
+		Event_ActionType:   "Delete",
+		Event_Description:  "",
+		Event_Entry_Before: nil,
+		Event_Entry_After:  entry,
+	})
+	return nil
 }

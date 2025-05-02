@@ -109,7 +109,9 @@ func (p *program) run() {
 		go http.ListenAndServe(":"+HttpLoyaltyFeedPort, corsOpts.Handler(Loyalty_Feed_router))
 
 		//go UserControl.PointsExpiry_Process()
+		go UserControl.Loyalty_Governance_DailyLog_Process()
 		go UserControl.LoyaltyGovernancePools_Metrics_Process()
+
 	}
 
 	//**Lendme web services
