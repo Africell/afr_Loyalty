@@ -5052,7 +5052,7 @@ func (Uc *UserControl) ReadAccountEventsDetailsFromMongoDB(startDate, endDate ti
 
 func (Uc *UserControl) Customer_Loyalty_Account_Getlogs(Type string, startDate, endDate time.Time, MSISDN string, Filter string) (response []Loyalty_Logs, err error) {
 	var allLogs []Loyalty_Logs
-	if Type == "All" || Type == "Debit" {
+	if Type == "All Logs" || Type == "Debit" {
 		findResult, err := Uc.Customer_Loyalty_Account_GetDebitPoints_log(startDate, endDate, MSISDN, Filter)
 		if err != nil {
 			return response, err
@@ -5068,7 +5068,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_Getlogs(Type string, startDate, 
 			allLogs = append(allLogs, newLog)
 		}
 	}
-	if Type == "All" || Type == "Credit" {
+	if Type == "All Logs" || Type == "Credit" {
 		findResult, err := Uc.Customer_Loyalty_Account_GetCreditPoints_log(startDate, endDate, MSISDN, Filter)
 		if err != nil {
 			return response, err
@@ -5084,7 +5084,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_Getlogs(Type string, startDate, 
 			allLogs = append(allLogs, newLog)
 		}
 	}
-	if Type == "All" || Type == "Redemption" {
+	if Type == "All Logs" || Type == "Redemption" {
 		findResult, err := Uc.Customer_Loyalty_Account_GetRedemptionPoints_log(startDate, endDate, MSISDN, Filter)
 		if err != nil {
 			return response, err
@@ -5100,7 +5100,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_Getlogs(Type string, startDate, 
 			allLogs = append(allLogs, newLog)
 		}
 	}
-	if Type == "All" || Type == "Expiry" {
+	if Type == "All Logs" || Type == "Expiry" {
 		findResult, err := Uc.Customer_Loyalty_Account_GetExpiryPoints_log(startDate, endDate, MSISDN, Filter)
 		if err != nil {
 			return response, err
@@ -5115,7 +5115,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_Getlogs(Type string, startDate, 
 			allLogs = append(allLogs, newLog)
 		}
 	}
-	if Type == "All" || Type == "LevelChange" {
+	if Type == "All Logs" || Type == "LevelChange" {
 		findResult, err := Uc.Customer_Loyalty_Account_GetLevelChange_log(startDate, endDate, MSISDN, Filter)
 		if err != nil {
 			return response, err
