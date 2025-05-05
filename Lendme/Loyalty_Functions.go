@@ -5052,14 +5052,14 @@ func (Uc *UserControl) ReadAccountEventsDetailsFromMongoDB(startDate, endDate ti
 
 func (Uc *UserControl) Customer_Loyalty_Account_Getlogs(Type string, startDate, endDate time.Time, MSISDN string, Filter string) (response []Loyalty_Logs, err error) {
 	var allLogs []Loyalty_Logs
-	if Type == "All Logs" || Type == "Debit" {
+	if Type == "All Logs" || Type == "Debit Logs" {
 		findResult, err := Uc.Customer_Loyalty_Account_GetDebitPoints_log(startDate, endDate, MSISDN, Filter)
 		if err != nil {
 			return response, err
 		}
 		for _, log := range findResult {
 			var newLog = Loyalty_Logs{}
-			newLog.Logs_Type = "Debit"
+			newLog.Logs_Type = "Debit Logs"
 			newLog.Debit_Logs = log
 			newLog.Date = log.ReceiveDate
 			newLog.PointsToCredit = log.Debit_Amount
@@ -5068,14 +5068,14 @@ func (Uc *UserControl) Customer_Loyalty_Account_Getlogs(Type string, startDate, 
 			allLogs = append(allLogs, newLog)
 		}
 	}
-	if Type == "All Logs" || Type == "Credit" {
+	if Type == "All Logs" || Type == "Credit Logs" {
 		findResult, err := Uc.Customer_Loyalty_Account_GetCreditPoints_log(startDate, endDate, MSISDN, Filter)
 		if err != nil {
 			return response, err
 		}
 		for _, log := range findResult {
 			var newLog = Loyalty_Logs{}
-			newLog.Logs_Type = "Credit"
+			newLog.Logs_Type = "Credit Logs"
 			newLog.Credit_Logs = log
 			newLog.Date = log.ReceiveDate
 			newLog.PointsToCredit = log.PointsToCredit
@@ -5084,14 +5084,14 @@ func (Uc *UserControl) Customer_Loyalty_Account_Getlogs(Type string, startDate, 
 			allLogs = append(allLogs, newLog)
 		}
 	}
-	if Type == "All Logs" || Type == "Redemption" {
+	if Type == "All Logs" || Type == "Redemption Logs" {
 		findResult, err := Uc.Customer_Loyalty_Account_GetRedemptionPoints_log(startDate, endDate, MSISDN, Filter)
 		if err != nil {
 			return response, err
 		}
 		for _, log := range findResult {
 			var newLog = Loyalty_Logs{}
-			newLog.Logs_Type = "Redemption"
+			newLog.Logs_Type = "Redemption Logs"
 			newLog.Redemption_Logs = log
 			newLog.Date = log.ReceiveDate
 			newLog.PointsToCredit = log.Points_To_Redeem
@@ -5100,14 +5100,14 @@ func (Uc *UserControl) Customer_Loyalty_Account_Getlogs(Type string, startDate, 
 			allLogs = append(allLogs, newLog)
 		}
 	}
-	if Type == "All Logs" || Type == "Expiry" {
+	if Type == "All Logs" || Type == "Expiry Logs" {
 		findResult, err := Uc.Customer_Loyalty_Account_GetExpiryPoints_log(startDate, endDate, MSISDN, Filter)
 		if err != nil {
 			return response, err
 		}
 		for _, log := range findResult {
 			var newLog = Loyalty_Logs{}
-			newLog.Logs_Type = "Expiry"
+			newLog.Logs_Type = "Expiry Logs"
 			newLog.Expiry_Logs = log
 			newLog.Date = log.ExpiryTime
 			newLog.Opening_Available_Points = log.Opening_Available_Points
@@ -5115,14 +5115,14 @@ func (Uc *UserControl) Customer_Loyalty_Account_Getlogs(Type string, startDate, 
 			allLogs = append(allLogs, newLog)
 		}
 	}
-	if Type == "All Logs" || Type == "LevelChange" {
+	if Type == "All Logs" || Type == "Level Change Logs" {
 		findResult, err := Uc.Customer_Loyalty_Account_GetLevelChange_log(startDate, endDate, MSISDN, Filter)
 		if err != nil {
 			return response, err
 		}
 		for _, log := range findResult {
 			var newLog = Loyalty_Logs{}
-			newLog.Logs_Type = "Level Change"
+			newLog.Logs_Type = "Level Change Logs"
 			newLog.Level_Change_Logs = log
 			newLog.Date = log.Level_Change_Date
 			allLogs = append(allLogs, newLog)
