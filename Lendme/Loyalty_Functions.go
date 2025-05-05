@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"reflect"
+	"sort"
 	"strconv"
 	"time"
 
@@ -4756,6 +4757,448 @@ func (Uc *UserControl) ReadAccountCreditPointsDetailsFromMongoDB(startDate, endD
 
 	return response, err
 }
+
+func (Uc *UserControl) Customer_Loyalty_Account_GetRedemptionPoints_log(startDate, endDate time.Time, MSISDN string, Filter string) (response []Loyalty_Redemption_log, err error) {
+
+	findResult, err := Uc.ReadAccountRedemptionPointsDetailsFromMongoDB(startDate, endDate, MSISDN, 1, 0)
+	if err != nil {
+		return response, err
+	}
+	response = append(response, findResult...)
+
+	return response, nil
+}
+
+func (Uc *UserControl) ReadAccountRedemptionPointsDetailsFromMongoDB(startDate, endDate time.Time, MSISDN string, page, limit int64) (response []Loyalty_Redemption_log, err error) {
+	// Ensure startDate is before or equal to endDate
+
+	if startDate.After(endDate) {
+		return response, fmt.Errorf("start date cannot be after end date")
+	}
+
+	if page < 1 {
+		page = 1 // Default to first page if invalid page number
+	}
+
+	// Iterate over the range of dates
+	for currentDate := startDate; !currentDate.After(endDate); currentDate = currentDate.AddDate(0, 0, 1) {
+		monthStr := strconv.Itoa(int(currentDate.Month()))
+		if len(monthStr) < 2 {
+			monthStr = "0" + monthStr
+		}
+		MongoDB_DB_Name := "Loyalty_DB_" + strconv.Itoa(currentDate.Year()) + monthStr
+
+		var dayStr = strconv.Itoa(currentDate.Day())
+		if len(dayStr) < 2 {
+			dayStr = "0" + dayStr
+		}
+
+		collName := "Col_Loyalty_Redemption_log_" + dayStr
+
+		// Fetch the collection
+		collection := Uc.LoyaltyMongoDB.MongoDBClient.Database(MongoDB_DB_Name).Collection(collName)
+		// Build the filter for the date range
+		filter := bson.D{
+			{Key: "MSISDN", Value: MSISDN},
+		}
+		skip := (page - 1) * limit
+
+		// Fetch a paginated list of documents using limit and skip
+		cursor, err := collection.Find(
+			context.Background(),
+			filter,
+			options.Find().SetSkip(int64(skip)).SetLimit(int64(limit)),
+		)
+		if err != nil {
+			return response, err
+		}
+		defer cursor.Close(context.Background())
+
+		for cursor.Next(context.Background()) {
+			var result Loyalty_Redemption_log
+
+			if err := cursor.Decode(&result); err != nil {
+				return nil, fmt.Errorf("failed to decode result: %w", err)
+			}
+			response = append(response, result)
+		}
+
+		if err := cursor.Err(); err != nil {
+			return nil, fmt.Errorf("cursor error: %w", err)
+		}
+	}
+
+	return response, err
+}
+
+func (Uc *UserControl) Customer_Loyalty_Account_GetExpiryPoints_log(startDate, endDate time.Time, MSISDN string, Filter string) (response []Loyalty_Expiry_log, err error) {
+
+	findResult, err := Uc.ReadAccountExpiryPointsDetailsFromMongoDB(startDate, endDate, MSISDN, 1, 0)
+	if err != nil {
+		return response, err
+	}
+	response = append(response, findResult...)
+
+	return response, nil
+}
+
+func (Uc *UserControl) ReadAccountExpiryPointsDetailsFromMongoDB(startDate, endDate time.Time, MSISDN string, page, limit int64) (response []Loyalty_Expiry_log, err error) {
+	// Ensure startDate is before or equal to endDate
+
+	if startDate.After(endDate) {
+		return response, fmt.Errorf("start date cannot be after end date")
+	}
+
+	if page < 1 {
+		page = 1 // Default to first page if invalid page number
+	}
+
+	// Iterate over the range of dates
+	for currentDate := startDate; !currentDate.After(endDate); currentDate = currentDate.AddDate(0, 0, 1) {
+		monthStr := strconv.Itoa(int(currentDate.Month()))
+		if len(monthStr) < 2 {
+			monthStr = "0" + monthStr
+		}
+		MongoDB_DB_Name := "Loyalty_DB_" + strconv.Itoa(currentDate.Year()) + monthStr
+
+		var dayStr = strconv.Itoa(currentDate.Day())
+		if len(dayStr) < 2 {
+			dayStr = "0" + dayStr
+		}
+
+		collName := "Col_Loyalty_Expiry_log_" + dayStr
+
+		// Fetch the collection
+		collection := Uc.LoyaltyMongoDB.MongoDBClient.Database(MongoDB_DB_Name).Collection(collName)
+		// Build the filter for the date range
+		filter := bson.D{
+			{Key: "MSISDN", Value: MSISDN},
+		}
+		skip := (page - 1) * limit
+
+		// Fetch a paginated list of documents using limit and skip
+		cursor, err := collection.Find(
+			context.Background(),
+			filter,
+			options.Find().SetSkip(int64(skip)).SetLimit(int64(limit)),
+		)
+		if err != nil {
+			return response, err
+		}
+		defer cursor.Close(context.Background())
+
+		for cursor.Next(context.Background()) {
+			var result Loyalty_Expiry_log
+
+			if err := cursor.Decode(&result); err != nil {
+				return nil, fmt.Errorf("failed to decode result: %w", err)
+			}
+			response = append(response, result)
+		}
+
+		if err := cursor.Err(); err != nil {
+			return nil, fmt.Errorf("cursor error: %w", err)
+		}
+	}
+
+	return response, err
+}
+
+func (Uc *UserControl) Customer_Loyalty_Account_GetLevelChange_log(startDate, endDate time.Time, MSISDN string, Filter string) (response []Loyalty_Level_Change_log, err error) {
+
+	findResult, err := Uc.ReadAccountLevelChangeDetailsFromMongoDB(startDate, endDate, MSISDN, 1, 0)
+	if err != nil {
+		return response, err
+	}
+	response = append(response, findResult...)
+
+	return response, nil
+}
+
+func (Uc *UserControl) ReadAccountLevelChangeDetailsFromMongoDB(startDate, endDate time.Time, MSISDN string, page, limit int64) (response []Loyalty_Level_Change_log, err error) {
+	// Ensure startDate is before or equal to endDate
+
+	if startDate.After(endDate) {
+		return response, fmt.Errorf("start date cannot be after end date")
+	}
+
+	if page < 1 {
+		page = 1 // Default to first page if invalid page number
+	}
+
+	// Iterate over the range of dates
+	for currentDate := startDate; !currentDate.After(endDate); currentDate = currentDate.AddDate(0, 0, 1) {
+		monthStr := strconv.Itoa(int(currentDate.Month()))
+		if len(monthStr) < 2 {
+			monthStr = "0" + monthStr
+		}
+		MongoDB_DB_Name := "Loyalty_DB_" + strconv.Itoa(currentDate.Year()) + monthStr
+
+		var dayStr = strconv.Itoa(currentDate.Day())
+		if len(dayStr) < 2 {
+			dayStr = "0" + dayStr
+		}
+
+		collName := "Col_Loyalty_Level_Change_log_" + dayStr
+
+		// Fetch the collection
+		collection := Uc.LoyaltyMongoDB.MongoDBClient.Database(MongoDB_DB_Name).Collection(collName)
+		// Build the filter for the date range
+		filter := bson.D{
+			{Key: "MSISDN", Value: MSISDN},
+		}
+		skip := (page - 1) * limit
+
+		// Fetch a paginated list of documents using limit and skip
+		cursor, err := collection.Find(
+			context.Background(),
+			filter,
+			options.Find().SetSkip(int64(skip)).SetLimit(int64(limit)),
+		)
+		if err != nil {
+			return response, err
+		}
+		defer cursor.Close(context.Background())
+
+		for cursor.Next(context.Background()) {
+			var result Loyalty_Level_Change_log
+
+			if err := cursor.Decode(&result); err != nil {
+				return nil, fmt.Errorf("failed to decode result: %w", err)
+			}
+			response = append(response, result)
+		}
+
+		if err := cursor.Err(); err != nil {
+			return nil, fmt.Errorf("cursor error: %w", err)
+		}
+	}
+
+	return response, err
+}
+
+func (Uc *UserControl) Customer_Loyalty_Account_GetEvents_log(startDate, endDate time.Time, MSISDN string, Filter string) (response []Loyalty_Event_Log, err error) {
+
+	findResult, err := Uc.ReadAccountEventsDetailsFromMongoDB(startDate, endDate, MSISDN, 1, 0)
+	if err != nil {
+		return response, err
+	}
+	response = append(response, findResult...)
+
+	return response, nil
+}
+
+func (Uc *UserControl) ReadAccountEventsDetailsFromMongoDB(startDate, endDate time.Time, MSISDN string, page, limit int64) (response []Loyalty_Event_Log, err error) {
+	// Ensure startDate is before or equal to endDate
+
+	if startDate.After(endDate) {
+		return response, fmt.Errorf("start date cannot be after end date")
+	}
+
+	if page < 1 {
+		page = 1 // Default to first page if invalid page number
+	}
+
+	// Iterate over the range of dates
+	for currentDate := startDate; !currentDate.After(endDate); currentDate = currentDate.AddDate(0, 0, 1) {
+		monthStr := strconv.Itoa(int(currentDate.Month()))
+		if len(monthStr) < 2 {
+			monthStr = "0" + monthStr
+		}
+		MongoDB_DB_Name := "Loyalty_DB_" + strconv.Itoa(currentDate.Year()) + monthStr
+
+		var dayStr = strconv.Itoa(currentDate.Day())
+		if len(dayStr) < 2 {
+			dayStr = "0" + dayStr
+		}
+
+		collName := "Col_Loyalty_Event_Log_" + dayStr
+
+		// Fetch the collection
+		collection := Uc.LoyaltyMongoDB.MongoDBClient.Database(MongoDB_DB_Name).Collection(collName)
+		// Build the filter for the date range
+		filter := bson.D{
+			{Key: "MSISDN", Value: MSISDN},
+		}
+		skip := (page - 1) * limit
+
+		// Fetch a paginated list of documents using limit and skip
+		cursor, err := collection.Find(
+			context.Background(),
+			filter,
+			options.Find().SetSkip(int64(skip)).SetLimit(int64(limit)),
+		)
+		if err != nil {
+			return response, err
+		}
+		defer cursor.Close(context.Background())
+
+		for cursor.Next(context.Background()) {
+			var result Loyalty_Event_Log
+
+			if err := cursor.Decode(&result); err != nil {
+				return nil, fmt.Errorf("failed to decode result: %w", err)
+			}
+			response = append(response, result)
+		}
+
+		if err := cursor.Err(); err != nil {
+			return nil, fmt.Errorf("cursor error: %w", err)
+		}
+	}
+
+	return response, err
+}
+
+func (Uc *UserControl) Customer_Loyalty_Account_Getlogs(Type string, startDate, endDate time.Time, MSISDN string, Filter string) (response []Loyalty_Logs, err error) {
+	var allLogs []Loyalty_Logs
+	if Type == "All" || Type == "Debit" {
+		findResult, err := Uc.Customer_Loyalty_Account_GetDebitPoints_log(startDate, endDate, MSISDN, Filter)
+		if err != nil {
+			return response, err
+		}
+		for _, log := range findResult {
+			var newLog = Loyalty_Logs{}
+			newLog.Logs_Type = "Debit"
+			newLog.Debit_Logs = log
+			newLog.Date = log.ReceiveDate
+			newLog.PointsToCredit = log.Debit_Amount
+			newLog.Opening_Available_Points = log.Opening_Available_Points
+			newLog.Closure_Available_Points = log.Closure_Available_Points
+			allLogs = append(allLogs, newLog)
+		}
+	}
+	if Type == "All" || Type == "Credit" {
+		findResult, err := Uc.Customer_Loyalty_Account_GetCreditPoints_log(startDate, endDate, MSISDN, Filter)
+		if err != nil {
+			return response, err
+		}
+		for _, log := range findResult {
+			var newLog = Loyalty_Logs{}
+			newLog.Logs_Type = "Credit"
+			newLog.Credit_Logs = log
+			newLog.Date = log.ReceiveDate
+			newLog.PointsToCredit = log.PointsToCredit
+			newLog.Opening_Available_Points = log.Opening_Available_Points
+			newLog.Closure_Available_Points = log.Closure_Available_Points
+			allLogs = append(allLogs, newLog)
+		}
+	}
+	if Type == "All" || Type == "Redemption" {
+		findResult, err := Uc.Customer_Loyalty_Account_GetRedemptionPoints_log(startDate, endDate, MSISDN, Filter)
+		if err != nil {
+			return response, err
+		}
+		for _, log := range findResult {
+			var newLog = Loyalty_Logs{}
+			newLog.Logs_Type = "Redemption"
+			newLog.Redemption_Logs = log
+			newLog.Date = log.ReceiveDate
+			newLog.PointsToCredit = log.Points_To_Redeem
+			newLog.Opening_Available_Points = log.Opening_Available_Points
+			newLog.Closure_Available_Points = log.Closure_Available_Points
+			allLogs = append(allLogs, newLog)
+		}
+	}
+	if Type == "All" || Type == "Expiry" {
+		findResult, err := Uc.Customer_Loyalty_Account_GetExpiryPoints_log(startDate, endDate, MSISDN, Filter)
+		if err != nil {
+			return response, err
+		}
+		for _, log := range findResult {
+			var newLog = Loyalty_Logs{}
+			newLog.Logs_Type = "Expiry"
+			newLog.Expiry_Logs = log
+			newLog.Date = log.ExpiryTime
+			newLog.Opening_Available_Points = log.Opening_Available_Points
+			newLog.Closure_Available_Points = log.End_Available_Points
+			allLogs = append(allLogs, newLog)
+		}
+	}
+	if Type == "All" || Type == "LevelChange" {
+		findResult, err := Uc.Customer_Loyalty_Account_GetLevelChange_log(startDate, endDate, MSISDN, Filter)
+		if err != nil {
+			return response, err
+		}
+		for _, log := range findResult {
+			var newLog = Loyalty_Logs{}
+			newLog.Logs_Type = "Level Change"
+			newLog.Level_Change_Logs = log
+			newLog.Date = log.Level_Change_Date
+			allLogs = append(allLogs, newLog)
+		}
+	}
+	sort.Slice(allLogs, func(i, j int) bool {
+		// Sort by date descending: newest first
+		return allLogs[i].Date.After(allLogs[j].Date)
+	})
+	response = append(response, allLogs...)
+
+	return response, nil
+}
+
+func (Uc *UserControl) ReadAccountLogsDetailsFromMongoDB(Type string, startDate, endDate time.Time, MSISDN string, page, limit int64) (response []Loyalty_Event_Log, err error) {
+	// Ensure startDate is before or equal to endDate
+
+	if startDate.After(endDate) {
+		return response, fmt.Errorf("start date cannot be after end date")
+	}
+
+	if page < 1 {
+		page = 1 // Default to first page if invalid page number
+	}
+
+	// Iterate over the range of dates
+	for currentDate := startDate; !currentDate.After(endDate); currentDate = currentDate.AddDate(0, 0, 1) {
+		monthStr := strconv.Itoa(int(currentDate.Month()))
+		if len(monthStr) < 2 {
+			monthStr = "0" + monthStr
+		}
+		MongoDB_DB_Name := "Loyalty_DB_" + strconv.Itoa(currentDate.Year()) + monthStr
+
+		var dayStr = strconv.Itoa(currentDate.Day())
+		if len(dayStr) < 2 {
+			dayStr = "0" + dayStr
+		}
+
+		collName := "Col_Loyalty_Event_Log_" + dayStr
+
+		// Fetch the collection
+		collection := Uc.LoyaltyMongoDB.MongoDBClient.Database(MongoDB_DB_Name).Collection(collName)
+		// Build the filter for the date range
+		filter := bson.D{
+			{Key: "MSISDN", Value: MSISDN},
+		}
+		skip := (page - 1) * limit
+
+		// Fetch a paginated list of documents using limit and skip
+		cursor, err := collection.Find(
+			context.Background(),
+			filter,
+			options.Find().SetSkip(int64(skip)).SetLimit(int64(limit)),
+		)
+		if err != nil {
+			return response, err
+		}
+		defer cursor.Close(context.Background())
+
+		for cursor.Next(context.Background()) {
+			var result Loyalty_Event_Log
+
+			if err := cursor.Decode(&result); err != nil {
+				return nil, fmt.Errorf("failed to decode result: %w", err)
+			}
+			response = append(response, result)
+		}
+
+		if err := cursor.Err(); err != nil {
+			return nil, fmt.Errorf("cursor error: %w", err)
+		}
+	}
+
+	return response, err
+}
+
 func (Uc *UserControl) EvaluateAndUpdate_CustomerLoyaltyLevel(Login string, Account_Key string) (New_Loyalty_Level_Key string, err error) {
 	loyalty_account_na, subexist := Map_Customer_Loyalty_Account.CheckThenGet(Account_Key)
 	if !subexist {

@@ -468,6 +468,18 @@ type Loyalty_AccountCreditPoints_Request struct {
 	PointsToCredit   float64 `bson:"PointsToCredit" json:"PointsToCredit"`
 	EventDescription string  `bson:"EventDescription" json:"EventDescription"`
 }
+type Loyalty_Logs struct {
+	Logs_Type                string                          `bson:"Logs_Type" json:"Logs_Type"`
+	Date                     time.Time                       `bson:"Date" json:"Date"`
+	PointsToCredit           float64                         `bson:"PointsToCredit" json:"PointsToCredit"`
+	Opening_Available_Points float64                         `bson:"Opening_Available_Points" json:"Opening_Available_Points"` //(Awarded_Points + Expired_Points) - Redeemed_Points
+	Closure_Available_Points float64                         `bson:"Closure_Available_Points" json:"Closure_Available_Points"` //(Awarded_Points + Expired_Points) - Redeemed_Points
+	Debit_Logs               Loyalty_AccountDebitPoints_log  `bson:"Debit_Logs" json:"Debit_Logs"`
+	Credit_Logs              Loyalty_AccountCreditPoints_log `bson:"Credit_Logs" json:"Credit_Logs"`
+	Redemption_Logs          Loyalty_Redemption_log          `bson:"Redemption_Logs" json:"Redemption_Logs"`
+	Expiry_Logs              Loyalty_Expiry_log              `bson:"Expiry_Logs" json:"Expiry_Logs"`
+	Level_Change_Logs        Loyalty_Level_Change_log        `bson:"Level_Change_Logs" json:"Level_Change_Logs"`
+}
 
 type Loyalty_AccountCreditPoints_log struct {
 	//request Header info

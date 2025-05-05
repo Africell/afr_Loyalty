@@ -1737,6 +1737,120 @@ func (UC *UserControl) Add_LoyaltyManagementRoutes(R *Routes) {
 	}
 	*R = append(*R, r)
 
+	Level1 = "Loyalty Account Redemption Points log"
+	Level1DisplayOrder = Level1DisplayOrder + 1
+	r = Route{
+		"HTTP_Loyalty_AccountRedemptionPoints_log",
+		"GET",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_AccountRedemptionPoints_log/",
+		Use(UC.HTTP_Loyalty_AccountRedemptionPoints_log, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
+		true,
+		"Loyalty Account Redemption Points log - Read", // DisplayName
+		DisplayOrder,       // DisplayOrder
+		Module,             // Module
+		ModuleDisplayOrder, //ModuleDisplayOrder
+		Level1,             // Level1
+		Level1DisplayOrder, // Level1DisplayOrder
+		"",                 // Level2
+		0,                  // Level2DisplayOrder
+		"",                 // Level3
+		0,                  // Level3DisplayOrder
+		true,               //AllowedFor_OKAPI
+		true,               //AllowedFor_App
+	}
+	*R = append(*R, r)
+
+	Level1 = "Loyalty Account Expiry Points log"
+	Level1DisplayOrder = Level1DisplayOrder + 1
+	r = Route{
+		"HTTP_Loyalty_AccountExpiryPoints_log",
+		"GET",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_AccountExpiryPoints_log/",
+		Use(UC.HTTP_Loyalty_AccountExpiryPoints_log, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
+		true,
+		"Loyalty Account Expiry Points log - Read", // DisplayName
+		DisplayOrder,       // DisplayOrder
+		Module,             // Module
+		ModuleDisplayOrder, //ModuleDisplayOrder
+		Level1,             // Level1
+		Level1DisplayOrder, // Level1DisplayOrder
+		"",                 // Level2
+		0,                  // Level2DisplayOrder
+		"",                 // Level3
+		0,                  // Level3DisplayOrder
+		true,               //AllowedFor_OKAPI
+		true,               //AllowedFor_App
+	}
+	*R = append(*R, r)
+
+	Level1 = "Loyalty Level Change log"
+	Level1DisplayOrder = Level1DisplayOrder + 1
+	r = Route{
+		"HTTP_Loyalty_AccountLevelChangePoints_log",
+		"GET",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_AccountLevelChangePoints_log/",
+		Use(UC.HTTP_Loyalty_AccountLevelChangePoints_log, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
+		true,
+		"Loyalty Level Change - Read", // DisplayName
+		DisplayOrder,                  // DisplayOrder
+		Module,                        // Module
+		ModuleDisplayOrder,            //ModuleDisplayOrder
+		Level1,                        // Level1
+		Level1DisplayOrder,            // Level1DisplayOrder
+		"",                            // Level2
+		0,                             // Level2DisplayOrder
+		"",                            // Level3
+		0,                             // Level3DisplayOrder
+		true,                          //AllowedFor_OKAPI
+		true,                          //AllowedFor_App
+	}
+	*R = append(*R, r)
+
+	Level1 = "Loyalty Events Change log"
+	Level1DisplayOrder = Level1DisplayOrder + 1
+	r = Route{
+		"HTTP_Loyalty_AccountEvents_log",
+		"GET",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_AccountEvents_log/",
+		Use(UC.HTTP_Loyalty_AccountEvents_log, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
+		true,
+		"Loyalty Events log - Read", // DisplayName
+		DisplayOrder,                // DisplayOrder
+		Module,                      // Module
+		ModuleDisplayOrder,          //ModuleDisplayOrder
+		Level1,                      // Level1
+		Level1DisplayOrder,          // Level1DisplayOrder
+		"",                          // Level2
+		0,                           // Level2DisplayOrder
+		"",                          // Level3
+		0,                           // Level3DisplayOrder
+		true,                        //AllowedFor_OKAPI
+		true,                        //AllowedFor_App
+	}
+	*R = append(*R, r)
+
+	Level1 = "Loyalty logs"
+	Level1DisplayOrder = Level1DisplayOrder + 1
+	r = Route{
+		"HTTP_Loyalty_logs",
+		"GET",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_logs/",
+		Use(UC.HTTP_Loyalty_logs, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
+		true,
+		"Loyalty logs - Read", // DisplayName
+		DisplayOrder,          // DisplayOrder
+		Module,                // Module
+		ModuleDisplayOrder,    //ModuleDisplayOrder
+		Level1,                // Level1
+		Level1DisplayOrder,    // Level1DisplayOrder
+		"",                    // Level2
+		0,                     // Level2DisplayOrder
+		"",                    // Level3
+		0,                     // Level3DisplayOrder
+		true,                  //AllowedFor_OKAPI
+		true,                  //AllowedFor_App
+	}
+	*R = append(*R, r)
 }
 
 func (UC *UserControl) Add_LoyaltyFeedRoutes(R *Routes) {
