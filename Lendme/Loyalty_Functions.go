@@ -3522,8 +3522,59 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 		return
 	}
 	response.Allow_Negative_Balance_ToRedeem = redemption_Rules.Allow_Negative_Balance_ToRedeem
-	response.Allow_PendingLendme_ToRedeem = redemption_Rules.Allow_PendingLendme_ToRedeem
 	//***To do: validate nagtive balance and pending lendme
+	if !redemption_Rules.Allow_Negative_Balance_ToRedeem {
+		IN_MSISDN := response.MSISDN
+		if Configuration.Operation == "Gambia" {
+			if len(response.MSISDN) > 7 {
+				IN_MSISDN = IN_MSISDN[len(response.MSISDN)-7 : len(response.MSISDN)]
+			}
+		} else if Configuration.Operation == "SierraLeone" { //077928014
+			if len(response.MSISDN) > 8 {
+				IN_MSISDN = "0" + IN_MSISDN[len(response.MSISDN)-8:len(response.MSISDN)]
+			}
+		}
+		IN_Response, err := Uc.IN.INClient.GetAccountDetails("", "", IN_MSISDN)
+		if err != nil {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "failed to get IN account detail"
+			response.ErrorDescription = err.Error()
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		if IN_Response.Balance < 0 {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "balance must be positive"
+			response.ErrorDescription = "main GSM balance must be positive"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+	}
+	response.Allow_PendingLendme_ToRedeem = redemption_Rules.Allow_PendingLendme_ToRedeem
+	if !redemption_Rules.Allow_PendingLendme_ToRedeem {
+		subscriber_na, exist := Map_Subscribers.CheckThenGet(response.MSISDN)
+		if exist {
+			subscriber, ok := subscriber_na.(Subscriber)
+			if ok {
+				if subscriber.Lendme_Outstanding_Amount > 0 {
+					response.Status = "failed"
+					response.StatusCode = http.StatusBadRequest
+					response.StatusDescription = "pending outstanding amount must be closed"
+					response.ErrorDescription = "pending outstanding amount must be closed"
+					response.StatusDate = time.Now()
+					response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+					Uc.Write_Loyalty_Redemption_log(*response)
+					return
+				}
+			}
+		}
+	}
 
 	//validate and execute redemption request
 	switch request.Redemption_Type {
