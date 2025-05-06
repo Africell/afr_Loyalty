@@ -3665,7 +3665,9 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			Uc.Write_Loyalty_Redemption_log(*response)
 			return
 		}
-
+		AirtimeRedemptionCount.With(prometheus.Labels{"EventSource": response.SourceApp, "Level": loyalty_Account.Loyalty_Level_Key}).Inc()
+		AirtimeRedemptionPoints.With(prometheus.Labels{"EventSource": response.SourceApp, "Level": loyalty_Account.Loyalty_Level_Key}).Add(response.Points_To_Redeem)
+		AirtimeRedemptionAmount.With(prometheus.Labels{"EventSource": response.SourceApp, "Level": loyalty_Account.Loyalty_Level_Key}).Add(response.Redemption_Amount)
 	case "Bundle":
 		if request.Redemption_Bunlde_Id == "" {
 			response.Status = "failed"
@@ -3783,6 +3785,8 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			Uc.Write_Loyalty_Redemption_log(*response)
 			return
 		}
+		BundleRedemptionCount.With(prometheus.Labels{"EventSource": response.SourceApp, "BunldeId": request.Redemption_Bunlde_Id, "Level": loyalty_Account.Loyalty_Level_Key}).Inc()
+		BundleRedemptionPoints.With(prometheus.Labels{"EventSource": response.SourceApp, "BunldeId": request.Redemption_Bunlde_Id, "Level": loyalty_Account.Loyalty_Level_Key}).Add(response.Points_To_Redeem)
 	case "MobileMoney":
 		if request.Redemption_Amount <= 0 && request.Points_To_Redeem <= 0 {
 			response.Status = "failed"
@@ -3881,6 +3885,10 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 		response.Closure_Redeemed_Points = debit_Log.Closure_Redeemed_Points
 		response.Closure_Available_Points = debit_Log.Closure_Available_Points
 		//to do: credit mobile money amount --> merchant transfer
+
+		MobileMoneyRedemptionCount.With(prometheus.Labels{"EventSource": response.SourceApp, "Level": loyalty_Account.Loyalty_Level_Key}).Inc()
+		MobileMoneyRedemptionPoints.With(prometheus.Labels{"EventSource": response.SourceApp, "Level": loyalty_Account.Loyalty_Level_Key}).Add(response.Points_To_Redeem)
+		MobileMoneyRedemptionAmount.With(prometheus.Labels{"EventSource": response.SourceApp, "Level": loyalty_Account.Loyalty_Level_Key}).Add(response.Redemption_Amount)
 
 	case "SpinAndWin":
 		if request.Redemption_Amount < 0 {
@@ -4279,8 +4287,8 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 	response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 	Uc.Write_Loyalty_AccountCreditPoints_log(*response)
 
-	AwardedTransactions.With(prometheus.Labels{"EventSource": request.EventSource, "EventType": request.EventType, "EventDetail": request.EventDetail}).Inc()
-	AwardedPoints.With(prometheus.Labels{"EventSource": request.EventSource, "EventType": request.EventType, "EventDetail": request.EventDetail}).Add(points)
+	PointsCreditedCount.With(prometheus.Labels{"EventSource": request.EventSource, "EventType": request.EventType, "EventDetail": request.EventDetail, "Level": loyalty_account.Loyalty_Level_Key}).Inc()
+	PointsCredited.With(prometheus.Labels{"EventSource": request.EventSource, "EventType": request.EventType, "EventDetail": request.EventDetail, "Level": loyalty_account.Loyalty_Level_Key}).Add(points)
 }
 
 func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header, request Loyalty_AccountDebitPoints_Request, response *Loyalty_AccountDebitPoints_log) {
@@ -4368,8 +4376,7 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 	loyalty_Account.Available_Points = (loyalty_Account.Awarded_Points + loyalty_Account.Expired_Points) - loyalty_Account.Redeemed_Points //(Awarded_Points + Expired_Points) - Redeemed_Points
 	loyalty_Account.Last_Redeem_Date = time.Now()
 	//update Monthly points
-	var start_date time.Time
-	start_date = time.Date(2025, 04, 01, 00, 00, 59, 0, time.UTC)
+	start_date := time.Date(2025, 04, 01, 00, 00, 59, 0, time.UTC)
 	end_date := start_date.AddDate(50, 0, 0)
 	Amount_to_debit := request.Debit_Amount
 	for d := start_date; d.After(end_date) == false; d = d.AddDate(0, 1, 0) {
@@ -4433,6 +4440,9 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 	response.StatusDate = time.Now()
 	response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 	Uc.Write_Loyalty_AccountDebitPoints_log(*response)
+	PointsDebitedCount.With(prometheus.Labels{"EventSource": response.SourceApp, "DebitType": response.Redemption_Type, "Level": loyalty_Account.Loyalty_Level_Key}).Inc()
+	PointsDebited.With(prometheus.Labels{"EventSource": response.SourceApp, "DebitType": response.Redemption_Type, "Level": loyalty_Account.Loyalty_Level_Key}).Add(request.Debit_Amount)
+
 }
 
 func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request Loyalty_AccountCreditPoints_Request, mainGSM_CurrentPending, mobileMoney_CurrentPending float64) (points, mainGSM_pending, mobileMoney_pending float64) {
