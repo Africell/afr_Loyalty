@@ -2468,7 +2468,7 @@ func (Uc *UserControl) HTTP_Loyalty_AccountDebitPoints_log(w http.ResponseWriter
 		// 	}
 		// 	sr.Data = fCDMRequests
 		// } else {
-		fCDM_Requests, err := Uc.Customer_Loyalty_Account_GetDebitPoints_log(startDateDD, endDateDD, MSISDN, "")
+		data, err := Uc.Customer_Loyalty_Account_GetDebitPoints_log(startDateDD, endDateDD, MSISDN, "")
 		if err != nil {
 			sr.Status = "failed"
 			sr.StatusCode = http.StatusBadRequest
@@ -2477,7 +2477,7 @@ func (Uc *UserControl) HTTP_Loyalty_AccountDebitPoints_log(w http.ResponseWriter
 			Uc.HTTP_API_Standard_response(w, r, sr, false)
 			return
 		}
-		sr.Data = fCDM_Requests
+		sr.Data = data
 		// }
 	}
 	//successful response
@@ -2545,7 +2545,7 @@ func (Uc *UserControl) HTTP_Loyalty_AccountCreditPoints_log(w http.ResponseWrite
 		// 	}
 		// 	sr.Data = fCDMRequests
 		// } else {
-		fCDM_Requests, err := Uc.Customer_Loyalty_Account_GetCreditPoints_log(startDateDD, endDateDD, MSISDN, "")
+		data, err := Uc.Customer_Loyalty_Account_GetCreditPoints_log(startDateDD, endDateDD, MSISDN, "")
 		if err != nil {
 			sr.Status = "failed"
 			sr.StatusCode = http.StatusBadRequest
@@ -2554,7 +2554,392 @@ func (Uc *UserControl) HTTP_Loyalty_AccountCreditPoints_log(w http.ResponseWrite
 			Uc.HTTP_API_Standard_response(w, r, sr, false)
 			return
 		}
-		sr.Data = fCDM_Requests
+		sr.Data = data
+		// }
+	}
+	//successful response
+	sr.Status = "successful"
+	sr.StatusCode = http.StatusOK
+	sr.StatusDescription = ""
+	sr.ErrorDescription = ""
+	Uc.HTTP_API_Standard_response(w, r, sr, true)
+}
+
+func (Uc *UserControl) HTTP_Loyalty_AccountRedemptionPoints_log(w http.ResponseWriter, r *http.Request) {
+	var sr API_Standard_response
+	//**fill response source detail
+	SourceIp, _ := GetRequestIP(r)
+	sr.SourceIP = SourceIp
+	sr.Login = r.Header.Get("Login")
+	sr.SourceApp = r.Header.Get("SourceApp")
+	sr.AccessKey = r.URL.Path
+	sr.AccessMethod = r.Method
+	sr.HostId = Configuration.HostId
+	sr.ReceiveDate = time.Now()
+	method := r.Method
+	switch method {
+	case "GET":
+		sr.TransactionType = "Loyalty Redemption log"
+		//Filter := r.URL.Query().Get("filter")
+		//ServiceType := r.URL.Query().Get("ServiceType")
+		// LimitStr := r.URL.Query().Get("Limit")
+		// PageStr := r.URL.Query().Get("Page")
+
+		MSISDN := r.URL.Query().Get("MSISDN")
+		startDate := r.URL.Query().Get("startDate")
+		endDate := r.URL.Query().Get("endDate")
+		startDateDD, _ := time.ParseInLocation("1/2/2006", startDate, time.Local)
+		endDateDD, _ := time.ParseInLocation("1/2/2006", endDate, time.Local)
+		// endDateDD = time.Date(endDateDD.Year(), endDateDD.Month(), endDateDD.Day(), 23, 59, 59, 0, endDateDD.Location())
+		//
+		// if LimitStr != "" || PageStr != "" {
+		// 	Limit, limiterr := strconv.ParseInt(LimitStr, 10, 64)
+		// 	if limiterr != nil {
+		// 		sr.Status = "failed"
+		// 		sr.StatusCode = http.StatusBadRequest
+		// 		sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+		// 		sr.ErrorDescription = limiterr.Error()
+		// 		Uc.HTTP_API_Standard_response(w, r, sr, false)
+		// 		return
+		// 	}
+		// 	Page, pageerr := strconv.ParseInt(PageStr, 10, 64)
+		// 	if pageerr != nil {
+		// 		sr.Status = "failed"
+		// 		sr.StatusCode = http.StatusBadRequest
+		// 		sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+		// 		sr.ErrorDescription = pageerr.Error()
+		// 		Uc.HTTP_API_Standard_response(w, r, sr, false)
+		// 		return
+		// 	}
+		// 	fCDMRequests, err := Uc.Customer_Loyalty_Account_DebitPoints_log_GetPaginated(startDateDD, endDateDD, MSISDN, Page, Limit)
+		// 	if err != nil {
+		// 		sr.Status = "failed"
+		// 		sr.StatusCode = http.StatusBadRequest
+		// 		sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+		// 		sr.ErrorDescription = err.Error()
+		// 		Uc.HTTP_API_Standard_response(w, r, sr, false)
+		// 		return
+		// 	}
+		// 	sr.Data = fCDMRequests
+		// } else {
+		data, err := Uc.Customer_Loyalty_Account_GetRedemptionPoints_log(startDateDD, endDateDD, MSISDN, "")
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		sr.Data = data
+		// }
+	}
+	//successful response
+	sr.Status = "successful"
+	sr.StatusCode = http.StatusOK
+	sr.StatusDescription = ""
+	sr.ErrorDescription = ""
+	Uc.HTTP_API_Standard_response(w, r, sr, true)
+}
+
+func (Uc *UserControl) HTTP_Loyalty_AccountExpiryPoints_log(w http.ResponseWriter, r *http.Request) {
+	var sr API_Standard_response
+	//**fill response source detail
+	SourceIp, _ := GetRequestIP(r)
+	sr.SourceIP = SourceIp
+	sr.Login = r.Header.Get("Login")
+	sr.SourceApp = r.Header.Get("SourceApp")
+	sr.AccessKey = r.URL.Path
+	sr.AccessMethod = r.Method
+	sr.HostId = Configuration.HostId
+	sr.ReceiveDate = time.Now()
+	method := r.Method
+	switch method {
+	case "GET":
+		sr.TransactionType = "Loyalty Expiry log"
+		//Filter := r.URL.Query().Get("filter")
+		//ServiceType := r.URL.Query().Get("ServiceType")
+		// LimitStr := r.URL.Query().Get("Limit")
+		// PageStr := r.URL.Query().Get("Page")
+
+		MSISDN := r.URL.Query().Get("MSISDN")
+		startDate := r.URL.Query().Get("startDate")
+		endDate := r.URL.Query().Get("endDate")
+		startDateDD, _ := time.ParseInLocation("1/2/2006", startDate, time.Local)
+		endDateDD, _ := time.ParseInLocation("1/2/2006", endDate, time.Local)
+		// endDateDD = time.Date(endDateDD.Year(), endDateDD.Month(), endDateDD.Day(), 23, 59, 59, 0, endDateDD.Location())
+		//
+		// if LimitStr != "" || PageStr != "" {
+		// 	Limit, limiterr := strconv.ParseInt(LimitStr, 10, 64)
+		// 	if limiterr != nil {
+		// 		sr.Status = "failed"
+		// 		sr.StatusCode = http.StatusBadRequest
+		// 		sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+		// 		sr.ErrorDescription = limiterr.Error()
+		// 		Uc.HTTP_API_Standard_response(w, r, sr, false)
+		// 		return
+		// 	}
+		// 	Page, pageerr := strconv.ParseInt(PageStr, 10, 64)
+		// 	if pageerr != nil {
+		// 		sr.Status = "failed"
+		// 		sr.StatusCode = http.StatusBadRequest
+		// 		sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+		// 		sr.ErrorDescription = pageerr.Error()
+		// 		Uc.HTTP_API_Standard_response(w, r, sr, false)
+		// 		return
+		// 	}
+		// 	fCDMRequests, err := Uc.Customer_Loyalty_Account_DebitPoints_log_GetPaginated(startDateDD, endDateDD, MSISDN, Page, Limit)
+		// 	if err != nil {
+		// 		sr.Status = "failed"
+		// 		sr.StatusCode = http.StatusBadRequest
+		// 		sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+		// 		sr.ErrorDescription = err.Error()
+		// 		Uc.HTTP_API_Standard_response(w, r, sr, false)
+		// 		return
+		// 	}
+		// 	sr.Data = fCDMRequests
+		// } else {
+		data, err := Uc.Customer_Loyalty_Account_GetExpiryPoints_log(startDateDD, endDateDD, MSISDN, "")
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		sr.Data = data
+		// }
+	}
+	//successful response
+	sr.Status = "successful"
+	sr.StatusCode = http.StatusOK
+	sr.StatusDescription = ""
+	sr.ErrorDescription = ""
+	Uc.HTTP_API_Standard_response(w, r, sr, true)
+}
+
+func (Uc *UserControl) HTTP_Loyalty_AccountLevelChangePoints_log(w http.ResponseWriter, r *http.Request) {
+	var sr API_Standard_response
+	//**fill response source detail
+	SourceIp, _ := GetRequestIP(r)
+	sr.SourceIP = SourceIp
+	sr.Login = r.Header.Get("Login")
+	sr.SourceApp = r.Header.Get("SourceApp")
+	sr.AccessKey = r.URL.Path
+	sr.AccessMethod = r.Method
+	sr.HostId = Configuration.HostId
+	sr.ReceiveDate = time.Now()
+	method := r.Method
+	switch method {
+	case "GET":
+		sr.TransactionType = "Loyalty Level Change log"
+		//Filter := r.URL.Query().Get("filter")
+		//ServiceType := r.URL.Query().Get("ServiceType")
+		// LimitStr := r.URL.Query().Get("Limit")
+		// PageStr := r.URL.Query().Get("Page")
+
+		MSISDN := r.URL.Query().Get("MSISDN")
+		startDate := r.URL.Query().Get("startDate")
+		endDate := r.URL.Query().Get("endDate")
+		startDateDD, _ := time.ParseInLocation("1/2/2006", startDate, time.Local)
+		endDateDD, _ := time.ParseInLocation("1/2/2006", endDate, time.Local)
+		// endDateDD = time.Date(endDateDD.Year(), endDateDD.Month(), endDateDD.Day(), 23, 59, 59, 0, endDateDD.Location())
+		//
+		// if LimitStr != "" || PageStr != "" {
+		// 	Limit, limiterr := strconv.ParseInt(LimitStr, 10, 64)
+		// 	if limiterr != nil {
+		// 		sr.Status = "failed"
+		// 		sr.StatusCode = http.StatusBadRequest
+		// 		sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+		// 		sr.ErrorDescription = limiterr.Error()
+		// 		Uc.HTTP_API_Standard_response(w, r, sr, false)
+		// 		return
+		// 	}
+		// 	Page, pageerr := strconv.ParseInt(PageStr, 10, 64)
+		// 	if pageerr != nil {
+		// 		sr.Status = "failed"
+		// 		sr.StatusCode = http.StatusBadRequest
+		// 		sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+		// 		sr.ErrorDescription = pageerr.Error()
+		// 		Uc.HTTP_API_Standard_response(w, r, sr, false)
+		// 		return
+		// 	}
+		// 	fCDMRequests, err := Uc.Customer_Loyalty_Account_DebitPoints_log_GetPaginated(startDateDD, endDateDD, MSISDN, Page, Limit)
+		// 	if err != nil {
+		// 		sr.Status = "failed"
+		// 		sr.StatusCode = http.StatusBadRequest
+		// 		sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+		// 		sr.ErrorDescription = err.Error()
+		// 		Uc.HTTP_API_Standard_response(w, r, sr, false)
+		// 		return
+		// 	}
+		// 	sr.Data = fCDMRequests
+		// } else {
+		data, err := Uc.Customer_Loyalty_Account_GetLevelChange_log(startDateDD, endDateDD, MSISDN, "")
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		sr.Data = data
+		// }
+	}
+	//successful response
+	sr.Status = "successful"
+	sr.StatusCode = http.StatusOK
+	sr.StatusDescription = ""
+	sr.ErrorDescription = ""
+	Uc.HTTP_API_Standard_response(w, r, sr, true)
+}
+
+func (Uc *UserControl) HTTP_Loyalty_AccountEvents_log(w http.ResponseWriter, r *http.Request) {
+	var sr API_Standard_response
+	//**fill response source detail
+	SourceIp, _ := GetRequestIP(r)
+	sr.SourceIP = SourceIp
+	sr.Login = r.Header.Get("Login")
+	sr.SourceApp = r.Header.Get("SourceApp")
+	sr.AccessKey = r.URL.Path
+	sr.AccessMethod = r.Method
+	sr.HostId = Configuration.HostId
+	sr.ReceiveDate = time.Now()
+	method := r.Method
+	switch method {
+	case "GET":
+		sr.TransactionType = "Loyalty Events log"
+		//Filter := r.URL.Query().Get("filter")
+		//ServiceType := r.URL.Query().Get("ServiceType")
+		// LimitStr := r.URL.Query().Get("Limit")
+		// PageStr := r.URL.Query().Get("Page")
+
+		MSISDN := r.URL.Query().Get("MSISDN")
+		startDate := r.URL.Query().Get("startDate")
+		endDate := r.URL.Query().Get("endDate")
+		startDateDD, _ := time.ParseInLocation("1/2/2006", startDate, time.Local)
+		endDateDD, _ := time.ParseInLocation("1/2/2006", endDate, time.Local)
+		// endDateDD = time.Date(endDateDD.Year(), endDateDD.Month(), endDateDD.Day(), 23, 59, 59, 0, endDateDD.Location())
+		//
+		// if LimitStr != "" || PageStr != "" {
+		// 	Limit, limiterr := strconv.ParseInt(LimitStr, 10, 64)
+		// 	if limiterr != nil {
+		// 		sr.Status = "failed"
+		// 		sr.StatusCode = http.StatusBadRequest
+		// 		sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+		// 		sr.ErrorDescription = limiterr.Error()
+		// 		Uc.HTTP_API_Standard_response(w, r, sr, false)
+		// 		return
+		// 	}
+		// 	Page, pageerr := strconv.ParseInt(PageStr, 10, 64)
+		// 	if pageerr != nil {
+		// 		sr.Status = "failed"
+		// 		sr.StatusCode = http.StatusBadRequest
+		// 		sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+		// 		sr.ErrorDescription = pageerr.Error()
+		// 		Uc.HTTP_API_Standard_response(w, r, sr, false)
+		// 		return
+		// 	}
+		// 	fCDMRequests, err := Uc.Customer_Loyalty_Account_DebitPoints_log_GetPaginated(startDateDD, endDateDD, MSISDN, Page, Limit)
+		// 	if err != nil {
+		// 		sr.Status = "failed"
+		// 		sr.StatusCode = http.StatusBadRequest
+		// 		sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+		// 		sr.ErrorDescription = err.Error()
+		// 		Uc.HTTP_API_Standard_response(w, r, sr, false)
+		// 		return
+		// 	}
+		// 	sr.Data = fCDMRequests
+		// } else {
+		data, err := Uc.Customer_Loyalty_Account_GetEvents_log(startDateDD, endDateDD, MSISDN, "")
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		sr.Data = data
+		// }
+	}
+	//successful response
+	sr.Status = "successful"
+	sr.StatusCode = http.StatusOK
+	sr.StatusDescription = ""
+	sr.ErrorDescription = ""
+	Uc.HTTP_API_Standard_response(w, r, sr, true)
+}
+func (Uc *UserControl) HTTP_Loyalty_logs(w http.ResponseWriter, r *http.Request) {
+	var sr API_Standard_response
+	//**fill response source detail
+	SourceIp, _ := GetRequestIP(r)
+	sr.SourceIP = SourceIp
+	sr.Login = r.Header.Get("Login")
+	sr.SourceApp = r.Header.Get("SourceApp")
+	sr.AccessKey = r.URL.Path
+	sr.AccessMethod = r.Method
+	sr.HostId = Configuration.HostId
+	sr.ReceiveDate = time.Now()
+	method := r.Method
+	switch method {
+	case "GET":
+		sr.TransactionType = "Loyalty logs"
+		//Filter := r.URL.Query().Get("filter")
+		//ServiceType := r.URL.Query().Get("ServiceType")
+		// LimitStr := r.URL.Query().Get("Limit")
+		// PageStr := r.URL.Query().Get("Page")
+
+		MSISDN := r.URL.Query().Get("MSISDN")
+		Type := r.URL.Query().Get("Type")
+		startDate := r.URL.Query().Get("startDate")
+		endDate := r.URL.Query().Get("endDate")
+		startDateDD, _ := time.ParseInLocation("1/2/2006", startDate, time.Local)
+		endDateDD, _ := time.ParseInLocation("1/2/2006", endDate, time.Local)
+		// endDateDD = time.Date(endDateDD.Year(), endDateDD.Month(), endDateDD.Day(), 23, 59, 59, 0, endDateDD.Location())
+		//
+		// if LimitStr != "" || PageStr != "" {
+		// 	Limit, limiterr := strconv.ParseInt(LimitStr, 10, 64)
+		// 	if limiterr != nil {
+		// 		sr.Status = "failed"
+		// 		sr.StatusCode = http.StatusBadRequest
+		// 		sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+		// 		sr.ErrorDescription = limiterr.Error()
+		// 		Uc.HTTP_API_Standard_response(w, r, sr, false)
+		// 		return
+		// 	}
+		// 	Page, pageerr := strconv.ParseInt(PageStr, 10, 64)
+		// 	if pageerr != nil {
+		// 		sr.Status = "failed"
+		// 		sr.StatusCode = http.StatusBadRequest
+		// 		sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+		// 		sr.ErrorDescription = pageerr.Error()
+		// 		Uc.HTTP_API_Standard_response(w, r, sr, false)
+		// 		return
+		// 	}
+		// 	fCDMRequests, err := Uc.Customer_Loyalty_Account_DebitPoints_log_GetPaginated(startDateDD, endDateDD, MSISDN, Page, Limit)
+		// 	if err != nil {
+		// 		sr.Status = "failed"
+		// 		sr.StatusCode = http.StatusBadRequest
+		// 		sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+		// 		sr.ErrorDescription = err.Error()
+		// 		Uc.HTTP_API_Standard_response(w, r, sr, false)
+		// 		return
+		// 	}
+		// 	sr.Data = fCDMRequests
+		// } else {
+		data, err := Uc.Customer_Loyalty_Account_Getlogs(Type, startDateDD, endDateDD, MSISDN, "")
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		sr.Data = data
 		// }
 	}
 	//successful response
