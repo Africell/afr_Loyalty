@@ -9,7 +9,8 @@ import (
 type Lendme_Client struct {
 	Protocol        string //http or https
 	Hostname        string //name or IP
-	Port            string
+	LendmePort      string
+	LoyaltyPort     string
 	LendMeModule    string
 	LendMeVersion   string
 	LoyaltyModule   string
@@ -25,7 +26,8 @@ type LendMe struct {
 
 func InitHostConfig(Protocol,
 	Hostname,
-	Port,
+	LendmePort,
+	LoyaltyPort,
 	LendMeModule,
 	LendMeVersion,
 	LoyaltyModule,
@@ -34,7 +36,8 @@ func InitHostConfig(Protocol,
 	Timeout time.Duration) (HostConfig Lendme_Client) {
 	HostConfig.Protocol = Protocol
 	HostConfig.Hostname = Hostname
-	HostConfig.Port = Port
+	HostConfig.LendmePort = LendmePort
+	HostConfig.LoyaltyPort = LoyaltyPort
 	HostConfig.LendMeModule = LendMeModule
 	HostConfig.LendMeVersion = LendMeVersion
 	HostConfig.LoyaltyModule = LoyaltyModule
@@ -45,7 +48,7 @@ func InitHostConfig(Protocol,
 }
 
 func NewLendmeClient(Config Lendme_Client) (conn *LendMe) {
-	if Config.Hostname != "" && Config.Port != "" {
+	if Config.Hostname != "" && Config.LendmePort != "" {
 		conn = new(LendMe)
 		conn.createLendmeClient(Config)
 		auc := AuthCenterClient.NewAUCClient(*Config.AUC_client)
@@ -60,7 +63,8 @@ func (conn *LendMe) createLendmeClient(Config Lendme_Client) (err error) {
 		conn.LendmeClient = new(Lendme_Client)
 		conn.LendmeClient.Protocol = Config.Protocol
 		conn.LendmeClient.Hostname = Config.Hostname
-		conn.LendmeClient.Port = Config.Port
+		conn.LendmeClient.LendmePort = Config.LendmePort
+		conn.LendmeClient.LoyaltyPort = Config.LoyaltyPort
 		conn.LendmeClient.LendMeModule = Config.LendMeModule
 		conn.LendmeClient.LendMeVersion = Config.LendMeVersion
 		conn.LendmeClient.LoyaltyModule = Config.LoyaltyModule

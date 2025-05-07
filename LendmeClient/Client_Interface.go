@@ -45,7 +45,7 @@ func (GWClient *Lendme_Client) Lendme_Subscriber_Get(MSISDN string) (response Le
 	var http_req Generic_http_call_Request
 	var http_request http.Request
 	http_req.Req = &http_request
-	http_req.Url = GWClient.Protocol + "://" + GWClient.Hostname + ":" + GWClient.Port + "/" + GWClient.LendMeModule + "/" + GWClient.LendMeVersion
+	http_req.Url = GWClient.Protocol + "://" + GWClient.Hostname + ":" + GWClient.LendmePort + "/" + GWClient.LendMeModule + "/" + GWClient.LendMeVersion
 	http_req.Url = http_req.Url + "/HTTP_Subscriber/"
 	http_req.Method = "GET"
 	http_req.Token = GWClient.S2S_AccessToken
@@ -100,7 +100,7 @@ func (GWClient *Lendme_Client) Loyalty_Account_Get(MSISDN string) (response Cust
 	var http_req Generic_http_call_Request
 	var http_request http.Request
 	http_req.Req = &http_request
-	http_req.Url = GWClient.Protocol + "://" + GWClient.Hostname + ":" + GWClient.Port + "/" + GWClient.LoyaltyModule + "/" + GWClient.LoyaltyVersion
+	http_req.Url = GWClient.Protocol + "://" + GWClient.Hostname + ":" + GWClient.LoyaltyPort + "/" + GWClient.LoyaltyModule + "/" + GWClient.LoyaltyVersion
 	http_req.Url = http_req.Url + "/HTTP_Customer_Loyalty_Account/"
 	http_req.Method = "GET"
 	http_req.Token = GWClient.S2S_AccessToken
@@ -152,7 +152,7 @@ func (GWClient *Lendme_Client) Loyalty_Account_DebitPoints(request Loyalty_Accou
 	var http_req Generic_http_call_Request
 	var http_request http.Request
 	http_req.Req = &http_request
-	http_req.Url = GWClient.Protocol + "://" + GWClient.Hostname + ":" + GWClient.Port + "/" + GWClient.LoyaltyModule + "/" + GWClient.LoyaltyVersion
+	http_req.Url = GWClient.Protocol + "://" + GWClient.Hostname + ":" + GWClient.LoyaltyPort + "/" + GWClient.LoyaltyModule + "/" + GWClient.LoyaltyVersion
 	http_req.Url = http_req.Url + "/HTTP_Customer_Loyalty_Account_DebitPoints/"
 	http_req.Method = "PUT"
 	http_req.Token = GWClient.S2S_AccessToken
