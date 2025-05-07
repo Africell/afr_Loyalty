@@ -10,8 +10,10 @@ type Lendme_Client struct {
 	Protocol        string //http or https
 	Hostname        string //name or IP
 	Port            string
-	Module          string
-	Version         string
+	LendMeModule    string
+	LendMeVersion   string
+	LoyaltyModule   string
+	LoyaltyVersion  string
 	S2S_AccessToken string        //system to system access token
 	Timeout         time.Duration //timeout if no reply after X seconds
 	AUC_client      *AuthCenterClient.AUC_Client
@@ -24,15 +26,19 @@ type LendMe struct {
 func InitHostConfig(Protocol,
 	Hostname,
 	Port,
-	Module,
-	Version,
+	LendMeModule,
+	LendMeVersion,
+	LoyaltyModule,
+	LoyaltyVersion,
 	S2S_AccessToken string,
 	Timeout time.Duration) (HostConfig Lendme_Client) {
 	HostConfig.Protocol = Protocol
 	HostConfig.Hostname = Hostname
 	HostConfig.Port = Port
-	HostConfig.Module = Module
-	HostConfig.Version = Version
+	HostConfig.LendMeModule = LendMeModule
+	HostConfig.LendMeVersion = LendMeVersion
+	HostConfig.LoyaltyModule = LoyaltyModule
+	HostConfig.LoyaltyVersion = LoyaltyVersion
 	HostConfig.S2S_AccessToken = S2S_AccessToken
 	HostConfig.Timeout = Timeout * time.Second
 	return
@@ -55,8 +61,10 @@ func (conn *LendMe) createLendmeClient(Config Lendme_Client) (err error) {
 		conn.LendmeClient.Protocol = Config.Protocol
 		conn.LendmeClient.Hostname = Config.Hostname
 		conn.LendmeClient.Port = Config.Port
-		conn.LendmeClient.Module = Config.Module
-		conn.LendmeClient.Version = Config.Version
+		conn.LendmeClient.LendMeModule = Config.LendMeModule
+		conn.LendmeClient.LendMeVersion = Config.LendMeVersion
+		conn.LendmeClient.LoyaltyModule = Config.LoyaltyModule
+		conn.LendmeClient.LoyaltyVersion = Config.LoyaltyVersion
 		conn.LendmeClient.S2S_AccessToken = Config.S2S_AccessToken
 		conn.LendmeClient.Timeout = Config.Timeout
 	}

@@ -6,6 +6,54 @@ import (
 	"time"
 )
 
+// **********************************************************************************************
+// Lendme structures
+// **********************************************************************************************
+type Lendme_Subscriber struct {
+	Key                     string    `bson:"Key" json:"Key"` //MSISDN
+	Subscriber_Id           int64     `bson:"Subscriber_Id" json:"Subscriber_Id"`
+	Add_Date                time.Time `bson:"Add_Date" json:"Add_Date"`
+	Last_ProfileUpdate_date time.Time `bson:"Last_ProfileUpdate_date" json:"Last_ProfileUpdate_date"`
+
+	COS           string    `bson:"COS" json:"COS"`
+	FirstUse_date time.Time `bson:"FirstUse_date" json:"FirstUse_date"`
+	Last_Credit   time.Time `bson:"Last_Credit" json:"Last_Credit"`
+
+	IN_Loyalty_Status                string    `bson:"IN_Loyalty_Status" json:"IN_Loyalty_Status"`
+	IN_Credit_Limit                  float64   `bson:"IN_Credit_Limit" json:"IN_Credit_Limit"`
+	ARPU                             float64   `bson:"ARPU" json:"ARPU"`
+	Recharge                         float64   `bson:"Recharge" json:"Recharge"`
+	Last_Recharge_Date               time.Time `bson:"Last_Recharge_Date" json:"Last_Recharge_Date"`
+	Dealer_Bundle_Purchase           float64   `bson:"Dealer_Bundle_Purchase" json:"Dealer_Bundle_Purchase"`
+	Last_Dealer_Bundle_Purchase_Date time.Time `bson:"Last_Dealer_Bundle_Purchase_Date" json:"Last_Dealer_Bundle_Purchase_Date"`
+
+	IsLendmeEligible         bool      `bson:"IsLendmeEligible" json:"IsLendmeEligible"`
+	Credit_Limit_Scheme      string    `bson:"Credit_Limit_Scheme" json:"Credit_Limit_Scheme"`
+	Credit_Limit_Scheme_Date time.Time `bson:"Credit_Limit_Scheme_Date" json:"Credit_Limit_Scheme_Date"`
+	NotElligibleReason       string    `bson:"NotElligibleReason" json:"NotElligibleReason"`
+
+	Lendme_Outstanding_Amount float64   `bson:"Lendme_Outstanding_Amount" json:"Lendme_Outstanding_Amount"`
+	Lendme_Outstanding_Fee    float64   `bson:"Lendme_Outstanding_Fee" json:"Lendme_Outstanding_Fee"`
+	Last_Lend_Date            time.Time `bson:"Last_Lend_Date" json:"Last_Lend_Date"`
+
+	Cumulative_Lent_Amount float64 `bson:"Cumulative_Lent_Amount" json:"Cumulative_Lent_Amount"`
+	Cumulative_Lent_Fee    float64 `bson:"Cumulative_Lent_Fee" json:"Cumulative_Lent_Fee"`
+
+	Cumulative_Payback_Amount float64   `bson:"Cumulative_Payback_Amount" json:"Cumulative_Payback_Amount"`
+	Last_Payback_Date         time.Time `bson:"Last_Payback_Date" json:"Last_Payback_Date"`
+	Cumulative_Payback_Fee    float64   `bson:"Cumulative_Payback_Fee" json:"Cumulative_Payback_Fee"`
+	Last_Payback_Fee_Date     time.Time `bson:"Last_Payback_Fee_Date" json:"Last_Payback_Fee_Date"`
+
+	//Workflow status
+	Status            string    `bson:"Status" json:"Status"`
+	StatusDate        time.Time `bson:"StatusDate" json:"StatusDate"`
+	StatusUser        string    `bson:"StatusUser" json:"StatusUser"`
+	StatusDescription string    `bson:"StatusDescription" json:"StatusDescription"`
+}
+
+// **********************************************************************************************
+// Loyalty structures
+// **********************************************************************************************
 type Generic_http_call_Request struct {
 	Req    *http.Request
 	Url    string
@@ -55,7 +103,7 @@ type Customer_Loyalty_Account struct {
 	MainGSMBalance_PendingAmount float64 `bson:"MainGSMBalance_PendingAmount" json:"MainGSMBalance_PendingAmount"`
 	MobileMoney_PendingAmount    float64 `bson:"MobileMoney_AmountConsumedPerPoint" json:"MobileMoney_AmountConsumedPerPoint"`
 
-	LoyaltyPointsDetail map[string]Loyalty_Points_Detail `bson:"LoyaltyPointsDetail" json:"LoyaltyPointsDetail"`
+	Points_Detail_Keys []string `bson:"Points_Detail_Keys" json:"Points_Detail_Keys"`
 }
 
 type Loyalty_Points_Detail struct {
@@ -69,12 +117,12 @@ type Loyalty_Points_Detail struct {
 }
 
 type Loyalty_AccountDebitPoints_Request struct {
-	MSISDN               string  `bson:"MSISDN" json:"MSISDN"` //MSISDN
-	Debit_Amount         float64 `bson:"Debit_Amount" json:"Debit_Amount"`
+	MSISDN               string  `bson:"MSISDN" json:"MSISDN"`             //MSISDN
+	Debit_Amount         float64 `bson:"Debit_Amount" json:"Debit_Amount"` //loyalty points to be deducted
 	Debit_Reason         string  `bson:"Debit_Reason" json:"Debit_Reason"`
 	Redemption_Type      string  `bson:"Redemption_Type" json:"Redemption_Type"` //Airtime, Bundle, MobileMoney, SpinAndWin
 	Redemption_Bunlde_Id string  `bson:"Redemption_Bunlde_Id" json:"Redemption_Bunlde_Id"`
-	Redemption_Amount    float64 `bson:"Redemption_Amount" json:"Redemption_Amount"`
+	Redemption_Amount    float64 `bson:"Redemption_Amount" json:"Redemption_Amount"` //airtime or money amount redeemed to customer
 }
 
 type Loyalty_AccountDebitPoints_log struct {
@@ -94,14 +142,21 @@ type Loyalty_AccountDebitPoints_log struct {
 	Redemption_Bunlde_Id string  `bson:"Redemption_Bunlde_Id" json:"Redemption_Bunlde_Id"`
 	Redemption_Amount    float64 `bson:"Redemption_Amount" json:"Redemption_Amount"`
 
-	Customer_Id                 int64   `bson:"Customer_Id" json:"Customer_Id"`
-	Account_Status              string  `bson:"Account_Status" json:"Account_Status"`
-	Loyalty_Level_Key           string  `bson:"Loyalty_Level_Key" json:"Loyalty_Level_Key"`
-	Loyalty_Account_Segment_Key string  `bson:"Loyalty_Account_Segment_Key" json:"Loyalty_Account_Segment_Key"`
-	Awarded_Points              float64 `bson:"Awarded_Points" json:"Awarded_Points"`
-	Opening_Redeemed_Points     float64 `bson:"Opening_Redeemed_Points" json:"Opening_Redeemed_Points"`
-	Closure_Redeemed_Points     float64 `bson:"Closure_Redeemed_Points" json:"Closure_Redeemed_Points"`
-	Available_Points            float64 `bson:"Available_Points" json:"Available_Points"` //(Awarded_Points + Expired_Points) - Redeemed_Points
+	Customer_Id                 int64  `bson:"Customer_Id" json:"Customer_Id"`
+	Account_Status              string `bson:"Account_Status" json:"Account_Status"`
+	Loyalty_Level_Key           string `bson:"Loyalty_Level_Key" json:"Loyalty_Level_Key"`
+	Loyalty_Account_Segment_Key string `bson:"Loyalty_Account_Segment_Key" json:"Loyalty_Account_Segment_Key"`
+	// Awarded_Points              float64 `bson:"Awarded_Points" json:"Awarded_Points"`
+	// Opening_Redeemed_Points     float64 `bson:"Opening_Redeemed_Points" json:"Opening_Redeemed_Points"`
+	// Closure_Redeemed_Points     float64 `bson:"Closure_Redeemed_Points" json:"Closure_Redeemed_Points"`
+	// Available_Points            float64 `bson:"Available_Points" json:"Available_Points"` //(Awarded_Points + Expired_Points) - Redeemed_Points
+
+	Opening_Awarded_Points   float64 `bson:"Opening_Awarded_Points" json:"Opening_Awarded_Points"`
+	Opening_Redeemed_Points  float64 `bson:"Opening_Redeemed_Points" json:"Opening_Redeemed_Points"`
+	Opening_Available_Points float64 `bson:"Opening_Available_Points" json:"Opening_Available_Points"` //(Awarded_Points + Expired_Points) - Redeemed_Points
+	Closure_Awarded_Points   float64 `bson:"Closure_Awarded_Points" json:"Closure_Awarded_Points"`
+	Closure_Redeemed_Points  float64 `bson:"Closure_Redeemed_Points" json:"Closure_Redeemed_Points"`
+	Closure_Available_Points float64 `bson:"Closure_Available_Points" json:"Closure_Available_Points"` //(Awarded_Points + Expired_Points) - Redeemed_Points
 
 	MinRequiredPoints               float64 `bson:"MinRequiredPoints" json:"MinRequiredPoints"`
 	Allow_Negative_Balance_ToRedeem bool    `bson:"Allow_Negative_Balance_ToRedeem" json:"Allow_Negative_Balance_ToRedeem"`
@@ -120,4 +175,5 @@ type Loyalty_AccountDebitPoints_log struct {
 	ErrorDescription  string    `bson:"ErrorDescription" json:"ErrorDescription"`
 	StatusDate        time.Time `bson:"StatusDate" json:"StatusDate"`
 	E2E_Elapsedtime   int64     `bson:"E2E_Elapsedtime" json:"E2E_Elapsedtime"` //receive date till return
+
 }

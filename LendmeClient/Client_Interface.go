@@ -37,12 +37,70 @@ func (GWClient *Lendme_Client) generic_http_call(request Generic_http_call_Reque
 	return response, nil
 }
 
+// **********************************************************************************************
+// Lendme functions
+// **********************************************************************************************
+func (GWClient *Lendme_Client) Lendme_Subscriber_Get(MSISDN string) (response Lendme_Subscriber, err error) {
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	var http_req Generic_http_call_Request
+	var http_request http.Request
+	http_req.Req = &http_request
+	http_req.Url = GWClient.Protocol + "://" + GWClient.Hostname + ":" + GWClient.Port + "/" + GWClient.LendMeModule + "/" + GWClient.LendMeVersion
+	http_req.Url = http_req.Url + "/HTTP_Subscriber/"
+	http_req.Method = "GET"
+	http_req.Token = GWClient.S2S_AccessToken
+	q := http_req.Req.URL.Query()
+	q.Add("Key", MSISDN)
+	http_req.Req.URL.RawQuery = q.Encode()
+	response_generic, err := GWClient.generic_http_call(http_req)
+	if err != nil {
+		log.Println("generic_http_call failed : ", err)
+		return response, err
+	} else {
+		err = json.Unmarshal(response_generic.Body, &response)
+		if err != nil {
+			log.Println("generic_http_call boby unmarshal error : ", err)
+			return
+		}
+		if response_generic.Statuscode == http.StatusUnauthorized {
+			srl, err := GWClient.AUC_client.Login(GWClient.AUC_client.S2S_Username, GWClient.AUC_client.S2S_Password) // try to get a new token using login if token is unauthenticated
+			if err != nil {
+				log.Println("AUC init - FAILED :: ", err)
+				return response, err
+			}
+			rt, err := GWClient.AUC_client.RefreshToken(srl.Token)
+			if err != nil {
+				log.Println("AUC init - FAILED :: ", err)
+				return response, err
+			} else {
+				GWClient.AUC_client.S2S_AccessToken = rt.Token // save token global variable to re-use
+				GWClient.S2S_AccessToken = rt.Token            // save token global variable to re-use
+				response_generic, err = GWClient.generic_http_call(http_req)
+				if err != nil {
+					log.Println("generic_http_call error : ", err)
+					return response, err
+				}
+				err = json.Unmarshal(response_generic.Body, &response)
+				if err != nil {
+					log.Println("generic_http_call boby unmarshal error : ", err)
+					return response, err
+				}
+				return response, err
+			}
+		}
+	}
+	return
+}
+
+// **********************************************************************************************
+// Loyalty functions
+// **********************************************************************************************
 func (GWClient *Lendme_Client) Loyalty_Account_Get(MSISDN string) (response Customer_Loyalty_Account, err error) {
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	var http_req Generic_http_call_Request
 	var http_request http.Request
 	http_req.Req = &http_request
-	http_req.Url = GWClient.Protocol + "://" + GWClient.Hostname + ":" + GWClient.Port + "/" + GWClient.Module + "/" + GWClient.Version
+	http_req.Url = GWClient.Protocol + "://" + GWClient.Hostname + ":" + GWClient.Port + "/" + GWClient.LoyaltyModule + "/" + GWClient.LoyaltyVersion
 	http_req.Url = http_req.Url + "/HTTP_Customer_Loyalty_Account/"
 	http_req.Method = "GET"
 	http_req.Token = GWClient.S2S_AccessToken
@@ -94,7 +152,7 @@ func (GWClient *Lendme_Client) Loyalty_Account_DebitPoints(request Loyalty_Accou
 	var http_req Generic_http_call_Request
 	var http_request http.Request
 	http_req.Req = &http_request
-	http_req.Url = GWClient.Protocol + "://" + GWClient.Hostname + ":" + GWClient.Port + "/" + GWClient.Module + "/" + GWClient.Version
+	http_req.Url = GWClient.Protocol + "://" + GWClient.Hostname + ":" + GWClient.Port + "/" + GWClient.LoyaltyModule + "/" + GWClient.LoyaltyVersion
 	http_req.Url = http_req.Url + "/HTTP_Customer_Loyalty_Account_DebitPoints/"
 	http_req.Method = "PUT"
 	http_req.Token = GWClient.S2S_AccessToken
