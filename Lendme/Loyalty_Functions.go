@@ -4093,7 +4093,30 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 	response.Opening_Available_Points = loyalty_account.Available_Points
 	response.Opening_MainGSMBalance_PendingAmount = loyalty_account.MainGSMBalance_PendingAmount
 	response.Opening_MobileMoney_PendingAmount = loyalty_account.MobileMoney_PendingAmount
-
+	//check exclusion list
+	exists_exclusion := Map_Customer_Exclusion.Check(loyalty_account.Key)
+	if exists_exclusion {
+		response.Status = "failed"
+		response.StatusCode = http.StatusBadRequest
+		response.StatusDescription = "customer is included in the exclusion list"
+		response.ErrorDescription = "customer is included in the exclusion list"
+		response.StatusDate = time.Now()
+		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+		Uc.Write_Loyalty_AccountCreditPoints_log(*response)
+		return
+	}
+	//check COS exclusion list
+	exists_exclusion_cos := Map_Customer_COS_Exclusion.Check(loyalty_account.COS)
+	if exists_exclusion_cos {
+		response.Status = "failed"
+		response.StatusCode = http.StatusBadRequest
+		response.StatusDescription = "customer is included in the cos exclusion list"
+		response.ErrorDescription = "customer is included in the cos exclusion list"
+		response.StatusDate = time.Now()
+		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+		Uc.Write_Loyalty_AccountCreditPoints_log(*response)
+		return
+	}
 	if loyalty_account.Loyalty_Account_Segment_Key == "" {
 		response.Status = "failed"
 		response.StatusCode = http.StatusBadRequest
@@ -4412,6 +4435,30 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 	response.Opening_Awarded_Points = loyalty_Account.Awarded_Points
 	response.Opening_Redeemed_Points = loyalty_Account.Redeemed_Points
 	response.Opening_Available_Points = loyalty_Account.Available_Points
+	//check exclusion list
+	exists_exclusion := Map_Customer_Exclusion.Check(loyalty_Account.Key)
+	if exists_exclusion {
+		response.Status = "failed"
+		response.StatusCode = http.StatusBadRequest
+		response.StatusDescription = "customer is included in the exclusion list"
+		response.ErrorDescription = "customer is included in the exclusion list"
+		response.StatusDate = time.Now()
+		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+		Uc.Write_Loyalty_AccountDebitPoints_log(*response)
+		return
+	}
+	//check COS exclusion list
+	exists_exclusion_cos := Map_Customer_COS_Exclusion.Check(loyalty_Account.COS)
+	if exists_exclusion_cos {
+		response.Status = "failed"
+		response.StatusCode = http.StatusBadRequest
+		response.StatusDescription = "customer is included in the cos exclusion list"
+		response.ErrorDescription = "customer is included in the cos exclusion list"
+		response.StatusDate = time.Now()
+		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+		Uc.Write_Loyalty_AccountDebitPoints_log(*response)
+		return
+	}
 	//check if available balance is enough
 	if response.Opening_Available_Points < request.Debit_Amount {
 		response.Status = "failed"
