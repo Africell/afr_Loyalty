@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"io"
 	"log"
 	"net/http"
@@ -49,6 +50,10 @@ func (GWClient *Lendme_Client) generic_http_call(request Generic_http_call_Reque
 // **********************************************************************************************
 // Lendme functions
 // **********************************************************************************************
+type Customer_Lendme_Account_Data struct {
+	Data []Lendme_Subscriber `bson:"Data" json:"Data"`
+}
+
 func (GWClient *Lendme_Client) Lendme_Subscriber_Get(MSISDN string) (response Lendme_Subscriber, err error) {
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	http_req := Generic_http_call_Request{
@@ -62,10 +67,18 @@ func (GWClient *Lendme_Client) Lendme_Subscriber_Get(MSISDN string) (response Le
 		log.Println("generic_http_call failed : ", err)
 		return response, err
 	} else {
-		err = json.Unmarshal(response_generic.Body, &response)
-		if err != nil {
-			log.Println("generic_http_call boby unmarshal error : ", err)
-			return
+		if response_generic.Statuscode == http.StatusOK {
+			var clad Customer_Lendme_Account_Data
+			err = json.Unmarshal(response_generic.Body, &clad)
+			if err != nil {
+				log.Println("generic_http_call boby unmarshal error : ", err)
+				return
+			}
+			if len(clad.Data) == 1 {
+				response = clad.Data[0]
+			} else {
+				err = errors.New("error reading Lendme account invalid length returned")
+			}
 		}
 		if response_generic.Statuscode == http.StatusUnauthorized {
 			srl, err := GWClient.AUC_client.Login(GWClient.AUC_client.S2S_Username, GWClient.AUC_client.S2S_Password) // try to get a new token using login if token is unauthenticated
@@ -100,6 +113,10 @@ func (GWClient *Lendme_Client) Lendme_Subscriber_Get(MSISDN string) (response Le
 // **********************************************************************************************
 // Loyalty functions
 // **********************************************************************************************
+type Customer_Loyalty_Account_Data struct {
+	Data []Customer_Loyalty_Account `bson:"Data" json:"Data"`
+}
+
 func (GWClient *Lendme_Client) Loyalty_Account_Get(MSISDN string) (response Customer_Loyalty_Account, err error) {
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	http_req := Generic_http_call_Request{
@@ -113,10 +130,18 @@ func (GWClient *Lendme_Client) Loyalty_Account_Get(MSISDN string) (response Cust
 		log.Println("generic_http_call failed : ", err)
 		return response, err
 	} else {
-		err = json.Unmarshal(response_generic.Body, &response)
-		if err != nil {
-			log.Println("generic_http_call boby unmarshal error : ", err)
-			return
+		if response_generic.Statuscode == http.StatusOK {
+			var clad Customer_Loyalty_Account_Data
+			err = json.Unmarshal(response_generic.Body, &clad)
+			if err != nil {
+				log.Println("generic_http_call boby unmarshal error : ", err)
+				return
+			}
+			if len(clad.Data) == 1 {
+				response = clad.Data[0]
+			} else {
+				err = errors.New("error reading loyalty account invalid length returned")
+			}
 		}
 		if response_generic.Statuscode == http.StatusUnauthorized {
 			srl, err := GWClient.AUC_client.Login(GWClient.AUC_client.S2S_Username, GWClient.AUC_client.S2S_Password) // try to get a new token using login if token is unauthenticated
