@@ -168,6 +168,9 @@ func (Uc *UserControl) Subscriber_Update(request Sub_Update_Request) {
 		<-chan_SubQueueExecution_controler
 		return
 	}
+	if request.ARPU_Amount < 0 {
+		request.ARPU_Amount = 0
+	}
 	//check if key already used
 	var subscriber Subscriber
 	subscriber_na, exits := Map_Subscribers.CheckThenGet(request.MSISDN)
