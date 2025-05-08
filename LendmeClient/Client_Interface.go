@@ -22,6 +22,15 @@ func (GWClient *Lendme_Client) generic_http_call(request Generic_http_call_Reque
 	request.Req.Header.Set("Content-Type", "application/json")
 	request.Req.Header.Set("Connection", "close")
 	request.Req.Header.Set("Authorization", "Bearer "+request.Token)
+
+	if len(request.QueryParameters) > 0 {
+		q := request.Req.URL.Query()
+		for qry_key, qry_val := range request.QueryParameters {
+			q.Add(qry_key, qry_val)
+		}
+		request.Req.URL.RawQuery = q.Encode()
+	}
+
 	client := &http.Client{Timeout: GWClient.Timeout * time.Second}
 	resp, err := client.Do(request.Req)
 	if err != nil {
@@ -42,16 +51,12 @@ func (GWClient *Lendme_Client) generic_http_call(request Generic_http_call_Reque
 // **********************************************************************************************
 func (GWClient *Lendme_Client) Lendme_Subscriber_Get(MSISDN string) (response Lendme_Subscriber, err error) {
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-	var http_req Generic_http_call_Request
-	var http_request http.Request
-	http_req.Req = &http_request
-	http_req.Url = GWClient.Protocol + "://" + GWClient.Hostname + ":" + GWClient.LendmePort + "/" + GWClient.LendMeModule + "/" + GWClient.LendMeVersion
-	http_req.Url = http_req.Url + "/HTTP_Subscriber/"
-	http_req.Method = "GET"
-	http_req.Token = GWClient.S2S_AccessToken
-	q := http_req.Req.URL.Query()
-	q.Add("Key", MSISDN)
-	http_req.Req.URL.RawQuery = q.Encode()
+	http_req := Generic_http_call_Request{
+		Url:             GWClient.Protocol + "://" + GWClient.Hostname + ":" + GWClient.LendmePort + "/" + GWClient.LendMeModule + "/" + GWClient.LendMeVersion + "/HTTP_Subscriber/",
+		Method:          "GET",
+		Token:           GWClient.S2S_AccessToken,
+		QueryParameters: map[string]string{"Key": MSISDN},
+	}
 	response_generic, err := GWClient.generic_http_call(http_req)
 	if err != nil {
 		log.Println("generic_http_call failed : ", err)
@@ -97,16 +102,12 @@ func (GWClient *Lendme_Client) Lendme_Subscriber_Get(MSISDN string) (response Le
 // **********************************************************************************************
 func (GWClient *Lendme_Client) Loyalty_Account_Get(MSISDN string) (response Customer_Loyalty_Account, err error) {
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-	var http_req Generic_http_call_Request
-	var http_request http.Request
-	http_req.Req = &http_request
-	http_req.Url = GWClient.Protocol + "://" + GWClient.Hostname + ":" + GWClient.LoyaltyPort + "/" + GWClient.LoyaltyModule + "/" + GWClient.LoyaltyVersion
-	http_req.Url = http_req.Url + "/HTTP_Customer_Loyalty_Account/"
-	http_req.Method = "GET"
-	http_req.Token = GWClient.S2S_AccessToken
-	q := http_req.Req.URL.Query()
-	q.Add("Key", MSISDN)
-	http_req.Req.URL.RawQuery = q.Encode()
+	http_req := Generic_http_call_Request{
+		Url:             GWClient.Protocol + "://" + GWClient.Hostname + ":" + GWClient.LoyaltyPort + "/" + GWClient.LoyaltyModule + "/" + GWClient.LoyaltyVersion + "/HTTP_Customer_Loyalty_Account/",
+		Method:          "GET",
+		Token:           GWClient.S2S_AccessToken,
+		QueryParameters: map[string]string{"Key": MSISDN},
+	}
 	response_generic, err := GWClient.generic_http_call(http_req)
 	if err != nil {
 		log.Println("generic_http_call failed : ", err)
@@ -149,19 +150,17 @@ func (GWClient *Lendme_Client) Loyalty_Account_Get(MSISDN string) (response Cust
 
 func (GWClient *Lendme_Client) Loyalty_Account_DebitPoints(request Loyalty_AccountDebitPoints_Request) (response Loyalty_AccountDebitPoints_log, err error) {
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-	var http_req Generic_http_call_Request
-	var http_request http.Request
-	http_req.Req = &http_request
-	http_req.Url = GWClient.Protocol + "://" + GWClient.Hostname + ":" + GWClient.LoyaltyPort + "/" + GWClient.LoyaltyModule + "/" + GWClient.LoyaltyVersion
-	http_req.Url = http_req.Url + "/HTTP_Customer_Loyalty_Account_DebitPoints/"
-	http_req.Method = "PUT"
-	http_req.Token = GWClient.S2S_AccessToken
 	request_byte, err := json.Marshal(request)
 	if err == nil {
 		log.Println("generic_http_call request marshal error : ", err)
 		return response, err
 	}
-	http_req.Load = request_byte
+	http_req := Generic_http_call_Request{
+		Url:    GWClient.Protocol + "://" + GWClient.Hostname + ":" + GWClient.LoyaltyPort + "/" + GWClient.LoyaltyModule + "/" + GWClient.LoyaltyVersion + "/HTTP_Customer_Loyalty_Account_DebitPoints/",
+		Method: "PUT",
+		Token:  GWClient.S2S_AccessToken,
+		Load:   request_byte,
+	}
 	response_generic, err := GWClient.generic_http_call(http_req)
 	if err != nil {
 		log.Println("generic_http_call failed : ", err)
