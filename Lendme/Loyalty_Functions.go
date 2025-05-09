@@ -432,27 +432,36 @@ func (Uc *UserControl) InitializeLoyaltyDefaultUAT() {
 		AON_Till:    999999999,
 	})
 	Uc.Loyalty_Point_Earning_Rules_Add("Default", Loyalty_Point_Earning_Rules_AddRequest{
-		Key:                                   "Default_Earning_Rules",
-		Description:                           "Default_Earning_Rules",
-		Welcome_Points:                        5,
-		MobileAppDaily_Login:                  1,
-		MainGSMBalance_AmountConsumedPerPoint: 10,
-		MM_P2P_Award_Type:                     "Transaction",
-		MM_P2P:                                1,
-		MM_CASHIN_Award_Type:                  "Transaction",
-		MM_CASHIN:                             1,
-		MM_CASHOUT_Award_Type:                 "Transaction",
-		MM_CASHOUT:                            1,
-		MM_MERCHPAY_Award_Type:                "Transaction",
-		MM_MERCHPAY:                           1,
-		MM_BILLPAY_Award_Type:                 "Transaction",
-		MM_BILLPAY:                            1,
-		MM_RC_Award_Type:                      "Amount",
-		MM_RC:                                 15,
-		MM_CTMMOREQ_Award_Type:                "Amount",
-		MM_CTMMOREQ:                           15,
-		MM_CBWREQ_Award_Type:                  "Transaction",
-		MM_CBWREQ:                             1,
+		Key:                    "Default_Earning_Rules",
+		Description:            "Default_Earning_Rules",
+		Welcome_Points:         5,
+		MobileAppDaily_Login:   1,
+		MainGSMBalance_Amount:  10,
+		MainGSMBalance_Points:  1,
+		MM_P2P_Award_Type:      "Transaction",
+		MM_P2P_Amount:          0,
+		MM_P2P_Points:          1,
+		MM_CASHIN_Award_Type:   "Transaction",
+		MM_CASHIN_Amount:       0,
+		MM_CASHIN_Points:       1,
+		MM_CASHOUT_Award_Type:  "Transaction",
+		MM_CASHOUT_Amount:      0,
+		MM_CASHOUT_Points:      1,
+		MM_MERCHPAY_Award_Type: "Transaction",
+		MM_MERCHPAY_Amount:     0,
+		MM_MERCHPAY_Points:     1,
+		MM_BILLPAY_Award_Type:  "Transaction",
+		MM_BILLPAY_Amount:      0,
+		MM_BILLPAY_Points:      1,
+		MM_RC_Award_Type:       "Amount",
+		MM_RC_Amount:           15,
+		MM_RC_Points:           1,
+		MM_CTMMOREQ_Award_Type: "Amount",
+		MM_CTMMOREQ_Amount:     15,
+		MM_CTMMOREQ_Points:     1,
+		MM_CBWREQ_Award_Type:   "Transaction",
+		MM_CBWREQ_Amount:       0,
+		MM_CBWREQ_Points:       1,
 	})
 	Uc.Loyalty_Point_Expiry_Rules_Add("Default", Loyalty_Point_Expiry_Rules_AddRequest{
 		Key:                     "Default_Expiry_Rules",
@@ -1231,81 +1240,97 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Add(Login string, request Loy
 		return Id, err
 	}
 	//check values
-	if request.MainGSMBalance_AmountConsumedPerPoint > 0 && request.MainGSMBalance_AmountConsumedPerPoint < 1 {
+	if request.MainGSMBalance_Amount > 0 && request.MainGSMBalance_Amount < 1 {
 		err = errors.New("invalid Main GSM value")
 		return Id, err
 	}
 	if request.MM_P2P_Award_Type == "Amount" {
-		if request.MM_P2P > 0 && request.MM_P2P < 1 {
+		if request.MM_P2P_Amount > 0 && request.MM_P2P_Amount < 1 {
 			err = errors.New("invalid MM P2P value")
 			return Id, err
 		}
 	} else if request.MM_P2P_Award_Type != "Transaction" {
 		err = errors.New("invalid MM P2P Award Type")
 		return Id, err
+	} else {
+		request.MM_P2P_Amount = 0
 	}
 	if request.MM_CASHIN_Award_Type == "Amount" {
-		if request.MM_CASHIN > 0 && request.MM_CASHIN < 1 {
+		if request.MM_CASHIN_Amount > 0 && request.MM_CASHIN_Amount < 1 {
 			err = errors.New("invalid MM CASHIN value")
 			return Id, err
 		}
 	} else if request.MM_CASHIN_Award_Type != "Transaction" {
 		err = errors.New("invalid MM CASHIN Award Type")
 		return Id, err
+	} else {
+		request.MM_CASHIN_Amount = 0
 	}
 	if request.MM_CASHOUT_Award_Type == "Amount" {
-		if request.MM_CASHOUT > 0 && request.MM_CASHOUT < 1 {
+		if request.MM_CASHOUT_Amount > 0 && request.MM_CASHOUT_Amount < 1 {
 			err = errors.New("invalid MM CASHOUT value")
 			return Id, err
 		}
 	} else if request.MM_CASHOUT_Award_Type != "Transaction" {
 		err = errors.New("invalid MM CASHOUT Award Type")
 		return Id, err
+	} else {
+		request.MM_CASHOUT_Amount = 0
 	}
 	if request.MM_MERCHPAY_Award_Type == "Amount" {
-		if request.MM_MERCHPAY > 0 && request.MM_MERCHPAY < 1 {
+		if request.MM_MERCHPAY_Amount > 0 && request.MM_MERCHPAY_Amount < 1 {
 			err = errors.New("invalid MM MERCHPAY value")
 			return Id, err
 		}
 	} else if request.MM_MERCHPAY_Award_Type != "Transaction" {
 		err = errors.New("invalid MM MERCHPAY Award Type")
 		return Id, err
+	} else {
+		request.MM_MERCHPAY_Amount = 0
 	}
 	if request.MM_BILLPAY_Award_Type == "Amount" {
-		if request.MM_BILLPAY > 0 && request.MM_BILLPAY < 1 {
+		if request.MM_BILLPAY_Amount > 0 && request.MM_BILLPAY_Amount < 1 {
 			err = errors.New("invalid MM BILLPAY value")
 			return Id, err
 		}
 	} else if request.MM_BILLPAY_Award_Type != "Transaction" {
 		err = errors.New("invalid MM BILLPAY Award Type")
 		return Id, err
+	} else {
+		request.MM_BILLPAY_Amount = 0
 	}
 	if request.MM_RC_Award_Type == "Amount" {
-		if request.MM_RC > 0 && request.MM_RC < 1 {
+		if request.MM_RC_Amount > 0 && request.MM_RC_Amount < 1 {
 			err = errors.New("invalid MM recharge for self value")
 			return Id, err
 		}
 	} else if request.MM_RC_Award_Type != "Transaction" {
 		err = errors.New("invalid MM recharge for self Award Type")
 		return Id, err
+	} else {
+		request.MM_RC_Amount = 0
 	}
 	if request.MM_CTMMOREQ_Award_Type == "Amount" {
-		if request.MM_CTMMOREQ > 0 && request.MM_CTMMOREQ < 1 {
+		if request.MM_CTMMOREQ_Amount > 0 && request.MM_CTMMOREQ_Amount < 1 {
 			err = errors.New("invalid MM recharge for others value")
 			return Id, err
 		}
 	} else if request.MM_CTMMOREQ_Award_Type != "Transaction" {
 		err = errors.New("invalid MM recharge for others Award Type")
 		return Id, err
+	} else {
+		request.MM_CTMMOREQ_Amount = 0
 	}
 	if request.MM_CBWREQ_Award_Type == "Amount" {
-		if request.MM_CBWREQ > 0 && request.MM_CBWREQ < 1 {
+		if request.MM_CBWREQ_Amount > 0 && request.MM_CBWREQ_Amount < 1 {
 			err = errors.New("invalid MM bank to wallet value")
 			return Id, err
 		}
 	} else if request.MM_CBWREQ_Award_Type != "Transaction" {
 		err = errors.New("invalid MM bank to wallet Award Type")
 		return Id, err
+	} else {
+		request.MM_CBWREQ_Amount = 0
 	}
 	//Prepare new entry
 	var NewEntry Loyalty_Point_Earning_Rules
@@ -1315,23 +1340,32 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Add(Login string, request Loy
 	NewEntry.Description = request.Description
 	NewEntry.Welcome_Points = request.Welcome_Points
 	NewEntry.MobileAppDaily_Login = request.MobileAppDaily_Login
-	NewEntry.MainGSMBalance_AmountConsumedPerPoint = request.MainGSMBalance_AmountConsumedPerPoint
+	NewEntry.MainGSMBalance_Amount = request.MainGSMBalance_Amount
+	NewEntry.MainGSMBalance_Points = request.MainGSMBalance_Points
 	NewEntry.MM_P2P_Award_Type = request.MM_P2P_Award_Type
-	NewEntry.MM_P2P = request.MM_P2P
+	NewEntry.MM_P2P_Amount = request.MM_P2P_Amount
+	NewEntry.MM_P2P_Points = request.MM_P2P_Points
 	NewEntry.MM_CASHIN_Award_Type = request.MM_CASHIN_Award_Type
-	NewEntry.MM_CASHIN = request.MM_CASHIN
+	NewEntry.MM_CASHIN_Amount = request.MM_CASHIN_Amount
+	NewEntry.MM_CASHIN_Points = request.MM_CASHIN_Points
 	NewEntry.MM_CASHOUT_Award_Type = request.MM_CASHOUT_Award_Type
-	NewEntry.MM_CASHOUT = request.MM_CASHOUT
+	NewEntry.MM_CASHOUT_Amount = request.MM_CASHOUT_Amount
+	NewEntry.MM_CASHOUT_Points = request.MM_CASHOUT_Points
 	NewEntry.MM_MERCHPAY_Award_Type = request.MM_MERCHPAY_Award_Type
-	NewEntry.MM_MERCHPAY = request.MM_MERCHPAY
+	NewEntry.MM_MERCHPAY_Amount = request.MM_MERCHPAY_Amount
+	NewEntry.MM_MERCHPAY_Points = request.MM_MERCHPAY_Points
 	NewEntry.MM_BILLPAY_Award_Type = request.MM_BILLPAY_Award_Type
-	NewEntry.MM_BILLPAY = request.MM_BILLPAY
+	NewEntry.MM_BILLPAY_Amount = request.MM_BILLPAY_Amount
+	NewEntry.MM_BILLPAY_Points = request.MM_BILLPAY_Points
 	NewEntry.MM_RC_Award_Type = request.MM_RC_Award_Type
-	NewEntry.MM_RC = request.MM_RC
+	NewEntry.MM_RC_Amount = request.MM_RC_Amount
+	NewEntry.MM_RC_Points = request.MM_RC_Points
 	NewEntry.MM_CTMMOREQ_Award_Type = request.MM_CTMMOREQ_Award_Type
-	NewEntry.MM_CTMMOREQ = request.MM_CTMMOREQ
+	NewEntry.MM_CTMMOREQ_Amount = request.MM_CTMMOREQ_Amount
+	NewEntry.MM_CTMMOREQ_Points = request.MM_CTMMOREQ_Points
 	NewEntry.MM_CBWREQ_Award_Type = request.MM_CBWREQ_Award_Type
-	NewEntry.MM_CBWREQ = request.MM_CBWREQ
+	NewEntry.MM_CBWREQ_Amount = request.MM_CBWREQ_Amount
+	NewEntry.MM_CBWREQ_Points = request.MM_CBWREQ_Points
 
 	//add to cache and DB
 	Map_Loyalty_Point_Earning_Rules.Put(NewEntry.Key, NewEntry)
@@ -1355,81 +1389,97 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Edit(Login string, request Lo
 		return Id, err
 	}
 	//check values
-	if request.MainGSMBalance_AmountConsumedPerPoint > 0 && request.MainGSMBalance_AmountConsumedPerPoint < 1 {
+	if request.MainGSMBalance_Amount > 0 && request.MainGSMBalance_Amount < 1 {
 		err = errors.New("invalid Main GSM value")
 		return Id, err
 	}
 	if request.MM_P2P_Award_Type == "Amount" {
-		if request.MM_P2P > 0 && request.MM_P2P < 1 {
+		if request.MM_P2P_Amount > 0 && request.MM_P2P_Amount < 1 {
 			err = errors.New("invalid MM P2P value")
 			return Id, err
 		}
 	} else if request.MM_P2P_Award_Type != "Transaction" {
 		err = errors.New("invalid MM P2P Award Type")
 		return Id, err
+	} else {
+		request.MM_P2P_Amount = 0
 	}
 	if request.MM_CASHIN_Award_Type == "Amount" {
-		if request.MM_CASHIN > 0 && request.MM_CASHIN < 1 {
+		if request.MM_CASHIN_Amount > 0 && request.MM_CASHIN_Amount < 1 {
 			err = errors.New("invalid MM CASHIN value")
 			return Id, err
 		}
 	} else if request.MM_CASHIN_Award_Type != "Transaction" {
 		err = errors.New("invalid MM CASHIN Award Type")
 		return Id, err
+	} else {
+		request.MM_CASHIN_Amount = 0
 	}
 	if request.MM_CASHOUT_Award_Type == "Amount" {
-		if request.MM_CASHOUT > 0 && request.MM_CASHOUT < 1 {
+		if request.MM_CASHOUT_Amount > 0 && request.MM_CASHOUT_Amount < 1 {
 			err = errors.New("invalid MM CASHOUT value")
 			return Id, err
 		}
 	} else if request.MM_CASHOUT_Award_Type != "Transaction" {
 		err = errors.New("invalid MM CASHOUT Award Type")
 		return Id, err
+	} else {
+		request.MM_CASHOUT_Amount = 0
 	}
 	if request.MM_MERCHPAY_Award_Type == "Amount" {
-		if request.MM_MERCHPAY > 0 && request.MM_MERCHPAY < 1 {
+		if request.MM_MERCHPAY_Amount > 0 && request.MM_MERCHPAY_Amount < 1 {
 			err = errors.New("invalid MM MERCHPAY value")
 			return Id, err
 		}
 	} else if request.MM_MERCHPAY_Award_Type != "Transaction" {
 		err = errors.New("invalid MM MERCHPAY Award Type")
 		return Id, err
+	} else {
+		request.MM_MERCHPAY_Amount = 0
 	}
 	if request.MM_BILLPAY_Award_Type == "Amount" {
-		if request.MM_BILLPAY > 0 && request.MM_BILLPAY < 1 {
+		if request.MM_BILLPAY_Amount > 0 && request.MM_BILLPAY_Amount < 1 {
 			err = errors.New("invalid MM BILLPAY value")
 			return Id, err
 		}
 	} else if request.MM_BILLPAY_Award_Type != "Transaction" {
 		err = errors.New("invalid MM BILLPAY Award Type")
 		return Id, err
+	} else {
+		request.MM_BILLPAY_Amount = 0
 	}
 	if request.MM_RC_Award_Type == "Amount" {
-		if request.MM_RC > 0 && request.MM_RC < 1 {
+		if request.MM_RC_Amount > 0 && request.MM_RC_Amount < 1 {
 			err = errors.New("invalid MM recharge for self value")
 			return Id, err
 		}
 	} else if request.MM_RC_Award_Type != "Transaction" {
 		err = errors.New("invalid MM recharge for self Award Type")
 		return Id, err
+	} else {
+		request.MM_RC_Amount = 0
 	}
 	if request.MM_CTMMOREQ_Award_Type == "Amount" {
-		if request.MM_CTMMOREQ > 0 && request.MM_CTMMOREQ < 1 {
+		if request.MM_CTMMOREQ_Amount > 0 && request.MM_CTMMOREQ_Amount < 1 {
 			err = errors.New("invalid MM recharge for others value")
 			return Id, err
 		}
 	} else if request.MM_CTMMOREQ_Award_Type != "Transaction" {
 		err = errors.New("invalid MM recharge for others Award Type")
 		return Id, err
+	} else {
+		request.MM_CTMMOREQ_Amount = 0
 	}
 	if request.MM_CBWREQ_Award_Type == "Amount" {
-		if request.MM_CBWREQ > 0 && request.MM_CBWREQ < 1 {
+		if request.MM_CBWREQ_Amount > 0 && request.MM_CBWREQ_Amount < 1 {
 			err = errors.New("invalid MM bank to wallet value")
 			return Id, err
 		}
 	} else if request.MM_CBWREQ_Award_Type != "Transaction" {
 		err = errors.New("invalid MM bank to wallet Award Type")
 		return Id, err
+	} else {
+		request.MM_CBWREQ_Amount = 0
 	}
 	entry_na, exits := Map_Loyalty_Point_Earning_Rules.CheckThenGet(request.Key)
 	if !exits {
@@ -1450,23 +1500,33 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Edit(Login string, request Lo
 	entry.Welcome_Points = request.Welcome_Points
 	entry.Welcome_Points = request.Welcome_Points
 	entry.MobileAppDaily_Login = request.MobileAppDaily_Login
-	entry.MainGSMBalance_AmountConsumedPerPoint = request.MainGSMBalance_AmountConsumedPerPoint
+	entry.MainGSMBalance_Amount = request.MainGSMBalance_Amount
+	entry.MainGSMBalance_Points = request.MainGSMBalance_Points
 	entry.MM_P2P_Award_Type = request.MM_P2P_Award_Type
-	entry.MM_P2P = request.MM_P2P
+	entry.MM_P2P_Amount = request.MM_P2P_Amount
+	entry.MM_P2P_Points = request.MM_P2P_Points
 	entry.MM_CASHIN_Award_Type = request.MM_CASHIN_Award_Type
-	entry.MM_CASHIN = request.MM_CASHIN
+	entry.MM_CASHIN_Amount = request.MM_CASHIN_Amount
+	entry.MM_CASHIN_Points = request.MM_CASHIN_Points
 	entry.MM_CASHOUT_Award_Type = request.MM_CASHOUT_Award_Type
-	entry.MM_CASHOUT = request.MM_CASHOUT
+	entry.MM_CASHOUT_Amount = request.MM_CASHOUT_Amount
+	entry.MM_CASHOUT_Points = request.MM_CASHOUT_Points
 	entry.MM_MERCHPAY_Award_Type = request.MM_MERCHPAY_Award_Type
-	entry.MM_MERCHPAY = request.MM_MERCHPAY
+	entry.MM_MERCHPAY_Amount = request.MM_MERCHPAY_Amount
+	entry.MM_MERCHPAY_Points = request.MM_MERCHPAY_Points
 	entry.MM_BILLPAY_Award_Type = request.MM_BILLPAY_Award_Type
-	entry.MM_BILLPAY = request.MM_BILLPAY
+	entry.MM_BILLPAY_Amount = request.MM_BILLPAY_Amount
+	entry.MM_BILLPAY_Points = request.MM_BILLPAY_Points
 	entry.MM_RC_Award_Type = request.MM_RC_Award_Type
-	entry.MM_RC = request.MM_RC
+	entry.MM_RC_Amount = request.MM_RC_Amount
+	entry.MM_RC_Points = request.MM_RC_Points
 	entry.MM_CTMMOREQ_Award_Type = request.MM_CTMMOREQ_Award_Type
-	entry.MM_CTMMOREQ = request.MM_CTMMOREQ
+	entry.MM_CTMMOREQ_Amount = request.MM_CTMMOREQ_Amount
+	entry.MM_CTMMOREQ_Points = request.MM_CTMMOREQ_Points
 	entry.MM_CBWREQ_Award_Type = request.MM_CBWREQ_Award_Type
-	entry.MM_CBWREQ = request.MM_CBWREQ
+	entry.MM_CBWREQ_Amount = request.MM_CBWREQ_Amount
+	entry.MM_CBWREQ_Points = request.MM_CBWREQ_Points
+
 	if request.NewKey != "" {
 		if request.NewKey != request.Key {
 			//delete old
@@ -4091,8 +4151,8 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 	response.Opening_Awarded_Points = loyalty_account.Awarded_Points
 	response.Opening_Redeemed_Points = loyalty_account.Redeemed_Points
 	response.Opening_Available_Points = loyalty_account.Available_Points
-	response.Opening_MainGSMBalance_PendingAmount = loyalty_account.MainGSMBalance_PendingAmount
-	response.Opening_MobileMoney_PendingAmount = loyalty_account.MobileMoney_PendingAmount
+	response.Opening_Outstanding_fraction_points = loyalty_account.Outstanding_fraction_points
+
 	//check exclusion list
 	exists_exclusion := Map_Customer_Exclusion.Check(loyalty_account.Key)
 	if exists_exclusion {
@@ -4227,13 +4287,12 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 		return
 	}
 	//calucate points
-	var points, mainGSM_pending, mobileMoney_pending float64
+	var points, Outstanding_fraction_points float64
 	if response.PointsToCredit == 0 {
-		points, mainGSM_pending, mobileMoney_pending = Calculate_Loyalty_Points(point_earning_rules, request, loyalty_account.MainGSMBalance_PendingAmount, loyalty_account.MobileMoney_PendingAmount)
+		points, Outstanding_fraction_points = Calculate_Loyalty_Points(point_earning_rules, request, loyalty_account.Outstanding_fraction_points)
 	} else {
 		points = response.PointsToCredit
-		mainGSM_pending = loyalty_account.MainGSMBalance_PendingAmount
-		mobileMoney_pending = loyalty_account.MobileMoney_PendingAmount
+		Outstanding_fraction_points = loyalty_account.Outstanding_fraction_points
 	}
 	if points > 0 {
 		//response.OpeningAvailablePoints = (loyalty_account.Awarded_Points + loyalty_account.Expired_Points) - loyalty_account.Redeemed_Points
@@ -4285,8 +4344,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 		loyalty_account.Awarded_Points = loyalty_account.Awarded_Points + points
 		loyalty_account.Available_Points = (loyalty_account.Awarded_Points + loyalty_account.Expired_Points) - loyalty_account.Redeemed_Points
 		loyalty_account.Last_Award_Date = time.Now()
-		loyalty_account.MainGSMBalance_PendingAmount = mainGSM_pending
-		loyalty_account.MobileMoney_PendingAmount = mobileMoney_pending
+		loyalty_account.Outstanding_fraction_points = Outstanding_fraction_points
 		YYYY, MM, _, _, _, _, _ := GetTimeParts(time.Now())
 		//prepare the monthly points detail
 		var PointsDetail Customer_Loyalty_Account_Points_Detail
@@ -4350,8 +4408,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 	response.Closure_Awarded_Points = loyalty_account.Awarded_Points
 	response.Closure_Redeemed_Points = loyalty_account.Redeemed_Points
 	response.Closure_Available_Points = loyalty_account.Available_Points
-	response.Closure_MainGSMBalance_PendingAmount = loyalty_account.MainGSMBalance_PendingAmount
-	response.Closure_MobileMoney_PendingAmount = loyalty_account.MobileMoney_PendingAmount
+	response.Closure_Outstanding_fraction_points = loyalty_account.Outstanding_fraction_points
 
 	//successful reply
 	response.Status = "successful"
@@ -4544,177 +4601,186 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 
 }
 
-func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request Loyalty_AccountCreditPoints_Request, mainGSM_CurrentPending, mobileMoney_CurrentPending float64) (points, mainGSM_pending, mobileMoney_pending float64) {
+func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request Loyalty_AccountCreditPoints_Request, current_outstanding_points float64) (points, outstanding_points float64) {
 	switch award_request.EventSource {
 	case "DWH_Import":
 		switch award_request.EventType {
 		case "NewJoining":
-			return rules.Welcome_Points, mainGSM_CurrentPending, mobileMoney_CurrentPending
+			return rules.Welcome_Points, outstanding_points
 		default:
-			return 0, mainGSM_CurrentPending, mobileMoney_CurrentPending
+			return 0, outstanding_points
 		}
 	case "IN_feed":
 		switch award_request.EventType {
 		case "NewJoining":
-			return rules.Welcome_Points, mainGSM_CurrentPending, mobileMoney_CurrentPending
+			return rules.Welcome_Points, outstanding_points
 		default:
 			//award points based amount
 			if award_request.EventAmount > 0 {
-				if rules.MainGSMBalance_AmountConsumedPerPoint > 0 {
-					flt_points := (award_request.EventAmount + mainGSM_CurrentPending) / rules.MainGSMBalance_AmountConsumedPerPoint
+				if rules.MainGSMBalance_Amount > 0 {
+					flt_fractions := award_request.EventAmount / rules.MainGSMBalance_Amount
+					flt_points := (flt_fractions * rules.MainGSMBalance_Points) + outstanding_points
 					int_points := int(flt_points)
-					mainGSM_pending = (award_request.EventAmount + mainGSM_CurrentPending) - (float64(int_points) * rules.MainGSMBalance_AmountConsumedPerPoint)
-					return float64(int_points), mainGSM_pending, mobileMoney_CurrentPending
+					outstanding_points = flt_points - float64(int_points)
+					return float64(int_points), outstanding_points
 				} else {
-					return 0, mainGSM_CurrentPending, mobileMoney_CurrentPending
+					return 0, outstanding_points
 				}
 			} else { //to do: award points based transaction
-				return 0, mainGSM_CurrentPending, mobileMoney_CurrentPending
+				return 0, outstanding_points
 			}
 		}
 	case "WebPortal":
 		switch award_request.EventType {
 		case "NewJoining":
-			return rules.Welcome_Points, mainGSM_CurrentPending, mobileMoney_CurrentPending
+			return rules.Welcome_Points, outstanding_points
 		default:
 			//award points based amount
 			if award_request.EventAmount > 0 {
-				if rules.MainGSMBalance_AmountConsumedPerPoint > 0 {
-					flt_points := (award_request.EventAmount + mainGSM_CurrentPending) / rules.MainGSMBalance_AmountConsumedPerPoint
+				if rules.MainGSMBalance_Amount > 0 {
+					flt_fractions := award_request.EventAmount / rules.MainGSMBalance_Amount
+					flt_points := (flt_fractions * rules.MainGSMBalance_Points) + outstanding_points
 					int_points := int(flt_points)
-					mainGSM_pending = (award_request.EventAmount + mainGSM_CurrentPending) - (float64(int_points) * rules.MainGSMBalance_AmountConsumedPerPoint)
-					return float64(int_points), mainGSM_pending, mobileMoney_CurrentPending
+					outstanding_points = flt_points - float64(int_points)
+					return float64(int_points), outstanding_points
 				} else {
-					return 0, mainGSM_CurrentPending, mobileMoney_CurrentPending
+					return 0, outstanding_points
 				}
 			} else { //to do: award points based transaction
-				return 0, mainGSM_CurrentPending, mobileMoney_CurrentPending
+				return 0, outstanding_points
 			}
 		}
 	case "MobileMoney_feed":
 		switch award_request.EventType {
 		case "P2P":
 			if rules.MM_P2P_Award_Type == "Transaction" {
-				if rules.MM_P2P > 0 {
-					return rules.MM_P2P, mainGSM_CurrentPending, mobileMoney_CurrentPending
+				if rules.MM_P2P_Points > 0 {
+					return rules.MM_P2P_Points, outstanding_points
 				}
 			} else if rules.MM_P2P_Award_Type == "Amount" {
-				if rules.MM_P2P > 0 && award_request.EventAmount > 0 {
-					flt_points := (award_request.EventAmount + mobileMoney_CurrentPending) / rules.MM_P2P
+				if rules.MM_P2P_Amount > 0 && award_request.EventAmount > 0 {
+					flt_fractions := award_request.EventAmount / rules.MM_P2P_Amount
+					flt_points := (flt_fractions * rules.MM_P2P_Points) + outstanding_points
 					int_points := int(flt_points)
-					mobileMoney_CurrentPending = (award_request.EventAmount + mobileMoney_CurrentPending) - (float64(int_points) * rules.MM_P2P)
-					return float64(int_points), mainGSM_pending, mobileMoney_CurrentPending
+					outstanding_points = flt_points - float64(int_points)
+					return float64(int_points), outstanding_points
 				}
 			}
-			return 0, mainGSM_CurrentPending, mobileMoney_CurrentPending
+			return 0, outstanding_points
 		case "CASHIN":
 			if rules.MM_CASHIN_Award_Type == "Transaction" {
-				if rules.MM_CASHIN > 0 {
-					return rules.MM_CASHIN, mainGSM_CurrentPending, mobileMoney_CurrentPending
+				if rules.MM_CASHIN_Points > 0 {
+					return rules.MM_CASHIN_Points, outstanding_points
 				}
 			} else if rules.MM_CASHIN_Award_Type == "Amount" {
-				if rules.MM_CASHIN > 0 && award_request.EventAmount > 0 {
-					flt_points := (award_request.EventAmount + mobileMoney_CurrentPending) / rules.MM_CASHIN
+				if rules.MM_CASHIN_Amount > 0 && award_request.EventAmount > 0 {
+					flt_fractions := award_request.EventAmount / rules.MM_CASHIN_Amount
+					flt_points := (flt_fractions * rules.MM_CASHIN_Points) + outstanding_points
 					int_points := int(flt_points)
-					mobileMoney_CurrentPending = (award_request.EventAmount + mobileMoney_CurrentPending) - (float64(int_points) * rules.MM_CASHIN)
-					return float64(int_points), mainGSM_pending, mobileMoney_CurrentPending
+					outstanding_points = flt_points - float64(int_points)
+					return float64(int_points), outstanding_points
 				}
 			}
-			return 0, mainGSM_CurrentPending, mobileMoney_CurrentPending
+			return 0, outstanding_points
 		case "CASHOUT":
 			if rules.MM_CASHOUT_Award_Type == "Transaction" {
-				if rules.MM_CASHOUT > 0 {
-					return rules.MM_CASHOUT, mainGSM_CurrentPending, mobileMoney_CurrentPending
+				if rules.MM_CASHOUT_Points > 0 {
+					return rules.MM_CASHOUT_Points, outstanding_points
 				}
 			} else if rules.MM_CASHOUT_Award_Type == "Amount" {
-				if rules.MM_CASHOUT > 0 && award_request.EventAmount > 0 {
-					flt_points := (award_request.EventAmount + mobileMoney_CurrentPending) / rules.MM_CASHOUT
+				if rules.MM_CASHOUT_Amount > 0 && award_request.EventAmount > 0 {
+					flt_fractions := award_request.EventAmount / rules.MM_CASHOUT_Amount
+					flt_points := (flt_fractions * rules.MM_CASHOUT_Points) + outstanding_points
 					int_points := int(flt_points)
-					mobileMoney_CurrentPending = (award_request.EventAmount + mobileMoney_CurrentPending) - (float64(int_points) * rules.MM_CASHOUT)
-					return float64(int_points), mainGSM_pending, mobileMoney_CurrentPending
+					outstanding_points = flt_points - float64(int_points)
+					return float64(int_points), outstanding_points
 				}
 			}
-			return 0, mainGSM_CurrentPending, mobileMoney_CurrentPending
+			return 0, outstanding_points
 		case "MERCHPAY":
 			if rules.MM_MERCHPAY_Award_Type == "Transaction" {
-				if rules.MM_MERCHPAY > 0 {
-					return rules.MM_MERCHPAY, mainGSM_CurrentPending, mobileMoney_CurrentPending
+				if rules.MM_MERCHPAY_Points > 0 {
+					return rules.MM_MERCHPAY_Points, outstanding_points
 				}
 			} else if rules.MM_MERCHPAY_Award_Type == "Amount" {
-				if rules.MM_MERCHPAY > 0 && award_request.EventAmount > 0 {
-					flt_points := (award_request.EventAmount + mobileMoney_CurrentPending) / rules.MM_MERCHPAY
+				if rules.MM_MERCHPAY_Amount > 0 && award_request.EventAmount > 0 {
+					flt_fractions := award_request.EventAmount / rules.MM_MERCHPAY_Amount
+					flt_points := (flt_fractions * rules.MM_MERCHPAY_Points) + outstanding_points
 					int_points := int(flt_points)
-					mobileMoney_CurrentPending = (award_request.EventAmount + mobileMoney_CurrentPending) - (float64(int_points) * rules.MM_MERCHPAY)
-					return float64(int_points), mainGSM_pending, mobileMoney_CurrentPending
+					outstanding_points = flt_points - float64(int_points)
+					return float64(int_points), outstanding_points
 				}
 			}
-			return 0, mainGSM_CurrentPending, mobileMoney_CurrentPending
+			return 0, outstanding_points
 		case "BILLPAY":
 			if rules.MM_BILLPAY_Award_Type == "Transaction" {
-				if rules.MM_BILLPAY > 0 {
-					return rules.MM_BILLPAY, mainGSM_CurrentPending, mobileMoney_CurrentPending
+				if rules.MM_BILLPAY_Points > 0 {
+					return rules.MM_BILLPAY_Points, outstanding_points
 				}
 			} else if rules.MM_BILLPAY_Award_Type == "Amount" {
-				if rules.MM_BILLPAY > 0 && award_request.EventAmount > 0 {
-					flt_points := (award_request.EventAmount + mobileMoney_CurrentPending) / rules.MM_BILLPAY
+				if rules.MM_BILLPAY_Amount > 0 && award_request.EventAmount > 0 {
+					flt_fractions := award_request.EventAmount / rules.MM_BILLPAY_Amount
+					flt_points := (flt_fractions * rules.MM_BILLPAY_Points) + outstanding_points
 					int_points := int(flt_points)
-					mobileMoney_CurrentPending = (award_request.EventAmount + mobileMoney_CurrentPending) - (float64(int_points) * rules.MM_BILLPAY)
-					return float64(int_points), mainGSM_pending, mobileMoney_CurrentPending
+					outstanding_points = flt_points - float64(int_points)
+					return float64(int_points), outstanding_points
 				}
 			}
-			return 0, mainGSM_CurrentPending, mobileMoney_CurrentPending
+			return 0, outstanding_points
 		case "RC": //self recharge
 			if rules.MM_RC_Award_Type == "Transaction" {
-				if rules.MM_RC > 0 {
-					return rules.MM_RC, mainGSM_CurrentPending, mobileMoney_CurrentPending
+				if rules.MM_RC_Points > 0 {
+					return rules.MM_RC_Points, outstanding_points
 				}
 			} else if rules.MM_RC_Award_Type == "Amount" {
-				if rules.MM_RC > 0 && award_request.EventAmount > 0 {
-					flt_points := (award_request.EventAmount + mobileMoney_CurrentPending) / rules.MM_RC
+				if rules.MM_RC_Amount > 0 && award_request.EventAmount > 0 {
+					flt_fractions := award_request.EventAmount / rules.MM_RC_Amount
+					flt_points := (flt_fractions * rules.MM_RC_Points) + outstanding_points
 					int_points := int(flt_points)
-					mobileMoney_CurrentPending = (award_request.EventAmount + mobileMoney_CurrentPending) - (float64(int_points) * rules.MM_RC)
-					return float64(int_points), mainGSM_pending, mobileMoney_CurrentPending
+					outstanding_points = flt_points - float64(int_points)
+					return float64(int_points), outstanding_points
 				}
 			}
-			return 0, mainGSM_CurrentPending, mobileMoney_CurrentPending
+			return 0, outstanding_points
 		case "CTMMOREQ": //recharge for others
 			if rules.MM_CTMMOREQ_Award_Type == "Transaction" {
-				if rules.MM_CTMMOREQ > 0 {
-					return rules.MM_CTMMOREQ, mainGSM_CurrentPending, mobileMoney_CurrentPending
+				if rules.MM_CTMMOREQ_Points > 0 {
+					return rules.MM_CTMMOREQ_Points, outstanding_points
 				}
 			} else if rules.MM_CTMMOREQ_Award_Type == "Amount" {
-				if rules.MM_CTMMOREQ > 0 && award_request.EventAmount > 0 {
-					flt_points := (award_request.EventAmount + mobileMoney_CurrentPending) / rules.MM_CTMMOREQ
+				if rules.MM_CTMMOREQ_Amount > 0 && award_request.EventAmount > 0 {
+					flt_fractions := award_request.EventAmount / rules.MM_CTMMOREQ_Amount
+					flt_points := (flt_fractions * rules.MM_CTMMOREQ_Points) + outstanding_points
 					int_points := int(flt_points)
-					mobileMoney_CurrentPending = (award_request.EventAmount + mobileMoney_CurrentPending) - (float64(int_points) * rules.MM_CTMMOREQ)
-					return float64(int_points), mainGSM_pending, mobileMoney_CurrentPending
+					outstanding_points = flt_points - float64(int_points)
+					return float64(int_points), outstanding_points
 				}
 			}
-			return 0, mainGSM_CurrentPending, mobileMoney_CurrentPending
+			return 0, outstanding_points
 		case "CBWREQ": //recharge for others
 			if rules.MM_CBWREQ_Award_Type == "Transaction" {
-				if rules.MM_CBWREQ > 0 {
-					return rules.MM_CBWREQ, mainGSM_CurrentPending, mobileMoney_CurrentPending
+				if rules.MM_CBWREQ_Points > 0 {
+					return rules.MM_CBWREQ_Points, outstanding_points
 				}
 			} else if rules.MM_CBWREQ_Award_Type == "Amount" {
-				if rules.MM_CBWREQ > 0 && award_request.EventAmount > 0 {
-					flt_points := (award_request.EventAmount + mobileMoney_CurrentPending) / rules.MM_CBWREQ
+				if rules.MM_CBWREQ_Amount > 0 && award_request.EventAmount > 0 {
+					flt_fractions := award_request.EventAmount / rules.MM_CBWREQ_Amount
+					flt_points := (flt_fractions * rules.MM_CBWREQ_Points) + outstanding_points
 					int_points := int(flt_points)
-					mobileMoney_CurrentPending = (award_request.EventAmount + mobileMoney_CurrentPending) - (float64(int_points) * rules.MM_CBWREQ)
-					return float64(int_points), mainGSM_pending, mobileMoney_CurrentPending
+					outstanding_points = flt_points - float64(int_points)
+					return float64(int_points), outstanding_points
 				}
 			}
-			return 0, mainGSM_CurrentPending, mobileMoney_CurrentPending
+			return 0, outstanding_points
 		default:
-			return 0, mainGSM_CurrentPending, mobileMoney_CurrentPending
+			return 0, outstanding_points
 		}
-		return 0, mainGSM_CurrentPending, mobileMoney_CurrentPending
 	case "MyAfricellApp":
 		switch award_request.EventType {
 		case "MobileAppDaily_Login":
-			return rules.MobileAppDaily_Login, mainGSM_CurrentPending, mobileMoney_CurrentPending
+			return rules.MobileAppDaily_Login, outstanding_points
 		default:
-			return 0, mainGSM_CurrentPending, mobileMoney_CurrentPending
+			return 0, outstanding_points
 		}
 	}
 	return
