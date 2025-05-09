@@ -380,6 +380,9 @@ func (Uc *UserControl) AddToLoyaltyManagementRouter(router *mux.Router, UC *User
 			{AccessKey: "HTTP_Loyalty_AccountDebitPoints_log", AccessMethod: "GET", Allowed: true},
 			{AccessKey: "HTTP_Loyalty_AccountCreditPoints_log", AccessMethod: "GET", Allowed: true},
 			{AccessKey: "HTTP_Loyalty_logs", AccessMethod: "GET", Allowed: true},
+			{AccessKey: "HTTP_Customer_Loyalty_Account_CreditPoints", AccessMethod: "PUT", Allowed: true},
+			{AccessKey: "HTTP_Customer_Loyalty_Account_DebitPoints", AccessMethod: "PUT", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Products_Catalogue", AccessMethod: "GET", Allowed: true},
 		}
 		_, err = Uc.OKAPIAUC.AUCClient.GroupAccessEntriesForGroup_Comprehensive("VAS - Loyalty", AccessEntries_to_add)
 
@@ -612,7 +615,7 @@ func (Uc *UserControl) Add_Loyalty_ToAccessEntry(existing map[string]AuthCenter.
 		Level2DisplayOrder:   8,
 		Level3:               "",
 		Level3DisplayOrder:   0,
-		Routes:               []string{"HTTP_Customer_Loyalty_Account_GetRedemption_Rules|GET", "HTTP_Customer_Loyalty_RedeemRequest|PUT", "HTTP_Loyalty_AccountDebitPoints_log|GET", "HTTP_Customer_Loyalty_Account_Points_Details|GET", "HTTP_Loyalty_AccountCreditPoints_log|GET", "HTTP_Loyalty_logs|GET"},
+		Routes:               []string{"HTTP_Customer_Loyalty_Account_GetRedemption_Rules|GET", "HTTP_Customer_Loyalty_RedeemRequest|PUT", "HTTP_Loyalty_AccountDebitPoints_log|GET", "HTTP_Customer_Loyalty_Account_Points_Details|GET", "HTTP_Loyalty_AccountCreditPoints_log|GET", "HTTP_Loyalty_logs|GET", "HTTP_Customer_Loyalty_Account_DebitPoints|PUT", "HTTP_Customer_Loyalty_Account_CreditPoints|PUT", "HTTP_Loyalty_Products_Catalogue|GET"},
 	}
 	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
 
