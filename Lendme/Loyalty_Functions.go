@@ -841,7 +841,22 @@ func (Uc *UserControl) Loyalty_Level_Add(Login string, request Loyalty_Level_Add
 		err = errors.New("key already exist")
 		return Id, err
 	}
+	entries_na := Map_Loyalty_Level.ConvertToArray()
+	if len(entries_na) > 0 {
+		for _, entry_na := range entries_na {
+			entry, ok := entry_na.(Loyalty_Level)
+			if !ok {
+				err = errors.New("error in type assertion")
+				return Id, err
+			} else {
+				if request.Min_Accumulated_Points <= entry.Max_Accumulated_Points && request.Max_Accumulated_Points >= entry.Min_Accumulated_Points {
+					err = errors.New("Points intersect with " + entry.Key + " level")
+					return Id, err
+				}
 
+			}
+		}
+	}
 	//Prepare new entry
 	var NewEntry Loyalty_Level
 	NewEntry.Level_Id = Map_Loyalty_AutoIncrement.GetNextAI("Loyalty_Level-Id")
@@ -886,7 +901,22 @@ func (Uc *UserControl) Loyalty_Level_Edit(Login string, request Loyalty_Level_Ed
 		return Id, errors.New("id is not matching")
 	}
 	Current_Entry := entry
+	entries_na := Map_Loyalty_Level.ConvertToArray()
+	if len(entries_na) > 0 {
+		for _, entry_na := range entries_na {
+			entry, ok := entry_na.(Loyalty_Level)
+			if !ok {
+				err = errors.New("error in type assertion")
+				return Id, err
+			} else {
+				if request.Key != entry.Key && request.Min_Accumulated_Points <= entry.Max_Accumulated_Points && request.Max_Accumulated_Points >= entry.Min_Accumulated_Points {
+					err = errors.New("Points intersect with " + entry.Key + " level")
+					return Id, err
+				}
 
+			}
+		}
+	}
 	//Prepare new entry
 	entry.Key = request.Key
 	entry.Description = request.Description
@@ -2100,6 +2130,22 @@ func (Uc *UserControl) Loyalty_Plan_Add(Login string, request Loyalty_Plan_AddRe
 		return Id, err
 	}
 
+	entries_na := Map_Loyalty_Plan.ConvertToArray()
+	if len(entries_na) > 0 {
+		for _, entry_na := range entries_na {
+			entry, ok := entry_na.(Loyalty_Plan)
+			if !ok {
+				err = errors.New("error in type assertion")
+				return Id, err
+			} else {
+				if request.Loyalty_Level_Key == entry.Loyalty_Level_Key && request.Loyalty_Account_Segment_Key == entry.Loyalty_Account_Segment_Key {
+					err = errors.New("A plan with the same Loyalty Level and Account Segment already exists. Please choose a different combination")
+					return Id, err
+				}
+
+			}
+		}
+	}
 	//Prepare new entry
 	var NewEntry Loyalty_Plan
 	NewEntry.Plan_Id = Map_Loyalty_AutoIncrement.GetNextAI("Loyalty_Plan-Id")
@@ -2143,6 +2189,22 @@ func (Uc *UserControl) Loyalty_Plan_Edit(Login string, request Loyalty_Plan_Edit
 	}
 	if entry.Plan_Id != request.Plan_Id {
 		return Id, errors.New("id is not matching")
+	}
+	entries_na := Map_Loyalty_Plan.ConvertToArray()
+	if len(entries_na) > 0 {
+		for _, entry_na := range entries_na {
+			entry, ok := entry_na.(Loyalty_Plan)
+			if !ok {
+				err = errors.New("error in type assertion")
+				return Id, err
+			} else {
+				if request.Key != entry.Key && request.Loyalty_Level_Key == entry.Loyalty_Level_Key && request.Loyalty_Account_Segment_Key == entry.Loyalty_Account_Segment_Key {
+					err = errors.New("A plan with the same Loyalty Level and Account Segment already exists. Please choose a different combination")
+					return Id, err
+				}
+
+			}
+		}
 	}
 	Current_Entry := entry
 	//Prepare new entry
@@ -5252,7 +5314,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_Getlogs(Type string, startDate, 
 			newLog.Logs_Type = "Credit Logs"
 			newLog.Credit_Logs = log
 			newLog.Date = log.ReceiveDate
-			newLog.PointsToCredit = log.PointsToCredit
+			newLog.PointsToCredit = log.AwardedPoints
 			newLog.Opening_Available_Points = log.Opening_Available_Points
 			newLog.Closure_Available_Points = log.Closure_Available_Points
 			allLogs = append(allLogs, newLog)
