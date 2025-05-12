@@ -1961,6 +1961,8 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Add(Login string, request 
 	NewEntry.Airtime_EVC_PIN = request.Airtime_EVC_PIN
 	NewEntry.MobileMoney_MinPoints = request.MobileMoney_MinPoints
 	NewEntry.MobileMoney_AmountPerPoint = request.MobileMoney_AmountPerPoint
+	NewEntry.MobileMoney_MerchantAccount = request.MobileMoney_MerchantAccount
+	NewEntry.MobileMoney_MerchantPIN = request.MobileMoney_MerchantPIN
 	NewEntry.Bundles_MinPoints = request.Bundles_MinPoints
 	NewEntry.Bundles_EVC_Account = request.Bundles_EVC_Account
 	NewEntry.Bundles_EVC_PIN = request.Bundles_EVC_PIN
@@ -2015,6 +2017,8 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Edit(Login string, request
 	entry.Airtime_EVC_PIN = request.Airtime_EVC_PIN
 	entry.MobileMoney_MinPoints = request.MobileMoney_MinPoints
 	entry.MobileMoney_AmountPerPoint = request.MobileMoney_AmountPerPoint
+	entry.MobileMoney_MerchantAccount = request.MobileMoney_MerchantAccount
+	entry.MobileMoney_MerchantPIN = request.MobileMoney_MerchantPIN
 	entry.Bundles_MinPoints = request.Bundles_MinPoints
 	entry.Bundles_EVC_Account = request.Bundles_EVC_Account
 	entry.Bundles_EVC_PIN = request.Bundles_EVC_PIN
