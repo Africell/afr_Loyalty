@@ -188,7 +188,7 @@ func (GWClient *Lendme_Client) Loyalty_Account_Get(MSISDN string) (response Cust
 func (GWClient *Lendme_Client) Loyalty_Account_DebitPoints(request Loyalty_AccountDebitPoints_Request) (response Loyalty_AccountDebitPoints_log, err error) {
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	request_byte, err := json.Marshal(request)
-	if err == nil {
+	if err != nil {
 		log.Println("generic_http_call request marshal error : ", err)
 		return response, err
 	}

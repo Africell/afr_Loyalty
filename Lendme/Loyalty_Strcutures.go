@@ -313,6 +313,8 @@ type Loyalty_Point_Redemption_Rules_AddRequest struct {
 	Airtime_EVC_PIN                   string  `bson:"Airtime_EVC_PIN" json:"Airtime_EVC_PIN"`
 	MobileMoney_MinPoints             float64 `bson:"MobileMoney_MinPoints" json:"MobileMoney_MinPoints"`
 	MobileMoney_AmountPerPoint        float64 `bson:"MobileMoney_AmountPerPoint" json:"MobileMoney_AmountPerPoint"`
+	MobileMoney_MerchantAccount       string  `bson:"MobileMoney_MerchantAccount" json:"MobileMoney_MerchantAccount"`
+	MobileMoney_MerchantPIN           string  `bson:"MobileMoney_MerchantPIN" json:"MobileMoney_MerchantPIN"`
 	Bundles_MinPoints                 float64 `bson:"Bundles_MinPoints" json:"Bundles_MinPoints"`
 	Bundles_EVC_Account               string  `bson:"Bundles_EVC_Account" json:"Bundles_EVC_Account"`
 	Bundles_EVC_PIN                   string  `bson:"Bundles_EVC_PIN" json:"Bundles_EVC_PIN"`
@@ -337,6 +339,8 @@ type Loyalty_Point_Redemption_Rules_EditRequest struct {
 	Airtime_EVC_PIN                   string  `bson:"Airtime_EVC_PIN" json:"Airtime_EVC_PIN"`
 	MobileMoney_MinPoints             float64 `bson:"MobileMoney_MinPoints" json:"MobileMoney_MinPoints"`
 	MobileMoney_AmountPerPoint        float64 `bson:"MobileMoney_AmountPerPoint" json:"MobileMoney_AmountPerPoint"`
+	MobileMoney_MerchantAccount       string  `bson:"MobileMoney_MerchantAccount" json:"MobileMoney_MerchantAccount"`
+	MobileMoney_MerchantPIN           string  `bson:"MobileMoney_MerchantPIN" json:"MobileMoney_MerchantPIN"`
 	Bundles_MinPoints                 float64 `bson:"Bundles_MinPoints" json:"Bundles_MinPoints"`
 	Bundles_Product_Catalogue_Channel string  `bson:"Bundles_Product_Catalogue_Channel" json:"Bundles_Product_Catalogue_Channel"`
 	Bundles_Product_Catalogue_Plan    string  `bson:"Bundles_Product_Catalogue_Plan" json:"Bundles_Product_Catalogue_Plan"`
