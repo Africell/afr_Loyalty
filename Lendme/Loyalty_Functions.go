@@ -4393,14 +4393,19 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 			}
 		}
 	} else {
-		response.Status = "failed"
-		response.StatusCode = http.StatusBadRequest
-		response.StatusDescription = "failed to credit loyalty account"
-		response.ErrorDescription = "points to credit must be greater than 0"
-		response.StatusDate = time.Now()
-		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
-		Uc.Write_Loyalty_AccountCreditPoints_log(*response)
-		return
+		if Outstanding_fraction_points > 0 {
+			loyalty_account.Outstanding_fraction_points = Outstanding_fraction_points
+			Map_Customer_Loyalty_Account.Put(loyalty_account.Key, loyalty_account)
+		} else {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "failed to credit loyalty account"
+			response.ErrorDescription = "points to credit or outstanding fractions point must be greater than 0"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_AccountCreditPoints_log(*response)
+			return
+		}
 	}
 	//response.ClosureAvailablePoints = (loyalty_account.Awarded_Points + loyalty_account.Expired_Points) - loyalty_account.Redeemed_Points
 	response.Closure_Loyalty_Level_Key = loyalty_account.Loyalty_Level_Key
