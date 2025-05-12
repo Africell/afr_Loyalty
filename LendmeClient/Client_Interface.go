@@ -81,14 +81,14 @@ func (GWClient *Lendme_Client) Lendme_Subscriber_Get(MSISDN string) (response Le
 			}
 		}
 		if response_generic.Statuscode == http.StatusUnauthorized {
-			srl, err := GWClient.AUC_client.Login(GWClient.AUC_client.S2S_Username, GWClient.AUC_client.S2S_Password) // try to get a new token using login if token is unauthenticated
-			if err != nil {
-				log.Println("AUC init - FAILED :: ", err)
-				return response, err
+			srl, errl := GWClient.AUC_client.Login(GWClient.AUC_client.S2S_Username, GWClient.AUC_client.S2S_Password) // try to get a new token using login if token is unauthenticated
+			if errl != nil {
+				log.Println("AUC init - FAILED :: ", errl)
+				return response, errl
 			}
-			rt, err := GWClient.AUC_client.RefreshToken(srl.Token)
-			if err != nil {
-				log.Println("AUC init - FAILED :: ", err)
+			rt, errl := GWClient.AUC_client.RefreshToken(srl.Token)
+			if errl != nil {
+				log.Println("AUC init - FAILED :: ", errl)
 				return response, err
 			} else {
 				GWClient.AUC_client.S2S_AccessToken = rt.Token // save token global variable to re-use
@@ -98,10 +98,16 @@ func (GWClient *Lendme_Client) Lendme_Subscriber_Get(MSISDN string) (response Le
 					log.Println("generic_http_call error : ", err)
 					return response, err
 				}
-				err = json.Unmarshal(response_generic.Body, &response)
+				var clad Customer_Lendme_Account_Data
+				err = json.Unmarshal(response_generic.Body, &clad)
 				if err != nil {
 					log.Println("generic_http_call boby unmarshal error : ", err)
-					return response, err
+					return
+				}
+				if len(clad.Data) == 1 {
+					response = clad.Data[0]
+				} else {
+					err = errors.New("error reading Lendme account invalid length returned")
 				}
 				return response, err
 			}
@@ -144,15 +150,15 @@ func (GWClient *Lendme_Client) Loyalty_Account_Get(MSISDN string) (response Cust
 			}
 		}
 		if response_generic.Statuscode == http.StatusUnauthorized {
-			srl, err := GWClient.AUC_client.Login(GWClient.AUC_client.S2S_Username, GWClient.AUC_client.S2S_Password) // try to get a new token using login if token is unauthenticated
-			if err != nil {
-				log.Println("AUC init - FAILED :: ", err)
-				return response, err
+			srl, errl := GWClient.AUC_client.Login(GWClient.AUC_client.S2S_Username, GWClient.AUC_client.S2S_Password) // try to get a new token using login if token is unauthenticated
+			if errl != nil {
+				log.Println("AUC init - FAILED :: ", errl)
+				return response, errl
 			}
-			rt, err := GWClient.AUC_client.RefreshToken(srl.Token)
-			if err != nil {
-				log.Println("AUC init - FAILED :: ", err)
-				return response, err
+			rt, errl := GWClient.AUC_client.RefreshToken(srl.Token)
+			if errl != nil {
+				log.Println("AUC init - FAILED :: ", errl)
+				return response, errl
 			} else {
 				GWClient.AUC_client.S2S_AccessToken = rt.Token // save token global variable to re-use
 				GWClient.S2S_AccessToken = rt.Token            // save token global variable to re-use
@@ -161,10 +167,16 @@ func (GWClient *Lendme_Client) Loyalty_Account_Get(MSISDN string) (response Cust
 					log.Println("generic_http_call error : ", err)
 					return response, err
 				}
-				err = json.Unmarshal(response_generic.Body, &response)
+				var clad Customer_Loyalty_Account_Data
+				err = json.Unmarshal(response_generic.Body, &clad)
 				if err != nil {
 					log.Println("generic_http_call boby unmarshal error : ", err)
-					return response, err
+					return
+				}
+				if len(clad.Data) == 1 {
+					response = clad.Data[0]
+				} else {
+					err = errors.New("error reading loyalty account invalid length returned")
 				}
 				return response, err
 			}
