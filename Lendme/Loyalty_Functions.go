@@ -5300,8 +5300,9 @@ func (Uc *UserControl) Customer_Loyalty_Account_Getlogs(Type string, startDate, 
 		}
 		for _, log := range findResult {
 			var newLog = Loyalty_Logs{}
-			newLog.Logs_Type = "Debit Logs"
+			newLog.Logs_Type = "Debit"
 			newLog.Debit_Logs = log
+			newLog.Status = log.Status
 			newLog.Date = log.ReceiveDate
 			newLog.PointsToCredit = log.Debit_Amount
 			newLog.Opening_Available_Points = log.Opening_Available_Points
@@ -5316,9 +5317,10 @@ func (Uc *UserControl) Customer_Loyalty_Account_Getlogs(Type string, startDate, 
 		}
 		for _, log := range findResult {
 			var newLog = Loyalty_Logs{}
-			newLog.Logs_Type = "Credit Logs"
+			newLog.Logs_Type = "Credit"
 			newLog.Credit_Logs = log
 			newLog.Date = log.ReceiveDate
+			newLog.Status = log.Status
 			newLog.PointsToCredit = log.AwardedPoints
 			newLog.Opening_Available_Points = log.Opening_Available_Points
 			newLog.Closure_Available_Points = log.Closure_Available_Points
@@ -5332,8 +5334,9 @@ func (Uc *UserControl) Customer_Loyalty_Account_Getlogs(Type string, startDate, 
 		}
 		for _, log := range findResult {
 			var newLog = Loyalty_Logs{}
-			newLog.Logs_Type = "Redemption Logs"
+			newLog.Logs_Type = "Redemption"
 			newLog.Redemption_Logs = log
+			newLog.Status = log.Status
 			newLog.Date = log.ReceiveDate
 			newLog.PointsToCredit = log.Points_To_Redeem
 			newLog.Opening_Available_Points = log.Opening_Available_Points
@@ -5348,8 +5351,9 @@ func (Uc *UserControl) Customer_Loyalty_Account_Getlogs(Type string, startDate, 
 		}
 		for _, log := range findResult {
 			var newLog = Loyalty_Logs{}
-			newLog.Logs_Type = "Expiry Logs"
+			newLog.Logs_Type = "Expiry"
 			newLog.Expiry_Logs = log
+			newLog.Status = log.ExpiryStatus
 			newLog.Date = log.ExpiryTime
 			newLog.Opening_Available_Points = log.Opening_Available_Points
 			newLog.Closure_Available_Points = log.End_Available_Points
@@ -5363,7 +5367,8 @@ func (Uc *UserControl) Customer_Loyalty_Account_Getlogs(Type string, startDate, 
 		}
 		for _, log := range findResult {
 			var newLog = Loyalty_Logs{}
-			newLog.Logs_Type = "Level Change Logs"
+			newLog.Logs_Type = "Level Change"
+			newLog.Status = ""
 			newLog.Level_Change_Logs = log
 			newLog.Date = log.Level_Change_Date
 			allLogs = append(allLogs, newLog)

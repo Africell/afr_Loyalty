@@ -462,6 +462,7 @@ type Loyalty_AccountCreditPoints_Request struct {
 type Loyalty_Logs struct {
 	Logs_Type                string                          `bson:"Logs_Type" json:"Logs_Type"`
 	Date                     time.Time                       `bson:"Date" json:"Date"`
+	Status                   string                          `bson:"Status" json:"Status"` //successful, failed
 	PointsToCredit           float64                         `bson:"PointsToCredit" json:"PointsToCredit"`
 	Opening_Available_Points float64                         `bson:"Opening_Available_Points" json:"Opening_Available_Points"` //(Awarded_Points + Expired_Points) - Redeemed_Points
 	Closure_Available_Points float64                         `bson:"Closure_Available_Points" json:"Closure_Available_Points"` //(Awarded_Points + Expired_Points) - Redeemed_Points
