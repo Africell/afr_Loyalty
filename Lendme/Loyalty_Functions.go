@@ -4673,48 +4673,48 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 	case "DWH_Import":
 		switch award_request.EventType {
 		case "NewJoining":
-			return rules.Welcome_Points, outstanding_points
+			return rules.Welcome_Points, current_outstanding_points
 		default:
-			return 0, outstanding_points
+			return 0, current_outstanding_points
 		}
 	case "IN_feed":
 		switch award_request.EventType {
 		case "NewJoining":
-			return rules.Welcome_Points, outstanding_points
+			return rules.Welcome_Points, current_outstanding_points
 		default:
 			//award points based amount
 			if award_request.EventAmount > 0 {
 				if rules.MainGSMBalance_Amount > 0 {
 					flt_fractions := award_request.EventAmount / rules.MainGSMBalance_Amount
-					flt_points := (flt_fractions * rules.MainGSMBalance_Points) + outstanding_points
+					flt_points := (flt_fractions * rules.MainGSMBalance_Points) + current_outstanding_points
 					int_points := int(flt_points)
 					outstanding_points = flt_points - float64(int_points)
 					return float64(int_points), outstanding_points
 				} else {
-					return 0, outstanding_points
+					return 0, current_outstanding_points
 				}
 			} else { //to do: award points based transaction
-				return 0, outstanding_points
+				return 0, current_outstanding_points
 			}
 		}
 	case "WebPortal":
 		switch award_request.EventType {
 		case "NewJoining":
-			return rules.Welcome_Points, outstanding_points
+			return rules.Welcome_Points, current_outstanding_points
 		default:
 			//award points based amount
 			if award_request.EventAmount > 0 {
 				if rules.MainGSMBalance_Amount > 0 {
 					flt_fractions := award_request.EventAmount / rules.MainGSMBalance_Amount
-					flt_points := (flt_fractions * rules.MainGSMBalance_Points) + outstanding_points
+					flt_points := (flt_fractions * rules.MainGSMBalance_Points) + current_outstanding_points
 					int_points := int(flt_points)
 					outstanding_points = flt_points - float64(int_points)
 					return float64(int_points), outstanding_points
 				} else {
-					return 0, outstanding_points
+					return 0, current_outstanding_points
 				}
 			} else { //to do: award points based transaction
-				return 0, outstanding_points
+				return 0, current_outstanding_points
 			}
 		}
 	case "MobileMoney_feed":
@@ -4722,132 +4722,132 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 		case "P2P":
 			if rules.MM_P2P_Award_Type == "Transaction" {
 				if rules.MM_P2P_Points > 0 {
-					return rules.MM_P2P_Points, outstanding_points
+					return rules.MM_P2P_Points, current_outstanding_points
 				}
 			} else if rules.MM_P2P_Award_Type == "Amount" {
 				if rules.MM_P2P_Amount > 0 && award_request.EventAmount > 0 {
 					flt_fractions := award_request.EventAmount / rules.MM_P2P_Amount
-					flt_points := (flt_fractions * rules.MM_P2P_Points) + outstanding_points
+					flt_points := (flt_fractions * rules.MM_P2P_Points) + current_outstanding_points
 					int_points := int(flt_points)
 					outstanding_points = flt_points - float64(int_points)
 					return float64(int_points), outstanding_points
 				}
 			}
-			return 0, outstanding_points
+			return 0, current_outstanding_points
 		case "CASHIN":
 			if rules.MM_CASHIN_Award_Type == "Transaction" {
 				if rules.MM_CASHIN_Points > 0 {
-					return rules.MM_CASHIN_Points, outstanding_points
+					return rules.MM_CASHIN_Points, current_outstanding_points
 				}
 			} else if rules.MM_CASHIN_Award_Type == "Amount" {
 				if rules.MM_CASHIN_Amount > 0 && award_request.EventAmount > 0 {
 					flt_fractions := award_request.EventAmount / rules.MM_CASHIN_Amount
-					flt_points := (flt_fractions * rules.MM_CASHIN_Points) + outstanding_points
+					flt_points := (flt_fractions * rules.MM_CASHIN_Points) + current_outstanding_points
 					int_points := int(flt_points)
 					outstanding_points = flt_points - float64(int_points)
 					return float64(int_points), outstanding_points
 				}
 			}
-			return 0, outstanding_points
+			return 0, current_outstanding_points
 		case "CASHOUT":
 			if rules.MM_CASHOUT_Award_Type == "Transaction" {
 				if rules.MM_CASHOUT_Points > 0 {
-					return rules.MM_CASHOUT_Points, outstanding_points
+					return rules.MM_CASHOUT_Points, current_outstanding_points
 				}
 			} else if rules.MM_CASHOUT_Award_Type == "Amount" {
 				if rules.MM_CASHOUT_Amount > 0 && award_request.EventAmount > 0 {
 					flt_fractions := award_request.EventAmount / rules.MM_CASHOUT_Amount
-					flt_points := (flt_fractions * rules.MM_CASHOUT_Points) + outstanding_points
+					flt_points := (flt_fractions * rules.MM_CASHOUT_Points) + current_outstanding_points
 					int_points := int(flt_points)
 					outstanding_points = flt_points - float64(int_points)
 					return float64(int_points), outstanding_points
 				}
 			}
-			return 0, outstanding_points
+			return 0, current_outstanding_points
 		case "MERCHPAY":
 			if rules.MM_MERCHPAY_Award_Type == "Transaction" {
 				if rules.MM_MERCHPAY_Points > 0 {
-					return rules.MM_MERCHPAY_Points, outstanding_points
+					return rules.MM_MERCHPAY_Points, current_outstanding_points
 				}
 			} else if rules.MM_MERCHPAY_Award_Type == "Amount" {
 				if rules.MM_MERCHPAY_Amount > 0 && award_request.EventAmount > 0 {
 					flt_fractions := award_request.EventAmount / rules.MM_MERCHPAY_Amount
-					flt_points := (flt_fractions * rules.MM_MERCHPAY_Points) + outstanding_points
+					flt_points := (flt_fractions * rules.MM_MERCHPAY_Points) + current_outstanding_points
 					int_points := int(flt_points)
 					outstanding_points = flt_points - float64(int_points)
 					return float64(int_points), outstanding_points
 				}
 			}
-			return 0, outstanding_points
+			return 0, current_outstanding_points
 		case "BILLPAY":
 			if rules.MM_BILLPAY_Award_Type == "Transaction" {
 				if rules.MM_BILLPAY_Points > 0 {
-					return rules.MM_BILLPAY_Points, outstanding_points
+					return rules.MM_BILLPAY_Points, current_outstanding_points
 				}
 			} else if rules.MM_BILLPAY_Award_Type == "Amount" {
 				if rules.MM_BILLPAY_Amount > 0 && award_request.EventAmount > 0 {
 					flt_fractions := award_request.EventAmount / rules.MM_BILLPAY_Amount
-					flt_points := (flt_fractions * rules.MM_BILLPAY_Points) + outstanding_points
+					flt_points := (flt_fractions * rules.MM_BILLPAY_Points) + current_outstanding_points
 					int_points := int(flt_points)
 					outstanding_points = flt_points - float64(int_points)
 					return float64(int_points), outstanding_points
 				}
 			}
-			return 0, outstanding_points
+			return 0, current_outstanding_points
 		case "RC": //self recharge
 			if rules.MM_RC_Award_Type == "Transaction" {
 				if rules.MM_RC_Points > 0 {
-					return rules.MM_RC_Points, outstanding_points
+					return rules.MM_RC_Points, current_outstanding_points
 				}
 			} else if rules.MM_RC_Award_Type == "Amount" {
 				if rules.MM_RC_Amount > 0 && award_request.EventAmount > 0 {
 					flt_fractions := award_request.EventAmount / rules.MM_RC_Amount
-					flt_points := (flt_fractions * rules.MM_RC_Points) + outstanding_points
+					flt_points := (flt_fractions * rules.MM_RC_Points) + current_outstanding_points
 					int_points := int(flt_points)
 					outstanding_points = flt_points - float64(int_points)
 					return float64(int_points), outstanding_points
 				}
 			}
-			return 0, outstanding_points
+			return 0, current_outstanding_points
 		case "CTMMOREQ": //recharge for others
 			if rules.MM_CTMMOREQ_Award_Type == "Transaction" {
 				if rules.MM_CTMMOREQ_Points > 0 {
-					return rules.MM_CTMMOREQ_Points, outstanding_points
+					return rules.MM_CTMMOREQ_Points, current_outstanding_points
 				}
 			} else if rules.MM_CTMMOREQ_Award_Type == "Amount" {
 				if rules.MM_CTMMOREQ_Amount > 0 && award_request.EventAmount > 0 {
 					flt_fractions := award_request.EventAmount / rules.MM_CTMMOREQ_Amount
-					flt_points := (flt_fractions * rules.MM_CTMMOREQ_Points) + outstanding_points
+					flt_points := (flt_fractions * rules.MM_CTMMOREQ_Points) + current_outstanding_points
 					int_points := int(flt_points)
 					outstanding_points = flt_points - float64(int_points)
 					return float64(int_points), outstanding_points
 				}
 			}
-			return 0, outstanding_points
+			return 0, current_outstanding_points
 		case "CBWREQ": //recharge for others
 			if rules.MM_CBWREQ_Award_Type == "Transaction" {
 				if rules.MM_CBWREQ_Points > 0 {
-					return rules.MM_CBWREQ_Points, outstanding_points
+					return rules.MM_CBWREQ_Points, current_outstanding_points
 				}
 			} else if rules.MM_CBWREQ_Award_Type == "Amount" {
 				if rules.MM_CBWREQ_Amount > 0 && award_request.EventAmount > 0 {
 					flt_fractions := award_request.EventAmount / rules.MM_CBWREQ_Amount
-					flt_points := (flt_fractions * rules.MM_CBWREQ_Points) + outstanding_points
+					flt_points := (flt_fractions * rules.MM_CBWREQ_Points) + current_outstanding_points
 					int_points := int(flt_points)
 					outstanding_points = flt_points - float64(int_points)
 					return float64(int_points), outstanding_points
 				}
 			}
-			return 0, outstanding_points
+			return 0, current_outstanding_points
 		default:
-			return 0, outstanding_points
+			return 0, current_outstanding_points
 		}
 	case "MyAfricellApp":
 		switch award_request.EventType {
 		case "MobileAppDaily_Login":
-			return rules.MobileAppDaily_Login, outstanding_points
+			return rules.MobileAppDaily_Login, current_outstanding_points
 		default:
-			return 0, outstanding_points
+			return 0, current_outstanding_points
 		}
 	}
 	return
