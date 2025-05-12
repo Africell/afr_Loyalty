@@ -4067,7 +4067,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			SenderPIN:      redemption_Rules.MobileMoney_MerchantPIN,
 			ReceiverMSISDN: request.MSISDN,
 			Amount:         fmt.Sprintf("%f", response.Redemption_Amount),
-			Remark:         "Loyalty redemption",
+			Remark:         "",
 		})
 		response.MobileMoney_PurchaseResult = mm_merchant_Pay_Reply
 		if err != nil {
