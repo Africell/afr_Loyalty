@@ -1364,6 +1364,25 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Add(Login string, request Loy
 	} else {
 		request.MM_CBWREQ_Amount = 0
 	}
+	var entries []Loyalty_Governance
+	entries_na := Map_Loyalty_Governance.ConvertToArray()
+	if len(entries_na) > 0 {
+		for _, entry_na := range entries_na {
+			entry, ok := entry_na.(Loyalty_Governance)
+			if !ok {
+				err = errors.New("error in type assertion")
+				return Id, err
+			} else {
+				entries = append(entries, entry)
+			}
+		}
+	}
+	if len(entries) > 0 {
+		if entries[0].MaxAllowedPoints_PerTransaction < request.MM_BILLPAY_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_CASHIN_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_CASHOUT_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_CBWREQ_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_CTMMOREQ_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_MERCHPAY_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_P2P_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_RC_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MainGSMBalance_Points {
+			err = errors.New("points can not exceed the maximum allowed points per transaction")
+			return Id, err
+		}
+	}
 	//Prepare new entry
 	var NewEntry Loyalty_Point_Earning_Rules
 	NewEntry.Earning_Rules_Id = Map_Loyalty_AutoIncrement.GetNextAI("Loyalty_Point_Earning_Rules-Id")
@@ -1524,6 +1543,25 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Edit(Login string, request Lo
 	}
 	if entry.Earning_Rules_Id != request.Earning_Rules_Id {
 		return Id, errors.New("id is not matching")
+	}
+	var entries []Loyalty_Governance
+	entries_na := Map_Loyalty_Governance.ConvertToArray()
+	if len(entries_na) > 0 {
+		for _, entry_na := range entries_na {
+			entry, ok := entry_na.(Loyalty_Governance)
+			if !ok {
+				err = errors.New("error in type assertion")
+				return Id, err
+			} else {
+				entries = append(entries, entry)
+			}
+		}
+	}
+	if len(entries) > 0 {
+		if entries[0].MaxAllowedPoints_PerTransaction < request.MM_BILLPAY_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_CASHIN_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_CASHOUT_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_CBWREQ_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_CTMMOREQ_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_MERCHPAY_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_P2P_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_RC_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MainGSMBalance_Points {
+			err = errors.New("points can not exceed the maximum allowed points per transaction")
+			return Id, err
+		}
 	}
 	Current_Entry := entry
 	//Prepare new entry
