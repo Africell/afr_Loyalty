@@ -4104,14 +4104,14 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 		response.Closure_Available_Points = debit_Log.Closure_Available_Points
 		//to do: credit mobile money amount --> merchant transfer
 
-		mm_merchant_Pay_Reply, err := Uc.CGW.UC_GWClient.MM_Merchant_Pay(MM.Merchant_Pay_Request{
+		mm_CashIn_Reply, err := Uc.CGW.UC_GWClient.MM_Agent_CashIN(MM.CashIN_Request{
 			SenderMSISDN:   redemption_Rules.MobileMoney_MerchantAccount,
 			SenderPIN:      redemption_Rules.MobileMoney_MerchantPIN,
 			ReceiverMSISDN: request.MSISDN,
 			Amount:         fmt.Sprintf("%f", response.Redemption_Amount),
-			Remark:         "",
+			Remark:         "Loyalty Redemption",
 		})
-		response.MobileMoney_PurchaseResult = mm_merchant_Pay_Reply
+		response.MobileMoney_PurchaseResult = mm_CashIn_Reply
 		if err != nil {
 			response.Status = "failed"
 			response.StatusCode = http.StatusBadRequest
@@ -4122,19 +4122,18 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			Uc.Write_Loyalty_Redemption_log(*response)
 			return
 		}
-		if mm_merchant_Pay_Reply.Status != "SUCCEEDED" {
+		if mm_CashIn_Reply.Status != "SUCCEEDED" {
 			response.Status = "failed"
 			response.StatusCode = http.StatusBadRequest
 			response.StatusDescription = "failed to redeem mobile money"
-			if len(mm_merchant_Pay_Reply.Errors) > 0 {
-				response.ErrorDescription = mm_merchant_Pay_Reply.Errors[0].Message
+			if len(mm_CashIn_Reply.Errors) > 0 {
+				response.ErrorDescription = mm_CashIn_Reply.Errors[0].Message
 			}
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
 			return
 		}
-
 		MobileMoneyRedemptionCount.With(prometheus.Labels{"EventSource": response.SourceApp, "Level": loyalty_Account.Loyalty_Level_Key}).Inc()
 		MobileMoneyRedemptionPoints.With(prometheus.Labels{"EventSource": response.SourceApp, "Level": loyalty_Account.Loyalty_Level_Key}).Add(response.Points_To_Redeem)
 		MobileMoneyRedemptionAmount.With(prometheus.Labels{"EventSource": response.SourceApp, "Level": loyalty_Account.Loyalty_Level_Key}).Add(response.Redemption_Amount)
