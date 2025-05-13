@@ -153,6 +153,28 @@ type ConfigType struct {
 		ChannelPlan     string
 		ChannelVersion  string
 	}
+
+	SpinAndWin_AUC struct {
+		Description   string
+		Protocol      string
+		Hostname      string
+		Port          string
+		Module        string
+		Version       string
+		S2S_Username  string
+		S2S_Password  string
+		Timeout_After time.Duration
+	}
+
+	SpinAndWin struct {
+		Protocol        string //http or https
+		Hostname        string //name or IP
+		Port            string
+		Module          string
+		Version         string
+		S2S_AccessToken string        //system to system access token
+		Timeout         time.Duration //timeout if no reply after X seconds
+	}
 }
 
 func GetDefaultConfiguration() (err error) {

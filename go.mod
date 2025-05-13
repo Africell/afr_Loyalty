@@ -10,11 +10,14 @@ replace afr_sb_in => ../afr_sb_in/
 
 replace afr_unified_charging_gateway => ../afr_unified_charging_gateway/
 
+replace afr_SpinAndWin_be => ../afr_SpinAndWin_be/
+
 replace afr_propylaea => ../afr_propylaea/
 
 replace afr_sb_mm => ../afr_sb_mm/
 
 require (
+	afr_SpinAndWin_be v0.0.0-00010101000000-000000000000
 	afr_auth_center v0.0.0-00010101000000-000000000000
 	afr_propylaea v0.0.0-00010101000000-000000000000
 	afr_sb_in v0.0.0-00010101000000-000000000000
@@ -25,7 +28,7 @@ require (
 	github.com/kardianos/service v1.2.2
 	github.com/prometheus/client_golang v1.20.5
 	github.com/rs/cors v1.11.1
-	go.mongodb.org/mongo-driver v1.13.1
+	go.mongodb.org/mongo-driver v1.17.0
 )
 
 require (
@@ -71,7 +74,7 @@ require (
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect
 	github.com/xdg-go/stringprep v1.0.4 // indirect
-	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
+	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78 // indirect
 	go.opentelemetry.io/otel v1.24.0 // indirect
 	go.opentelemetry.io/otel/metric v1.24.0 // indirect
 	go.opentelemetry.io/otel/trace v1.24.0 // indirect

@@ -1,6 +1,7 @@
 package Lendme
 
 import (
+	SpinAndWin_client "afr_SpinAndWin_be/SpinAndWinClient"
 	AuthCenterClient "afr_auth_center/AuthCenterClient"
 	Prop "afr_propylaea/PropylaeaClient"
 	INClient "afr_sb_in"
@@ -9,6 +10,7 @@ import (
 )
 
 var CGWHostConfig UCGW_client.UC_GW_Client
+var SpinAndWinHostConfig SpinAndWin_client.SpinAndWin_Client
 
 type UserControl struct {
 	MongoDB        *daoc.MongoDB
@@ -19,6 +21,7 @@ type UserControl struct {
 	IN             *INClient.IN
 	CGW            *UCGW_client.UC_GW
 	Propylaea      *Prop.Propylaea
+	SpinAndWin     *SpinAndWin_client.SpinAndWin
 }
 
 func NewUserControl() *UserControl {
@@ -111,6 +114,26 @@ func NewUserControl() *UserControl {
 		AUC_client:      AuthCenterClient.NewAUCClient(OKAPI_AUCHostConfig).AUCClient,
 	}
 
+	SpinAndWinAUC := AuthCenterClient.InitHostConfig(Configuration.SpinAndWin_AUC.Protocol,
+		Configuration.SpinAndWin_AUC.Hostname,
+		Configuration.SpinAndWin_AUC.Port,
+		Configuration.SpinAndWin_AUC.Module,
+		Configuration.SpinAndWin_AUC.Version,
+		"",
+		Configuration.SpinAndWin_AUC.S2S_Username,
+		Configuration.SpinAndWin_AUC.S2S_Password,
+		Configuration.SpinAndWin_AUC.Timeout_After)
+
+	SpinAndWinHostConfig = SpinAndWin_client.SpinAndWin_Client{
+		Protocol:   Configuration.SpinAndWin.Protocol,
+		Hostname:   Configuration.SpinAndWin.Hostname,
+		Port:       Configuration.SpinAndWin.Port,
+		Module:     Configuration.SpinAndWin.Module,
+		Version:    Configuration.SpinAndWin.Version,
+		Timeout:    10 * Configuration.SpinAndWin.Timeout,
+		AUC_client: AuthCenterClient.NewAUCClient(SpinAndWinAUC).AUCClient,
+	}
+
 	UC := &UserControl{
 		MongoDB:        daoc.NewMongoDBClient(MongoHostConfig),
 		LoyaltyMongoDB: daoc.NewMongoDBClient(LoyaltyMongoHostConfig),
@@ -120,6 +143,7 @@ func NewUserControl() *UserControl {
 		IN:             INClient.NewINClient(INHostConfig),
 		CGW:            UCGW_client.NewUC_GWClient(CGWHostConfig),
 		Propylaea:      Prop.NewPropylaeaClient(propylaea_config),
+		SpinAndWin:     SpinAndWin_client.NewSpinAndWinClient(SpinAndWinHostConfig),
 	}
 	return UC
 }
