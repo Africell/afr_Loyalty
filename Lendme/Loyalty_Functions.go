@@ -476,19 +476,19 @@ func (Uc *UserControl) InitializeLoyaltyDefaultUAT() {
 		Expiration_Point_Before: time.Date(2025, 12, 31, 00, 00, 59, 0, time.UTC), //expiry all points before this date
 	})
 	Uc.Loyalty_Point_Redemption_Rules_Add("Default", Loyalty_Point_Redemption_Rules_AddRequest{
-		Key:                               "Default_Redemption_Rules",
-		Description:                       "Default_Redemption_Rules",
-		Min_Accumulated_Points:            100,
-		Allow_Negative_Balance_ToRedeem:   false,
-		Allow_PendingLendme_ToRedeem:      false,
-		Airtime_MinPoints:                 100,
-		Airtime_AmountPerPoint:            0.5,
-		MobileMoney_MinPoints:             100,
-		MobileMoney_AmountPerPoint:        0.5,
-		Bundles_MinPoints:                 100,
-		Bundles_Product_Catalogue_Channel: "Loyalty_Default_Channel",
-		Bundles_Product_Catalogue_Plan:    "Loyalty_Default_Plan",
-		Bundles_Product_Catalogue_Version: "1",
+		Key:                                 "Default_Redemption_Rules",
+		Description:                         "Default_Redemption_Rules",
+		Min_Accumulated_Points:              100,
+		Allow_Negative_Balance_ToRedeem:     false,
+		Allow_PendingLendme_ToRedeem:        false,
+		Available_MinPoints_for_Airtime:     100,
+		Airtime_AmountPerPoint:              0.5,
+		Available_MinPoints_for_MobileMoney: 100,
+		MobileMoney_AmountPerPoint:          0.5,
+		Bundles_MinPoints:                   100,
+		Bundles_Product_Catalogue_Channel:   "Loyalty_Default_Channel",
+		Bundles_Product_Catalogue_Plan:      "Loyalty_Default_Plan",
+		Bundles_Product_Catalogue_Version:   "1",
 	})
 	Uc.Loyalty_Plan_Add("Default", Loyalty_Plan_AddRequest{
 		Key:                         "Member|Main_Segment", //Loyalty_Level_Key + "|" + Loyalty_Account_Segment_Key
@@ -1956,10 +1956,12 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Add(Login string, request 
 	NewEntry.Allow_Negative_Balance_ToRedeem = request.Allow_Negative_Balance_ToRedeem
 	NewEntry.Allow_PendingLendme_ToRedeem = request.Allow_PendingLendme_ToRedeem
 	NewEntry.Airtime_MinPoints = request.Airtime_MinPoints
+	NewEntry.Available_MinPoints_for_Airtime = request.Available_MinPoints_for_Airtime
 	NewEntry.Airtime_AmountPerPoint = request.Airtime_AmountPerPoint
 	NewEntry.Airtime_EVC_Account = request.Airtime_EVC_Account
 	NewEntry.Airtime_EVC_PIN = request.Airtime_EVC_PIN
 	NewEntry.MobileMoney_MinPoints = request.MobileMoney_MinPoints
+	NewEntry.Available_MinPoints_for_MobileMoney = request.Available_MinPoints_for_MobileMoney
 	NewEntry.MobileMoney_AmountPerPoint = request.MobileMoney_AmountPerPoint
 	NewEntry.MobileMoney_MerchantAccount = request.MobileMoney_MerchantAccount
 	NewEntry.MobileMoney_MerchantPIN = request.MobileMoney_MerchantPIN
@@ -1970,6 +1972,7 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Add(Login string, request 
 	NewEntry.Bundles_Product_Catalogue_Plan = request.Bundles_Product_Catalogue_Plan
 	NewEntry.Bundles_Product_Catalogue_Version = request.Bundles_Product_Catalogue_Version
 	NewEntry.FreeSpinAndWin_MinPoints = request.FreeSpinAndWin_MinPoints
+	NewEntry.Available_MinPoints_for_SpinAndWin = request.Available_MinPoints_for_SpinAndWin
 	NewEntry.FreeSpinAndWin_PointsPerSpin = request.FreeSpinAndWin_PointsPerSpin
 	//add to cache and DB
 	Map_Loyalty_Point_Redemption_Rules.Put(NewEntry.Key, NewEntry)
@@ -2012,10 +2015,12 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Edit(Login string, request
 	entry.Allow_Negative_Balance_ToRedeem = request.Allow_Negative_Balance_ToRedeem
 	entry.Allow_PendingLendme_ToRedeem = request.Allow_PendingLendme_ToRedeem
 	entry.Airtime_MinPoints = request.Airtime_MinPoints
+	entry.Available_MinPoints_for_Airtime = request.Available_MinPoints_for_Airtime
 	entry.Airtime_AmountPerPoint = request.Airtime_AmountPerPoint
 	entry.Airtime_EVC_Account = request.Airtime_EVC_Account
 	entry.Airtime_EVC_PIN = request.Airtime_EVC_PIN
 	entry.MobileMoney_MinPoints = request.MobileMoney_MinPoints
+	entry.Available_MinPoints_for_MobileMoney = request.Available_MinPoints_for_MobileMoney
 	entry.MobileMoney_AmountPerPoint = request.MobileMoney_AmountPerPoint
 	entry.MobileMoney_MerchantAccount = request.MobileMoney_MerchantAccount
 	entry.MobileMoney_MerchantPIN = request.MobileMoney_MerchantPIN
@@ -2026,6 +2031,7 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Edit(Login string, request
 	entry.Bundles_Product_Catalogue_Plan = request.Bundles_Product_Catalogue_Plan
 	entry.Bundles_Product_Catalogue_Version = request.Bundles_Product_Catalogue_Version
 	entry.FreeSpinAndWin_MinPoints = request.FreeSpinAndWin_MinPoints
+	entry.Available_MinPoints_for_SpinAndWin = request.Available_MinPoints_for_SpinAndWin
 	entry.FreeSpinAndWin_PointsPerSpin = request.FreeSpinAndWin_PointsPerSpin
 	if request.NewKey != "" {
 		if request.NewKey != request.Key {
@@ -3765,8 +3771,8 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			Uc.Write_Loyalty_Redemption_log(*response)
 			return
 		}
-		response.MinRequiredPoints = redemption_Rules.Airtime_MinPoints
-		if response.Opening_Available_Points < response.MinRequiredPoints {
+		response.MinAvailableRequiredPoints = redemption_Rules.Available_MinPoints_for_Airtime
+		if response.Opening_Available_Points < response.MinAvailableRequiredPoints {
 			response.Status = "failed"
 			response.StatusCode = http.StatusBadRequest
 			response.StatusDescription = "no enough points"
@@ -3826,6 +3832,17 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 				Uc.Write_Loyalty_Redemption_log(*response)
 				return
 			}
+		}
+		response.MinRequiredPoints = redemption_Rules.Airtime_MinPoints
+		if response.Points_To_Redeem < response.MinRequiredPoints {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "requested points are less than the minimum allowed points for redemption"
+			response.ErrorDescription = "requested points are less than the minimum allowed points for redemption"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
 		}
 		//check if subscriber have enough points
 		if response.Points_To_Redeem > response.Opening_Available_Points {
@@ -4027,8 +4044,8 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			Uc.Write_Loyalty_Redemption_log(*response)
 			return
 		}
-		response.MinRequiredPoints = redemption_Rules.MobileMoney_MinPoints
-		if response.Opening_Available_Points < response.MinRequiredPoints {
+		response.MinAvailableRequiredPoints = redemption_Rules.Available_MinPoints_for_MobileMoney
+		if response.Opening_Available_Points < response.MinAvailableRequiredPoints {
 			response.Status = "failed"
 			response.StatusCode = http.StatusBadRequest
 			response.StatusDescription = "no enough points"
@@ -4078,6 +4095,17 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 				Uc.Write_Loyalty_Redemption_log(*response)
 				return
 			}
+		}
+		response.MinRequiredPoints = redemption_Rules.MobileMoney_MinPoints
+		if response.Points_To_Redeem < response.MinRequiredPoints {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "requested points are less than the minimum allowed points for redemption"
+			response.ErrorDescription = "requested points are less than the minimum allowed points for redemption"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
 		}
 		//check if subscriber have enough points
 		if response.Points_To_Redeem > response.Opening_Available_Points {
@@ -4160,12 +4188,23 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			Uc.Write_Loyalty_Redemption_log(*response)
 			return
 		}
-		response.MinRequiredPoints = redemption_Rules.FreeSpinAndWin_MinPoints
-		if response.Opening_Available_Points < response.MinRequiredPoints {
+		response.MinAvailableRequiredPoints = redemption_Rules.Available_MinPoints_for_SpinAndWin
+		if response.Opening_Available_Points < response.MinAvailableRequiredPoints {
 			response.Status = "failed"
 			response.StatusCode = http.StatusBadRequest
 			response.StatusDescription = "no enough points"
 			response.ErrorDescription = "no enough points"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		response.MinRequiredPoints = redemption_Rules.FreeSpinAndWin_MinPoints
+		if response.Points_To_Redeem < response.MinRequiredPoints {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "requested points are less than the minimum allowed points for redemption"
+			response.ErrorDescription = "requested points are less than the minimum allowed points for redemption"
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
