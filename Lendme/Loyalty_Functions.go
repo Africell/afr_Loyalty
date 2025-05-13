@@ -3687,8 +3687,18 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 		Uc.Write_Loyalty_Redemption_log(*response)
 		return
 	}
+	if response.Opening_Available_Points < redemption_Rules.Min_Accumulated_Points {
+		response.Status = "failed"
+		response.StatusCode = http.StatusBadRequest
+		response.StatusDescription = "no enough points"
+		response.ErrorDescription = "no enough points"
+		response.StatusDate = time.Now()
+		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+		Uc.Write_Loyalty_Redemption_log(*response)
+		return
+	}
 	response.Allow_Negative_Balance_ToRedeem = redemption_Rules.Allow_Negative_Balance_ToRedeem
-	//***To do: validate nagtive balance and pending lendme
+	//validate nagtive balance and pending lendme
 	if !redemption_Rules.Allow_Negative_Balance_ToRedeem {
 		IN_MSISDN := response.MSISDN
 		if Configuration.Operation == "Gambia" {
@@ -3828,6 +3838,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			Uc.Write_Loyalty_Redemption_log(*response)
 			return
 		}
+
 		var Debit_Request Loyalty_AccountDebitPoints_Request
 		Debit_Request.MSISDN = response.MSISDN
 		Debit_Request.Debit_Amount = response.Points_To_Redeem
