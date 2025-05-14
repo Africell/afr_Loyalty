@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"time"
 
+	SpinAndWin "afr_SpinAndWin_be/SpinAndWinClient"
 	PropC "afr_propylaea/PropylaeaClient"
 	"afr_unified_charging_gateway/Unified_charging_gateway_Client"
 
@@ -4178,11 +4179,11 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 		MobileMoneyRedemptionAmount.With(prometheus.Labels{"EventSource": response.SourceApp, "Level": loyalty_Account.Loyalty_Level_Key}).Add(response.Redemption_Amount)
 
 	case "SpinAndWin":
-		if request.Redemption_Amount < 0 {
+		if request.Redemption_Amount <= 0 {
 			response.Status = "failed"
 			response.StatusCode = http.StatusBadRequest
-			response.StatusDescription = "number of spins is not provided"
-			response.ErrorDescription = "number of spins is not provided"
+			response.StatusDescription = "invalid redemption amount"
+			response.ErrorDescription = "invalid redemption spin and win amount"
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
@@ -4199,12 +4200,86 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			Uc.Write_Loyalty_Redemption_log(*response)
 			return
 		}
+		//debit loyalty points
+		if redemption_Rules.FreeSpinAndWin_PointsPerSpin <= 0 {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "airtime redeem rules are not defined"
+			response.ErrorDescription = "airtime redeem rules are not defined"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		//do the calculation
+		response.Points_To_Redeem = response.Redemption_Amount * redemption_Rules.FreeSpinAndWin_PointsPerSpin
 		response.MinRequiredPoints = redemption_Rules.FreeSpinAndWin_MinPoints
 		if response.Points_To_Redeem < response.MinRequiredPoints {
 			response.Status = "failed"
 			response.StatusCode = http.StatusBadRequest
 			response.StatusDescription = "requested points are less than the minimum allowed points for redemption"
 			response.ErrorDescription = "requested points are less than the minimum allowed points for redemption"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		//check if subscriber have enough points
+		if response.Points_To_Redeem > response.Opening_Available_Points {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "no enough points"
+			response.ErrorDescription = "no enough points"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+
+		var Debit_Request Loyalty_AccountDebitPoints_Request
+		Debit_Request.MSISDN = response.MSISDN
+		Debit_Request.Debit_Amount = response.Points_To_Redeem
+		Debit_Request.Debit_Reason = "Redeem Request"
+		Debit_Request.Redemption_Type = "SpinAndWin" //Airtime, Bundle, MobileMoney, SpinAndWin
+		Debit_Request.Redemption_Bunlde_Id = ""
+		Debit_Request.Redemption_Amount = response.Redemption_Amount
+		var debit_Log Loyalty_AccountDebitPoints_log
+		Uc.Loyalty_AccountDebitPoints(request_header, Debit_Request, &debit_Log)
+		response.Points_Debit_Result = debit_Log
+		if debit_Log.StatusCode != http.StatusOK {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = debit_Log.StatusDescription
+			response.ErrorDescription = debit_Log.ErrorDescription
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		response.Closure_Awarded_Points = debit_Log.Closure_Awarded_Points
+		response.Closure_Redeemed_Points = debit_Log.Closure_Redeemed_Points
+		response.Closure_Available_Points = debit_Log.Closure_Available_Points
+		//awar spins chances
+		spinAndWin_Reply, err := Uc.SpinAndWin.SpinAndWinClient.EligibleSubs_AddChances(SpinAndWin.EligibleSubs_AddChances_Request{
+			Key:            request.MSISDN,
+			SpinCountToAdd: int64(response.Redemption_Amount),
+		})
+		response.SpinAndWin_PurchaseResult = spinAndWin_Reply
+		if err != nil {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "failed to redeem Spin And Win Chances"
+			response.ErrorDescription = err.Error()
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		if spinAndWin_Reply.StatusCode != http.StatusOK {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = spinAndWin_Reply.StatusDescription
+			response.ErrorDescription = spinAndWin_Reply.ErrorDescription
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
