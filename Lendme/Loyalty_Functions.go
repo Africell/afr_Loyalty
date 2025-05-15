@@ -3900,6 +3900,17 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
+			//refund points
+			var refund_response Loyalty_AccountCreditPoints_log
+			var refundRequest Loyalty_AccountCreditPoints_Request
+			refundRequest.MSISDN = response.MSISDN
+			refundRequest.EventSource = response.SourceApp
+			refundRequest.EventType = "refund"
+			refundRequest.EventDetail = request.Redemption_Type + " - refund"
+			refundRequest.EventAmount = 0
+			refundRequest.PointsToCredit = response.Points_To_Redeem
+			refundRequest.EventDescription = ""
+			Uc.Loyalty_AccountCreditPoints(request_header, refundRequest, &refund_response)
 			return
 		}
 		if airtimeTransferReply.StatusCode != http.StatusOK {
@@ -3910,6 +3921,17 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
+			//refund points
+			var refund_response Loyalty_AccountCreditPoints_log
+			var refundRequest Loyalty_AccountCreditPoints_Request
+			refundRequest.MSISDN = response.MSISDN
+			refundRequest.EventSource = response.SourceApp
+			refundRequest.EventType = "refund"
+			refundRequest.EventDetail = request.Redemption_Type + " - refund"
+			refundRequest.EventAmount = 0
+			refundRequest.PointsToCredit = response.Points_To_Redeem
+			refundRequest.EventDescription = ""
+			Uc.Loyalty_AccountCreditPoints(request_header, refundRequest, &refund_response)
 			return
 		}
 		AirtimeRedemptionCount.With(prometheus.Labels{"EventSource": response.SourceApp, "Level": loyalty_Account.Loyalty_Level_Key}).Inc()
@@ -4020,6 +4042,17 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
+			//refund points
+			var refund_response Loyalty_AccountCreditPoints_log
+			var refundRequest Loyalty_AccountCreditPoints_Request
+			refundRequest.MSISDN = response.MSISDN
+			refundRequest.EventSource = response.SourceApp
+			refundRequest.EventType = "refund"
+			refundRequest.EventDetail = request.Redemption_Type + " - refund"
+			refundRequest.EventAmount = 0
+			refundRequest.PointsToCredit = response.Points_To_Redeem
+			refundRequest.EventDescription = ""
+			Uc.Loyalty_AccountCreditPoints(request_header, refundRequest, &refund_response)
 			return
 		}
 		if bundlePurchaseReply.StatusCode != http.StatusOK {
@@ -4030,6 +4063,17 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
+			//refund points
+			var refund_response Loyalty_AccountCreditPoints_log
+			var refundRequest Loyalty_AccountCreditPoints_Request
+			refundRequest.MSISDN = response.MSISDN
+			refundRequest.EventSource = response.SourceApp
+			refundRequest.EventType = "refund"
+			refundRequest.EventDetail = request.Redemption_Type + " - refund"
+			refundRequest.EventAmount = 0
+			refundRequest.PointsToCredit = response.Points_To_Redeem
+			refundRequest.EventDescription = ""
+			Uc.Loyalty_AccountCreditPoints(request_header, refundRequest, &refund_response)
 			return
 		}
 		BundleRedemptionCount.With(prometheus.Labels{"EventSource": response.SourceApp, "BunldeId": request.Redemption_Bunlde_Id, "Level": loyalty_Account.Loyalty_Level_Key}).Inc()
@@ -4160,6 +4204,17 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
+			//refund points
+			var refund_response Loyalty_AccountCreditPoints_log
+			var refundRequest Loyalty_AccountCreditPoints_Request
+			refundRequest.MSISDN = response.MSISDN
+			refundRequest.EventSource = response.SourceApp
+			refundRequest.EventType = "refund"
+			refundRequest.EventDetail = request.Redemption_Type + " - refund"
+			refundRequest.EventAmount = 0
+			refundRequest.PointsToCredit = response.Points_To_Redeem
+			refundRequest.EventDescription = ""
+			Uc.Loyalty_AccountCreditPoints(request_header, refundRequest, &refund_response)
 			return
 		}
 		if mm_CashIn_Reply.Status != "SUCCEEDED" {
@@ -4172,6 +4227,17 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
+			//refund points
+			var refund_response Loyalty_AccountCreditPoints_log
+			var refundRequest Loyalty_AccountCreditPoints_Request
+			refundRequest.MSISDN = response.MSISDN
+			refundRequest.EventSource = response.SourceApp
+			refundRequest.EventType = "refund"
+			refundRequest.EventDetail = request.Redemption_Type + " - refund"
+			refundRequest.EventAmount = 0
+			refundRequest.PointsToCredit = response.Points_To_Redeem
+			refundRequest.EventDescription = ""
+			Uc.Loyalty_AccountCreditPoints(request_header, refundRequest, &refund_response)
 			return
 		}
 		MobileMoneyRedemptionCount.With(prometheus.Labels{"EventSource": response.SourceApp, "Level": loyalty_Account.Loyalty_Level_Key}).Inc()
@@ -4273,6 +4339,17 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
+			//refund points
+			var refund_response Loyalty_AccountCreditPoints_log
+			var refundRequest Loyalty_AccountCreditPoints_Request
+			refundRequest.MSISDN = response.MSISDN
+			refundRequest.EventSource = response.SourceApp
+			refundRequest.EventType = "refund"
+			refundRequest.EventDetail = request.Redemption_Type + " - refund"
+			refundRequest.EventAmount = 0
+			refundRequest.PointsToCredit = response.Points_To_Redeem
+			refundRequest.EventDescription = ""
+			Uc.Loyalty_AccountCreditPoints(request_header, refundRequest, &refund_response)
 			return
 		}
 		if spinAndWin_Reply.StatusCode != http.StatusOK {
@@ -4283,6 +4360,17 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
+			//refund points
+			var refund_response Loyalty_AccountCreditPoints_log
+			var refundRequest Loyalty_AccountCreditPoints_Request
+			refundRequest.MSISDN = response.MSISDN
+			refundRequest.EventSource = response.SourceApp
+			refundRequest.EventType = "refund"
+			refundRequest.EventDetail = request.Redemption_Type + " - refund"
+			refundRequest.EventAmount = 0
+			refundRequest.PointsToCredit = response.Points_To_Redeem
+			refundRequest.EventDescription = ""
+			Uc.Loyalty_AccountCreditPoints(request_header, refundRequest, &refund_response)
 			return
 		}
 

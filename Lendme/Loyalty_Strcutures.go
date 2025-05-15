@@ -472,6 +472,7 @@ type Loyalty_AccountCreditPoints_Request struct {
 	PointsToCredit   float64 `bson:"PointsToCredit" json:"PointsToCredit"`
 	EventDescription string  `bson:"EventDescription" json:"EventDescription"`
 }
+
 type Loyalty_Logs struct {
 	Logs_Type                string                          `bson:"Logs_Type" json:"Logs_Type"`
 	Date                     time.Time                       `bson:"Date" json:"Date"`
