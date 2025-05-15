@@ -4438,6 +4438,40 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 		Uc.Write_Loyalty_AccountCreditPoints_log(*response)
 		return
 	}
+	//exclude loyalty redemption accounts
+	if response.EventSource == "MobileMoney_feed" && response.EventType == "CASHIN" && response.EventDetail != "" {
+		redemption_Rules, err := Uc.Customer_Loyalty_Account_GetRedemption_Rules(loyalty_account.Key)
+		if err != nil {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "failed to get redemption rules"
+			response.ErrorDescription = err.Error()
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_AccountCreditPoints_log(*response)
+			return
+		}
+		response.EventDetail = Normalize_International_MSISDN(response.EventDetail)
+		var transactionAgent, loyaltyAgent string
+		if len(response.EventDetail) >= Configuration.MSISDN_Short_len {
+			transactionAgent = response.EventDetail[len(response.EventDetail)-Configuration.MSISDN_Short_len:]
+		}
+		if len(redemption_Rules.MobileMoney_MerchantAccount) >= Configuration.MSISDN_Short_len {
+			loyaltyAgent = redemption_Rules.MobileMoney_MerchantAccount[len(redemption_Rules.MobileMoney_MerchantAccount)-Configuration.MSISDN_Short_len:]
+		}
+		if transactionAgent != "" && loyaltyAgent != "" {
+			if transactionAgent == loyaltyAgent {
+				response.Status = "failed"
+				response.StatusCode = http.StatusBadRequest
+				response.StatusDescription = "loyalty redemption transaction"
+				response.ErrorDescription = "loyalty redemption transaction is not entitled for loyalty redemption"
+				response.StatusDate = time.Now()
+				response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+				Uc.Write_Loyalty_AccountCreditPoints_log(*response)
+				return
+			}
+		}
+	}
 	if loyalty_account.Loyalty_Account_Segment_Key == "" {
 		response.Status = "failed"
 		response.StatusCode = http.StatusBadRequest
@@ -5972,7 +6006,7 @@ func Normalize_International_MSISDN(MSISDN string) (N_MSISDN string) {
 		} else if len(MSISDN) == Configuration.MSISDN_Short_len {
 			return Configuration.CountryCode + MSISDN
 		} else {
-			return MSISDN[len(MSISDN)-Configuration.MSISDN_Short_len:] + Configuration.CountryCode
+			return Configuration.CountryCode + MSISDN[len(MSISDN)-Configuration.MSISDN_Short_len:]
 		}
 	}
 }
