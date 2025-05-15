@@ -4188,7 +4188,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 		response.Closure_Available_Points = debit_Log.Closure_Available_Points
 		//to do: credit mobile money amount --> merchant transfer
 
-		mm_CashIn_Reply, err := Uc.CGW.UC_GWClient.MM_Agent_CashIN(MM.CashIN_Request{
+		mm_CashIn_Reply, err := Uc.CGW.UC_GWClient.MM_Agent_CashIN_ToBonusWallet(MM.CashIN_Request{
 			SenderMSISDN:   redemption_Rules.MobileMoney_MerchantAccount,
 			SenderPIN:      redemption_Rules.MobileMoney_MerchantPIN,
 			ReceiverMSISDN: request.MSISDN,
