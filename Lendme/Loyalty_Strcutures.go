@@ -898,6 +898,14 @@ type Loyalty_AccountDebitPoints_log struct {
 
 }
 
+type Loyalty_Subs_Summary struct {
+	Loyalty_Level_Key      string
+	Accounts_Count         float64
+	Total_Awarded_Points   float64
+	Total_Redeemed_Points  float64
+	Total_Available_Points float64
+}
+
 // type Loyalty_Point_Redemption_Rules struct {
 // 	Key                               string  `bson:"Key" json:"Key"`
 // 	Redemption_Rules_Id               int64   `bson:"Redemption_Rules_Id" json:"Redemption_Rules_Id"`

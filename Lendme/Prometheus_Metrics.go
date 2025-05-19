@@ -201,6 +201,14 @@ var (
 		},
 		[]string{"EventSource", "Level"},
 	)
+
+	LoyaltySubsSummary = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "LoyaltySubsSummary",
+			Help: "LoyaltySubsSummary",
+		},
+		[]string{"Level", "Description"},
+	)
 )
 
 //DailyImportSubsStats.With(prometheus.Labels{"IsElligble":"", "Reason":"", "Scheme":""}).Inc()
@@ -239,6 +247,8 @@ func Init_Prometheus_Metrics() {
 	LoyaltyPrometheusRegistry.Register(MobileMoneyRedemptionCount)
 	LoyaltyPrometheusRegistry.Register(MobileMoneyRedemptionPoints)
 	LoyaltyPrometheusRegistry.Register(MobileMoneyRedemptionAmount)
+	LoyaltyPrometheusRegistry.Register(LoyaltySubsSummary)
+
 }
 
 func Reset_Prometheus_Metrics() {

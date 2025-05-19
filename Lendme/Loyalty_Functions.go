@@ -6304,6 +6304,52 @@ func Normalize_International_MSISDN(MSISDN string) (N_MSISDN string) {
 	}
 }
 
+func (Uc *UserControl) Auto_GetLoyaltySubsSummary() {
+	Uc.GetOutstandingSummary()
+	for range time.Tick(time.Second * 300) {
+		Uc.GetLoyaltySubsSummary()
+	}
+}
+
+func (Uc *UserControl) GetLoyaltySubsSummary() (err error) {
+	pipeline := []bson.M{
+		{
+			"$group": bson.M{
+				"_id": bson.M{
+					"Loyalty_Level_Key": "$Loyalty_Level_Key",
+				},
+				"Accounts_Count":         bson.M{"$sum": 1},
+				"total_Awarded_Points":   bson.M{"$sum": "$Awarded_Points"},
+				"total_Redeemed_Points":  bson.M{"$sum": "$Redeemed_Points"},
+				"total_Available_Points": bson.M{"$sum": "$Available_Points"},
+			},
+		},
+	}
+
+	cur, err := Uc.MongoDB.MongoDBClient.Database(Configuration.DB_Name_Loyalty).Collection(DAO_Customer_Loyalty_Account.Collection).Aggregate(context.TODO(), pipeline, options.Aggregate())
+	if err != nil {
+		log.Println("Error in GetLoyaltySubsSummary: ", err)
+		return
+	}
+	defer cur.Close(context.Background())
+	//var output []AlarmsDailyByType
+	for cur.Next(context.Background()) {
+		var entry Loyalty_Subs_Summary
+		err := cur.Decode(&entry)
+		if err != nil {
+			log.Println("Error in GetLoyaltySubsSummary: ", err)
+			return err
+		}
+		//log.Println(entry)
+		LoyaltySubsSummary.Reset()
+		LoyaltySubsSummary.With(prometheus.Labels{"Level": entry.Loyalty_Level_Key, "Description": "Accounts_Count"}).Add(entry.Accounts_Count)
+		LoyaltySubsSummary.With(prometheus.Labels{"Level": entry.Loyalty_Level_Key, "Description": "Total_Awarded_Points"}).Add(entry.Total_Awarded_Points)
+		LoyaltySubsSummary.With(prometheus.Labels{"Level": entry.Loyalty_Level_Key, "Description": "Total_Redeemed_Points"}).Add(entry.Total_Redeemed_Points)
+		LoyaltySubsSummary.With(prometheus.Labels{"Level": entry.Loyalty_Level_Key, "Description": "Total_Available_Points"}).Add(entry.Total_Available_Points)
+	}
+	return
+}
+
 // ***********************************************************************
 // Loyalty Campaign
 // ***********************************************************************

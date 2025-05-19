@@ -111,6 +111,7 @@ func (p *program) run() {
 		//go UserControl.PointsExpiry_Process()
 		go UserControl.Loyalty_Governance_DailyLog_Process()
 		go UserControl.LoyaltyGovernancePools_Metrics_Process()
+		go UserControl.Auto_GetLoyaltySubsSummary()
 
 	}
 
