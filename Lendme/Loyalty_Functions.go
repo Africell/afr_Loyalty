@@ -18,6 +18,7 @@ import (
 
 	MM "afr_sb_mm"
 
+	"github.com/jinzhu/copier"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -3685,7 +3686,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_Points_Details_GetPaginated(Page
 	}
 	return entries, nil
 }
-func (Uc *UserControl) Customer_Loyalty_Account_GetRedemption_Rules(MSISDN string) (Redemption_Rules Loyalty_Point_Redemption_Rules, err error) {
+func (Uc *UserControl) Customer_Loyalty_Account_GetRedemption_Rules(MSISDN string) (Redemption_Rules Loyalty_Point_Redemption_Rule, err error) {
 	MSISDN = Normalize_International_MSISDN(MSISDN)
 	if MSISDN == "" {
 		return Redemption_Rules, errors.New("msisdn cannot be empty")
@@ -3722,11 +3723,16 @@ func (Uc *UserControl) Customer_Loyalty_Account_GetRedemption_Rules(MSISDN strin
 	if !redemptionexist {
 		return Redemption_Rules, errors.New("redemption rules is not defined")
 	}
-	Redemption_Rules, ok = redemption_Rules_na.(Loyalty_Point_Redemption_Rules)
+	Redemption_Rule, ok := redemption_Rules_na.(Loyalty_Point_Redemption_Rules)
 	if !ok {
 		return Redemption_Rules, errors.New("type assertion issue with Loyalty_Point_Redemption_Rules")
 	}
-	return Redemption_Rules, nil
+	var cleanRedemptionRule Loyalty_Point_Redemption_Rule
+	err = copier.Copy(&cleanRedemptionRule, &Redemption_Rule)
+	if err != nil {
+		return Loyalty_Point_Redemption_Rule{}, err
+	}
+	return cleanRedemptionRule, nil
 }
 
 func (Uc *UserControl) Customer_Loyalty_Account_GetRedemptionProductCatalogue(MSISDN string) (response PropC.Catalogue_WithBundleDetail_response, err error) {
