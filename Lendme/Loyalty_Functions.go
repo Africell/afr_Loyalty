@@ -1277,6 +1277,39 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Add(Login string, request Loy
 		err = errors.New("invalid Main GSM value")
 		return Id, err
 	}
+	if request.GSM_SC_Airtime_Award_Type == "Amount" {
+		if request.GSM_SC_Airtime_Amount > 0 && request.GSM_SC_Airtime_Amount < 1 {
+			err = errors.New("invalid SC Airtime value")
+			return Id, err
+		}
+	} else if request.GSM_SC_Airtime_Award_Type != "Transaction" {
+		err = errors.New("invalid SC Airtime Award Type")
+		return Id, err
+	} else {
+		request.GSM_SC_Airtime_Amount = 0
+	}
+	if request.GSM_EVC_Airtime_Award_Type == "Amount" {
+		if request.GSM_EVC_Airtime_Amount > 0 && request.GSM_EVC_Airtime_Amount < 1 {
+			err = errors.New("invalid EVC Airtime value")
+			return Id, err
+		}
+	} else if request.GSM_EVC_Airtime_Award_Type != "Transaction" {
+		err = errors.New("invalid EVC Airtime Award Type")
+		return Id, err
+	} else {
+		request.GSM_EVC_Airtime_Amount = 0
+	}
+	if request.GSM_EVC_Bundle_Award_Type == "Amount" {
+		if request.GSM_EVC_Bundle_Amount > 0 && request.GSM_EVC_Bundle_Amount < 1 {
+			err = errors.New("invalid EVC Bundle value")
+			return Id, err
+		}
+	} else if request.GSM_EVC_Bundle_Award_Type != "Transaction" {
+		err = errors.New("invalid EVC Bundle Award Type")
+		return Id, err
+	} else {
+		request.GSM_EVC_Bundle_Amount = 0
+	}
 	if request.MM_P2P_Award_Type == "Amount" {
 		if request.MM_P2P_Amount > 0 && request.MM_P2P_Amount < 1 {
 			err = errors.New("invalid MM P2P value")
@@ -1365,6 +1398,29 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Add(Login string, request Loy
 	} else {
 		request.MM_CBWREQ_Amount = 0
 	}
+	if request.MM_Airtime_Award_Type == "Amount" {
+		if request.MM_Airtime_Amount > 0 && request.MM_Airtime_Amount < 1 {
+			err = errors.New("invalid MM Airtime value")
+			return Id, err
+		}
+	} else if request.MM_Airtime_Award_Type != "Transaction" {
+		err = errors.New("invalid MM Airtime Award Type")
+		return Id, err
+	} else {
+		request.MM_Airtime_Amount = 0
+	}
+	if request.MM_Bundle_Award_Type == "Amount" {
+		if request.MM_Bundle_Amount > 0 && request.MM_Bundle_Amount < 1 {
+			err = errors.New("invalid MM Bundle value")
+			return Id, err
+		}
+	} else if request.MM_Bundle_Award_Type != "Transaction" {
+		err = errors.New("invalid MM Bundle Award Type")
+		return Id, err
+	} else {
+		request.MM_Bundle_Amount = 0
+	}
+
 	var entries []Loyalty_Governance
 	entries_na := Map_Loyalty_Governance.ConvertToArray()
 	if len(entries_na) > 0 {
@@ -1394,6 +1450,15 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Add(Login string, request Loy
 	NewEntry.MobileAppDaily_Login = request.MobileAppDaily_Login
 	NewEntry.MainGSMBalance_Amount = request.MainGSMBalance_Amount
 	NewEntry.MainGSMBalance_Points = request.MainGSMBalance_Points
+	NewEntry.GSM_SC_Airtime_Award_Type = request.GSM_SC_Airtime_Award_Type
+	NewEntry.GSM_SC_Airtime_Amount = request.GSM_SC_Airtime_Amount
+	NewEntry.GSM_SC_Airtime_Points = request.GSM_SC_Airtime_Points
+	NewEntry.GSM_EVC_Airtime_Award_Type = request.GSM_EVC_Airtime_Award_Type
+	NewEntry.GSM_EVC_Airtime_Amount = request.GSM_EVC_Airtime_Amount
+	NewEntry.GSM_EVC_Airtime_Points = request.GSM_EVC_Airtime_Points
+	NewEntry.GSM_EVC_Bundle_Award_Type = request.GSM_EVC_Bundle_Award_Type
+	NewEntry.GSM_EVC_Bundle_Amount = request.GSM_EVC_Bundle_Amount
+	NewEntry.GSM_EVC_Bundle_Points = request.GSM_EVC_Bundle_Points
 	NewEntry.MM_P2P_Award_Type = request.MM_P2P_Award_Type
 	NewEntry.MM_P2P_Amount = request.MM_P2P_Amount
 	NewEntry.MM_P2P_Points = request.MM_P2P_Points
@@ -1418,6 +1483,12 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Add(Login string, request Loy
 	NewEntry.MM_CBWREQ_Award_Type = request.MM_CBWREQ_Award_Type
 	NewEntry.MM_CBWREQ_Amount = request.MM_CBWREQ_Amount
 	NewEntry.MM_CBWREQ_Points = request.MM_CBWREQ_Points
+	NewEntry.MM_Airtime_Award_Type = request.MM_Airtime_Award_Type
+	NewEntry.MM_Airtime_Amount = request.MM_Airtime_Amount
+	NewEntry.MM_Airtime_Points = request.MM_Airtime_Points
+	NewEntry.MM_Bundle_Award_Type = request.MM_Bundle_Award_Type
+	NewEntry.MM_Bundle_Amount = request.MM_Bundle_Amount
+	NewEntry.MM_Bundle_Points = request.MM_Bundle_Points
 
 	//add to cache and DB
 	Map_Loyalty_Point_Earning_Rules.Put(NewEntry.Key, NewEntry)
@@ -1444,6 +1515,39 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Edit(Login string, request Lo
 	if request.MainGSMBalance_Amount > 0 && request.MainGSMBalance_Amount < 1 {
 		err = errors.New("invalid Main GSM value")
 		return Id, err
+	}
+	if request.GSM_SC_Airtime_Award_Type == "Amount" {
+		if request.GSM_SC_Airtime_Amount > 0 && request.GSM_SC_Airtime_Amount < 1 {
+			err = errors.New("invalid SC Airtime value")
+			return Id, err
+		}
+	} else if request.GSM_SC_Airtime_Award_Type != "Transaction" {
+		err = errors.New("invalid SC Airtime Award Type")
+		return Id, err
+	} else {
+		request.GSM_SC_Airtime_Amount = 0
+	}
+	if request.GSM_EVC_Airtime_Award_Type == "Amount" {
+		if request.GSM_EVC_Airtime_Amount > 0 && request.GSM_EVC_Airtime_Amount < 1 {
+			err = errors.New("invalid EVC Airtime value")
+			return Id, err
+		}
+	} else if request.GSM_EVC_Airtime_Award_Type != "Transaction" {
+		err = errors.New("invalid EVC Airtime Award Type")
+		return Id, err
+	} else {
+		request.GSM_EVC_Airtime_Amount = 0
+	}
+	if request.GSM_EVC_Bundle_Award_Type == "Amount" {
+		if request.GSM_EVC_Bundle_Amount > 0 && request.GSM_EVC_Bundle_Amount < 1 {
+			err = errors.New("invalid EVC Bundle value")
+			return Id, err
+		}
+	} else if request.GSM_EVC_Bundle_Award_Type != "Transaction" {
+		err = errors.New("invalid EVC Bundle Award Type")
+		return Id, err
+	} else {
+		request.GSM_EVC_Bundle_Amount = 0
 	}
 	if request.MM_P2P_Award_Type == "Amount" {
 		if request.MM_P2P_Amount > 0 && request.MM_P2P_Amount < 1 {
@@ -1532,6 +1636,28 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Edit(Login string, request Lo
 		return Id, err
 	} else {
 		request.MM_CBWREQ_Amount = 0
+	}
+	if request.MM_Airtime_Award_Type == "Amount" {
+		if request.MM_Airtime_Amount > 0 && request.MM_Airtime_Amount < 1 {
+			err = errors.New("invalid MM Airtime value")
+			return Id, err
+		}
+	} else if request.MM_Airtime_Award_Type != "Transaction" {
+		err = errors.New("invalid MM Airtime Award Type")
+		return Id, err
+	} else {
+		request.MM_Airtime_Amount = 0
+	}
+	if request.MM_Bundle_Award_Type == "Amount" {
+		if request.MM_Bundle_Amount > 0 && request.MM_Bundle_Amount < 1 {
+			err = errors.New("invalid MM Bundle value")
+			return Id, err
+		}
+	} else if request.MM_Bundle_Award_Type != "Transaction" {
+		err = errors.New("invalid MM Bundle Award Type")
+		return Id, err
+	} else {
+		request.MM_Bundle_Amount = 0
 	}
 	entry_na, exits := Map_Loyalty_Point_Earning_Rules.CheckThenGet(request.Key)
 	if !exits {
@@ -1573,6 +1699,15 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Edit(Login string, request Lo
 	entry.MobileAppDaily_Login = request.MobileAppDaily_Login
 	entry.MainGSMBalance_Amount = request.MainGSMBalance_Amount
 	entry.MainGSMBalance_Points = request.MainGSMBalance_Points
+	entry.GSM_SC_Airtime_Award_Type = request.GSM_SC_Airtime_Award_Type
+	entry.GSM_SC_Airtime_Amount = request.GSM_SC_Airtime_Amount
+	entry.GSM_SC_Airtime_Points = request.GSM_SC_Airtime_Points
+	entry.GSM_EVC_Airtime_Award_Type = request.GSM_EVC_Airtime_Award_Type
+	entry.GSM_EVC_Airtime_Amount = request.GSM_EVC_Airtime_Amount
+	entry.GSM_EVC_Airtime_Points = request.GSM_EVC_Airtime_Points
+	entry.GSM_EVC_Bundle_Award_Type = request.GSM_EVC_Bundle_Award_Type
+	entry.GSM_EVC_Bundle_Amount = request.GSM_EVC_Bundle_Amount
+	entry.GSM_EVC_Bundle_Points = request.GSM_EVC_Bundle_Points
 	entry.MM_P2P_Award_Type = request.MM_P2P_Award_Type
 	entry.MM_P2P_Amount = request.MM_P2P_Amount
 	entry.MM_P2P_Points = request.MM_P2P_Points
@@ -1597,7 +1732,12 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Edit(Login string, request Lo
 	entry.MM_CBWREQ_Award_Type = request.MM_CBWREQ_Award_Type
 	entry.MM_CBWREQ_Amount = request.MM_CBWREQ_Amount
 	entry.MM_CBWREQ_Points = request.MM_CBWREQ_Points
-
+	entry.MM_Airtime_Award_Type = request.MM_Airtime_Award_Type
+	entry.MM_Airtime_Amount = request.MM_Airtime_Amount
+	entry.MM_Airtime_Points = request.MM_Airtime_Points
+	entry.MM_Bundle_Award_Type = request.MM_Bundle_Award_Type
+	entry.MM_Bundle_Amount = request.MM_Bundle_Amount
+	entry.MM_Bundle_Points = request.MM_Bundle_Points
 	if request.NewKey != "" {
 		if request.NewKey != request.Key {
 			//delete old
@@ -2190,10 +2330,9 @@ func (Uc *UserControl) Loyalty_Plan_Add(Login string, request Loyalty_Plan_AddRe
 				return Id, err
 			} else {
 				if request.Loyalty_Level_Key == entry.Loyalty_Level_Key && request.Loyalty_Account_Segment_Key == entry.Loyalty_Account_Segment_Key {
-					err = errors.New("A plan with the same Loyalty Level and Account Segment already exists. Please choose a different combination")
+					err = errors.New("a plan with the same Loyalty Level and Account Segment already exists. Please choose a different combination")
 					return Id, err
 				}
-
 			}
 		}
 	}
@@ -2250,7 +2389,7 @@ func (Uc *UserControl) Loyalty_Plan_Edit(Login string, request Loyalty_Plan_Edit
 				return Id, err
 			} else {
 				if request.Key != entry.Key && request.Loyalty_Level_Key == entry.Loyalty_Level_Key && request.Loyalty_Account_Segment_Key == entry.Loyalty_Account_Segment_Key {
-					err = errors.New("A plan with the same Loyalty Level and Account Segment already exists. Please choose a different combination")
+					err = errors.New("a plan with the same Loyalty Level and Account Segment already exists. Please choose a different combination")
 					return Id, err
 				}
 
@@ -5002,8 +5141,68 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 		switch award_request.EventType {
 		case "NewJoining":
 			return rules.Welcome_Points, current_outstanding_points
+		case "SSR_3": //scratch card recharge
+			if rules.GSM_SC_Airtime_Award_Type == "Transaction" {
+				if rules.GSM_SC_Airtime_Points > 0 {
+					return rules.GSM_SC_Airtime_Points, current_outstanding_points
+				}
+			} else if rules.GSM_SC_Airtime_Award_Type == "Amount" {
+				if rules.GSM_SC_Airtime_Amount > 0 && award_request.EventAmount > 0 {
+					flt_fractions := award_request.EventAmount / rules.GSM_SC_Airtime_Amount
+					flt_points := (flt_fractions * rules.GSM_SC_Airtime_Points) + current_outstanding_points
+					int_points := int(flt_points)
+					outstanding_points = flt_points - float64(int_points)
+					return float64(int_points), outstanding_points
+				}
+			}
+			return 0, current_outstanding_points
+		case "SSR_97": //EVC recharge
+			if rules.GSM_EVC_Airtime_Award_Type == "Transaction" {
+				if rules.GSM_EVC_Airtime_Points > 0 {
+					return rules.GSM_EVC_Airtime_Points, current_outstanding_points
+				}
+			} else if rules.GSM_EVC_Airtime_Award_Type == "Amount" {
+				if rules.GSM_EVC_Airtime_Amount > 0 && award_request.EventAmount > 0 {
+					flt_fractions := award_request.EventAmount / rules.GSM_EVC_Airtime_Amount
+					flt_points := (flt_fractions * rules.GSM_EVC_Airtime_Points) + current_outstanding_points
+					int_points := int(flt_points)
+					outstanding_points = flt_points - float64(int_points)
+					return float64(int_points), outstanding_points
+				}
+			}
+			return 0, current_outstanding_points
+		case "MM_SSR_97": //mobile money airtime recharge
+			if rules.MM_Airtime_Award_Type == "Transaction" {
+				if rules.MM_Airtime_Points > 0 {
+					return rules.MM_Airtime_Points, current_outstanding_points
+				}
+			} else if rules.MM_Airtime_Award_Type == "Amount" {
+				if rules.MM_Airtime_Amount > 0 && award_request.EventAmount > 0 {
+					flt_fractions := award_request.EventAmount / rules.MM_Airtime_Amount
+					flt_points := (flt_fractions * rules.MM_Airtime_Points) + current_outstanding_points
+					int_points := int(flt_points)
+					outstanding_points = flt_points - float64(int_points)
+					return float64(int_points), outstanding_points
+				}
+			}
+			return 0, current_outstanding_points
+		case "MM_Bundles_Recharge": //mobile money bundle recharge
+			if rules.MM_Bundle_Award_Type == "Transaction" {
+				if rules.MM_Bundle_Points > 0 {
+					return rules.MM_Bundle_Points, current_outstanding_points
+				}
+			} else if rules.MM_Bundle_Award_Type == "Amount" {
+				if rules.MM_Bundle_Amount > 0 && award_request.EventAmount > 0 {
+					flt_fractions := award_request.EventAmount / rules.MM_Bundle_Amount
+					flt_points := (flt_fractions * rules.MM_Bundle_Points) + current_outstanding_points
+					int_points := int(flt_points)
+					outstanding_points = flt_points - float64(int_points)
+					return float64(int_points), outstanding_points
+				}
+			}
+			return 0, current_outstanding_points
 		default:
-			//award points based amount
+			//award points on main GSM balance consumption based on amount
 			if award_request.EventAmount > 0 {
 				if rules.MainGSMBalance_Amount > 0 {
 					flt_fractions := award_request.EventAmount / rules.MainGSMBalance_Amount

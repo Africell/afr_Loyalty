@@ -136,13 +136,27 @@ type Loyalty_Account_Segment_EditRequest struct {
 }
 
 type Loyalty_Point_Earning_Rules struct {
-	Key                    string  `bson:"Key" json:"Key"` //Program name
-	Earning_Rules_Id       int64   `bson:"Earning_Rules_Id" json:"Earning_Rules_Id"`
-	Description            string  `bson:"Description" json:"Description"`
-	Welcome_Points         float64 `bson:"Welcome_Points" json:"Welcome_Points"`
-	MobileAppDaily_Login   float64 `bson:"MobileAppDaily_Login" json:"MobileAppDaily_Login"`
-	MainGSMBalance_Amount  float64 `bson:"MainGSMBalance_Amount" json:"MainGSMBalance_Amount"`
-	MainGSMBalance_Points  float64 `bson:"MainGSMBalance_Points" json:"MainGSMBalance_Points"`
+	Key                  string  `bson:"Key" json:"Key"` //Program name
+	Earning_Rules_Id     int64   `bson:"Earning_Rules_Id" json:"Earning_Rules_Id"`
+	Description          string  `bson:"Description" json:"Description"`
+	Welcome_Points       float64 `bson:"Welcome_Points" json:"Welcome_Points"`
+	MobileAppDaily_Login float64 `bson:"MobileAppDaily_Login" json:"MobileAppDaily_Login"`
+	//GSM main balance consumption
+	MainGSMBalance_Amount float64 `bson:"MainGSMBalance_Amount" json:"MainGSMBalance_Amount"`
+	MainGSMBalance_Points float64 `bson:"MainGSMBalance_Points" json:"MainGSMBalance_Points"`
+	//GSM Scratch Card Recharge
+	GSM_SC_Airtime_Award_Type string  `bson:"GSM_SC_Airtime_Award_Type" json:"GSM_SC_Airtime_Award_Type"` //"Transaction" or "Amount"
+	GSM_SC_Airtime_Amount     float64 `bson:"GSM_SC_Airtime_Amount" json:"GSM_SC_Airtime_Amount"`
+	GSM_SC_Airtime_Points     float64 `bson:"GSM_SC_Airtime_Points" json:"GSM_SC_Airtime_Points"`
+	//GSM EVC airtime recharge
+	GSM_EVC_Airtime_Award_Type string  `bson:"GSM_EVC_Airtime_Award_Type" json:"GSM_EVC_Airtime_Award_Type"` //"Transaction" or "Amount"
+	GSM_EVC_Airtime_Amount     float64 `bson:"GSM_EVC_Airtime_Amount" json:"GSM_EVC_Airtime_Amount"`
+	GSM_EVC_Airtime_Points     float64 `bson:"GSM_EVC_Airtime_Points" json:"GSM_EVC_Airtime_Points"`
+	//GSM EVC Bundle purchase
+	GSM_EVC_Bundle_Award_Type string  `bson:"GSM_EVC_Bundle_Award_Type" json:"GSM_EVC_Bundle_Award_Type"` //"Transaction" or "Amount"
+	GSM_EVC_Bundle_Amount     float64 `bson:"GSM_EVC_Bundle_Amount" json:"GSM_EVC_Bundle_Amount"`
+	GSM_EVC_Bundle_Points     float64 `bson:"GSM_EVC_Bundle_Points" json:"GSM_EVC_Bundle_Points"`
+	//Mobile Money
 	MM_P2P_Award_Type      string  `bson:"MM_P2P_Award_Type" json:"MM_P2P_Award_Type"` //"Transaction" or "Amount"
 	MM_P2P_Amount          float64 `bson:"MM_P2P_Amount" json:"MM_P2P_Amount"`
 	MM_P2P_Points          float64 `bson:"MM_P2P_Points" json:"MM_P2P_Points"`
@@ -167,16 +181,38 @@ type Loyalty_Point_Earning_Rules struct {
 	MM_CBWREQ_Award_Type   string  `bson:"MM_CBWREQ_Award_Type" json:"MM_CBWREQ_Award_Type"` //"Transaction" or "Amount"
 	MM_CBWREQ_Amount       float64 `bson:"MM_CBWREQ_Amount" json:"MM_CBWREQ_Amount"`
 	MM_CBWREQ_Points       float64 `bson:"MM_CBWREQ_Points" json:"MM_CBWREQ_Points"`
+	//Mobile money airtime --> detected from IN live feed
+	MM_Airtime_Award_Type string  `bson:"MM_Airtime_Award_Type" json:"MM_Airtime_Award_Type"` //"Transaction" or "Amount"
+	MM_Airtime_Amount     float64 `bson:"MM_Airtime_Amount" json:"MM_Airtime_Amount"`
+	MM_Airtime_Points     float64 `bson:"MM_Airtime_Points" json:"MM_Airtime_Points"`
+	//Mobile money data purchase --> detected from IN live feed
+	MM_Bundle_Award_Type string  `bson:"MM_Bundle_Award_Type" json:"MM_Bundle_Award_Type"` //"Transaction" or "Amount"
+	MM_Bundle_Amount     float64 `bson:"MM_Bundle_Amount" json:"MM_Bundle_Amount"`
+	MM_Bundle_Points     float64 `bson:"MM_Bundle_Points" json:"MM_Bundle_Points"`
 }
 
 type Loyalty_Point_Earning_Rules_AddRequest struct {
-	Key                    string  `bson:"Key" json:"Key"` //Program name
-	Earning_Rules_Id       int64   `bson:"Earning_Rules_Id" json:"Earning_Rules_Id"`
-	Description            string  `bson:"Description" json:"Description"`
-	Welcome_Points         float64 `bson:"Welcome_Points" json:"Welcome_Points"`
-	MobileAppDaily_Login   float64 `bson:"MobileAppDaily_Login" json:"MobileAppDaily_Login"`
-	MainGSMBalance_Amount  float64 `bson:"MainGSMBalance_Amount" json:"MainGSMBalance_Amount"`
-	MainGSMBalance_Points  float64 `bson:"MainGSMBalance_Points" json:"MainGSMBalance_Points"`
+	Key                  string  `bson:"Key" json:"Key"` //Program name
+	Earning_Rules_Id     int64   `bson:"Earning_Rules_Id" json:"Earning_Rules_Id"`
+	Description          string  `bson:"Description" json:"Description"`
+	Welcome_Points       float64 `bson:"Welcome_Points" json:"Welcome_Points"`
+	MobileAppDaily_Login float64 `bson:"MobileAppDaily_Login" json:"MobileAppDaily_Login"`
+	//GSM main balance consumption
+	MainGSMBalance_Amount float64 `bson:"MainGSMBalance_Amount" json:"MainGSMBalance_Amount"`
+	MainGSMBalance_Points float64 `bson:"MainGSMBalance_Points" json:"MainGSMBalance_Points"`
+	//GSM Scratch Card Recharge
+	GSM_SC_Airtime_Award_Type string  `bson:"GSM_SC_Airtime_Award_Type" json:"GSM_SC_Airtime_Award_Type"` //"Transaction" or "Amount"
+	GSM_SC_Airtime_Amount     float64 `bson:"GSM_SC_Airtime_Amount" json:"GSM_SC_Airtime_Amount"`
+	GSM_SC_Airtime_Points     float64 `bson:"GSM_SC_Airtime_Points" json:"GSM_SC_Airtime_Points"`
+	//GSM EVC airtime recharge
+	GSM_EVC_Airtime_Award_Type string  `bson:"GSM_EVC_Airtime_Award_Type" json:"GSM_EVC_Airtime_Award_Type"` //"Transaction" or "Amount"
+	GSM_EVC_Airtime_Amount     float64 `bson:"GSM_EVC_Airtime_Amount" json:"GSM_EVC_Airtime_Amount"`
+	GSM_EVC_Airtime_Points     float64 `bson:"GSM_EVC_Airtime_Points" json:"GSM_EVC_Airtime_Points"`
+	//GSM EVC Bundle purchase
+	GSM_EVC_Bundle_Award_Type string  `bson:"GSM_EVC_Bundle_Award_Type" json:"GSM_EVC_Bundle_Award_Type"` //"Transaction" or "Amount"
+	GSM_EVC_Bundle_Amount     float64 `bson:"GSM_EVC_Bundle_Amount" json:"GSM_EVC_Bundle_Amount"`
+	GSM_EVC_Bundle_Points     float64 `bson:"GSM_EVC_Bundle_Points" json:"GSM_EVC_Bundle_Points"`
+	//Mobile Money
 	MM_P2P_Award_Type      string  `bson:"MM_P2P_Award_Type" json:"MM_P2P_Award_Type"` //"Transaction" or "Amount"
 	MM_P2P_Amount          float64 `bson:"MM_P2P_Amount" json:"MM_P2P_Amount"`
 	MM_P2P_Points          float64 `bson:"MM_P2P_Points" json:"MM_P2P_Points"`
@@ -201,17 +237,39 @@ type Loyalty_Point_Earning_Rules_AddRequest struct {
 	MM_CBWREQ_Award_Type   string  `bson:"MM_CBWREQ_Award_Type" json:"MM_CBWREQ_Award_Type"` //"Transaction" or "Amount"
 	MM_CBWREQ_Amount       float64 `bson:"MM_CBWREQ_Amount" json:"MM_CBWREQ_Amount"`
 	MM_CBWREQ_Points       float64 `bson:"MM_CBWREQ_Points" json:"MM_CBWREQ_Points"`
+	//Mobile money airtime --> detected from IN live feed
+	MM_Airtime_Award_Type string  `bson:"MM_Airtime_Award_Type" json:"MM_Airtime_Award_Type"` //"Transaction" or "Amount"
+	MM_Airtime_Amount     float64 `bson:"MM_Airtime_Amount" json:"MM_Airtime_Amount"`
+	MM_Airtime_Points     float64 `bson:"MM_Airtime_Points" json:"MM_Airtime_Points"`
+	//Mobile money data purchase --> detected from IN live feed
+	MM_Bundle_Award_Type string  `bson:"MM_Bundle_Award_Type" json:"MM_Bundle_Award_Type"` //"Transaction" or "Amount"
+	MM_Bundle_Amount     float64 `bson:"MM_Bundle_Amount" json:"MM_Bundle_Amount"`
+	MM_Bundle_Points     float64 `bson:"MM_Bundle_Points" json:"MM_Bundle_Points"`
 }
 
 type Loyalty_Point_Earning_Rules_EditRequest struct {
-	Key                    string  `bson:"Key" json:"Key"` //Program name
-	NewKey                 string  `bson:"NewKey" json:"NewKey"`
-	Earning_Rules_Id       int64   `bson:"Earning_Rules_Id" json:"Earning_Rules_Id"`
-	Description            string  `bson:"Description" json:"Description"`
-	Welcome_Points         float64 `bson:"Welcome_Points" json:"Welcome_Points"`
-	MobileAppDaily_Login   float64 `bson:"MobileAppDaily_Login" json:"MobileAppDaily_Login"`
-	MainGSMBalance_Amount  float64 `bson:"MainGSMBalance_Amount" json:"MainGSMBalance_Amount"`
-	MainGSMBalance_Points  float64 `bson:"MainGSMBalance_Points" json:"MainGSMBalance_Points"`
+	Key                  string  `bson:"Key" json:"Key"` //Program name
+	NewKey               string  `bson:"NewKey" json:"NewKey"`
+	Earning_Rules_Id     int64   `bson:"Earning_Rules_Id" json:"Earning_Rules_Id"`
+	Description          string  `bson:"Description" json:"Description"`
+	Welcome_Points       float64 `bson:"Welcome_Points" json:"Welcome_Points"`
+	MobileAppDaily_Login float64 `bson:"MobileAppDaily_Login" json:"MobileAppDaily_Login"`
+	//GSM main balance consumption
+	MainGSMBalance_Amount float64 `bson:"MainGSMBalance_Amount" json:"MainGSMBalance_Amount"`
+	MainGSMBalance_Points float64 `bson:"MainGSMBalance_Points" json:"MainGSMBalance_Points"`
+	//GSM Scratch Card Recharge
+	GSM_SC_Airtime_Award_Type string  `bson:"GSM_SC_Airtime_Award_Type" json:"GSM_SC_Airtime_Award_Type"` //"Transaction" or "Amount"
+	GSM_SC_Airtime_Amount     float64 `bson:"GSM_SC_Airtime_Amount" json:"GSM_SC_Airtime_Amount"`
+	GSM_SC_Airtime_Points     float64 `bson:"GSM_SC_Airtime_Points" json:"GSM_SC_Airtime_Points"`
+	//GSM EVC airtime recharge
+	GSM_EVC_Airtime_Award_Type string  `bson:"GSM_EVC_Airtime_Award_Type" json:"GSM_EVC_Airtime_Award_Type"` //"Transaction" or "Amount"
+	GSM_EVC_Airtime_Amount     float64 `bson:"GSM_EVC_Airtime_Amount" json:"GSM_EVC_Airtime_Amount"`
+	GSM_EVC_Airtime_Points     float64 `bson:"GSM_EVC_Airtime_Points" json:"GSM_EVC_Airtime_Points"`
+	//GSM EVC Bundle purchase
+	GSM_EVC_Bundle_Award_Type string  `bson:"GSM_EVC_Bundle_Award_Type" json:"GSM_EVC_Bundle_Award_Type"` //"Transaction" or "Amount"
+	GSM_EVC_Bundle_Amount     float64 `bson:"GSM_EVC_Bundle_Amount" json:"GSM_EVC_Bundle_Amount"`
+	GSM_EVC_Bundle_Points     float64 `bson:"GSM_EVC_Bundle_Points" json:"GSM_EVC_Bundle_Points"`
+	//Mobile Money
 	MM_P2P_Award_Type      string  `bson:"MM_P2P_Award_Type" json:"MM_P2P_Award_Type"` //"Transaction" or "Amount"
 	MM_P2P_Amount          float64 `bson:"MM_P2P_Amount" json:"MM_P2P_Amount"`
 	MM_P2P_Points          float64 `bson:"MM_P2P_Points" json:"MM_P2P_Points"`
@@ -236,6 +294,14 @@ type Loyalty_Point_Earning_Rules_EditRequest struct {
 	MM_CBWREQ_Award_Type   string  `bson:"MM_CBWREQ_Award_Type" json:"MM_CBWREQ_Award_Type"` //"Transaction" or "Amount"
 	MM_CBWREQ_Amount       float64 `bson:"MM_CBWREQ_Amount" json:"MM_CBWREQ_Amount"`
 	MM_CBWREQ_Points       float64 `bson:"MM_CBWREQ_Points" json:"MM_CBWREQ_Points"`
+	//Mobile money airtime --> detected from IN live feed
+	MM_Airtime_Award_Type string  `bson:"MM_Airtime_Award_Type" json:"MM_Airtime_Award_Type"` //"Transaction" or "Amount"
+	MM_Airtime_Amount     float64 `bson:"MM_Airtime_Amount" json:"MM_Airtime_Amount"`
+	MM_Airtime_Points     float64 `bson:"MM_Airtime_Points" json:"MM_Airtime_Points"`
+	//Mobile money data purchase --> detected from IN live feed
+	MM_Bundle_Award_Type string  `bson:"MM_Bundle_Award_Type" json:"MM_Bundle_Award_Type"` //"Transaction" or "Amount"
+	MM_Bundle_Amount     float64 `bson:"MM_Bundle_Amount" json:"MM_Bundle_Amount"`
+	MM_Bundle_Points     float64 `bson:"MM_Bundle_Points" json:"MM_Bundle_Points"`
 }
 
 type Loyalty_Point_Expiry_Rules struct {
