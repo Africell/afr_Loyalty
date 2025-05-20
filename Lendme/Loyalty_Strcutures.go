@@ -925,11 +925,13 @@ type Loyalty_AccountDebitPoints_log struct {
 }
 
 type Loyalty_Subs_Summary struct {
-	Loyalty_Level_Key      string
-	Accounts_Count         float64
-	Total_Awarded_Points   float64
-	Total_Redeemed_Points  float64
-	Total_Available_Points float64
+	ID struct {
+		Loyalty_Level_Key string
+	} `bson:"_id"`
+	Accounts_Count         float64 `bson:"Accounts_Count"`
+	Total_Awarded_Points   float64 `bson:"Total_Awarded_Points"`
+	Total_Redeemed_Points  float64 `bson:"Total_Redeemed_Points"`
+	Total_Available_Points float64 `bson:"Total_Available_Points"`
 }
 
 // type Loyalty_Point_Redemption_Rules struct {

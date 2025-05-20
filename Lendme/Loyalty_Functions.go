@@ -6388,9 +6388,9 @@ func (Uc *UserControl) GetLoyaltySubsSummary() (err error) {
 					"Loyalty_Level_Key": "$Loyalty_Level_Key",
 				},
 				"Accounts_Count":         bson.M{"$sum": 1},
-				"total_Awarded_Points":   bson.M{"$sum": "$Awarded_Points"},
-				"total_Redeemed_Points":  bson.M{"$sum": "$Redeemed_Points"},
-				"total_Available_Points": bson.M{"$sum": "$Available_Points"},
+				"Total_Awarded_Points":   bson.M{"$sum": "$Awarded_Points"},
+				"Total_Redeemed_Points":  bson.M{"$sum": "$Redeemed_Points"},
+				"Total_Available_Points": bson.M{"$sum": "$Available_Points"},
 			},
 		},
 	}
@@ -6411,10 +6411,10 @@ func (Uc *UserControl) GetLoyaltySubsSummary() (err error) {
 		}
 		//log.Println(entry)
 		LoyaltySubsSummary.Reset()
-		LoyaltySubsSummary.With(prometheus.Labels{"Level": entry.Loyalty_Level_Key, "Description": "Accounts_Count"}).Add(entry.Accounts_Count)
-		LoyaltySubsSummary.With(prometheus.Labels{"Level": entry.Loyalty_Level_Key, "Description": "Total_Awarded_Points"}).Add(entry.Total_Awarded_Points)
-		LoyaltySubsSummary.With(prometheus.Labels{"Level": entry.Loyalty_Level_Key, "Description": "Total_Redeemed_Points"}).Add(entry.Total_Redeemed_Points)
-		LoyaltySubsSummary.With(prometheus.Labels{"Level": entry.Loyalty_Level_Key, "Description": "Total_Available_Points"}).Add(entry.Total_Available_Points)
+		LoyaltySubsSummary.With(prometheus.Labels{"Level": entry.ID.Loyalty_Level_Key, "Description": "Accounts_Count"}).Set(entry.Accounts_Count)
+		LoyaltySubsSummary.With(prometheus.Labels{"Level": entry.ID.Loyalty_Level_Key, "Description": "Total_Awarded_Points"}).Set(entry.Total_Awarded_Points)
+		LoyaltySubsSummary.With(prometheus.Labels{"Level": entry.ID.Loyalty_Level_Key, "Description": "Total_Redeemed_Points"}).Set(entry.Total_Redeemed_Points)
+		LoyaltySubsSummary.With(prometheus.Labels{"Level": entry.ID.Loyalty_Level_Key, "Description": "Total_Available_Points"}).Set(entry.Total_Available_Points)
 	}
 	return
 }
