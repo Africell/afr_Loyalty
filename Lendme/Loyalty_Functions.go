@@ -331,6 +331,7 @@ func (Uc *UserControl) Write_Loyalty_Level_Change_log(record Loyalty_Level_Chang
 		log.Println("Error in Write_Lendme_log:", err, " (", record, ")")
 		return
 	}
+
 }
 
 func (Uc *UserControl) Write_Loyalty_AccountCreditPoints_log(record Loyalty_AccountCreditPoints_log) {
@@ -1399,28 +1400,28 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Add(Login string, request Loy
 	} else {
 		request.MM_CBWREQ_Amount = 0
 	}
-	if request.MM_Airtime_Award_Type == "Amount" {
-		if request.MM_Airtime_Amount > 0 && request.MM_Airtime_Amount < 1 {
-			err = errors.New("invalid MM Airtime value")
-			return Id, err
-		}
-	} else if request.MM_Airtime_Award_Type != "Transaction" {
-		err = errors.New("invalid MM Airtime Award Type")
-		return Id, err
-	} else {
-		request.MM_Airtime_Amount = 0
-	}
-	if request.MM_Bundle_Award_Type == "Amount" {
-		if request.MM_Bundle_Amount > 0 && request.MM_Bundle_Amount < 1 {
-			err = errors.New("invalid MM Bundle value")
-			return Id, err
-		}
-	} else if request.MM_Bundle_Award_Type != "Transaction" {
-		err = errors.New("invalid MM Bundle Award Type")
-		return Id, err
-	} else {
-		request.MM_Bundle_Amount = 0
-	}
+	// if request.MM_Airtime_Award_Type == "Amount" {
+	// 	if request.MM_Airtime_Amount > 0 && request.MM_Airtime_Amount < 1 {
+	// 		err = errors.New("invalid MM Airtime value")
+	// 		return Id, err
+	// 	}
+	// } else if request.MM_Airtime_Award_Type != "Transaction" {
+	// 	err = errors.New("invalid MM Airtime Award Type")
+	// 	return Id, err
+	// } else {
+	// 	request.MM_Airtime_Amount = 0
+	// }
+	// if request.MM_Bundle_Award_Type == "Amount" {
+	// 	if request.MM_Bundle_Amount > 0 && request.MM_Bundle_Amount < 1 {
+	// 		err = errors.New("invalid MM Bundle value")
+	// 		return Id, err
+	// 	}
+	// } else if request.MM_Bundle_Award_Type != "Transaction" {
+	// 	err = errors.New("invalid MM Bundle Award Type")
+	// 	return Id, err
+	// } else {
+	// 	request.MM_Bundle_Amount = 0
+	// }
 
 	var entries []Loyalty_Governance
 	entries_na := Map_Loyalty_Governance.ConvertToArray()
@@ -1644,28 +1645,28 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Edit(Login string, request Lo
 	} else {
 		request.MM_CBWREQ_Amount = 0
 	}
-	if request.MM_Airtime_Award_Type == "Amount" {
-		if request.MM_Airtime_Amount > 0 && request.MM_Airtime_Amount < 1 {
-			err = errors.New("invalid MM Airtime value")
-			return Id, err
-		}
-	} else if request.MM_Airtime_Award_Type != "Transaction" {
-		err = errors.New("invalid MM Airtime Award Type")
-		return Id, err
-	} else {
-		request.MM_Airtime_Amount = 0
-	}
-	if request.MM_Bundle_Award_Type == "Amount" {
-		if request.MM_Bundle_Amount > 0 && request.MM_Bundle_Amount < 1 {
-			err = errors.New("invalid MM Bundle value")
-			return Id, err
-		}
-	} else if request.MM_Bundle_Award_Type != "Transaction" {
-		err = errors.New("invalid MM Bundle Award Type")
-		return Id, err
-	} else {
-		request.MM_Bundle_Amount = 0
-	}
+	// if request.MM_Airtime_Award_Type == "Amount" {
+	// 	if request.MM_Airtime_Amount > 0 && request.MM_Airtime_Amount < 1 {
+	// 		err = errors.New("invalid MM Airtime value")
+	// 		return Id, err
+	// 	}
+	// } else if request.MM_Airtime_Award_Type != "Transaction" {
+	// 	err = errors.New("invalid MM Airtime Award Type")
+	// 	return Id, err
+	// } else {
+	// 	request.MM_Airtime_Amount = 0
+	// }
+	// if request.MM_Bundle_Award_Type == "Amount" {
+	// 	if request.MM_Bundle_Amount > 0 && request.MM_Bundle_Amount < 1 {
+	// 		err = errors.New("invalid MM Bundle value")
+	// 		return Id, err
+	// 	}
+	// } else if request.MM_Bundle_Award_Type != "Transaction" {
+	// 	err = errors.New("invalid MM Bundle Award Type")
+	// 	return Id, err
+	// } else {
+	// 	request.MM_Bundle_Amount = 0
+	// }
 	entry_na, exits := Map_Loyalty_Point_Earning_Rules.CheckThenGet(request.Key)
 	if !exits {
 		err = errors.New("key is not created")
