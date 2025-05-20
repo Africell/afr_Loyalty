@@ -136,11 +136,17 @@ type Loyalty_Account_Segment_EditRequest struct {
 }
 
 type Loyalty_Point_Earning_Rules struct {
-	Key                  string  `bson:"Key" json:"Key"` //Program name
-	Earning_Rules_Id     int64   `bson:"Earning_Rules_Id" json:"Earning_Rules_Id"`
-	Description          string  `bson:"Description" json:"Description"`
-	Welcome_Points       float64 `bson:"Welcome_Points" json:"Welcome_Points"`
-	MobileAppDaily_Login float64 `bson:"MobileAppDaily_Login" json:"MobileAppDaily_Login"`
+	Key                              string  `bson:"Key" json:"Key"` //Program name
+	Earning_Rules_Id                 int64   `bson:"Earning_Rules_Id" json:"Earning_Rules_Id"`
+	Description                      string  `bson:"Description" json:"Description"`
+	Welcome_Points                   float64 `bson:"Welcome_Points" json:"Welcome_Points"`
+	MobileAppDaily_Login             float64 `bson:"MobileAppDaily_Login" json:"MobileAppDaily_Login"`
+	Welcome_Notification             bool    `bson:"Welcome_Notification" json:"Welcome_Notification"`
+	Welcome_Notification_Sender      string  `bson:"Welcome_Notification_Sender" json:"Welcome_Notification_Sender"`
+	Welcome_Notification_Text        string  `bson:"Welcome_Notification_Text" json:"Welcome_Notification_Text"`
+	Level_Change_Notification        bool    `bson:"Level_Change_Notification" json:"Level_Change_Notification"`
+	Level_Change_Notification_Sender string  `bson:"Level_Change_Notification_Sender" json:"Level_Change_Notification_Sender"`
+	Level_Change_Notification_Text   string  `bson:"Level_Change_Notification_Text" json:"Level_Change_Notification_Text"`
 	//GSM main balance consumption
 	MainGSMBalance_Amount float64 `bson:"MainGSMBalance_Amount" json:"MainGSMBalance_Amount"`
 	MainGSMBalance_Points float64 `bson:"MainGSMBalance_Points" json:"MainGSMBalance_Points"`
@@ -192,11 +198,17 @@ type Loyalty_Point_Earning_Rules struct {
 }
 
 type Loyalty_Point_Earning_Rules_AddRequest struct {
-	Key                  string  `bson:"Key" json:"Key"` //Program name
-	Earning_Rules_Id     int64   `bson:"Earning_Rules_Id" json:"Earning_Rules_Id"`
-	Description          string  `bson:"Description" json:"Description"`
-	Welcome_Points       float64 `bson:"Welcome_Points" json:"Welcome_Points"`
-	MobileAppDaily_Login float64 `bson:"MobileAppDaily_Login" json:"MobileAppDaily_Login"`
+	Key                              string  `bson:"Key" json:"Key"` //Program name
+	Earning_Rules_Id                 int64   `bson:"Earning_Rules_Id" json:"Earning_Rules_Id"`
+	Description                      string  `bson:"Description" json:"Description"`
+	Welcome_Points                   float64 `bson:"Welcome_Points" json:"Welcome_Points"`
+	MobileAppDaily_Login             float64 `bson:"MobileAppDaily_Login" json:"MobileAppDaily_Login"`
+	Welcome_Notification             bool    `bson:"Welcome_Notification" json:"Welcome_Notification"`
+	Welcome_Notification_Sender      string  `bson:"Welcome_Notification_Sender" json:"Welcome_Notification_Sender"`
+	Welcome_Notification_Text        string  `bson:"Welcome_Notification_Text" json:"Welcome_Notification_Text"`
+	Level_Change_Notification        bool    `bson:"Level_Change_Notification" json:"Level_Change_Notification"`
+	Level_Change_Notification_Sender string  `bson:"Level_Change_Notification_Sender" json:"Level_Change_Notification_Sender"`
+	Level_Change_Notification_Text   string  `bson:"Level_Change_Notification_Text" json:"Level_Change_Notification_Text"`
 	//GSM main balance consumption
 	MainGSMBalance_Amount float64 `bson:"MainGSMBalance_Amount" json:"MainGSMBalance_Amount"`
 	MainGSMBalance_Points float64 `bson:"MainGSMBalance_Points" json:"MainGSMBalance_Points"`
@@ -248,12 +260,18 @@ type Loyalty_Point_Earning_Rules_AddRequest struct {
 }
 
 type Loyalty_Point_Earning_Rules_EditRequest struct {
-	Key                  string  `bson:"Key" json:"Key"` //Program name
-	NewKey               string  `bson:"NewKey" json:"NewKey"`
-	Earning_Rules_Id     int64   `bson:"Earning_Rules_Id" json:"Earning_Rules_Id"`
-	Description          string  `bson:"Description" json:"Description"`
-	Welcome_Points       float64 `bson:"Welcome_Points" json:"Welcome_Points"`
-	MobileAppDaily_Login float64 `bson:"MobileAppDaily_Login" json:"MobileAppDaily_Login"`
+	Key                              string  `bson:"Key" json:"Key"` //Program name
+	NewKey                           string  `bson:"NewKey" json:"NewKey"`
+	Earning_Rules_Id                 int64   `bson:"Earning_Rules_Id" json:"Earning_Rules_Id"`
+	Description                      string  `bson:"Description" json:"Description"`
+	Welcome_Points                   float64 `bson:"Welcome_Points" json:"Welcome_Points"`
+	MobileAppDaily_Login             float64 `bson:"MobileAppDaily_Login" json:"MobileAppDaily_Login"`
+	Welcome_Notification             bool    `bson:"Welcome_Notification" json:"Welcome_Notification"`
+	Welcome_Notification_Sender      string  `bson:"Welcome_Notification_Sender" json:"Welcome_Notification_Sender"`
+	Welcome_Notification_Text        string  `bson:"Welcome_Notification_Text" json:"Welcome_Notification_Text"`
+	Level_Change_Notification        bool    `bson:"Level_Change_Notification" json:"Level_Change_Notification"`
+	Level_Change_Notification_Sender string  `bson:"Level_Change_Notification_Sender" json:"Level_Change_Notification_Sender"`
+	Level_Change_Notification_Text   string  `bson:"Level_Change_Notification_Text" json:"Level_Change_Notification_Text"`
 	//GSM main balance consumption
 	MainGSMBalance_Amount float64 `bson:"MainGSMBalance_Amount" json:"MainGSMBalance_Amount"`
 	MainGSMBalance_Points float64 `bson:"MainGSMBalance_Points" json:"MainGSMBalance_Points"`
@@ -348,6 +366,8 @@ type Loyalty_Point_Redemption_Rules struct {
 	Min_Accumulated_Points              float64 `bson:"Min_Accumulated_Points" json:"Min_Accumulated_Points"` //will be used for upgrade
 	Allow_Negative_Balance_ToRedeem     bool    `bson:"Allow_Negative_Balance_ToRedeem" json:"Allow_Negative_Balance_ToRedeem"`
 	Allow_PendingLendme_ToRedeem        bool    `bson:"Allow_PendingLendme_ToRedeem" json:"Allow_PendingLendme_ToRedeem"`
+	Notification_Sender                 string  `bson:"Notification_Sender" json:"Notification_Sender"`
+	Notification_Text                   string  `bson:"Notification_Text" json:"Notification_Text"`
 	Airtime_MinPoints                   float64 `bson:"Airtime_MinPoints" json:"Airtime_MinPoints"`
 	Available_MinPoints_for_Airtime     float64 `bson:"Available_MinPoints_for_Airtime" json:"Available_MinPoints_for_Airtime"`
 	Airtime_AmountPerPoint              float64 `bson:"Airtime_AmountPerPoint" json:"Airtime_AmountPerPoint"`
@@ -376,6 +396,8 @@ type Loyalty_Point_Redemption_Rule struct {
 	Min_Accumulated_Points              float64 `bson:"Min_Accumulated_Points" json:"Min_Accumulated_Points"` //will be used for upgrade
 	Allow_Negative_Balance_ToRedeem     bool    `bson:"Allow_Negative_Balance_ToRedeem" json:"Allow_Negative_Balance_ToRedeem"`
 	Allow_PendingLendme_ToRedeem        bool    `bson:"Allow_PendingLendme_ToRedeem" json:"Allow_PendingLendme_ToRedeem"`
+	Notification_Sender                 string  `bson:"Notification_Sender" json:"Notification_Sender"`
+	Notification_Text                   string  `bson:"Notification_Text" json:"Notification_Text"`
 	Airtime_MinPoints                   float64 `bson:"Airtime_MinPoints" json:"Airtime_MinPoints"`
 	Available_MinPoints_for_Airtime     float64 `bson:"Available_MinPoints_for_Airtime" json:"Available_MinPoints_for_Airtime"`
 	Airtime_AmountPerPoint              float64 `bson:"Airtime_AmountPerPoint" json:"Airtime_AmountPerPoint"`
@@ -404,6 +426,8 @@ type Loyalty_Point_Redemption_Rules_AddRequest struct {
 	Min_Accumulated_Points              float64 `bson:"Min_Accumulated_Points" json:"Min_Accumulated_Points"` //will be used for upgrade
 	Allow_Negative_Balance_ToRedeem     bool    `bson:"Allow_Negative_Balance_ToRedeem" json:"Allow_Negative_Balance_ToRedeem"`
 	Allow_PendingLendme_ToRedeem        bool    `bson:"Allow_PendingLendme_ToRedeem" json:"Allow_PendingLendme_ToRedeem"`
+	Notification_Sender                 string  `bson:"Notification_Sender" json:"Notification_Sender"`
+	Notification_Text                   string  `bson:"Notification_Text" json:"Notification_Text"`
 	Airtime_MinPoints                   float64 `bson:"Airtime_MinPoints" json:"Airtime_MinPoints"`
 	Available_MinPoints_for_Airtime     float64 `bson:"Available_MinPoints_for_Airtime" json:"Available_MinPoints_for_Airtime"`
 	Airtime_AmountPerPoint              float64 `bson:"Airtime_AmountPerPoint" json:"Airtime_AmountPerPoint"`
@@ -433,6 +457,8 @@ type Loyalty_Point_Redemption_Rules_EditRequest struct {
 	Min_Accumulated_Points              float64 `bson:"Min_Accumulated_Points" json:"Min_Accumulated_Points"` //will be used for upgrade
 	Allow_Negative_Balance_ToRedeem     bool    `bson:"Allow_Negative_Balance_ToRedeem" json:"Allow_Negative_Balance_ToRedeem"`
 	Allow_PendingLendme_ToRedeem        bool    `bson:"Allow_PendingLendme_ToRedeem" json:"Allow_PendingLendme_ToRedeem"`
+	Notification_Sender                 string  `bson:"Notification_Sender" json:"Notification_Sender"`
+	Notification_Text                   string  `bson:"Notification_Text" json:"Notification_Text"`
 	Airtime_MinPoints                   float64 `bson:"Airtime_MinPoints" json:"Airtime_MinPoints"`
 	Available_MinPoints_for_Airtime     float64 `bson:"Available_MinPoints_for_Airtime" json:"Available_MinPoints_for_Airtime"`
 	Airtime_AmountPerPoint              float64 `bson:"Airtime_AmountPerPoint" json:"Airtime_AmountPerPoint"`

@@ -1449,6 +1449,12 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Add(Login string, request Loy
 	NewEntry.Description = request.Description
 	NewEntry.Welcome_Points = request.Welcome_Points
 	NewEntry.MobileAppDaily_Login = request.MobileAppDaily_Login
+	NewEntry.Welcome_Notification = request.Welcome_Notification
+	NewEntry.Welcome_Notification_Sender = request.Welcome_Notification_Sender
+	NewEntry.Welcome_Notification_Text = request.Welcome_Notification_Text
+	NewEntry.Level_Change_Notification = request.Level_Change_Notification
+	NewEntry.Level_Change_Notification_Sender = request.Level_Change_Notification_Sender
+	NewEntry.Level_Change_Notification_Text = request.Level_Change_Notification_Text
 	NewEntry.MainGSMBalance_Amount = request.MainGSMBalance_Amount
 	NewEntry.MainGSMBalance_Points = request.MainGSMBalance_Points
 	NewEntry.GSM_SC_Airtime_Award_Type = request.GSM_SC_Airtime_Award_Type
@@ -1698,6 +1704,12 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Edit(Login string, request Lo
 	entry.Welcome_Points = request.Welcome_Points
 	entry.Welcome_Points = request.Welcome_Points
 	entry.MobileAppDaily_Login = request.MobileAppDaily_Login
+	entry.Welcome_Notification = request.Welcome_Notification
+	entry.Welcome_Notification_Sender = request.Welcome_Notification_Sender
+	entry.Welcome_Notification_Text = request.Welcome_Notification_Text
+	entry.Level_Change_Notification = request.Level_Change_Notification
+	entry.Level_Change_Notification_Sender = request.Level_Change_Notification_Sender
+	entry.Level_Change_Notification_Text = request.Level_Change_Notification_Text
 	entry.MainGSMBalance_Amount = request.MainGSMBalance_Amount
 	entry.MainGSMBalance_Points = request.MainGSMBalance_Points
 	entry.GSM_SC_Airtime_Award_Type = request.GSM_SC_Airtime_Award_Type
@@ -2097,6 +2109,8 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Add(Login string, request 
 	NewEntry.Min_Accumulated_Points = request.Min_Accumulated_Points
 	NewEntry.Allow_Negative_Balance_ToRedeem = request.Allow_Negative_Balance_ToRedeem
 	NewEntry.Allow_PendingLendme_ToRedeem = request.Allow_PendingLendme_ToRedeem
+	NewEntry.Notification_Sender = request.Notification_Sender
+	NewEntry.Notification_Text = request.Notification_Text
 	NewEntry.Airtime_MinPoints = request.Airtime_MinPoints
 	NewEntry.Available_MinPoints_for_Airtime = request.Available_MinPoints_for_Airtime
 	NewEntry.Airtime_AmountPerPoint = request.Airtime_AmountPerPoint
@@ -2156,6 +2170,8 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Edit(Login string, request
 	entry.Min_Accumulated_Points = request.Min_Accumulated_Points
 	entry.Allow_Negative_Balance_ToRedeem = request.Allow_Negative_Balance_ToRedeem
 	entry.Allow_PendingLendme_ToRedeem = request.Allow_PendingLendme_ToRedeem
+	entry.Notification_Sender = request.Notification_Sender
+	entry.Notification_Text = request.Notification_Text
 	entry.Airtime_MinPoints = request.Airtime_MinPoints
 	entry.Available_MinPoints_for_Airtime = request.Available_MinPoints_for_Airtime
 	entry.Airtime_AmountPerPoint = request.Airtime_AmountPerPoint
@@ -3451,10 +3467,66 @@ func (Uc *UserControl) Customer_Loyalty_Account_Edit(Login string, request Custo
 	//Prepare new entry
 	entry.Key = request.Key
 	if entry.Loyalty_Level_Key != request.Loyalty_Level_Key {
-		entry.Loyalty_Level_Key = request.Loyalty_Level_Key
-		entry.Loyalty_Level_Date = time.Now()
-		//entry.Loyalty_Level_Direction =
-		entry.Loyalty_Level_SetBy = Login
+
+		current_level_na, lvlexist := Map_Loyalty_Level.CheckThenGet(entry.Loyalty_Level_Key)
+		if !lvlexist {
+			err = errors.New("current level is invalid")
+			return Id, err
+		}
+		current_level, ok := current_level_na.(Loyalty_Level)
+		if !ok {
+			err = errors.New("error in type assertion")
+			return Id, err
+		}
+		new_level_na, lvlexist := Map_Loyalty_Level.CheckThenGet(request.Loyalty_Level_Key)
+		if !lvlexist {
+			err = errors.New("new level is invalid")
+			return Id, err
+		}
+		new_level, ok := new_level_na.(Loyalty_Level)
+		if !ok {
+			err = errors.New("error in type assertion")
+			return Id, err
+		}
+
+		if entry.Loyalty_Level_Key != request.Loyalty_Level_Key {
+			entry.Previous_Loyalty_Level_Key = entry.Loyalty_Level_Key
+			entry.Previous_Loyalty_Level_Date = entry.Loyalty_Level_Date
+			entry.Loyalty_Level_Key = new_level.Key
+			entry.Loyalty_Level_Date = time.Now()
+			entry.Loyalty_Level_SetBy = Login
+			if new_level.Min_Accumulated_Points > current_level.Min_Accumulated_Points &&
+				new_level.Max_Accumulated_Points > current_level.Max_Accumulated_Points {
+				entry.Loyalty_Level_Direction = "Upgrade"
+			} else {
+				entry.Loyalty_Level_Direction = "Downgrade"
+			}
+
+			Uc.Write_Loyalty_Level_Change_log(Loyalty_Level_Change_log{
+				Level_Change_Date:                 time.Now(),
+				MSISDN:                            entry.Key,
+				COS:                               entry.COS,
+				Joining_Date:                      entry.Joining_Date,
+				ARPU:                              entry.ARPU,
+				Customer_Id:                       entry.Customer_Id,
+				Creation_date:                     entry.Creation_date,
+				Previous_Loyalty_Level_Key:        entry.Loyalty_Level_Key,
+				Previous_Loyalty_Level_Date:       entry.Previous_Loyalty_Level_Date,
+				New_Loyalty_Level_Key:             entry.Loyalty_Level_Key,
+				New_Loyalty_Level_Date:            entry.Loyalty_Level_Date,
+				New_Loyalty_Level_Direction:       entry.Loyalty_Level_Direction,
+				New_Loyalty_Level_SetBy:           entry.Loyalty_Level_SetBy,
+				Loyalty_Account_Segment_Key:       entry.Loyalty_Account_Segment_Key,
+				Loyalty_Account_Segment_Date:      entry.Loyalty_Account_Segment_Date,
+				Loyalty_Account_Segment_Direction: entry.Loyalty_Account_Segment_Direction,
+				Loyalty_Account_Segment_SetBy:     entry.Loyalty_Account_Segment_SetBy,
+				Awarded_Points:                    entry.Awarded_Points,
+				Redeemed_Points:                   entry.Redeemed_Points,
+				Available_Points:                  entry.Available_Points,
+				Last_Award_Date:                   entry.Last_Award_Date,
+				Last_Redeem_Date:                  entry.Last_Redeem_Date,
+			})
+		}
 	}
 	//evaluate the loyalty Account segment
 	if Login == "DWH_Import" {
@@ -3521,6 +3593,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_Edit(Login string, request Custo
 			Event_Entry_After:  entry,
 		})
 	}
+
 	return Id, nil
 }
 
@@ -5701,12 +5774,7 @@ func (Uc *UserControl) ReadAccountLevelChangeDetailsFromMongoDB(startDate, endDa
 		}
 		MongoDB_DB_Name := "Loyalty_DB_" + strconv.Itoa(currentDate.Year()) + monthStr
 
-		var dayStr = strconv.Itoa(currentDate.Day())
-		if len(dayStr) < 2 {
-			dayStr = "0" + dayStr
-		}
-
-		collName := "Col_Loyalty_Level_Change_log_" + dayStr
+		collName := "Col_Loyalty_Level_Change_log"
 
 		// Fetch the collection
 		collection := Uc.LoyaltyMongoDB.MongoDBClient.Database(MongoDB_DB_Name).Collection(collName)
