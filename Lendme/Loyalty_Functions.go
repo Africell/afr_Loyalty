@@ -5026,8 +5026,8 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 	response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 	Uc.Write_Loyalty_AccountCreditPoints_log(*response)
 
-	PointsCreditedCount.With(prometheus.Labels{"EventSource": request.EventSource, "EventType": request.EventType, "EventDetail": request.EventDetail, "Level": loyalty_account.Loyalty_Level_Key}).Inc()
-	PointsCredited.With(prometheus.Labels{"EventSource": request.EventSource, "EventType": request.EventType, "EventDetail": request.EventDetail, "Level": loyalty_account.Loyalty_Level_Key}).Add(points)
+	PointsCreditedCount.With(prometheus.Labels{"EventSource": request.EventSource, "EventType": request.EventType, "Level": loyalty_account.Loyalty_Level_Key}).Inc()
+	PointsCredited.With(prometheus.Labels{"EventSource": request.EventSource, "EventType": request.EventType, "Level": loyalty_account.Loyalty_Level_Key}).Add(points)
 }
 
 func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header, request Loyalty_AccountDebitPoints_Request, response *Loyalty_AccountDebitPoints_log) {

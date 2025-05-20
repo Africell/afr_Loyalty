@@ -121,14 +121,14 @@ var (
 			Name: "PointsCreditedCount",
 			Help: "PointsCreditedCount",
 		},
-		[]string{"EventSource", "EventType", "EventDetail", "Level"},
+		[]string{"EventSource", "EventType", "Level"},
 	)
 	PointsCredited = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "PointsCredited",
 			Help: "PointsCredited",
 		},
-		[]string{"EventSource", "EventType", "EventDetail", "Level"},
+		[]string{"EventSource", "EventType", "Level"},
 	)
 	PointsDebitedCount = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
