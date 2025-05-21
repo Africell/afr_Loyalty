@@ -624,7 +624,7 @@ func setDefaultConfiguration_GM_Loyalty() (Configuration ConfigType) {
 	Configuration.SpinAndWin_AUC.Description = "SAW AUC"
 	Configuration.SpinAndWin_AUC.Protocol = "http"
 	Configuration.SpinAndWin_AUC.Hostname = "10.30.0.120"
-	Configuration.SpinAndWin_AUC.Port = "9001"
+	Configuration.SpinAndWin_AUC.Port = "9102"
 	Configuration.SpinAndWin_AUC.Module = "AUC"
 	Configuration.SpinAndWin_AUC.Version = "V1"
 	Configuration.SpinAndWin_AUC.S2S_Username = "SAW_Admin"
