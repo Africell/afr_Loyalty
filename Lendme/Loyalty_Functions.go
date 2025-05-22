@@ -374,7 +374,7 @@ func (Uc *UserControl) Write_Loyalty_Level_Change_log(record Loyalty_Level_Chang
 			LevelChangeNotiLog.Error = "Undefined level change notification for transaction"
 		}
 		YYYY, MM, _, _, _, _, _ = GetTimeParts(record.Level_Change_Date)
-		Db = Configuration.DB_Name + "_Logs_" + YYYY + MM
+		Db = Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
 		_, err = DAO_NotificationLog.PutOneLogs(LevelChangeNotiLog, Db, DAO_NotificationLog.Collection)
 		if err != nil {
 			log.Println("Error in Write level change Notification Logs:", err, " (", LevelChangeNotiLog, ")")
@@ -3531,7 +3531,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_Add(Login string, request Custom
 			WelcomeNotiLog.Error = "Undefined welcome notification for transaction"
 		}
 		YYYY, MM, _, _, _, _, _ := GetTimeParts(time.Now())
-		Db := Configuration.DB_Name + "_Logs_" + YYYY + MM
+		Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
 		_, err = DAO_NotificationLog.PutOneLogs(WelcomeNotiLog, Db, DAO_NotificationLog.Collection)
 		if err != nil {
 			log.Println("Error in Write welcome Notification Logs:", err, " (", WelcomeNotiLog, ")")
@@ -4350,7 +4350,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			AirtimeNotiLog.Error = "Undefined Airtime notification for transaction, check bundle definition"
 		}
 		YYYY, MM, _, _, _, _, _ := GetTimeParts(response.ReceiveDate)
-		Db := Configuration.DB_Name + "_Logs_" + YYYY + MM
+		Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
 		_, err = DAO_NotificationLog.PutOneLogs(AirtimeNotiLog, Db, DAO_NotificationLog.Collection)
 		if err != nil {
 			log.Println("Error in Write Airtime Notification Logs:", err, " (", AirtimeNotiLog, ")")
@@ -4538,7 +4538,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			BundleNotiLog.Error = "Undefined Bundle notification for transaction"
 		}
 		YYYY, MM, _, _, _, _, _ := GetTimeParts(response.ReceiveDate)
-		Db := Configuration.DB_Name + "_Logs_" + YYYY + MM
+		Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
 		_, err = DAO_NotificationLog.PutOneLogs(BundleNotiLog, Db, DAO_NotificationLog.Collection)
 		if err != nil {
 			log.Println("Error in Write Bundle Notification Logs:", err, " (", BundleNotiLog, ")")
@@ -4749,7 +4749,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			MobileMoneyNotiLog.Error = "Undefined Mobile Money notification for transaction"
 		}
 		YYYY, MM, _, _, _, _, _ := GetTimeParts(response.ReceiveDate)
-		Db := Configuration.DB_Name + "_Logs_" + YYYY + MM
+		Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
 		_, err = DAO_NotificationLog.PutOneLogs(MobileMoneyNotiLog, Db, DAO_NotificationLog.Collection)
 		if err != nil {
 			log.Println("Error in Write Mobile Money Notification Logs:", err, " (", MobileMoneyNotiLog, ")")
@@ -4924,7 +4924,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			SpinWinNotiLog.Error = "Undefined Mobile Money notification for transaction"
 		}
 		YYYY, MM, _, _, _, _, _ := GetTimeParts(response.ReceiveDate)
-		Db := Configuration.DB_Name + "_Logs_" + YYYY + MM
+		Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
 		_, err = DAO_NotificationLog.PutOneLogs(SpinWinNotiLog, Db, DAO_NotificationLog.Collection)
 		if err != nil {
 			log.Println("Error in Write Mobile Money Notification Logs:", err, " (", SpinWinNotiLog, ")")
