@@ -6300,7 +6300,9 @@ func (Uc *UserControl) Customer_Loyalty_Account_Getlogs(Type string, startDate, 
 		for _, log := range findResult {
 			var newLog = Loyalty_Logs{}
 			newLog.Logs_Type = "Level Change"
-			newLog.Status = ""
+			newLog.Status = "successful"
+			newLog.Opening_Available_Points = log.Available_Points
+			newLog.Closure_Available_Points = log.Available_Points
 			newLog.Level_Change_Logs = log
 			newLog.Date = log.Level_Change_Date
 			allLogs = append(allLogs, newLog)
