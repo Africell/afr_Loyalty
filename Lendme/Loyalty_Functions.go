@@ -3512,6 +3512,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_Add(Login string, request Custom
 	if Welcome_Noti_Text != "" {
 		Welcome_Noti_Text = strings.ReplaceAll(Welcome_Noti_Text, "{{WelcomePoints}}", fmt.Sprint(Earningrecord.Welcome_Points))
 		Welcome_Noti_Text = strings.ReplaceAll(Welcome_Noti_Text, "{{LoyaltyBalance}}", fmt.Sprint(Earningrecord.Welcome_Points))
+		Welcome_Noti_Text = strings.ReplaceAll(Welcome_Noti_Text, "{{NewLevel}}", fmt.Sprint(NewEntry.Loyalty_Level_Key))
 		WelcomeNotiLog.Payload = Welcome_Noti_Text
 		fmt.Println("Welcome_Noti_Text", Welcome_Noti_Text)
 		err := Send_SMS(Earningrecord.Level_Change_Notification_Sender, request.Key, Welcome_Noti_Text)
