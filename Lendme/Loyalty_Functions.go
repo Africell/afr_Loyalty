@@ -341,42 +341,44 @@ func (Uc *UserControl) Write_Loyalty_Level_Change_log(record Loyalty_Level_Chang
 		log.Println("failed to get data")
 		return
 	}
-	LevelChangeNotiLog := NotificationLog{
-		SourceAction:  "LevelChange",
-		TransactionId: "",
-		Medium:        "SMS",
-		SourceAddress: Earningrecord.Level_Change_Notification_Sender,
-		Destination:   record.MSISDN,
-		Subject:       "LevelChange",
-		AddUser:       "SYSTEM",
-		AddDate:       time.Now(),
-	}
-	LevelChange_Noti_Text := ""
-	LevelChange_Noti_Text = Earningrecord.Level_Change_Notification_Text
-	if LevelChange_Noti_Text != "" {
-		LevelChange_Noti_Text = strings.ReplaceAll(LevelChange_Noti_Text, "{{PreviousLevel}}", fmt.Sprint(record.Previous_Loyalty_Level_Key))
-		LevelChange_Noti_Text = strings.ReplaceAll(LevelChange_Noti_Text, "{{NewLevel}}", fmt.Sprint(record.New_Loyalty_Level_Key))
-		LevelChange_Noti_Text = strings.ReplaceAll(LevelChange_Noti_Text, "{{LevelChangeDirection}}", fmt.Sprint(record.New_Loyalty_Level_Direction))
-		LevelChange_Noti_Text = strings.ReplaceAll(LevelChange_Noti_Text, "{{LoyaltyBalance}}", fmt.Sprint(record.Available_Points))
-		LevelChangeNotiLog.Payload = LevelChange_Noti_Text
-		fmt.Println("LevelChange_Noti_Text", LevelChange_Noti_Text)
-		err := Send_SMS(Earningrecord.Level_Change_Notification_Sender, record.MSISDN, LevelChange_Noti_Text)
-		if err != nil {
-			LevelChangeNotiLog.Status = "Failed"
-			LevelChangeNotiLog.Error = err.Error()
-		} else {
-			LevelChangeNotiLog.Status = "Successful"
+	if Earningrecord.Level_Change_Notification {
+		LevelChangeNotiLog := NotificationLog{
+			SourceAction:  "LevelChange",
+			TransactionId: "",
+			Medium:        "SMS",
+			SourceAddress: Earningrecord.Level_Change_Notification_Sender,
+			Destination:   record.MSISDN,
+			Subject:       "LevelChange",
+			AddUser:       "SYSTEM",
+			AddDate:       time.Now(),
 		}
-	} else {
-		LevelChangeNotiLog.Payload = LevelChange_Noti_Text
-		LevelChangeNotiLog.Status = "Failed"
-		LevelChangeNotiLog.Error = "Undefined level change notification for transaction"
-	}
-	YYYY, MM, _, _, _, _, _ = GetTimeParts(record.Level_Change_Date)
-	Db = Configuration.DB_Name + "_Logs_" + YYYY + MM
-	_, err = DAO_NotificationLog.PutOneLogs(LevelChangeNotiLog, Db, DAO_NotificationLog.Collection)
-	if err != nil {
-		log.Println("Error in Write level change Notification Logs:", err, " (", LevelChangeNotiLog, ")")
+		LevelChange_Noti_Text := ""
+		LevelChange_Noti_Text = Earningrecord.Level_Change_Notification_Text
+		if LevelChange_Noti_Text != "" {
+			LevelChange_Noti_Text = strings.ReplaceAll(LevelChange_Noti_Text, "{{PreviousLevel}}", fmt.Sprint(record.Previous_Loyalty_Level_Key))
+			LevelChange_Noti_Text = strings.ReplaceAll(LevelChange_Noti_Text, "{{NewLevel}}", fmt.Sprint(record.New_Loyalty_Level_Key))
+			LevelChange_Noti_Text = strings.ReplaceAll(LevelChange_Noti_Text, "{{LevelChangeDirection}}", fmt.Sprint(record.New_Loyalty_Level_Direction))
+			LevelChange_Noti_Text = strings.ReplaceAll(LevelChange_Noti_Text, "{{LoyaltyBalance}}", fmt.Sprint(record.Available_Points))
+			LevelChangeNotiLog.Payload = LevelChange_Noti_Text
+			fmt.Println("LevelChange_Noti_Text", LevelChange_Noti_Text)
+			err := Send_SMS(Earningrecord.Level_Change_Notification_Sender, record.MSISDN, LevelChange_Noti_Text)
+			if err != nil {
+				LevelChangeNotiLog.Status = "Failed"
+				LevelChangeNotiLog.Error = err.Error()
+			} else {
+				LevelChangeNotiLog.Status = "Successful"
+			}
+		} else {
+			LevelChangeNotiLog.Payload = LevelChange_Noti_Text
+			LevelChangeNotiLog.Status = "Failed"
+			LevelChangeNotiLog.Error = "Undefined level change notification for transaction"
+		}
+		YYYY, MM, _, _, _, _, _ = GetTimeParts(record.Level_Change_Date)
+		Db = Configuration.DB_Name + "_Logs_" + YYYY + MM
+		_, err = DAO_NotificationLog.PutOneLogs(LevelChangeNotiLog, Db, DAO_NotificationLog.Collection)
+		if err != nil {
+			log.Println("Error in Write level change Notification Logs:", err, " (", LevelChangeNotiLog, ")")
+		}
 	}
 
 }
@@ -3497,43 +3499,44 @@ func (Uc *UserControl) Customer_Loyalty_Account_Add(Login string, request Custom
 		log.Println("failed to get data")
 		return
 	}
-	WelcomeNotiLog := NotificationLog{
-		SourceAction:  "Welcome",
-		TransactionId: "",
-		Medium:        "SMS",
-		SourceAddress: Earningrecord.Welcome_Notification_Sender,
-		Destination:   request.Key,
-		Subject:       "Welcome",
-		AddUser:       "SYSTEM",
-		AddDate:       time.Now(),
-	}
-	Welcome_Noti_Text := ""
-	Welcome_Noti_Text = Earningrecord.Level_Change_Notification_Text
-	if Welcome_Noti_Text != "" {
-		Welcome_Noti_Text = strings.ReplaceAll(Welcome_Noti_Text, "{{WelcomePoints}}", fmt.Sprint(Earningrecord.Welcome_Points))
-		Welcome_Noti_Text = strings.ReplaceAll(Welcome_Noti_Text, "{{LoyaltyBalance}}", fmt.Sprint(Earningrecord.Welcome_Points))
-		Welcome_Noti_Text = strings.ReplaceAll(Welcome_Noti_Text, "{{NewLevel}}", fmt.Sprint(NewEntry.Loyalty_Level_Key))
-		WelcomeNotiLog.Payload = Welcome_Noti_Text
-		fmt.Println("Welcome_Noti_Text", Welcome_Noti_Text)
-		err := Send_SMS(Earningrecord.Level_Change_Notification_Sender, request.Key, Welcome_Noti_Text)
-		if err != nil {
-			WelcomeNotiLog.Status = "Failed"
-			WelcomeNotiLog.Error = err.Error()
-		} else {
-			WelcomeNotiLog.Status = "Successful"
+	if Earningrecord.Welcome_Notification {
+		WelcomeNotiLog := NotificationLog{
+			SourceAction:  "Welcome",
+			TransactionId: "",
+			Medium:        "SMS",
+			SourceAddress: Earningrecord.Welcome_Notification_Sender,
+			Destination:   request.Key,
+			Subject:       "Welcome",
+			AddUser:       "SYSTEM",
+			AddDate:       time.Now(),
 		}
-	} else {
-		WelcomeNotiLog.Payload = Welcome_Noti_Text
-		WelcomeNotiLog.Status = "Failed"
-		WelcomeNotiLog.Error = "Undefined welcome notification for transaction"
+		Welcome_Noti_Text := ""
+		Welcome_Noti_Text = Earningrecord.Level_Change_Notification_Text
+		if Welcome_Noti_Text != "" {
+			Welcome_Noti_Text = strings.ReplaceAll(Welcome_Noti_Text, "{{WelcomePoints}}", fmt.Sprint(Earningrecord.Welcome_Points))
+			Welcome_Noti_Text = strings.ReplaceAll(Welcome_Noti_Text, "{{LoyaltyBalance}}", fmt.Sprint(Earningrecord.Welcome_Points))
+			Welcome_Noti_Text = strings.ReplaceAll(Welcome_Noti_Text, "{{NewLevel}}", fmt.Sprint(NewEntry.Loyalty_Level_Key))
+			WelcomeNotiLog.Payload = Welcome_Noti_Text
+			fmt.Println("Welcome_Noti_Text", Welcome_Noti_Text)
+			err := Send_SMS(Earningrecord.Level_Change_Notification_Sender, request.Key, Welcome_Noti_Text)
+			if err != nil {
+				WelcomeNotiLog.Status = "Failed"
+				WelcomeNotiLog.Error = err.Error()
+			} else {
+				WelcomeNotiLog.Status = "Successful"
+			}
+		} else {
+			WelcomeNotiLog.Payload = Welcome_Noti_Text
+			WelcomeNotiLog.Status = "Failed"
+			WelcomeNotiLog.Error = "Undefined welcome notification for transaction"
+		}
+		YYYY, MM, _, _, _, _, _ := GetTimeParts(time.Now())
+		Db := Configuration.DB_Name + "_Logs_" + YYYY + MM
+		_, err = DAO_NotificationLog.PutOneLogs(WelcomeNotiLog, Db, DAO_NotificationLog.Collection)
+		if err != nil {
+			log.Println("Error in Write welcome Notification Logs:", err, " (", WelcomeNotiLog, ")")
+		}
 	}
-	YYYY, MM, _, _, _, _, _ := GetTimeParts(time.Now())
-	Db := Configuration.DB_Name + "_Logs_" + YYYY + MM
-	_, err = DAO_NotificationLog.PutOneLogs(WelcomeNotiLog, Db, DAO_NotificationLog.Collection)
-	if err != nil {
-		log.Println("Error in Write welcome Notification Logs:", err, " (", WelcomeNotiLog, ")")
-	}
-
 	return Id, nil
 
 }
