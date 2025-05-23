@@ -2355,7 +2355,7 @@ func (Uc *UserControl) Lendme_PayBack(Source, MSISDN string, RechargeAmount floa
 			SMS_MSISDN = "232" + SMS_MSISDN[len(SMS_MSISDN)-8:]
 		}
 		SMSText := "Dear subscriber, thank you for paying outstanding Lendme amount " + PaidAmount_str + " NLE"
-		go SendSMS("Africell", SMS_MSISDN, SMSText)
+		go SendSMS("TrossMi", SMS_MSISDN, SMSText)
 
 	}
 
