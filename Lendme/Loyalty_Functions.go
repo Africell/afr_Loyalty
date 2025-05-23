@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	SpinAndWin "afr_SpinAndWin_be/SpinAndWinClient"
@@ -75,6 +76,8 @@ var DAO_Loyalty_Redemption_log daoc.DAO
 
 var DAO_Loyalty_AccountCreditPoints_log daoc.DAO
 var DAO_Loyalty_AccountDebitPoints_log daoc.DAO
+
+var DAO_NotificationLog daoc.DAO
 
 var Map_Loyalty_Campaign daoc.Cache_Synch
 var DAO_Loyalty_Campaign daoc.DAO
@@ -149,6 +152,7 @@ func (uc *UserControl) InitializeLoyaltyDAO() {
 	DAO_Loyalty_Redemption_log.Initialize("Loyalty_Redemption_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Redemption_log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Redemption_log", "")
 	DAO_Loyalty_AccountCreditPoints_log.Initialize("Loyalty_AccountCreditPoints_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_AccountCreditPoints_log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_AccountCreditPoints_log", "")
 	DAO_Loyalty_AccountDebitPoints_log.Initialize("Loyalty_AccountDebitPoints_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_AccountDebitPoints_log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_AccountDebitPoints_log", "")
+	DAO_NotificationLog.Initialize("NotificationLog", uc.MongoDB.MongoDBClient, reflect.TypeOf(NotificationLog{}), Configuration.DB_Name, "Col_NotificationLog", "")
 	DAO_Loyalty_Campaign.Initialize("Loyalty_Campaign", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Campaign{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Campaign", "")
 	DAO_Loyalty_Campaign_Target_List.Initialize("Loyalty_Campaign_Target_List", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Campaign_Target_List{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Campaign_Target_List", "")
 	DAO_Loyalty_Campaign_Account.Initialize("Loyalty_Campaign_Account", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Campaign_Account{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Campaign_Account", "")
@@ -332,6 +336,51 @@ func (Uc *UserControl) Write_Loyalty_Level_Change_log(record Loyalty_Level_Chang
 		return
 	}
 
+	Earningrecord, err := Uc.Customer_Loyalty_Account_GetEarning_Rule(record.MSISDN)
+	if err != nil {
+		log.Println("failed to get data")
+		return
+	}
+	if Earningrecord.Level_Change_Notification {
+		LevelChangeNotiLog := NotificationLog{
+			SourceAction:  "LevelChange",
+			TransactionId: "",
+			Medium:        "SMS",
+			SourceAddress: Earningrecord.Level_Change_Notification_Sender,
+			Destination:   record.MSISDN,
+			Subject:       "LevelChange",
+			AddUser:       "SYSTEM",
+			AddDate:       time.Now(),
+		}
+		LevelChange_Noti_Text := ""
+		LevelChange_Noti_Text = Earningrecord.Level_Change_Notification_Text
+		if LevelChange_Noti_Text != "" {
+			LevelChange_Noti_Text = strings.ReplaceAll(LevelChange_Noti_Text, "{{PreviousLevel}}", fmt.Sprint(record.Previous_Loyalty_Level_Key))
+			LevelChange_Noti_Text = strings.ReplaceAll(LevelChange_Noti_Text, "{{NewLevel}}", fmt.Sprint(record.New_Loyalty_Level_Key))
+			LevelChange_Noti_Text = strings.ReplaceAll(LevelChange_Noti_Text, "{{LevelChangeDirection}}", fmt.Sprint(record.New_Loyalty_Level_Direction))
+			LevelChange_Noti_Text = strings.ReplaceAll(LevelChange_Noti_Text, "{{LoyaltyBalance}}", fmt.Sprint(record.Available_Points))
+			LevelChangeNotiLog.Payload = LevelChange_Noti_Text
+			fmt.Println("LevelChange_Noti_Text", LevelChange_Noti_Text)
+			err := Send_SMS(Earningrecord.Level_Change_Notification_Sender, record.MSISDN, LevelChange_Noti_Text)
+			if err != nil {
+				LevelChangeNotiLog.Status = "Failed"
+				LevelChangeNotiLog.Error = err.Error()
+			} else {
+				LevelChangeNotiLog.Status = "Successful"
+			}
+		} else {
+			LevelChangeNotiLog.Payload = LevelChange_Noti_Text
+			LevelChangeNotiLog.Status = "Failed"
+			LevelChangeNotiLog.Error = "Undefined level change notification for transaction"
+		}
+		YYYY, MM, _, _, _, _, _ = GetTimeParts(record.Level_Change_Date)
+		Db = Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
+		_, err = DAO_NotificationLog.PutOneLogs(LevelChangeNotiLog, Db, DAO_NotificationLog.Collection)
+		if err != nil {
+			log.Println("Error in Write level change Notification Logs:", err, " (", LevelChangeNotiLog, ")")
+		}
+	}
+
 }
 
 func (Uc *UserControl) Write_Loyalty_AccountCreditPoints_log(record Loyalty_AccountCreditPoints_log) {
@@ -437,36 +486,39 @@ func (Uc *UserControl) InitializeLoyaltyDefaultUAT() {
 		AON_Till:    999999999,
 	})
 	Uc.Loyalty_Point_Earning_Rules_Add("Default", Loyalty_Point_Earning_Rules_AddRequest{
-		Key:                    "Default_Earning_Rules",
-		Description:            "Default_Earning_Rules",
-		Welcome_Points:         5,
-		MobileAppDaily_Login:   1,
-		MainGSMBalance_Amount:  10,
-		MainGSMBalance_Points:  1,
-		MM_P2P_Award_Type:      "Transaction",
-		MM_P2P_Amount:          0,
-		MM_P2P_Points:          1,
-		MM_CASHIN_Award_Type:   "Transaction",
-		MM_CASHIN_Amount:       0,
-		MM_CASHIN_Points:       1,
-		MM_CASHOUT_Award_Type:  "Transaction",
-		MM_CASHOUT_Amount:      0,
-		MM_CASHOUT_Points:      1,
-		MM_MERCHPAY_Award_Type: "Transaction",
-		MM_MERCHPAY_Amount:     0,
-		MM_MERCHPAY_Points:     1,
-		MM_BILLPAY_Award_Type:  "Transaction",
-		MM_BILLPAY_Amount:      0,
-		MM_BILLPAY_Points:      1,
-		MM_RC_Award_Type:       "Amount",
-		MM_RC_Amount:           15,
-		MM_RC_Points:           1,
-		MM_CTMMOREQ_Award_Type: "Amount",
-		MM_CTMMOREQ_Amount:     15,
-		MM_CTMMOREQ_Points:     1,
-		MM_CBWREQ_Award_Type:   "Transaction",
-		MM_CBWREQ_Amount:       0,
-		MM_CBWREQ_Points:       1,
+		Key:                        "Default_Earning_Rules",
+		Description:                "Default_Earning_Rules",
+		Welcome_Points:             5,
+		MobileAppDaily_Login:       1,
+		MainGSMBalance_Amount:      10,
+		MainGSMBalance_Points:      1,
+		GSM_SC_Airtime_Award_Type:  "Transaction",
+		GSM_EVC_Airtime_Award_Type: "Transaction",
+		GSM_EVC_Bundle_Award_Type:  "Transaction",
+		MM_P2P_Award_Type:          "Transaction",
+		MM_P2P_Amount:              0,
+		MM_P2P_Points:              1,
+		MM_CASHIN_Award_Type:       "Transaction",
+		MM_CASHIN_Amount:           0,
+		MM_CASHIN_Points:           1,
+		MM_CASHOUT_Award_Type:      "Transaction",
+		MM_CASHOUT_Amount:          0,
+		MM_CASHOUT_Points:          1,
+		MM_MERCHPAY_Award_Type:     "Transaction",
+		MM_MERCHPAY_Amount:         0,
+		MM_MERCHPAY_Points:         1,
+		MM_BILLPAY_Award_Type:      "Transaction",
+		MM_BILLPAY_Amount:          0,
+		MM_BILLPAY_Points:          1,
+		MM_RC_Award_Type:           "Amount",
+		MM_RC_Amount:               15,
+		MM_RC_Points:               1,
+		MM_CTMMOREQ_Award_Type:     "Amount",
+		MM_CTMMOREQ_Amount:         15,
+		MM_CTMMOREQ_Points:         1,
+		MM_CBWREQ_Award_Type:       "Transaction",
+		MM_CBWREQ_Amount:           0,
+		MM_CBWREQ_Points:           1,
 	})
 	Uc.Loyalty_Point_Expiry_Rules_Add("Default", Loyalty_Point_Expiry_Rules_AddRequest{
 		Key:                     "Default_Expiry_Rules",
@@ -2110,8 +2162,8 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Add(Login string, request 
 	NewEntry.Min_Accumulated_Points = request.Min_Accumulated_Points
 	NewEntry.Allow_Negative_Balance_ToRedeem = request.Allow_Negative_Balance_ToRedeem
 	NewEntry.Allow_PendingLendme_ToRedeem = request.Allow_PendingLendme_ToRedeem
-	NewEntry.Notification_Sender = request.Notification_Sender
-	NewEntry.Notification_Text = request.Notification_Text
+	NewEntry.Airtime_Notification_Sender = request.Airtime_Notification_Sender
+	NewEntry.Airtime_Notification_Text = request.Airtime_Notification_Text
 	NewEntry.Airtime_MinPoints = request.Airtime_MinPoints
 	NewEntry.Available_MinPoints_for_Airtime = request.Available_MinPoints_for_Airtime
 	NewEntry.Airtime_AmountPerPoint = request.Airtime_AmountPerPoint
@@ -2122,15 +2174,21 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Add(Login string, request 
 	NewEntry.MobileMoney_AmountPerPoint = request.MobileMoney_AmountPerPoint
 	NewEntry.MobileMoney_MerchantAccount = request.MobileMoney_MerchantAccount
 	NewEntry.MobileMoney_MerchantPIN = request.MobileMoney_MerchantPIN
+	NewEntry.MobileMoney_Notification_Sender = request.MobileMoney_Notification_Sender
+	NewEntry.MobileMoney_Notification_Text = request.MobileMoney_Notification_Text
 	NewEntry.Bundles_MinPoints = request.Bundles_MinPoints
 	NewEntry.Bundles_EVC_Account = request.Bundles_EVC_Account
 	NewEntry.Bundles_EVC_PIN = request.Bundles_EVC_PIN
 	NewEntry.Bundles_Product_Catalogue_Channel = request.Bundles_Product_Catalogue_Channel
 	NewEntry.Bundles_Product_Catalogue_Plan = request.Bundles_Product_Catalogue_Plan
 	NewEntry.Bundles_Product_Catalogue_Version = request.Bundles_Product_Catalogue_Version
+	NewEntry.Bundles_Notification_Sender = request.Bundles_Notification_Sender
+	NewEntry.Bundles_Notification_Text = request.Bundles_Notification_Text
 	NewEntry.FreeSpinAndWin_MinPoints = request.FreeSpinAndWin_MinPoints
 	NewEntry.Available_MinPoints_for_SpinAndWin = request.Available_MinPoints_for_SpinAndWin
 	NewEntry.FreeSpinAndWin_PointsPerSpin = request.FreeSpinAndWin_PointsPerSpin
+	NewEntry.FreeSpinAndWin_Notification_Sender = request.FreeSpinAndWin_Notification_Sender
+	NewEntry.FreeSpinAndWin_Notification_Text = request.FreeSpinAndWin_Notification_Text
 	//add to cache and DB
 	Map_Loyalty_Point_Redemption_Rules.Put(NewEntry.Key, NewEntry)
 	//add logs
@@ -2171,8 +2229,8 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Edit(Login string, request
 	entry.Min_Accumulated_Points = request.Min_Accumulated_Points
 	entry.Allow_Negative_Balance_ToRedeem = request.Allow_Negative_Balance_ToRedeem
 	entry.Allow_PendingLendme_ToRedeem = request.Allow_PendingLendme_ToRedeem
-	entry.Notification_Sender = request.Notification_Sender
-	entry.Notification_Text = request.Notification_Text
+	entry.Airtime_Notification_Sender = request.Airtime_Notification_Sender
+	entry.Airtime_Notification_Text = request.Airtime_Notification_Text
 	entry.Airtime_MinPoints = request.Airtime_MinPoints
 	entry.Available_MinPoints_for_Airtime = request.Available_MinPoints_for_Airtime
 	entry.Airtime_AmountPerPoint = request.Airtime_AmountPerPoint
@@ -2183,15 +2241,21 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Edit(Login string, request
 	entry.MobileMoney_AmountPerPoint = request.MobileMoney_AmountPerPoint
 	entry.MobileMoney_MerchantAccount = request.MobileMoney_MerchantAccount
 	entry.MobileMoney_MerchantPIN = request.MobileMoney_MerchantPIN
+	entry.MobileMoney_Notification_Sender = request.MobileMoney_Notification_Sender
+	entry.MobileMoney_Notification_Text = request.MobileMoney_Notification_Text
 	entry.Bundles_MinPoints = request.Bundles_MinPoints
 	entry.Bundles_EVC_Account = request.Bundles_EVC_Account
 	entry.Bundles_EVC_PIN = request.Bundles_EVC_PIN
 	entry.Bundles_Product_Catalogue_Channel = request.Bundles_Product_Catalogue_Channel
 	entry.Bundles_Product_Catalogue_Plan = request.Bundles_Product_Catalogue_Plan
 	entry.Bundles_Product_Catalogue_Version = request.Bundles_Product_Catalogue_Version
+	entry.Bundles_Notification_Sender = request.Bundles_Notification_Sender
+	entry.Bundles_Notification_Text = request.Bundles_Notification_Text
 	entry.FreeSpinAndWin_MinPoints = request.FreeSpinAndWin_MinPoints
 	entry.Available_MinPoints_for_SpinAndWin = request.Available_MinPoints_for_SpinAndWin
 	entry.FreeSpinAndWin_PointsPerSpin = request.FreeSpinAndWin_PointsPerSpin
+	entry.FreeSpinAndWin_Notification_Sender = request.FreeSpinAndWin_Notification_Sender
+	entry.FreeSpinAndWin_Notification_Text = request.FreeSpinAndWin_Notification_Text
 	if request.NewKey != "" {
 		if request.NewKey != request.Key {
 			//delete old
@@ -3429,7 +3493,52 @@ func (Uc *UserControl) Customer_Loyalty_Account_Add(Login string, request Custom
 	request_header.SourceApp = request.EventSource
 	request_header.AppLogin = Login
 	Uc.Loyalty_AccountCreditPoints(&request_header, loyalty_AccountCreditPoints_Request, &loyalty_AccountCreditPoints_log)
+
+	Earningrecord, err := Uc.Customer_Loyalty_Account_GetEarning_Rule(request.Key)
+	if err != nil {
+		log.Println("failed to get data")
+		return
+	}
+	if Earningrecord.Welcome_Notification {
+		WelcomeNotiLog := NotificationLog{
+			SourceAction:  "Welcome",
+			TransactionId: "",
+			Medium:        "SMS",
+			SourceAddress: Earningrecord.Welcome_Notification_Sender,
+			Destination:   request.Key,
+			Subject:       "Welcome",
+			AddUser:       "SYSTEM",
+			AddDate:       time.Now(),
+		}
+		Welcome_Noti_Text := ""
+		Welcome_Noti_Text = Earningrecord.Level_Change_Notification_Text
+		if Welcome_Noti_Text != "" {
+			Welcome_Noti_Text = strings.ReplaceAll(Welcome_Noti_Text, "{{WelcomePoints}}", fmt.Sprint(Earningrecord.Welcome_Points))
+			Welcome_Noti_Text = strings.ReplaceAll(Welcome_Noti_Text, "{{LoyaltyBalance}}", fmt.Sprint(Earningrecord.Welcome_Points))
+			Welcome_Noti_Text = strings.ReplaceAll(Welcome_Noti_Text, "{{NewLevel}}", fmt.Sprint(NewEntry.Loyalty_Level_Key))
+			WelcomeNotiLog.Payload = Welcome_Noti_Text
+			fmt.Println("Welcome_Noti_Text", Welcome_Noti_Text)
+			err := Send_SMS(Earningrecord.Level_Change_Notification_Sender, request.Key, Welcome_Noti_Text)
+			if err != nil {
+				WelcomeNotiLog.Status = "Failed"
+				WelcomeNotiLog.Error = err.Error()
+			} else {
+				WelcomeNotiLog.Status = "Successful"
+			}
+		} else {
+			WelcomeNotiLog.Payload = Welcome_Noti_Text
+			WelcomeNotiLog.Status = "Failed"
+			WelcomeNotiLog.Error = "Undefined welcome notification for transaction"
+		}
+		YYYY, MM, _, _, _, _, _ := GetTimeParts(time.Now())
+		Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
+		_, err = DAO_NotificationLog.PutOneLogs(WelcomeNotiLog, Db, DAO_NotificationLog.Collection)
+		if err != nil {
+			log.Println("Error in Write welcome Notification Logs:", err, " (", WelcomeNotiLog, ")")
+		}
+	}
 	return Id, nil
+
 }
 
 func (Uc *UserControl) Customer_Loyalty_Account_Edit(Login string, request Customer_Loyalty_Account_EditRequest) (Id int64, err error) {
@@ -3809,6 +3918,51 @@ func (Uc *UserControl) Customer_Loyalty_Account_GetRedemption_Rules(MSISDN strin
 	return cleanRedemptionRule, nil
 }
 
+func (Uc *UserControl) Customer_Loyalty_Account_GetEarning_Rule(MSISDN string) (Earning_Rules Loyalty_Point_Earning_Rules, err error) {
+	MSISDN = Normalize_International_MSISDN(MSISDN)
+	if MSISDN == "" {
+		return Earning_Rules, errors.New("msisdn cannot be empty")
+	}
+	//get loyalty account detail
+	loyalty_account_na, subexist := Map_Customer_Loyalty_Account.CheckThenGet(MSISDN)
+	if !subexist {
+		return Earning_Rules, errors.New("loyalty account does not exist")
+	}
+	loyalty_account, ok := loyalty_account_na.(Customer_Loyalty_Account)
+	if !ok {
+		return Earning_Rules, errors.New("type assertion issue with Customer_Loyalty_Account")
+	}
+	if loyalty_account.Loyalty_Account_Segment_Key == "" {
+		return Earning_Rules, errors.New("type assertion issue with Customer_Loyalty_Account")
+	}
+	if loyalty_account.Loyalty_Level_Key == "" {
+		return Earning_Rules, errors.New("loyalty account level is not assigned")
+	}
+	//get the loyalty plan
+	plan_na, planexist := Map_Loyalty_Plan.CheckThenGet(loyalty_account.Loyalty_Level_Key + "|" + loyalty_account.Loyalty_Account_Segment_Key)
+	if !planexist {
+		return Earning_Rules, errors.New("loyalty plan does not exist")
+	}
+	plan, ok := plan_na.(Loyalty_Plan)
+	if !ok {
+		return Earning_Rules, errors.New("type assertion issue with Loyalty_Plan")
+	}
+	//validate earning rules
+	if plan.Earning_Rules_Key == "" {
+		return Earning_Rules, errors.New("earning rule is not defined")
+	}
+	Earning_Rules_na, earningexist := Map_Loyalty_Point_Earning_Rules.CheckThenGet(plan.Earning_Rules_Key)
+	if !earningexist {
+		return Earning_Rules, errors.New("earning rule is not defined")
+	}
+	Earning_Rule, ok := Earning_Rules_na.(Loyalty_Point_Earning_Rules)
+	if !ok {
+		return Earning_Rules, errors.New("type assertion issue with Loyalty_Point_Earning_Rules")
+	}
+
+	return Earning_Rule, nil
+}
+
 func (Uc *UserControl) Customer_Loyalty_Account_GetRedemptionProductCatalogue(MSISDN string) (response PropC.Catalogue_WithBundleDetail_response, err error) {
 	//get redemption plan
 	redemption_Rules, err := Uc.Customer_Loyalty_Account_GetRedemption_Rules(MSISDN)
@@ -4156,6 +4310,52 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 		AirtimeRedemptionCount.With(prometheus.Labels{"EventSource": response.SourceApp, "Level": loyalty_Account.Loyalty_Level_Key}).Inc()
 		AirtimeRedemptionPoints.With(prometheus.Labels{"EventSource": response.SourceApp, "Level": loyalty_Account.Loyalty_Level_Key}).Add(response.Points_To_Redeem)
 		AirtimeRedemptionAmount.With(prometheus.Labels{"EventSource": response.SourceApp, "Level": loyalty_Account.Loyalty_Level_Key}).Add(response.Redemption_Amount)
+		record, err := Uc.Customer_Loyalty_Account_GetRedemption_Rules(response.MSISDN)
+		if err != nil {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+			response.ErrorDescription = err.Error()
+			return
+		}
+		AirtimeNotiLog := NotificationLog{
+			SourceAction:  "AirtimeRedemption",
+			TransactionId: "",
+			Medium:        "SMS",
+			SourceAddress: record.Airtime_Notification_Sender,
+			Destination:   response.MSISDN,
+			Subject:       "Redemption",
+			AddUser:       "SYSTEM",
+			AddDate:       time.Now(),
+		}
+		Airtime_Noti_Text := ""
+		Airtime_Noti_Text = record.Airtime_Notification_Text
+
+		if Airtime_Noti_Text != "" {
+			Airtime_Noti_Text = strings.ReplaceAll(Airtime_Noti_Text, "{{PointsDeducted}}", fmt.Sprint(response.Points_To_Redeem))
+			Airtime_Noti_Text = strings.ReplaceAll(Airtime_Noti_Text, "{{AirtimeAwarded}}", fmt.Sprint(response.Redemption_Amount))
+			Airtime_Noti_Text = strings.ReplaceAll(Airtime_Noti_Text, "{{LoyaltyBalance}}", fmt.Sprint(response.Closure_Available_Points))
+			AirtimeNotiLog.Payload = Airtime_Noti_Text
+			fmt.Println("Airtime_Noti_Text", Airtime_Noti_Text)
+			err := Send_SMS(record.Airtime_Notification_Sender, response.MSISDN, Airtime_Noti_Text)
+			if err != nil {
+				AirtimeNotiLog.Status = "Failed"
+				AirtimeNotiLog.Error = err.Error()
+			} else {
+				AirtimeNotiLog.Status = "Successful"
+			}
+		} else {
+			AirtimeNotiLog.Payload = Airtime_Noti_Text
+			AirtimeNotiLog.Status = "Failed"
+			AirtimeNotiLog.Error = "Undefined Airtime notification for transaction, check bundle definition"
+		}
+		YYYY, MM, _, _, _, _, _ := GetTimeParts(response.ReceiveDate)
+		Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
+		_, err = DAO_NotificationLog.PutOneLogs(AirtimeNotiLog, Db, DAO_NotificationLog.Collection)
+		if err != nil {
+			log.Println("Error in Write Airtime Notification Logs:", err, " (", AirtimeNotiLog, ")")
+		}
+
 	case "Bundle":
 		if request.Redemption_Bunlde_Id == "" {
 			response.Status = "failed"
@@ -4297,6 +4497,52 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 		}
 		BundleRedemptionCount.With(prometheus.Labels{"EventSource": response.SourceApp, "BunldeId": request.Redemption_Bunlde_Id, "Level": loyalty_Account.Loyalty_Level_Key}).Inc()
 		BundleRedemptionPoints.With(prometheus.Labels{"EventSource": response.SourceApp, "BunldeId": request.Redemption_Bunlde_Id, "Level": loyalty_Account.Loyalty_Level_Key}).Add(response.Points_To_Redeem)
+
+		record, err := Uc.Customer_Loyalty_Account_GetRedemption_Rules(response.MSISDN)
+		if err != nil {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+			response.ErrorDescription = err.Error()
+			return
+		}
+		BundleNotiLog := NotificationLog{
+			SourceAction:  "BundleRedemption",
+			TransactionId: "",
+			Medium:        "SMS",
+			SourceAddress: record.Bundles_Notification_Sender,
+			Destination:   response.MSISDN,
+			Subject:       "Redemption",
+			AddUser:       "SYSTEM",
+			AddDate:       time.Now(),
+		}
+		Bundle_Noti_Text := ""
+		Bundle_Noti_Text = record.Bundles_Notification_Text
+
+		if Bundle_Noti_Text != "" {
+			Bundle_Noti_Text = strings.ReplaceAll(Bundle_Noti_Text, "{{PointsDeducted}}", fmt.Sprint(response.Points_To_Redeem))
+			Bundle_Noti_Text = strings.ReplaceAll(Bundle_Noti_Text, "{{BundleName}}", fmt.Sprint(response.Redemption_Bunlde_Id))
+			Bundle_Noti_Text = strings.ReplaceAll(Bundle_Noti_Text, "{{LoyaltyBalance}}", fmt.Sprint(response.Closure_Available_Points))
+			BundleNotiLog.Payload = Bundle_Noti_Text
+			fmt.Println("Bundle_Noti_Text", Bundle_Noti_Text)
+			err := Send_SMS(record.Bundles_Notification_Sender, response.MSISDN, Bundle_Noti_Text)
+			if err != nil {
+				BundleNotiLog.Status = "Failed"
+				BundleNotiLog.Error = err.Error()
+			} else {
+				BundleNotiLog.Status = "Successful"
+			}
+		} else {
+			BundleNotiLog.Payload = Bundle_Noti_Text
+			BundleNotiLog.Status = "Failed"
+			BundleNotiLog.Error = "Undefined Bundle notification for transaction"
+		}
+		YYYY, MM, _, _, _, _, _ := GetTimeParts(response.ReceiveDate)
+		Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
+		_, err = DAO_NotificationLog.PutOneLogs(BundleNotiLog, Db, DAO_NotificationLog.Collection)
+		if err != nil {
+			log.Println("Error in Write Bundle Notification Logs:", err, " (", BundleNotiLog, ")")
+		}
 	case "MobileMoney":
 		if request.Redemption_Amount <= 0 && request.Points_To_Redeem <= 0 {
 			response.Status = "failed"
@@ -4463,6 +4709,51 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 		MobileMoneyRedemptionPoints.With(prometheus.Labels{"EventSource": response.SourceApp, "Level": loyalty_Account.Loyalty_Level_Key}).Add(response.Points_To_Redeem)
 		MobileMoneyRedemptionAmount.With(prometheus.Labels{"EventSource": response.SourceApp, "Level": loyalty_Account.Loyalty_Level_Key}).Add(response.Redemption_Amount)
 
+		record, err := Uc.Customer_Loyalty_Account_GetRedemption_Rules(response.MSISDN)
+		if err != nil {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+			response.ErrorDescription = err.Error()
+			return
+		}
+		MobileMoneyNotiLog := NotificationLog{
+			SourceAction:  "MobileMoneyRedemption",
+			TransactionId: "",
+			Medium:        "SMS",
+			SourceAddress: record.MobileMoney_Notification_Sender,
+			Destination:   response.MSISDN,
+			Subject:       "Redemption",
+			AddUser:       "SYSTEM",
+			AddDate:       time.Now(),
+		}
+		MobileMoney_Noti_Text := ""
+		MobileMoney_Noti_Text = record.MobileMoney_Notification_Text
+
+		if MobileMoney_Noti_Text != "" {
+			MobileMoney_Noti_Text = strings.ReplaceAll(MobileMoney_Noti_Text, "{{PointsDeducted}}", fmt.Sprint(response.Points_To_Redeem))
+			MobileMoney_Noti_Text = strings.ReplaceAll(MobileMoney_Noti_Text, "{{MobileMoneyAwarded}}", fmt.Sprint(response.Redemption_Amount))
+			MobileMoney_Noti_Text = strings.ReplaceAll(MobileMoney_Noti_Text, "{{LoyaltyBalance}}", fmt.Sprint(response.Closure_Available_Points))
+			MobileMoneyNotiLog.Payload = MobileMoney_Noti_Text
+			fmt.Println("MobileMoney_Noti_Text", MobileMoney_Noti_Text)
+			err := Send_SMS(record.MobileMoney_Notification_Sender, response.MSISDN, MobileMoney_Noti_Text)
+			if err != nil {
+				MobileMoneyNotiLog.Status = "Failed"
+				MobileMoneyNotiLog.Error = err.Error()
+			} else {
+				MobileMoneyNotiLog.Status = "Successful"
+			}
+		} else {
+			MobileMoneyNotiLog.Payload = MobileMoney_Noti_Text
+			MobileMoneyNotiLog.Status = "Failed"
+			MobileMoneyNotiLog.Error = "Undefined Mobile Money notification for transaction"
+		}
+		YYYY, MM, _, _, _, _, _ := GetTimeParts(response.ReceiveDate)
+		Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
+		_, err = DAO_NotificationLog.PutOneLogs(MobileMoneyNotiLog, Db, DAO_NotificationLog.Collection)
+		if err != nil {
+			log.Println("Error in Write Mobile Money Notification Logs:", err, " (", MobileMoneyNotiLog, ")")
+		}
 	case "SpinAndWin":
 		if request.Redemption_Amount <= 0 {
 			response.Status = "failed"
@@ -4591,6 +4882,52 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			refundRequest.EventDescription = ""
 			Uc.Loyalty_AccountCreditPoints(request_header, refundRequest, &refund_response)
 			return
+		}
+
+		record, err := Uc.Customer_Loyalty_Account_GetRedemption_Rules(response.MSISDN)
+		if err != nil {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+			response.ErrorDescription = err.Error()
+			return
+		}
+		SpinWinNotiLog := NotificationLog{
+			SourceAction:  "SpinAndWinRedemption",
+			TransactionId: "",
+			Medium:        "SMS",
+			SourceAddress: record.FreeSpinAndWin_Notification_Sender,
+			Destination:   response.MSISDN,
+			Subject:       "Redemption",
+			AddUser:       "SYSTEM",
+			AddDate:       time.Now(),
+		}
+		SpinWin_Noti_Text := ""
+		SpinWin_Noti_Text = record.FreeSpinAndWin_Notification_Text
+
+		if SpinWin_Noti_Text != "" {
+			SpinWin_Noti_Text = strings.ReplaceAll(SpinWin_Noti_Text, "{{PointsDeducted}}", fmt.Sprint(response.Points_To_Redeem))
+			SpinWin_Noti_Text = strings.ReplaceAll(SpinWin_Noti_Text, "{{SpinsAwarded}}", fmt.Sprint(response.Redemption_Amount))
+			SpinWin_Noti_Text = strings.ReplaceAll(SpinWin_Noti_Text, "{{LoyaltyBalance}}", fmt.Sprint(response.Closure_Available_Points))
+			SpinWinNotiLog.Payload = SpinWin_Noti_Text
+			fmt.Println("SpinWin_Noti_Text", SpinWin_Noti_Text)
+			err := Send_SMS(record.MobileMoney_Notification_Sender, response.MSISDN, SpinWin_Noti_Text)
+			if err != nil {
+				SpinWinNotiLog.Status = "Failed"
+				SpinWinNotiLog.Error = err.Error()
+			} else {
+				SpinWinNotiLog.Status = "Successful"
+			}
+		} else {
+			SpinWinNotiLog.Payload = SpinWin_Noti_Text
+			SpinWinNotiLog.Status = "Failed"
+			SpinWinNotiLog.Error = "Undefined Mobile Money notification for transaction"
+		}
+		YYYY, MM, _, _, _, _, _ := GetTimeParts(response.ReceiveDate)
+		Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
+		_, err = DAO_NotificationLog.PutOneLogs(SpinWinNotiLog, Db, DAO_NotificationLog.Collection)
+		if err != nil {
+			log.Println("Error in Write Mobile Money Notification Logs:", err, " (", SpinWinNotiLog, ")")
 		}
 
 	default:
@@ -5963,7 +6300,9 @@ func (Uc *UserControl) Customer_Loyalty_Account_Getlogs(Type string, startDate, 
 		for _, log := range findResult {
 			var newLog = Loyalty_Logs{}
 			newLog.Logs_Type = "Level Change"
-			newLog.Status = ""
+			newLog.Status = "successful"
+			newLog.Opening_Available_Points = log.Available_Points
+			newLog.Closure_Available_Points = log.Available_Points
 			newLog.Level_Change_Logs = log
 			newLog.Date = log.Level_Change_Date
 			allLogs = append(allLogs, newLog)

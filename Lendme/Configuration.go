@@ -21,10 +21,11 @@ type ConfigType struct {
 	Version         string
 	Module          string
 
-	IsProduction       bool
-	LoyaltyProgramName string
-	LoyaltyVersion     string
-	LoyaltyModule      string
+	IsProduction        bool
+	IsLoyaltyProduction bool
+	LoyaltyProgramName  string
+	LoyaltyVersion      string
+	LoyaltyModule       string
 
 	MSISDN_Prefix    string
 	MSISDN_Short_len int
@@ -110,10 +111,16 @@ type ConfigType struct {
 	}
 
 	SMPP struct {
-		IP       string
-		Port     string
-		Login    string
-		Password string
+		IP                string
+		Port              string
+		Login             string
+		Password          string
+		TimeOut           time.Duration
+		PrintLogs         bool
+		MSISDN_Short_len  int //length without country code and without 0 prefix
+		CountryCodePrefix string
+		DefaultSender     string
+		Encoding          int
 	}
 
 	CGW_AUC struct {
@@ -215,6 +222,7 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 	Configuration.CountryCode = "243"
 
 	Configuration.IsProduction = false
+	Configuration.IsLoyaltyProduction = false
 	Configuration.Min_Allowed_Amnt = 10
 	Configuration.Service_FeePerc = 0.1
 	Configuration.Min_Allowed_AON = 3
@@ -364,6 +372,7 @@ func setDefaultConfiguration_GM_Live() (Configuration ConfigType) {
 	Configuration.LoyaltyModule = "Loyalty"
 
 	Configuration.IsProduction = false
+	Configuration.IsLoyaltyProduction = false
 	Configuration.Min_Allowed_Amnt = 5
 	Configuration.Service_FeePerc = 0.04
 	Configuration.Min_Allowed_AON = 3
@@ -505,6 +514,7 @@ func setDefaultConfiguration_GM_Loyalty() (Configuration ConfigType) {
 	Configuration.CountryCode = "220"
 
 	Configuration.IsProduction = false
+	Configuration.IsLoyaltyProduction = false
 	Configuration.Min_Allowed_Amnt = 5
 	Configuration.Service_FeePerc = 0.04
 	Configuration.Min_Allowed_AON = 3
@@ -588,8 +598,14 @@ func setDefaultConfiguration_GM_Loyalty() (Configuration ConfigType) {
 	//SMPP
 	Configuration.SMPP.IP = "10.30.8.10"
 	Configuration.SMPP.Port = "15403"
-	Configuration.SMPP.Login = "LendME2"
-	Configuration.SMPP.Password = "LendMEP@ssw0rd"
+	Configuration.SMPP.Login = "Loyalty"
+	Configuration.SMPP.Password = "Loyalty123"
+	Configuration.SMPP.TimeOut = 5 //in seconds
+	Configuration.SMPP.PrintLogs = true
+	Configuration.SMPP.MSISDN_Short_len = 8
+	Configuration.SMPP.CountryCodePrefix = "220"
+	Configuration.SMPP.DefaultSender = "Africell" //"Africell"
+	Configuration.SMPP.Encoding = 0
 
 	Configuration.CGW_AUC.Description = "UCGW AUC service"
 	Configuration.CGW_AUC.Protocol = "http"
@@ -624,7 +640,7 @@ func setDefaultConfiguration_GM_Loyalty() (Configuration ConfigType) {
 	Configuration.SpinAndWin_AUC.Description = "SAW AUC"
 	Configuration.SpinAndWin_AUC.Protocol = "http"
 	Configuration.SpinAndWin_AUC.Hostname = "10.30.0.120"
-	Configuration.SpinAndWin_AUC.Port = "9001"
+	Configuration.SpinAndWin_AUC.Port = "9102"
 	Configuration.SpinAndWin_AUC.Module = "AUC"
 	Configuration.SpinAndWin_AUC.Version = "V1"
 	Configuration.SpinAndWin_AUC.S2S_Username = "SAW_Admin"
@@ -670,6 +686,7 @@ func setDefaultConfiguration_SL_Live() (Configuration ConfigType) {
 	Configuration.CountryCode = "232"
 
 	Configuration.IsProduction = false
+	Configuration.IsLoyaltyProduction = false
 	Configuration.Min_Allowed_Amnt = 1
 	Configuration.Service_FeePerc = 0.15
 	Configuration.Min_Allowed_AON = 3
@@ -832,6 +849,7 @@ func setDefaultConfiguration_SL_Loyalty() (Configuration ConfigType) {
 	Configuration.CountryCode = "232"
 
 	Configuration.IsProduction = false
+	Configuration.IsLoyaltyProduction = false
 	Configuration.Min_Allowed_Amnt = 1
 	Configuration.Service_FeePerc = 0.15
 	Configuration.Min_Allowed_AON = 3
@@ -930,9 +948,14 @@ func setDefaultConfiguration_SL_Loyalty() (Configuration ConfigType) {
 
 	//Configuration.SMPP.Login = "lendme"
 	//Configuration.SMPP.Password = "lendmeP@ssw0rd"
-	Configuration.SMPP.Login = "LendME2"
-	Configuration.SMPP.Password = "LendMEP@ssw0rd"
-
+	Configuration.SMPP.Login = "Loyalty"
+	Configuration.SMPP.Password = "Loyalty123"
+	Configuration.SMPP.TimeOut = 5 //in seconds
+	Configuration.SMPP.PrintLogs = true
+	Configuration.SMPP.MSISDN_Short_len = 8
+	Configuration.SMPP.CountryCodePrefix = "232"
+	Configuration.SMPP.DefaultSender = "Africell" //"Africell"
+	Configuration.SMPP.Encoding = 0
 	//CGW
 	Configuration.CGW.Protocol = "http"
 	Configuration.CGW.Hostname = "10.10.231.51"
