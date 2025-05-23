@@ -16,7 +16,6 @@ func Send_SMS(sender string, target string, text string) (_rErr error) {
 		err := errors.New("error sending SMS: target is short ")
 		return err
 	}
-	fmt.Println("target", target)
 	// target = Configuration.SMPP.CountryCodePrefix + target[(len(target)-Configuration.SMPP.MSISDN_Short_len):]
 	//check if UAT and if target is in UAT pool
 	if !Configuration.IsLoyaltyProduction {
@@ -27,7 +26,6 @@ func Send_SMS(sender string, target string, text string) (_rErr error) {
 			return
 		}
 	}
-	fmt.Println("continued", target)
 
 	//check if target is in do not disturb list
 	existsDND := Map_Customer_DND.Check(target)
