@@ -6713,7 +6713,7 @@ func Normalize_International_MSISDN(MSISDN string) (N_MSISDN string) {
 }
 
 func (Uc *UserControl) Auto_GetLoyaltySubsSummary() {
-	Uc.GetOutstandingSummary()
+	Uc.GetLoyaltySubsSummary()
 	for range time.Tick(time.Second * 300) {
 		Uc.GetLoyaltySubsSummary()
 	}
