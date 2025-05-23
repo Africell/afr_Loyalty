@@ -6402,6 +6402,7 @@ func (Uc *UserControl) GetLoyaltySubsSummary() (err error) {
 	}
 	defer cur.Close(context.Background())
 	//var output []AlarmsDailyByType
+	LoyaltySubsSummary.Reset()
 	for cur.Next(context.Background()) {
 		var entry Loyalty_Subs_Summary
 		err := cur.Decode(&entry)
@@ -6410,7 +6411,6 @@ func (Uc *UserControl) GetLoyaltySubsSummary() (err error) {
 			return err
 		}
 		//log.Println(entry)
-		LoyaltySubsSummary.Reset()
 		LoyaltySubsSummary.With(prometheus.Labels{"Level": entry.ID.Loyalty_Level_Key, "Description": "Accounts_Count"}).Set(entry.Accounts_Count)
 		LoyaltySubsSummary.With(prometheus.Labels{"Level": entry.ID.Loyalty_Level_Key, "Description": "Total_Awarded_Points"}).Set(entry.Total_Awarded_Points)
 		LoyaltySubsSummary.With(prometheus.Labels{"Level": entry.ID.Loyalty_Level_Key, "Description": "Total_Redeemed_Points"}).Set(entry.Total_Redeemed_Points)
