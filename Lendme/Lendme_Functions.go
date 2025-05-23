@@ -1422,7 +1422,8 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_SierraLeone() {
 		Amount_Till:         375,
 		AON_From:            3,
 		AON_Till:            6,
-		Credit_limit_Amount: 8,
+		// Credit_limit_Amount: 8,
+		Credit_limit_Amount: 18,
 	}
 	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
 	if err != nil {
@@ -1436,7 +1437,8 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_SierraLeone() {
 		Amount_Till:         375,
 		AON_From:            6,
 		AON_Till:            12,
-		Credit_limit_Amount: 8,
+		// Credit_limit_Amount: 8,
+		Credit_limit_Amount: 20,
 	}
 	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
 	if err != nil {
@@ -1450,7 +1452,8 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_SierraLeone() {
 		Amount_Till:         375,
 		AON_From:            12,
 		AON_Till:            24,
-		Credit_limit_Amount: 15,
+		// Credit_limit_Amount: 15,
+		Credit_limit_Amount: 30,
 	}
 	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
 	if err != nil {
@@ -1464,7 +1467,8 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_SierraLeone() {
 		Amount_Till:         375,
 		AON_From:            24,
 		AON_Till:            1200,
-		Credit_limit_Amount: 20,
+		// Credit_limit_Amount: 20,
+		Credit_limit_Amount: 50,
 	}
 	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
 	if err != nil {
