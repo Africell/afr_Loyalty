@@ -360,7 +360,6 @@ func (Uc *UserControl) Write_Loyalty_Level_Change_log(record Loyalty_Level_Chang
 			LevelChange_Noti_Text = strings.ReplaceAll(LevelChange_Noti_Text, "{{LevelChangeDirection}}", fmt.Sprint(record.New_Loyalty_Level_Direction))
 			LevelChange_Noti_Text = strings.ReplaceAll(LevelChange_Noti_Text, "{{LoyaltyBalance}}", fmt.Sprint(record.Available_Points))
 			LevelChangeNotiLog.Payload = LevelChange_Noti_Text
-			fmt.Println("LevelChange_Noti_Text", LevelChange_Noti_Text)
 			err := Send_SMS(Earningrecord.Level_Change_Notification_Sender, record.MSISDN, LevelChange_Noti_Text)
 			if err != nil {
 				LevelChangeNotiLog.Status = "Failed"
@@ -1960,6 +1959,8 @@ func (Uc *UserControl) Loyalty_Point_Expiry_Rules_Add(Login string, request Loya
 	NewEntry.Rolling_Expiration = request.Rolling_Expiration
 	NewEntry.Validity_Unit = request.Validity_Unit
 	NewEntry.Validity_Duration = request.Validity_Duration
+	NewEntry.Grace_Validity_Unit = request.Grace_Validity_Unit
+	NewEntry.Grace_Validity_Duration = request.Grace_Validity_Duration
 	NewEntry.Fix_Date_Expiration = request.Fix_Date_Expiration
 	NewEntry.Expiration_Trigger_date = request.Expiration_Trigger_date
 	NewEntry.Expiration_Point_Before = request.Expiration_Point_Before
@@ -2003,6 +2004,8 @@ func (Uc *UserControl) Loyalty_Point_Expiry_Rules_Edit(Login string, request Loy
 	entry.Rolling_Expiration = request.Rolling_Expiration
 	entry.Validity_Unit = request.Validity_Unit
 	entry.Validity_Duration = request.Validity_Duration
+	entry.Grace_Validity_Unit = request.Grace_Validity_Unit
+	entry.Grace_Validity_Duration = request.Grace_Validity_Duration
 	entry.Fix_Date_Expiration = request.Fix_Date_Expiration
 	entry.Expiration_Trigger_date = request.Expiration_Trigger_date
 	entry.Expiration_Point_Before = request.Expiration_Point_Before
@@ -2162,6 +2165,7 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Add(Login string, request 
 	NewEntry.Min_Accumulated_Points = request.Min_Accumulated_Points
 	NewEntry.Allow_Negative_Balance_ToRedeem = request.Allow_Negative_Balance_ToRedeem
 	NewEntry.Allow_PendingLendme_ToRedeem = request.Allow_PendingLendme_ToRedeem
+	NewEntry.Airtime_Notification = request.Airtime_Notification
 	NewEntry.Airtime_Notification_Sender = request.Airtime_Notification_Sender
 	NewEntry.Airtime_Notification_Text = request.Airtime_Notification_Text
 	NewEntry.Airtime_MinPoints = request.Airtime_MinPoints
@@ -2174,6 +2178,7 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Add(Login string, request 
 	NewEntry.MobileMoney_AmountPerPoint = request.MobileMoney_AmountPerPoint
 	NewEntry.MobileMoney_MerchantAccount = request.MobileMoney_MerchantAccount
 	NewEntry.MobileMoney_MerchantPIN = request.MobileMoney_MerchantPIN
+	NewEntry.MobileMoney_Notification = request.MobileMoney_Notification
 	NewEntry.MobileMoney_Notification_Sender = request.MobileMoney_Notification_Sender
 	NewEntry.MobileMoney_Notification_Text = request.MobileMoney_Notification_Text
 	NewEntry.Bundles_MinPoints = request.Bundles_MinPoints
@@ -2182,11 +2187,13 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Add(Login string, request 
 	NewEntry.Bundles_Product_Catalogue_Channel = request.Bundles_Product_Catalogue_Channel
 	NewEntry.Bundles_Product_Catalogue_Plan = request.Bundles_Product_Catalogue_Plan
 	NewEntry.Bundles_Product_Catalogue_Version = request.Bundles_Product_Catalogue_Version
+	NewEntry.Bundles_Notification = request.Bundles_Notification
 	NewEntry.Bundles_Notification_Sender = request.Bundles_Notification_Sender
 	NewEntry.Bundles_Notification_Text = request.Bundles_Notification_Text
 	NewEntry.FreeSpinAndWin_MinPoints = request.FreeSpinAndWin_MinPoints
 	NewEntry.Available_MinPoints_for_SpinAndWin = request.Available_MinPoints_for_SpinAndWin
 	NewEntry.FreeSpinAndWin_PointsPerSpin = request.FreeSpinAndWin_PointsPerSpin
+	NewEntry.FreeSpinAndWin_Notification = request.FreeSpinAndWin_Notification
 	NewEntry.FreeSpinAndWin_Notification_Sender = request.FreeSpinAndWin_Notification_Sender
 	NewEntry.FreeSpinAndWin_Notification_Text = request.FreeSpinAndWin_Notification_Text
 	//add to cache and DB
@@ -2229,6 +2236,7 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Edit(Login string, request
 	entry.Min_Accumulated_Points = request.Min_Accumulated_Points
 	entry.Allow_Negative_Balance_ToRedeem = request.Allow_Negative_Balance_ToRedeem
 	entry.Allow_PendingLendme_ToRedeem = request.Allow_PendingLendme_ToRedeem
+	entry.Airtime_Notification = request.Airtime_Notification
 	entry.Airtime_Notification_Sender = request.Airtime_Notification_Sender
 	entry.Airtime_Notification_Text = request.Airtime_Notification_Text
 	entry.Airtime_MinPoints = request.Airtime_MinPoints
@@ -2241,6 +2249,7 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Edit(Login string, request
 	entry.MobileMoney_AmountPerPoint = request.MobileMoney_AmountPerPoint
 	entry.MobileMoney_MerchantAccount = request.MobileMoney_MerchantAccount
 	entry.MobileMoney_MerchantPIN = request.MobileMoney_MerchantPIN
+	entry.MobileMoney_Notification = request.MobileMoney_Notification
 	entry.MobileMoney_Notification_Sender = request.MobileMoney_Notification_Sender
 	entry.MobileMoney_Notification_Text = request.MobileMoney_Notification_Text
 	entry.Bundles_MinPoints = request.Bundles_MinPoints
@@ -2249,11 +2258,13 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Edit(Login string, request
 	entry.Bundles_Product_Catalogue_Channel = request.Bundles_Product_Catalogue_Channel
 	entry.Bundles_Product_Catalogue_Plan = request.Bundles_Product_Catalogue_Plan
 	entry.Bundles_Product_Catalogue_Version = request.Bundles_Product_Catalogue_Version
+	entry.Bundles_Notification = request.Bundles_Notification
 	entry.Bundles_Notification_Sender = request.Bundles_Notification_Sender
 	entry.Bundles_Notification_Text = request.Bundles_Notification_Text
 	entry.FreeSpinAndWin_MinPoints = request.FreeSpinAndWin_MinPoints
 	entry.Available_MinPoints_for_SpinAndWin = request.Available_MinPoints_for_SpinAndWin
 	entry.FreeSpinAndWin_PointsPerSpin = request.FreeSpinAndWin_PointsPerSpin
+	entry.FreeSpinAndWin_Notification = request.FreeSpinAndWin_Notification
 	entry.FreeSpinAndWin_Notification_Sender = request.FreeSpinAndWin_Notification_Sender
 	entry.FreeSpinAndWin_Notification_Text = request.FreeSpinAndWin_Notification_Text
 	if request.NewKey != "" {
@@ -3517,7 +3528,6 @@ func (Uc *UserControl) Customer_Loyalty_Account_Add(Login string, request Custom
 			Welcome_Noti_Text = strings.ReplaceAll(Welcome_Noti_Text, "{{LoyaltyBalance}}", fmt.Sprint(Earningrecord.Welcome_Points))
 			Welcome_Noti_Text = strings.ReplaceAll(Welcome_Noti_Text, "{{NewLevel}}", fmt.Sprint(NewEntry.Loyalty_Level_Key))
 			WelcomeNotiLog.Payload = Welcome_Noti_Text
-			fmt.Println("Welcome_Noti_Text", Welcome_Noti_Text)
 			err := Send_SMS(Earningrecord.Level_Change_Notification_Sender, request.Key, Welcome_Noti_Text)
 			if err != nil {
 				WelcomeNotiLog.Status = "Failed"
@@ -3814,6 +3824,20 @@ func (Uc *UserControl) Customer_Loyalty_Account_Delete(Login, Key string) (err e
 	})
 	return nil
 }
+
+func addValidity(date time.Time, unit string, duration int) time.Time {
+	switch unit {
+	case "Month":
+		return date.AddDate(0, duration, 0)
+	case "Year":
+		return date.AddDate(duration, 0, 0)
+	default:
+		// Handle invalid unit
+		fmt.Println("Invalid validity unit:", unit)
+		return date
+	}
+}
+
 func (Uc *UserControl) Customer_Loyalty_Account_Points_Details_Get(Key string) (entries []Customer_Loyalty_Account_Points_Detail, err error) {
 	if Key == "" {
 		entries_na := Map_Customer_Loyalty_Account_Points_Detail.ConvertToArray()
@@ -4310,6 +4334,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 		AirtimeRedemptionCount.With(prometheus.Labels{"EventSource": response.SourceApp, "Level": loyalty_Account.Loyalty_Level_Key}).Inc()
 		AirtimeRedemptionPoints.With(prometheus.Labels{"EventSource": response.SourceApp, "Level": loyalty_Account.Loyalty_Level_Key}).Add(response.Points_To_Redeem)
 		AirtimeRedemptionAmount.With(prometheus.Labels{"EventSource": response.SourceApp, "Level": loyalty_Account.Loyalty_Level_Key}).Add(response.Redemption_Amount)
+
 		record, err := Uc.Customer_Loyalty_Account_GetRedemption_Rules(response.MSISDN)
 		if err != nil {
 			response.Status = "failed"
@@ -4318,42 +4343,43 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.ErrorDescription = err.Error()
 			return
 		}
-		AirtimeNotiLog := NotificationLog{
-			SourceAction:  "AirtimeRedemption",
-			TransactionId: "",
-			Medium:        "SMS",
-			SourceAddress: record.Airtime_Notification_Sender,
-			Destination:   response.MSISDN,
-			Subject:       "Redemption",
-			AddUser:       "SYSTEM",
-			AddDate:       time.Now(),
-		}
-		Airtime_Noti_Text := ""
-		Airtime_Noti_Text = record.Airtime_Notification_Text
-
-		if Airtime_Noti_Text != "" {
-			Airtime_Noti_Text = strings.ReplaceAll(Airtime_Noti_Text, "{{PointsDeducted}}", fmt.Sprint(response.Points_To_Redeem))
-			Airtime_Noti_Text = strings.ReplaceAll(Airtime_Noti_Text, "{{AirtimeAwarded}}", fmt.Sprint(response.Redemption_Amount))
-			Airtime_Noti_Text = strings.ReplaceAll(Airtime_Noti_Text, "{{LoyaltyBalance}}", fmt.Sprint(response.Closure_Available_Points))
-			AirtimeNotiLog.Payload = Airtime_Noti_Text
-			fmt.Println("Airtime_Noti_Text", Airtime_Noti_Text)
-			err := Send_SMS(record.Airtime_Notification_Sender, response.MSISDN, Airtime_Noti_Text)
-			if err != nil {
-				AirtimeNotiLog.Status = "Failed"
-				AirtimeNotiLog.Error = err.Error()
-			} else {
-				AirtimeNotiLog.Status = "Successful"
+		if record.Airtime_Notification {
+			AirtimeNotiLog := NotificationLog{
+				SourceAction:  "AirtimeRedemption",
+				TransactionId: "",
+				Medium:        "SMS",
+				SourceAddress: record.Airtime_Notification_Sender,
+				Destination:   response.MSISDN,
+				Subject:       "Redemption",
+				AddUser:       "SYSTEM",
+				AddDate:       time.Now(),
 			}
-		} else {
-			AirtimeNotiLog.Payload = Airtime_Noti_Text
-			AirtimeNotiLog.Status = "Failed"
-			AirtimeNotiLog.Error = "Undefined Airtime notification for transaction, check bundle definition"
-		}
-		YYYY, MM, _, _, _, _, _ := GetTimeParts(response.ReceiveDate)
-		Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
-		_, err = DAO_NotificationLog.PutOneLogs(AirtimeNotiLog, Db, DAO_NotificationLog.Collection)
-		if err != nil {
-			log.Println("Error in Write Airtime Notification Logs:", err, " (", AirtimeNotiLog, ")")
+			Airtime_Noti_Text := ""
+			Airtime_Noti_Text = record.Airtime_Notification_Text
+
+			if Airtime_Noti_Text != "" {
+				Airtime_Noti_Text = strings.ReplaceAll(Airtime_Noti_Text, "{{PointsDeducted}}", fmt.Sprint(response.Points_To_Redeem))
+				Airtime_Noti_Text = strings.ReplaceAll(Airtime_Noti_Text, "{{AirtimeAwarded}}", fmt.Sprint(response.Redemption_Amount))
+				Airtime_Noti_Text = strings.ReplaceAll(Airtime_Noti_Text, "{{LoyaltyBalance}}", fmt.Sprint(response.Closure_Available_Points))
+				AirtimeNotiLog.Payload = Airtime_Noti_Text
+				err := Send_SMS(record.Airtime_Notification_Sender, response.MSISDN, Airtime_Noti_Text)
+				if err != nil {
+					AirtimeNotiLog.Status = "Failed"
+					AirtimeNotiLog.Error = err.Error()
+				} else {
+					AirtimeNotiLog.Status = "Successful"
+				}
+			} else {
+				AirtimeNotiLog.Payload = Airtime_Noti_Text
+				AirtimeNotiLog.Status = "Failed"
+				AirtimeNotiLog.Error = "Undefined Airtime notification for transaction, check bundle definition"
+			}
+			YYYY, MM, _, _, _, _, _ := GetTimeParts(response.ReceiveDate)
+			Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
+			_, err = DAO_NotificationLog.PutOneLogs(AirtimeNotiLog, Db, DAO_NotificationLog.Collection)
+			if err != nil {
+				log.Println("Error in Write Airtime Notification Logs:", err, " (", AirtimeNotiLog, ")")
+			}
 		}
 
 	case "Bundle":
@@ -4499,49 +4525,50 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 		BundleRedemptionPoints.With(prometheus.Labels{"EventSource": response.SourceApp, "BunldeId": request.Redemption_Bunlde_Id, "Level": loyalty_Account.Loyalty_Level_Key}).Add(response.Points_To_Redeem)
 
 		record, err := Uc.Customer_Loyalty_Account_GetRedemption_Rules(response.MSISDN)
-		if err != nil {
-			response.Status = "failed"
-			response.StatusCode = http.StatusBadRequest
-			response.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
-			response.ErrorDescription = err.Error()
-			return
-		}
-		BundleNotiLog := NotificationLog{
-			SourceAction:  "BundleRedemption",
-			TransactionId: "",
-			Medium:        "SMS",
-			SourceAddress: record.Bundles_Notification_Sender,
-			Destination:   response.MSISDN,
-			Subject:       "Redemption",
-			AddUser:       "SYSTEM",
-			AddDate:       time.Now(),
-		}
-		Bundle_Noti_Text := ""
-		Bundle_Noti_Text = record.Bundles_Notification_Text
-
-		if Bundle_Noti_Text != "" {
-			Bundle_Noti_Text = strings.ReplaceAll(Bundle_Noti_Text, "{{PointsDeducted}}", fmt.Sprint(response.Points_To_Redeem))
-			Bundle_Noti_Text = strings.ReplaceAll(Bundle_Noti_Text, "{{BundleName}}", fmt.Sprint(response.Redemption_Bunlde_Id))
-			Bundle_Noti_Text = strings.ReplaceAll(Bundle_Noti_Text, "{{LoyaltyBalance}}", fmt.Sprint(response.Closure_Available_Points))
-			BundleNotiLog.Payload = Bundle_Noti_Text
-			fmt.Println("Bundle_Noti_Text", Bundle_Noti_Text)
-			err := Send_SMS(record.Bundles_Notification_Sender, response.MSISDN, Bundle_Noti_Text)
+		if record.Bundles_Notification {
 			if err != nil {
-				BundleNotiLog.Status = "Failed"
-				BundleNotiLog.Error = err.Error()
-			} else {
-				BundleNotiLog.Status = "Successful"
+				response.Status = "failed"
+				response.StatusCode = http.StatusBadRequest
+				response.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+				response.ErrorDescription = err.Error()
+				return
 			}
-		} else {
-			BundleNotiLog.Payload = Bundle_Noti_Text
-			BundleNotiLog.Status = "Failed"
-			BundleNotiLog.Error = "Undefined Bundle notification for transaction"
-		}
-		YYYY, MM, _, _, _, _, _ := GetTimeParts(response.ReceiveDate)
-		Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
-		_, err = DAO_NotificationLog.PutOneLogs(BundleNotiLog, Db, DAO_NotificationLog.Collection)
-		if err != nil {
-			log.Println("Error in Write Bundle Notification Logs:", err, " (", BundleNotiLog, ")")
+			BundleNotiLog := NotificationLog{
+				SourceAction:  "BundleRedemption",
+				TransactionId: "",
+				Medium:        "SMS",
+				SourceAddress: record.Bundles_Notification_Sender,
+				Destination:   response.MSISDN,
+				Subject:       "Redemption",
+				AddUser:       "SYSTEM",
+				AddDate:       time.Now(),
+			}
+			Bundle_Noti_Text := ""
+			Bundle_Noti_Text = record.Bundles_Notification_Text
+
+			if Bundle_Noti_Text != "" {
+				Bundle_Noti_Text = strings.ReplaceAll(Bundle_Noti_Text, "{{PointsDeducted}}", fmt.Sprint(response.Points_To_Redeem))
+				Bundle_Noti_Text = strings.ReplaceAll(Bundle_Noti_Text, "{{BundleName}}", fmt.Sprint(response.Redemption_Bunlde_Id))
+				Bundle_Noti_Text = strings.ReplaceAll(Bundle_Noti_Text, "{{LoyaltyBalance}}", fmt.Sprint(response.Closure_Available_Points))
+				BundleNotiLog.Payload = Bundle_Noti_Text
+				err := Send_SMS(record.Bundles_Notification_Sender, response.MSISDN, Bundle_Noti_Text)
+				if err != nil {
+					BundleNotiLog.Status = "Failed"
+					BundleNotiLog.Error = err.Error()
+				} else {
+					BundleNotiLog.Status = "Successful"
+				}
+			} else {
+				BundleNotiLog.Payload = Bundle_Noti_Text
+				BundleNotiLog.Status = "Failed"
+				BundleNotiLog.Error = "Undefined Bundle notification for transaction"
+			}
+			YYYY, MM, _, _, _, _, _ := GetTimeParts(response.ReceiveDate)
+			Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
+			_, err = DAO_NotificationLog.PutOneLogs(BundleNotiLog, Db, DAO_NotificationLog.Collection)
+			if err != nil {
+				log.Println("Error in Write Bundle Notification Logs:", err, " (", BundleNotiLog, ")")
+			}
 		}
 	case "MobileMoney":
 		if request.Redemption_Amount <= 0 && request.Points_To_Redeem <= 0 {
@@ -4717,42 +4744,43 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.ErrorDescription = err.Error()
 			return
 		}
-		MobileMoneyNotiLog := NotificationLog{
-			SourceAction:  "MobileMoneyRedemption",
-			TransactionId: "",
-			Medium:        "SMS",
-			SourceAddress: record.MobileMoney_Notification_Sender,
-			Destination:   response.MSISDN,
-			Subject:       "Redemption",
-			AddUser:       "SYSTEM",
-			AddDate:       time.Now(),
-		}
-		MobileMoney_Noti_Text := ""
-		MobileMoney_Noti_Text = record.MobileMoney_Notification_Text
-
-		if MobileMoney_Noti_Text != "" {
-			MobileMoney_Noti_Text = strings.ReplaceAll(MobileMoney_Noti_Text, "{{PointsDeducted}}", fmt.Sprint(response.Points_To_Redeem))
-			MobileMoney_Noti_Text = strings.ReplaceAll(MobileMoney_Noti_Text, "{{MobileMoneyAwarded}}", fmt.Sprint(response.Redemption_Amount))
-			MobileMoney_Noti_Text = strings.ReplaceAll(MobileMoney_Noti_Text, "{{LoyaltyBalance}}", fmt.Sprint(response.Closure_Available_Points))
-			MobileMoneyNotiLog.Payload = MobileMoney_Noti_Text
-			fmt.Println("MobileMoney_Noti_Text", MobileMoney_Noti_Text)
-			err := Send_SMS(record.MobileMoney_Notification_Sender, response.MSISDN, MobileMoney_Noti_Text)
-			if err != nil {
-				MobileMoneyNotiLog.Status = "Failed"
-				MobileMoneyNotiLog.Error = err.Error()
-			} else {
-				MobileMoneyNotiLog.Status = "Successful"
+		if record.MobileMoney_Notification {
+			MobileMoneyNotiLog := NotificationLog{
+				SourceAction:  "MobileMoneyRedemption",
+				TransactionId: "",
+				Medium:        "SMS",
+				SourceAddress: record.MobileMoney_Notification_Sender,
+				Destination:   response.MSISDN,
+				Subject:       "Redemption",
+				AddUser:       "SYSTEM",
+				AddDate:       time.Now(),
 			}
-		} else {
-			MobileMoneyNotiLog.Payload = MobileMoney_Noti_Text
-			MobileMoneyNotiLog.Status = "Failed"
-			MobileMoneyNotiLog.Error = "Undefined Mobile Money notification for transaction"
-		}
-		YYYY, MM, _, _, _, _, _ := GetTimeParts(response.ReceiveDate)
-		Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
-		_, err = DAO_NotificationLog.PutOneLogs(MobileMoneyNotiLog, Db, DAO_NotificationLog.Collection)
-		if err != nil {
-			log.Println("Error in Write Mobile Money Notification Logs:", err, " (", MobileMoneyNotiLog, ")")
+			MobileMoney_Noti_Text := ""
+			MobileMoney_Noti_Text = record.MobileMoney_Notification_Text
+
+			if MobileMoney_Noti_Text != "" {
+				MobileMoney_Noti_Text = strings.ReplaceAll(MobileMoney_Noti_Text, "{{PointsDeducted}}", fmt.Sprint(response.Points_To_Redeem))
+				MobileMoney_Noti_Text = strings.ReplaceAll(MobileMoney_Noti_Text, "{{MobileMoneyAwarded}}", fmt.Sprint(response.Redemption_Amount))
+				MobileMoney_Noti_Text = strings.ReplaceAll(MobileMoney_Noti_Text, "{{LoyaltyBalance}}", fmt.Sprint(response.Closure_Available_Points))
+				MobileMoneyNotiLog.Payload = MobileMoney_Noti_Text
+				err := Send_SMS(record.MobileMoney_Notification_Sender, response.MSISDN, MobileMoney_Noti_Text)
+				if err != nil {
+					MobileMoneyNotiLog.Status = "Failed"
+					MobileMoneyNotiLog.Error = err.Error()
+				} else {
+					MobileMoneyNotiLog.Status = "Successful"
+				}
+			} else {
+				MobileMoneyNotiLog.Payload = MobileMoney_Noti_Text
+				MobileMoneyNotiLog.Status = "Failed"
+				MobileMoneyNotiLog.Error = "Undefined Mobile Money notification for transaction"
+			}
+			YYYY, MM, _, _, _, _, _ := GetTimeParts(response.ReceiveDate)
+			Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
+			_, err = DAO_NotificationLog.PutOneLogs(MobileMoneyNotiLog, Db, DAO_NotificationLog.Collection)
+			if err != nil {
+				log.Println("Error in Write Mobile Money Notification Logs:", err, " (", MobileMoneyNotiLog, ")")
+			}
 		}
 	case "SpinAndWin":
 		if request.Redemption_Amount <= 0 {
@@ -4892,42 +4920,43 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.ErrorDescription = err.Error()
 			return
 		}
-		SpinWinNotiLog := NotificationLog{
-			SourceAction:  "SpinAndWinRedemption",
-			TransactionId: "",
-			Medium:        "SMS",
-			SourceAddress: record.FreeSpinAndWin_Notification_Sender,
-			Destination:   response.MSISDN,
-			Subject:       "Redemption",
-			AddUser:       "SYSTEM",
-			AddDate:       time.Now(),
-		}
-		SpinWin_Noti_Text := ""
-		SpinWin_Noti_Text = record.FreeSpinAndWin_Notification_Text
-
-		if SpinWin_Noti_Text != "" {
-			SpinWin_Noti_Text = strings.ReplaceAll(SpinWin_Noti_Text, "{{PointsDeducted}}", fmt.Sprint(response.Points_To_Redeem))
-			SpinWin_Noti_Text = strings.ReplaceAll(SpinWin_Noti_Text, "{{SpinsAwarded}}", fmt.Sprint(response.Redemption_Amount))
-			SpinWin_Noti_Text = strings.ReplaceAll(SpinWin_Noti_Text, "{{LoyaltyBalance}}", fmt.Sprint(response.Closure_Available_Points))
-			SpinWinNotiLog.Payload = SpinWin_Noti_Text
-			fmt.Println("SpinWin_Noti_Text", SpinWin_Noti_Text)
-			err := Send_SMS(record.MobileMoney_Notification_Sender, response.MSISDN, SpinWin_Noti_Text)
-			if err != nil {
-				SpinWinNotiLog.Status = "Failed"
-				SpinWinNotiLog.Error = err.Error()
-			} else {
-				SpinWinNotiLog.Status = "Successful"
+		if record.FreeSpinAndWin_Notification {
+			SpinWinNotiLog := NotificationLog{
+				SourceAction:  "SpinAndWinRedemption",
+				TransactionId: "",
+				Medium:        "SMS",
+				SourceAddress: record.FreeSpinAndWin_Notification_Sender,
+				Destination:   response.MSISDN,
+				Subject:       "Redemption",
+				AddUser:       "SYSTEM",
+				AddDate:       time.Now(),
 			}
-		} else {
-			SpinWinNotiLog.Payload = SpinWin_Noti_Text
-			SpinWinNotiLog.Status = "Failed"
-			SpinWinNotiLog.Error = "Undefined Mobile Money notification for transaction"
-		}
-		YYYY, MM, _, _, _, _, _ := GetTimeParts(response.ReceiveDate)
-		Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
-		_, err = DAO_NotificationLog.PutOneLogs(SpinWinNotiLog, Db, DAO_NotificationLog.Collection)
-		if err != nil {
-			log.Println("Error in Write Mobile Money Notification Logs:", err, " (", SpinWinNotiLog, ")")
+			SpinWin_Noti_Text := ""
+			SpinWin_Noti_Text = record.FreeSpinAndWin_Notification_Text
+
+			if SpinWin_Noti_Text != "" {
+				SpinWin_Noti_Text = strings.ReplaceAll(SpinWin_Noti_Text, "{{PointsDeducted}}", fmt.Sprint(response.Points_To_Redeem))
+				SpinWin_Noti_Text = strings.ReplaceAll(SpinWin_Noti_Text, "{{SpinsAwarded}}", fmt.Sprint(response.Redemption_Amount))
+				SpinWin_Noti_Text = strings.ReplaceAll(SpinWin_Noti_Text, "{{LoyaltyBalance}}", fmt.Sprint(response.Closure_Available_Points))
+				SpinWinNotiLog.Payload = SpinWin_Noti_Text
+				err := Send_SMS(record.FreeSpinAndWin_Notification_Sender, response.MSISDN, SpinWin_Noti_Text)
+				if err != nil {
+					SpinWinNotiLog.Status = "Failed"
+					SpinWinNotiLog.Error = err.Error()
+				} else {
+					SpinWinNotiLog.Status = "Successful"
+				}
+			} else {
+				SpinWinNotiLog.Payload = SpinWin_Noti_Text
+				SpinWinNotiLog.Status = "Failed"
+				SpinWinNotiLog.Error = "Undefined Mobile Money notification for transaction"
+			}
+			YYYY, MM, _, _, _, _, _ := GetTimeParts(response.ReceiveDate)
+			Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
+			_, err = DAO_NotificationLog.PutOneLogs(SpinWinNotiLog, Db, DAO_NotificationLog.Collection)
+			if err != nil {
+				log.Println("Error in Write Mobile Money Notification Logs:", err, " (", SpinWinNotiLog, ")")
+			}
 		}
 
 	default:
