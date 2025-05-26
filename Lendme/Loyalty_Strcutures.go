@@ -589,6 +589,9 @@ type Customer_Loyalty_Account struct {
 	Last_Award_Date  time.Time `bson:"Last_Award_Date" json:"Last_Award_Date"`
 	Last_Redeem_Date time.Time `bson:"Last_Redeem_Date" json:"Last_Redeem_Date"`
 
+	Points_To_Expire   float64   `bson:"Points_To_Expire" json:"Points_To_Expire"`
+	Coming_Expiry_Date time.Time `bson:"Coming_Expiry_Date" json:"Coming_Expiry_Date"`
+
 	Expired_Points float64   `bson:"Expired_Points" json:"Expired_Points"` //expired are deducted from Awarded_Points
 	Expiry_Date    time.Time `bson:"Expiry_Date" json:"Expiry_Date"`
 

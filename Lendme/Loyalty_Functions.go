@@ -3743,9 +3743,57 @@ func (Uc *UserControl) Customer_Loyalty_Account_Get(Key string) (entries []Custo
 			err = errors.New("error in type assertion")
 			return entries, err
 		}
+
+		plan_na, planexist := Map_Loyalty_Plan.CheckThenGet(entry.Loyalty_Level_Key + "|" + entry.Loyalty_Account_Segment_Key)
+		if !planexist {
+			err = errors.New("loyalty plan does not exist")
+			return entries, err
+		}
+		plan, ok := plan_na.(Loyalty_Plan)
+		if !ok {
+			err = errors.New("type assertion issue with Loyalty_Plan")
+			return entries, err
+		}
+		//validate earning rules
+		if plan.Expiry_Rules_Key == "" {
+			err = errors.New("expiry rules is not defined")
+			return entries, err
+		}
+		expiry_Rules_na, expirynexist := Map_Loyalty_Point_Expiry_Rules.CheckThenGet(plan.Expiry_Rules_Key)
+		if !expirynexist {
+			err = errors.New("expiry rules is not defined")
+			return entries, err
+
+		}
+		expiry_Rule, ok := expiry_Rules_na.(Loyalty_Point_Expiry_Rules)
+		if !ok {
+			err = errors.New("type assertion issue with Loyalty_Point_Expiry_Rules")
+			return entries, err
+		}
+		var creationDate = entry.Creation_date
+		initialexpiryDate := addValidity(creationDate, expiry_Rule.Validity_Unit, expiry_Rule.Validity_Duration)
+		finalexpiryDate := addValidity(initialexpiryDate, expiry_Rule.Grace_Validity_Unit, expiry_Rule.Grace_Validity_Duration)
+		var expiryPoints float64 = 0
+		for _, pointKey := range entry.Points_Detail_Keys {
+			pointsDetail, err := Uc.Customer_Loyalty_Account_Points_Details_Get(pointKey)
+			if err != nil {
+				return entries, err
+			}
+			year, err := strconv.Atoi(pointsDetail[0].Year_Month[:4])
+			if err != nil {
+				return entries, err
+			}
+			month, err := strconv.Atoi(pointsDetail[0].Year_Month[4:])
+			if err == nil && year < int(initialexpiryDate.Year()) || (year == initialexpiryDate.Year() && month < int(initialexpiryDate.Month())) {
+				expiryPoints += pointsDetail[0].Available_Points
+			}
+		}
+		entry.Coming_Expiry_Date = finalexpiryDate
+		entry.Points_To_Expire = expiryPoints
 		entries = append(entries, entry)
-		return entries, nil
 	}
+
+	return entries, nil
 }
 
 func (Uc *UserControl) Customer_Loyalty_Account_GetPaginated(Page, Limit int64) (entries []Customer_Loyalty_Account, err error) {
