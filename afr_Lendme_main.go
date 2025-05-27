@@ -53,10 +53,6 @@ func (p *program) run() {
 	go lendme.Reset_Prometheus_Metrics()
 	go lendme.Reset_Prometheus_Metrics_Latency()
 
-	go UserControl.SubQueueExecution()
-	go UserControl.Auto_Import_Subscribers_Dump()
-	go UserControl.Auto_GetOutstandingSummary()
-
 	go sysadmin.SysAdminInit(UserControl.CacheDir, "3"+lendme.Configuration.HttpAppServicePort)
 
 	corsOpts := cors.New(cors.Options{
@@ -114,6 +110,10 @@ func (p *program) run() {
 		go UserControl.Auto_GetLoyaltySubsSummary()
 
 	}
+
+	go UserControl.SubQueueExecution()
+	go UserControl.Auto_Import_Subscribers_Dump()
+	go UserControl.Auto_GetOutstandingSummary()
 
 	//**Lendme web services
 	log.Println("Add App routers to the web service")

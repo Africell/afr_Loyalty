@@ -327,8 +327,10 @@ type Loyalty_Point_Expiry_Rules struct {
 	Expiry_Rules_Id         int64     `bson:"Expiry_Rules_Id" json:"Expiry_Rules_Id"`
 	Description             string    `bson:"Description" json:"Description"`
 	Rolling_Expiration      bool      `bson:"Rolling_Expiration" json:"Rolling_Expiration"`
-	Validity_Unit           string    `bson:"Validity_Unit" json:"Validity_Unit"`         //Month, Year --> only when Rolling_Expiration is true
-	Validity_Duration       int       `bson:"Validity_Duration" json:"Validity_Duration"` //only when Rolling_Expiration is true
+	Validity_Unit           string    `bson:"Validity_Unit" json:"Validity_Unit"`                     //Month, Year --> only when Rolling_Expiration is true
+	Validity_Duration       int       `bson:"Validity_Duration" json:"Validity_Duration"`             //only when Rolling_Expiration is true
+	Grace_Validity_Unit     string    `bson:"Grace_Validity_Unit" json:"Grace_Validity_Unit"`         //actual expiry unit
+	Grace_Validity_Duration int       `bson:"Grace_Validity_Duration" json:"Grace_Validity_Duration"` //actual expiry duration
 	Fix_Date_Expiration     bool      `bson:"Fix_Date_Expiration" json:"Fix_Date_Expiration"`
 	Expiration_Trigger_date time.Time `bson:"Expiration_Trigger_date" json:"Expiration_Trigger_date"` //when the expiry process will run
 	Expiration_Point_Before time.Time `bson:"Expiration_Point_Before" json:"Expiration_Point_Before"` //expiry all points before this date
@@ -339,8 +341,10 @@ type Loyalty_Point_Expiry_Rules_AddRequest struct {
 	Expiry_Rules_Id         int64     `bson:"Expiry_Rules_Id" json:"Expiry_Rules_Id"`
 	Description             string    `bson:"Description" json:"Description"`
 	Rolling_Expiration      bool      `bson:"Rolling_Expiration" json:"Rolling_Expiration"`
-	Validity_Unit           string    `bson:"Validity_Unit" json:"Validity_Unit"`         //Month, Year --> only when Rolling_Expiration is true
-	Validity_Duration       int       `bson:"Validity_Duration" json:"Validity_Duration"` //only when Rolling_Expiration is true
+	Validity_Unit           string    `bson:"Validity_Unit" json:"Validity_Unit"`                     //Month, Year --> only when Rolling_Expiration is true
+	Validity_Duration       int       `bson:"Validity_Duration" json:"Validity_Duration"`             //only when Rolling_Expiration is true
+	Grace_Validity_Unit     string    `bson:"Grace_Validity_Unit" json:"Grace_Validity_Unit"`         //actual expiry unit
+	Grace_Validity_Duration int       `bson:"Grace_Validity_Duration" json:"Grace_Validity_Duration"` //actual expiry duration
 	Fix_Date_Expiration     bool      `bson:"Fix_Date_Expiration" json:"Fix_Date_Expiration"`
 	Expiration_Trigger_date time.Time `bson:"Expiration_Trigger_date" json:"Expiration_Trigger_date"` //when the expiry process will run
 	Expiration_Point_Before time.Time `bson:"Expiration_Point_Before" json:"Expiration_Point_Before"` //expiry all points before this date
@@ -352,8 +356,10 @@ type Loyalty_Point_Expiry_Rules_EditRequest struct {
 	Expiry_Rules_Id         int64     `bson:"Expiry_Rules_Id" json:"Expiry_Rules_Id"`
 	Description             string    `bson:"Description" json:"Description"`
 	Rolling_Expiration      bool      `bson:"Rolling_Expiration" json:"Rolling_Expiration"`
-	Validity_Unit           string    `bson:"Validity_Unit" json:"Validity_Unit"`         //Month, Year --> only when Rolling_Expiration is true
-	Validity_Duration       int       `bson:"Validity_Duration" json:"Validity_Duration"` //only when Rolling_Expiration is true
+	Validity_Unit           string    `bson:"Validity_Unit" json:"Validity_Unit"`                     //Month, Year --> only when Rolling_Expiration is true
+	Validity_Duration       int       `bson:"Validity_Duration" json:"Validity_Duration"`             //only when Rolling_Expiration is true
+	Grace_Validity_Unit     string    `bson:"Grace_Validity_Unit" json:"Grace_Validity_Unit"`         //actual expiry unit
+	Grace_Validity_Duration int       `bson:"Grace_Validity_Duration" json:"Grace_Validity_Duration"` //actual expiry duration
 	Fix_Date_Expiration     bool      `bson:"Fix_Date_Expiration" json:"Fix_Date_Expiration"`
 	Expiration_Trigger_date time.Time `bson:"Expiration_Trigger_date" json:"Expiration_Trigger_date"` //when the expiry process will run
 	Expiration_Point_Before time.Time `bson:"Expiration_Point_Before" json:"Expiration_Point_Before"` //expiry all points before this date
@@ -366,27 +372,37 @@ type Loyalty_Point_Redemption_Rules struct {
 	Min_Accumulated_Points              float64 `bson:"Min_Accumulated_Points" json:"Min_Accumulated_Points"` //will be used for upgrade
 	Allow_Negative_Balance_ToRedeem     bool    `bson:"Allow_Negative_Balance_ToRedeem" json:"Allow_Negative_Balance_ToRedeem"`
 	Allow_PendingLendme_ToRedeem        bool    `bson:"Allow_PendingLendme_ToRedeem" json:"Allow_PendingLendme_ToRedeem"`
-	Notification_Sender                 string  `bson:"Notification_Sender" json:"Notification_Sender"`
-	Notification_Text                   string  `bson:"Notification_Text" json:"Notification_Text"`
 	Airtime_MinPoints                   float64 `bson:"Airtime_MinPoints" json:"Airtime_MinPoints"`
 	Available_MinPoints_for_Airtime     float64 `bson:"Available_MinPoints_for_Airtime" json:"Available_MinPoints_for_Airtime"`
 	Airtime_AmountPerPoint              float64 `bson:"Airtime_AmountPerPoint" json:"Airtime_AmountPerPoint"`
 	Airtime_EVC_Account                 string  `bson:"Airtime_EVC_Account" json:"Airtime_EVC_Account"`
 	Airtime_EVC_PIN                     string  `bson:"Airtime_EVC_PIN" json:"Airtime_EVC_PIN"`
+	Airtime_Notification                bool    `bson:"Airtime_Notification" json:"Airtime_Notification"`
+	Airtime_Notification_Sender         string  `bson:"Airtime_Notification_Sender" json:"Airtime_Notification_Sender"`
+	Airtime_Notification_Text           string  `bson:"Airtime_Notification_Text" json:"Airtime_Notification_Text"`
 	MobileMoney_MinPoints               float64 `bson:"MobileMoney_MinPoints" json:"MobileMoney_MinPoints"`
 	Available_MinPoints_for_MobileMoney float64 `bson:"Available_MinPoints_for_MobileMoney" json:"Available_MinPoints_for_MobileMoney"`
 	MobileMoney_AmountPerPoint          float64 `bson:"MobileMoney_AmountPerPoint" json:"MobileMoney_AmountPerPoint"`
 	MobileMoney_MerchantAccount         string  `bson:"MobileMoney_MerchantAccount" json:"MobileMoney_MerchantAccount"`
 	MobileMoney_MerchantPIN             string  `bson:"MobileMoney_MerchantPIN" json:"MobileMoney_MerchantPIN"`
+	MobileMoney_Notification            bool    `bson:"MobileMoney_Notification" json:"MobileMoney_Notification"`
+	MobileMoney_Notification_Sender     string  `bson:"MobileMoney_Notification_Sender" json:"MobileMoney_Notification_Sender"`
+	MobileMoney_Notification_Text       string  `bson:"MobileMoney_Notification_Text" json:"MobileMoney_Notification_Text"`
 	Bundles_MinPoints                   float64 `bson:"Bundles_MinPoints" json:"Bundles_MinPoints"`
 	Bundles_Product_Catalogue_Channel   string  `bson:"Bundles_Product_Catalogue_Channel" json:"Bundles_Product_Catalogue_Channel"`
 	Bundles_Product_Catalogue_Plan      string  `bson:"Bundles_Product_Catalogue_Plan" json:"Bundles_Product_Catalogue_Plan"`
 	Bundles_Product_Catalogue_Version   string  `bson:"Bundles_Product_Catalogue_Version" json:"Bundles_Product_Catalogue_Version"`
 	Bundles_EVC_Account                 string  `bson:"Bundles_EVC_Account" json:"Bundles_EVC_Account"`
 	Bundles_EVC_PIN                     string  `bson:"Bundles_EVC_PIN" json:"Bundles_EVC_PIN"`
+	Bundles_Notification                bool    `bson:"Bundles_Notification" json:"Bundles_Notification"`
+	Bundles_Notification_Sender         string  `bson:"Bundles_Notification_Sender" json:"Bundles_Notification_Sender"`
+	Bundles_Notification_Text           string  `bson:"Bundles_Notification_Text" json:"Bundles_Notification_Text"`
 	FreeSpinAndWin_MinPoints            float64 `bson:"FreeSpinAndWin_MinPoints" json:"FreeSpinAndWin_MinPoints"`
 	Available_MinPoints_for_SpinAndWin  float64 `bson:"Available_MinPoints_for_SpinAndWin" json:"Available_MinPoints_for_SpinAndWin"`
 	FreeSpinAndWin_PointsPerSpin        float64 `bson:"FreeSpinAndWin_PointsPerSpin" json:"FreeSpinAndWin_PointsPerSpin"`
+	FreeSpinAndWin_Notification         bool    `bson:"FreeSpinAndWin_Notification" json:"FreeSpinAndWin_Notification"`
+	FreeSpinAndWin_Notification_Sender  string  `bson:"FreeSpinAndWin_Notification_Sender" json:"FreeSpinAndWin_Notification_Sender"`
+	FreeSpinAndWin_Notification_Text    string  `bson:"FreeSpinAndWin_Notification_Text" json:"FreeSpinAndWin_Notification_Text"`
 }
 
 type Loyalty_Point_Redemption_Rule struct {
@@ -396,27 +412,37 @@ type Loyalty_Point_Redemption_Rule struct {
 	Min_Accumulated_Points              float64 `bson:"Min_Accumulated_Points" json:"Min_Accumulated_Points"` //will be used for upgrade
 	Allow_Negative_Balance_ToRedeem     bool    `bson:"Allow_Negative_Balance_ToRedeem" json:"Allow_Negative_Balance_ToRedeem"`
 	Allow_PendingLendme_ToRedeem        bool    `bson:"Allow_PendingLendme_ToRedeem" json:"Allow_PendingLendme_ToRedeem"`
-	Notification_Sender                 string  `bson:"Notification_Sender" json:"Notification_Sender"`
-	Notification_Text                   string  `bson:"Notification_Text" json:"Notification_Text"`
 	Airtime_MinPoints                   float64 `bson:"Airtime_MinPoints" json:"Airtime_MinPoints"`
 	Available_MinPoints_for_Airtime     float64 `bson:"Available_MinPoints_for_Airtime" json:"Available_MinPoints_for_Airtime"`
 	Airtime_AmountPerPoint              float64 `bson:"Airtime_AmountPerPoint" json:"Airtime_AmountPerPoint"`
 	Airtime_EVC_Account                 string  `bson:"Airtime_EVC_Account" json:"-"`
 	Airtime_EVC_PIN                     string  `bson:"Airtime_EVC_PIN" json:"-"`
+	Airtime_Notification                bool    `bson:"Airtime_Notification" json:"Airtime_Notification"`
+	Airtime_Notification_Sender         string  `bson:"Airtime_Notification_Sender" json:"Airtime_Notification_Sender"`
+	Airtime_Notification_Text           string  `bson:"Airtime_Notification_Text" json:"Airtime_Notification_Text"`
 	MobileMoney_MinPoints               float64 `bson:"MobileMoney_MinPoints" json:"MobileMoney_MinPoints"`
 	Available_MinPoints_for_MobileMoney float64 `bson:"Available_MinPoints_for_MobileMoney" json:"Available_MinPoints_for_MobileMoney"`
 	MobileMoney_AmountPerPoint          float64 `bson:"MobileMoney_AmountPerPoint" json:"MobileMoney_AmountPerPoint"`
 	MobileMoney_MerchantAccount         string  `bson:"MobileMoney_MerchantAccount" json:"-"`
 	MobileMoney_MerchantPIN             string  `bson:"MobileMoney_MerchantPIN" json:"-"`
+	MobileMoney_Notification            bool    `bson:"MobileMoney_Notification" json:"MobileMoney_Notification"`
+	MobileMoney_Notification_Sender     string  `bson:"MobileMoney_Notification_Sender" json:"MobileMoney_Notification_Sender"`
+	MobileMoney_Notification_Text       string  `bson:"MobileMoney_Notification_Text" json:"MobileMoney_Notification_Text"`
 	Bundles_MinPoints                   float64 `bson:"Bundles_MinPoints" json:"Bundles_MinPoints"`
 	Bundles_Product_Catalogue_Channel   string  `bson:"Bundles_Product_Catalogue_Channel" json:"Bundles_Product_Catalogue_Channel"`
 	Bundles_Product_Catalogue_Plan      string  `bson:"Bundles_Product_Catalogue_Plan" json:"Bundles_Product_Catalogue_Plan"`
 	Bundles_Product_Catalogue_Version   string  `bson:"Bundles_Product_Catalogue_Version" json:"Bundles_Product_Catalogue_Version"`
 	Bundles_EVC_Account                 string  `bson:"Bundles_EVC_Account" json:"-"`
 	Bundles_EVC_PIN                     string  `bson:"Bundles_EVC_PIN" json:"-"`
+	Bundles_Notification                bool    `bson:"Bundles_Notification" json:"Bundles_Notification"`
+	Bundles_Notification_Sender         string  `bson:"Bundles_Notification_Sender" json:"Bundles_Notification_Sender"`
+	Bundles_Notification_Text           string  `bson:"Bundles_Notification_Text" json:"Bundles_Notification_Text"`
 	FreeSpinAndWin_MinPoints            float64 `bson:"FreeSpinAndWin_MinPoints" json:"FreeSpinAndWin_MinPoints"`
 	Available_MinPoints_for_SpinAndWin  float64 `bson:"Available_MinPoints_for_SpinAndWin" json:"Available_MinPoints_for_SpinAndWin"`
 	FreeSpinAndWin_PointsPerSpin        float64 `bson:"FreeSpinAndWin_PointsPerSpin" json:"FreeSpinAndWin_PointsPerSpin"`
+	FreeSpinAndWin_Notification         bool    `bson:"FreeSpinAndWin_Notification" json:"FreeSpinAndWin_Notification"`
+	FreeSpinAndWin_Notification_Sender  string  `bson:"FreeSpinAndWin_Notification_Sender" json:"FreeSpinAndWin_Notification_Sender"`
+	FreeSpinAndWin_Notification_Text    string  `bson:"FreeSpinAndWin_Notification_Text" json:"FreeSpinAndWin_Notification_Text"`
 }
 
 type Loyalty_Point_Redemption_Rules_AddRequest struct {
@@ -426,27 +452,37 @@ type Loyalty_Point_Redemption_Rules_AddRequest struct {
 	Min_Accumulated_Points              float64 `bson:"Min_Accumulated_Points" json:"Min_Accumulated_Points"` //will be used for upgrade
 	Allow_Negative_Balance_ToRedeem     bool    `bson:"Allow_Negative_Balance_ToRedeem" json:"Allow_Negative_Balance_ToRedeem"`
 	Allow_PendingLendme_ToRedeem        bool    `bson:"Allow_PendingLendme_ToRedeem" json:"Allow_PendingLendme_ToRedeem"`
-	Notification_Sender                 string  `bson:"Notification_Sender" json:"Notification_Sender"`
-	Notification_Text                   string  `bson:"Notification_Text" json:"Notification_Text"`
 	Airtime_MinPoints                   float64 `bson:"Airtime_MinPoints" json:"Airtime_MinPoints"`
 	Available_MinPoints_for_Airtime     float64 `bson:"Available_MinPoints_for_Airtime" json:"Available_MinPoints_for_Airtime"`
 	Airtime_AmountPerPoint              float64 `bson:"Airtime_AmountPerPoint" json:"Airtime_AmountPerPoint"`
 	Airtime_EVC_Account                 string  `bson:"Airtime_EVC_Account" json:"Airtime_EVC_Account"`
 	Airtime_EVC_PIN                     string  `bson:"Airtime_EVC_PIN" json:"Airtime_EVC_PIN"`
+	Airtime_Notification                bool    `bson:"Airtime_Notification" json:"Airtime_Notification"`
+	Airtime_Notification_Sender         string  `bson:"Airtime_Notification_Sender" json:"Airtime_Notification_Sender"`
+	Airtime_Notification_Text           string  `bson:"Airtime_Notification_Text" json:"Airtime_Notification_Text"`
 	MobileMoney_MinPoints               float64 `bson:"MobileMoney_MinPoints" json:"MobileMoney_MinPoints"`
 	Available_MinPoints_for_MobileMoney float64 `bson:"Available_MinPoints_for_MobileMoney" json:"Available_MinPoints_for_MobileMoney"`
 	MobileMoney_AmountPerPoint          float64 `bson:"MobileMoney_AmountPerPoint" json:"MobileMoney_AmountPerPoint"`
 	MobileMoney_MerchantAccount         string  `bson:"MobileMoney_MerchantAccount" json:"MobileMoney_MerchantAccount"`
 	MobileMoney_MerchantPIN             string  `bson:"MobileMoney_MerchantPIN" json:"MobileMoney_MerchantPIN"`
+	MobileMoney_Notification            bool    `bson:"MobileMoney_Notification" json:"MobileMoney_Notification"`
+	MobileMoney_Notification_Sender     string  `bson:"MobileMoney_Notification_Sender" json:"MobileMoney_Notification_Sender"`
+	MobileMoney_Notification_Text       string  `bson:"MobileMoney_Notification_Text" json:"MobileMoney_Notification_Text"`
 	Bundles_MinPoints                   float64 `bson:"Bundles_MinPoints" json:"Bundles_MinPoints"`
 	Bundles_EVC_Account                 string  `bson:"Bundles_EVC_Account" json:"Bundles_EVC_Account"`
 	Bundles_EVC_PIN                     string  `bson:"Bundles_EVC_PIN" json:"Bundles_EVC_PIN"`
+	Bundles_Notification                bool    `bson:"Bundles_Notification" json:"Bundles_Notification"`
+	Bundles_Notification_Sender         string  `bson:"Bundles_Notification_Sender" json:"Bundles_Notification_Sender"`
+	Bundles_Notification_Text           string  `bson:"Bundles_Notification_Text" json:"Bundles_Notification_Text"`
 	Bundles_Product_Catalogue_Channel   string  `bson:"Bundles_Product_Catalogue_Channel" json:"Bundles_Product_Catalogue_Channel"`
 	Bundles_Product_Catalogue_Plan      string  `bson:"Bundles_Product_Catalogue_Plan" json:"Bundles_Product_Catalogue_Plan"`
 	Bundles_Product_Catalogue_Version   string  `bson:"Bundles_Product_Catalogue_Version" json:"Bundles_Product_Catalogue_Version"`
 	FreeSpinAndWin_MinPoints            float64 `bson:"FreeSpinAndWin_MinPoints" json:"FreeSpinAndWin_MinPoints"`
 	Available_MinPoints_for_SpinAndWin  float64 `bson:"Available_MinPoints_for_SpinAndWin" json:"Available_MinPoints_for_SpinAndWin"`
 	FreeSpinAndWin_PointsPerSpin        float64 `bson:"FreeSpinAndWin_PointsPerSpin" json:"FreeSpinAndWin_PointsPerSpin"`
+	FreeSpinAndWin_Notification         bool    `bson:"FreeSpinAndWin_Notification" json:"FreeSpinAndWin_Notification"`
+	FreeSpinAndWin_Notification_Sender  string  `bson:"FreeSpinAndWin_Notification_Sender" json:"FreeSpinAndWin_Notification_Sender"`
+	FreeSpinAndWin_Notification_Text    string  `bson:"FreeSpinAndWin_Notification_Text" json:"FreeSpinAndWin_Notification_Text"`
 }
 
 type Loyalty_Point_Redemption_Rules_EditRequest struct {
@@ -457,27 +493,37 @@ type Loyalty_Point_Redemption_Rules_EditRequest struct {
 	Min_Accumulated_Points              float64 `bson:"Min_Accumulated_Points" json:"Min_Accumulated_Points"` //will be used for upgrade
 	Allow_Negative_Balance_ToRedeem     bool    `bson:"Allow_Negative_Balance_ToRedeem" json:"Allow_Negative_Balance_ToRedeem"`
 	Allow_PendingLendme_ToRedeem        bool    `bson:"Allow_PendingLendme_ToRedeem" json:"Allow_PendingLendme_ToRedeem"`
-	Notification_Sender                 string  `bson:"Notification_Sender" json:"Notification_Sender"`
-	Notification_Text                   string  `bson:"Notification_Text" json:"Notification_Text"`
 	Airtime_MinPoints                   float64 `bson:"Airtime_MinPoints" json:"Airtime_MinPoints"`
 	Available_MinPoints_for_Airtime     float64 `bson:"Available_MinPoints_for_Airtime" json:"Available_MinPoints_for_Airtime"`
 	Airtime_AmountPerPoint              float64 `bson:"Airtime_AmountPerPoint" json:"Airtime_AmountPerPoint"`
 	Airtime_EVC_Account                 string  `bson:"Airtime_EVC_Account" json:"Airtime_EVC_Account"`
 	Airtime_EVC_PIN                     string  `bson:"Airtime_EVC_PIN" json:"Airtime_EVC_PIN"`
+	Airtime_Notification                bool    `bson:"Airtime_Notification" json:"Airtime_Notification"`
+	Airtime_Notification_Sender         string  `bson:"Airtime_Notification_Sender" json:"Airtime_Notification_Sender"`
+	Airtime_Notification_Text           string  `bson:"Airtime_Notification_Text" json:"Airtime_Notification_Text"`
 	MobileMoney_MinPoints               float64 `bson:"MobileMoney_MinPoints" json:"MobileMoney_MinPoints"`
 	Available_MinPoints_for_MobileMoney float64 `bson:"Available_MinPoints_for_MobileMoney" json:"Available_MinPoints_for_MobileMoney"`
 	MobileMoney_AmountPerPoint          float64 `bson:"MobileMoney_AmountPerPoint" json:"MobileMoney_AmountPerPoint"`
 	MobileMoney_MerchantAccount         string  `bson:"MobileMoney_MerchantAccount" json:"MobileMoney_MerchantAccount"`
 	MobileMoney_MerchantPIN             string  `bson:"MobileMoney_MerchantPIN" json:"MobileMoney_MerchantPIN"`
+	MobileMoney_Notification            bool    `bson:"MobileMoney_Notification" json:"MobileMoney_Notification"`
+	MobileMoney_Notification_Sender     string  `bson:"MobileMoney_Notification_Sender" json:"MobileMoney_Notification_Sender"`
+	MobileMoney_Notification_Text       string  `bson:"MobileMoney_Notification_Text" json:"MobileMoney_Notification_Text"`
 	Bundles_MinPoints                   float64 `bson:"Bundles_MinPoints" json:"Bundles_MinPoints"`
 	Bundles_Product_Catalogue_Channel   string  `bson:"Bundles_Product_Catalogue_Channel" json:"Bundles_Product_Catalogue_Channel"`
 	Bundles_Product_Catalogue_Plan      string  `bson:"Bundles_Product_Catalogue_Plan" json:"Bundles_Product_Catalogue_Plan"`
 	Bundles_Product_Catalogue_Version   string  `bson:"Bundles_Product_Catalogue_Version" json:"Bundles_Product_Catalogue_Version"`
 	Bundles_EVC_Account                 string  `bson:"Bundles_EVC_Account" json:"Bundles_EVC_Account"`
 	Bundles_EVC_PIN                     string  `bson:"Bundles_EVC_PIN" json:"Bundles_EVC_PIN"`
+	Bundles_Notification                bool    `bson:"Bundles_Notification" json:"Bundles_Notification"`
+	Bundles_Notification_Sender         string  `bson:"Bundles_Notification_Sender" json:"Bundles_Notification_Sender"`
+	Bundles_Notification_Text           string  `bson:"Bundles_Notification_Text" json:"Bundles_Notification_Text"`
 	FreeSpinAndWin_MinPoints            float64 `bson:"FreeSpinAndWin_MinPoints" json:"FreeSpinAndWin_MinPoints"`
 	Available_MinPoints_for_SpinAndWin  float64 `bson:"Available_MinPoints_for_SpinAndWin" json:"Available_MinPoints_for_SpinAndWin"`
 	FreeSpinAndWin_PointsPerSpin        float64 `bson:"FreeSpinAndWin_PointsPerSpin" json:"FreeSpinAndWin_PointsPerSpin"`
+	FreeSpinAndWin_Notification         bool    `bson:"FreeSpinAndWin_Notification" json:"FreeSpinAndWin_Notification"`
+	FreeSpinAndWin_Notification_Sender  string  `bson:"FreeSpinAndWin_Notification_Sender" json:"FreeSpinAndWin_Notification_Sender"`
+	FreeSpinAndWin_Notification_Text    string  `bson:"FreeSpinAndWin_Notification_Text" json:"FreeSpinAndWin_Notification_Text"`
 }
 
 type Loyalty_Plan struct {
@@ -542,6 +588,9 @@ type Customer_Loyalty_Account struct {
 	Available_Points float64   `bson:"Available_Points" json:"Available_Points"` //(Awarded_Points + Expired_Points) - Redeemed_Points
 	Last_Award_Date  time.Time `bson:"Last_Award_Date" json:"Last_Award_Date"`
 	Last_Redeem_Date time.Time `bson:"Last_Redeem_Date" json:"Last_Redeem_Date"`
+
+	Points_To_Expire   float64   `bson:"Points_To_Expire" json:"Points_To_Expire"`
+	Coming_Expiry_Date time.Time `bson:"Coming_Expiry_Date" json:"Coming_Expiry_Date"`
 
 	Expired_Points float64   `bson:"Expired_Points" json:"Expired_Points"` //expired are deducted from Awarded_Points
 	Expiry_Date    time.Time `bson:"Expiry_Date" json:"Expiry_Date"`
@@ -1214,4 +1263,18 @@ type Loyalty_Campaign_Account struct {
 	MSISDN                   string    `bson:"MSISDN" json:"MSISDN"`
 	Last_Award_Date          time.Time `bson:"Last_Award_Date" json:"Last_Award_Date"` //the last date when subscriber get benefit from the campaign
 	Cumulative_Points_Earned float64   `bson:"Cumulative_Points_Earned" json:"Cumulative_Points_Earned"`
+}
+
+type NotificationLog struct {
+	SourceAction  string      `bson:"SourceAction" json:"SourceAction"`
+	TransactionId string      `bson:"TransactionId" json:"TransactionId"`
+	Medium        string      `bson:"Medium" json:"Medium"`
+	SourceAddress string      `bson:"SourceAddress" json:"SourceAddress"`
+	Destination   string      `bson:"Destination" json:"Destination"`
+	Payload       interface{} `bson:"Payload" json:"Payload"`
+	Subject       string      `bson:"Subject" json:"Subject"`
+	Status        string      `bson:"Status" json:"Status"`
+	Error         interface{} `bson:"Error" json:"Error"`
+	AddUser       string      `bson:"AddUser" json:"AddUser"`
+	AddDate       time.Time   `bson:"AddDate" json:"AddDate"`
 }
