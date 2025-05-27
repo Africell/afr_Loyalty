@@ -42,6 +42,9 @@ type ConfigType struct {
 
 	ARPU_File_Path string
 
+	Lendme_EVC_Dealer_MSISDN string
+	Lendme_EVC_Dealer_PIN    string
+
 	App_AUC struct {
 		Description   string
 		Protocol      string

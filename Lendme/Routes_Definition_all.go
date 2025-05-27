@@ -296,6 +296,28 @@ func (UC *UserControl) Add_LendmeRoutes(R *Routes) {
 	*R = append(*R, r)
 	DisplayOrder = DisplayOrder + 1
 
+	r = Route{
+		"HTTP_AO_Lendme_Request",
+		"POST",
+		"/" + Configuration.Module + "/" + Configuration.Version + "/HTTP_AO_Lendme_Request/",
+		UC.HTTP_AO_Lendme_Request,
+		true,
+		"AO Lendme Request - Add", // DisplayName
+		DisplayOrder,              // DisplayOrder
+		Module,                    // Module
+		ModuleDisplayOrder,        //ModuleDisplayOrder
+		Level1,                    // Level1
+		Level1DisplayOrder,        // Level1DisplayOrder
+		"",                        // Level2
+		0,                         // Level2DisplayOrder
+		"",                        // Level3
+		0,                         // Level3DisplayOrder
+		true,                      //AllowedFor_OKAPI
+		true,                      //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
 	//*****************************
 	// Subscriber PayBack
 	//*****************************
@@ -304,6 +326,50 @@ func (UC *UserControl) Add_LendmeRoutes(R *Routes) {
 		"POST",
 		"/" + Configuration.Module + "/" + Configuration.Version + "/HTTP_Lendme_PayBack/",
 		UC.HTTP_Lendme_PayBack,
+		true,
+		"Lendme PayBack - Add", // DisplayName
+		DisplayOrder,           // DisplayOrder
+		Module,                 // Module
+		ModuleDisplayOrder,     //ModuleDisplayOrder
+		Level1,                 // Level1
+		Level1DisplayOrder,     // Level1DisplayOrder
+		"",                     // Level2
+		0,                      // Level2DisplayOrder
+		"",                     // Level3
+		0,                      // Level3DisplayOrder
+		true,                   //AllowedFor_OKAPI
+		true,                   //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+	r = Route{
+		"HTTP_Lendme_PayBack",
+		"POST",
+		"/" + Configuration.Module + "/" + Configuration.Version + "/HTTP_Lendme_PayBack/",
+		UC.HTTP_Lendme_PayBack,
+		true,
+		"Lendme PayBack - Add", // DisplayName
+		DisplayOrder,           // DisplayOrder
+		Module,                 // Module
+		ModuleDisplayOrder,     //ModuleDisplayOrder
+		Level1,                 // Level1
+		Level1DisplayOrder,     // Level1DisplayOrder
+		"",                     // Level2
+		0,                      // Level2DisplayOrder
+		"",                     // Level3
+		0,                      // Level3DisplayOrder
+		true,                   //AllowedFor_OKAPI
+		true,                   //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+	r = Route{
+		"HTTP_AO_Lendme_PayBack",
+		"POST",
+		"/" + Configuration.Module + "/" + Configuration.Version + "/HTTP_AO_Lendme_PayBack/",
+		UC.HTTP_AO_Lendme_PayBack,
 		true,
 		"Lendme PayBack - Add", // DisplayName
 		DisplayOrder,           // DisplayOrder
