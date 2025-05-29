@@ -37,6 +37,7 @@ var DAO_AutoIncrement daoc.DAO
 
 var Map_Subscribers daoc.Cache_Synch
 var DAO_Subscribers daoc.DAO
+var DAO_Subscribers_Chrun daoc.DAO
 
 var Map_Credit_Limit_Scheme daoc.Cache_Synch
 var DAO_Credit_Limit_Scheme daoc.DAO
@@ -61,6 +62,7 @@ func (uc *UserControl) InitializeDAO() {
 	DAO_AutoIncrement.Initialize("AutoIncrement", uc.MongoDB.MongoDBClient, reflect.TypeOf(daoc.AutoIncrement{}), Configuration.DB_Name, "Col_AutoIncrement", "")
 	DAO_DefaultValues.Initialize("DefaultValues", uc.MongoDB.MongoDBClient, reflect.TypeOf(DefaultValues{}), Configuration.DB_Name, "Col_DefaultValues", "")
 	DAO_Subscribers.Initialize("Subscriber", uc.MongoDB.MongoDBClient, reflect.TypeOf(Subscriber{}), Configuration.DB_Name, "Col_Subscriber", "")
+	DAO_Subscribers_Chrun.Initialize("Subscriber_Churn", uc.MongoDB.MongoDBClient, reflect.TypeOf(Subscriber{}), Configuration.DB_Name, "Col_Subscriber_Churn", "")
 	DAO_Credit_Limit_Scheme.Initialize("Credit_Limit_Scheme", uc.MongoDB.MongoDBClient, reflect.TypeOf(Credit_Limit_Scheme{}), Configuration.DB_Name, "Col_Credit_Limit_Scheme", "")
 	DAO_Lendme_log.Initialize("Lendme_log", uc.MongoDB.MongoDBClient, reflect.TypeOf(Lendme_log{}), Configuration.DB_Name, "Col_Lendme_log", "")
 }
@@ -131,6 +133,17 @@ func (Uc *UserControl) Write_Lendme_log(record Lendme_log) {
 	_, err := DAO_Lendme_log.PutOneLogs(record, Db, Col)
 	if err != nil {
 		log.Println("Error in Write_Lendme_log:", err, " (", record, ")")
+		return
+	}
+}
+
+func (Uc *UserControl) Write_Subscribers_Chrun_log(record Subscriber) {
+	YYYY, MM, _, DD, _, _, _ := GetTimeParts(time.Now())
+	Db := DAO_Subscribers_Chrun.DB + "_" + YYYY + MM
+	Col := DAO_Subscribers_Chrun.Collection + "_" + DD
+	_, err := DAO_Subscribers_Chrun.PutOneLogs(record, Db, Col)
+	if err != nil {
+		log.Println("Error in Write_Subscribers_Chrun_log:", err, " (", record, ")")
 		return
 	}
 }
@@ -1424,12 +1437,12 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_SierraLeone() {
 
 	//
 	request = Credit_Limit_Scheme_Add_Request{
-		Key:                 "175_375_3_6",
-		Scheme_Id:           0,
-		Amount_From:         175,
-		Amount_Till:         375,
-		AON_From:            3,
-		AON_Till:            6,
+		Key:         "175_375_3_6",
+		Scheme_Id:   0,
+		Amount_From: 175,
+		Amount_Till: 375,
+		AON_From:    3,
+		AON_Till:    6,
 		// Credit_limit_Amount: 8,
 		Credit_limit_Amount: 18,
 	}
@@ -1439,12 +1452,12 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_SierraLeone() {
 	}
 
 	request = Credit_Limit_Scheme_Add_Request{
-		Key:                 "175_375_6_12",
-		Scheme_Id:           0,
-		Amount_From:         175,
-		Amount_Till:         375,
-		AON_From:            6,
-		AON_Till:            12,
+		Key:         "175_375_6_12",
+		Scheme_Id:   0,
+		Amount_From: 175,
+		Amount_Till: 375,
+		AON_From:    6,
+		AON_Till:    12,
 		// Credit_limit_Amount: 8,
 		Credit_limit_Amount: 20,
 	}
@@ -1454,12 +1467,12 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_SierraLeone() {
 	}
 
 	request = Credit_Limit_Scheme_Add_Request{
-		Key:                 "175_375_12_24",
-		Scheme_Id:           0,
-		Amount_From:         175,
-		Amount_Till:         375,
-		AON_From:            12,
-		AON_Till:            24,
+		Key:         "175_375_12_24",
+		Scheme_Id:   0,
+		Amount_From: 175,
+		Amount_Till: 375,
+		AON_From:    12,
+		AON_Till:    24,
 		// Credit_limit_Amount: 15,
 		Credit_limit_Amount: 30,
 	}
@@ -1469,12 +1482,12 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_SierraLeone() {
 	}
 
 	request = Credit_Limit_Scheme_Add_Request{
-		Key:                 "175_375_24_1200",
-		Scheme_Id:           0,
-		Amount_From:         175,
-		Amount_Till:         375,
-		AON_From:            24,
-		AON_Till:            1200,
+		Key:         "175_375_24_1200",
+		Scheme_Id:   0,
+		Amount_From: 175,
+		Amount_Till: 375,
+		AON_From:    24,
+		AON_Till:    1200,
 		// Credit_limit_Amount: 20,
 		Credit_limit_Amount: 50,
 	}
@@ -1904,11 +1917,17 @@ func (Uc *UserControl) Subscriber_Delete(Key string) (err error) {
 		err = errors.New("msisdn cannot be empty")
 		return err
 	}
-	exits := Map_Subscribers.Check(Key)
+	subscriber_na, exits := Map_Subscribers.CheckThenGet(Key)
 	if !exits {
 		err = errors.New("msisdn does not exist")
 		return err
 	}
+	subscriber, ok := subscriber_na.(Subscriber)
+	if !ok {
+		err = errors.New("error in subscriber type assertion")
+		return err
+	}
+	Uc.Write_Subscribers_Chrun_log(subscriber)
 	Map_Subscribers.Delete(Key)
 	return nil
 }

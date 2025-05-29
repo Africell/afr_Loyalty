@@ -3046,6 +3046,9 @@ func (Uc *UserControl) HTTP_INLiveFeed_Churn(w http.ResponseWriter, r *http.Requ
 			Uc.HTTP_API_Standard_response(w, r, sr, false)
 			return
 		}
+		//churn from lendme
+		Uc.Subscriber_Delete(request.Key)
+		//churn from loyalty
 		err = Uc.Customer_Loyalty_Account_Delete(sr.Login, request.Key)
 		if err != nil {
 			sr.Status = "failed"
