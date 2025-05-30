@@ -2172,18 +2172,45 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Add(Login string, request 
 	NewEntry.Available_MinPoints_for_Airtime = request.Available_MinPoints_for_Airtime
 	NewEntry.Airtime_AmountPerPoint = request.Airtime_AmountPerPoint
 	NewEntry.Airtime_EVC_Account = request.Airtime_EVC_Account
-	NewEntry.Airtime_EVC_PIN = request.Airtime_EVC_PIN
+	if request.Airtime_EVC_PIN == "" {
+		NewEntry.Airtime_EVC_PIN = ""
+	} else {
+		enc_string, err := EcryptToHexString(request.Airtime_EVC_PIN)
+		if err != nil {
+			return Id, errors.New("error encrypting password: " + err.Error())
+		}
+		NewEntry.Airtime_EVC_PIN = enc_string
+
+	}
 	NewEntry.MobileMoney_MinPoints = request.MobileMoney_MinPoints
 	NewEntry.Available_MinPoints_for_MobileMoney = request.Available_MinPoints_for_MobileMoney
 	NewEntry.MobileMoney_AmountPerPoint = request.MobileMoney_AmountPerPoint
 	NewEntry.MobileMoney_MerchantAccount = request.MobileMoney_MerchantAccount
-	NewEntry.MobileMoney_MerchantPIN = request.MobileMoney_MerchantPIN
+	if request.MobileMoney_MerchantPIN == "" {
+		NewEntry.MobileMoney_MerchantPIN = ""
+	} else {
+		enc_string, err := EcryptToHexString(request.MobileMoney_MerchantPIN)
+		if err != nil {
+			return Id, errors.New("error encrypting password: " + err.Error())
+		}
+		NewEntry.MobileMoney_MerchantPIN = enc_string
+
+	}
 	NewEntry.MobileMoney_Notification = request.MobileMoney_Notification
 	NewEntry.MobileMoney_Notification_Sender = request.MobileMoney_Notification_Sender
 	NewEntry.MobileMoney_Notification_Text = request.MobileMoney_Notification_Text
 	NewEntry.Bundles_MinPoints = request.Bundles_MinPoints
 	NewEntry.Bundles_EVC_Account = request.Bundles_EVC_Account
-	NewEntry.Bundles_EVC_PIN = request.Bundles_EVC_PIN
+	if request.Bundles_EVC_Account == "" {
+		NewEntry.Bundles_EVC_Account = ""
+	} else {
+		enc_string, err := EcryptToHexString(request.Bundles_EVC_Account)
+		if err != nil {
+			return Id, errors.New("error encrypting password: " + err.Error())
+		}
+		NewEntry.Bundles_EVC_Account = enc_string
+
+	}
 	NewEntry.Bundles_Product_Catalogue_Channel = request.Bundles_Product_Catalogue_Channel
 	NewEntry.Bundles_Product_Catalogue_Plan = request.Bundles_Product_Catalogue_Plan
 	NewEntry.Bundles_Product_Catalogue_Version = request.Bundles_Product_Catalogue_Version
@@ -2243,18 +2270,43 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Edit(Login string, request
 	entry.Available_MinPoints_for_Airtime = request.Available_MinPoints_for_Airtime
 	entry.Airtime_AmountPerPoint = request.Airtime_AmountPerPoint
 	entry.Airtime_EVC_Account = request.Airtime_EVC_Account
-	entry.Airtime_EVC_PIN = request.Airtime_EVC_PIN
+	if request.Airtime_EVC_PIN == "" {
+		entry.Airtime_EVC_PIN = ""
+	} else if request.Airtime_EVC_PIN != "****" {
+		enc_string, err := EcryptToHexString(request.Airtime_EVC_PIN)
+		if err != nil {
+			return Id, errors.New("error encrypting password: " + err.Error())
+		}
+		entry.Airtime_EVC_PIN = enc_string
+	}
 	entry.MobileMoney_MinPoints = request.MobileMoney_MinPoints
 	entry.Available_MinPoints_for_MobileMoney = request.Available_MinPoints_for_MobileMoney
 	entry.MobileMoney_AmountPerPoint = request.MobileMoney_AmountPerPoint
 	entry.MobileMoney_MerchantAccount = request.MobileMoney_MerchantAccount
-	entry.MobileMoney_MerchantPIN = request.MobileMoney_MerchantPIN
+
+	if request.MobileMoney_MerchantPIN == "" {
+		entry.MobileMoney_MerchantPIN = ""
+	} else if request.MobileMoney_MerchantPIN != "****" {
+		enc_string, err := EcryptToHexString(request.MobileMoney_MerchantPIN)
+		if err != nil {
+			return Id, errors.New("error encrypting password: " + err.Error())
+		}
+		entry.MobileMoney_MerchantPIN = enc_string
+	}
 	entry.MobileMoney_Notification = request.MobileMoney_Notification
 	entry.MobileMoney_Notification_Sender = request.MobileMoney_Notification_Sender
 	entry.MobileMoney_Notification_Text = request.MobileMoney_Notification_Text
 	entry.Bundles_MinPoints = request.Bundles_MinPoints
 	entry.Bundles_EVC_Account = request.Bundles_EVC_Account
-	entry.Bundles_EVC_PIN = request.Bundles_EVC_PIN
+	if request.Bundles_EVC_PIN == "" {
+		entry.Bundles_EVC_PIN = ""
+	} else if request.Bundles_EVC_PIN != "****" {
+		enc_string, err := EcryptToHexString(request.Bundles_EVC_PIN)
+		if err != nil {
+			return Id, errors.New("error encrypting password: " + err.Error())
+		}
+		entry.Bundles_EVC_PIN = enc_string
+	}
 	entry.Bundles_Product_Catalogue_Channel = request.Bundles_Product_Catalogue_Channel
 	entry.Bundles_Product_Catalogue_Plan = request.Bundles_Product_Catalogue_Plan
 	entry.Bundles_Product_Catalogue_Version = request.Bundles_Product_Catalogue_Version
@@ -3770,9 +3822,18 @@ func (Uc *UserControl) Customer_Loyalty_Account_Get(Key string) (entries []Custo
 			err = errors.New("type assertion issue with Loyalty_Point_Expiry_Rules")
 			return entries, err
 		}
-		var creationDate = entry.Creation_date
-		initialexpiryDate := addValidity(creationDate, expiry_Rule.Validity_Unit, expiry_Rule.Validity_Duration)
-		finalexpiryDate := addValidity(initialexpiryDate, expiry_Rule.Grace_Validity_Unit, expiry_Rule.Grace_Validity_Duration)
+		if entry.Expiry_Date.IsZero() || entry.Initial_Date.Before(entry.Expiry_Date) {
+			var initialDate time.Time
+			if !entry.Expiry_Date.IsZero() {
+				initialDate = entry.Initial_Date
+			} else {
+				initialDate = entry.Creation_date
+			}
+			initialexpiryDate := addValidity(initialDate, expiry_Rule.Validity_Unit, expiry_Rule.Validity_Duration)
+			finalexpiryDate := addValidity(initialexpiryDate, expiry_Rule.Grace_Validity_Unit, expiry_Rule.Grace_Validity_Duration)
+			entry.Coming_Expiry_Date = finalexpiryDate
+			entry.Initial_Date = initialexpiryDate
+		}
 		var expiryPoints float64 = 0
 		for _, pointKey := range entry.Points_Detail_Keys {
 			pointsDetail, err := Uc.Customer_Loyalty_Account_Points_Details_Get(pointKey)
@@ -3784,12 +3845,11 @@ func (Uc *UserControl) Customer_Loyalty_Account_Get(Key string) (entries []Custo
 				return entries, err
 			}
 			month, err := strconv.Atoi(pointsDetail[0].Year_Month[4:])
-			if err == nil && year < int(initialexpiryDate.Year()) || (year == initialexpiryDate.Year() && month < int(initialexpiryDate.Month())) {
+			if err == nil && year < int(entry.Initial_Date.Year()) || (year == entry.Initial_Date.Year() && month < int(entry.Initial_Date.Month())) {
 				expiryPoints += pointsDetail[0].Available_Points
 			}
+			entry.Points_To_Expire = expiryPoints
 		}
-		entry.Coming_Expiry_Date = finalexpiryDate
-		entry.Points_To_Expire = expiryPoints
 		entries = append(entries, entry)
 	}
 
@@ -4326,9 +4386,13 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 		response.Closure_Redeemed_Points = debit_Log.Closure_Redeemed_Points
 		response.Closure_Available_Points = debit_Log.Closure_Available_Points
 		//credit airtime
+		Airtime_EVC_PIN, err := DecryptHexString(redemption_Rules.Airtime_EVC_PIN)
+		if err != nil {
+			fmt.Println("error in decrypting artime evc pin", err.Error())
+		}
 		airtimeTransferReply, err := Uc.CGW.UC_GWClient.AirtimePurchase(Unified_charging_gateway_Client.AirtimePurchase_Request{
 			PayerMSISDN:            redemption_Rules.Airtime_EVC_Account,
-			PayerPIN:               redemption_Rules.Airtime_EVC_PIN,
+			PayerPIN:               Airtime_EVC_PIN,
 			PaymentMethod:          "Loyalty Points",
 			TargetMSISDN:           request.MSISDN,
 			Amount:                 response.Redemption_Amount,
@@ -4516,9 +4580,13 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 		response.Closure_Redeemed_Points = debit_Log.Closure_Redeemed_Points
 		response.Closure_Available_Points = debit_Log.Closure_Available_Points
 		//recharge the bundle
+		Bundles_EVC_PIN, err := DecryptHexString(redemption_Rules.Bundles_EVC_PIN)
+		if err != nil {
+			fmt.Println("error in decrypting artime evc pin", err.Error())
+		}
 		bundlePurchaseReply, err := Uc.CGW.UC_GWClient.BundlePurchase(Unified_charging_gateway_Client.BundlePurchase_Request{
 			PayerMSISDN:            redemption_Rules.Bundles_EVC_Account,
-			PayerPIN:               redemption_Rules.Bundles_EVC_PIN,
+			PayerPIN:               Bundles_EVC_PIN,
 			PaymentMethod:          "Loyalty Points",
 			TargetMSISDN:           request.MSISDN,
 			BundleKey:              request.Redemption_Bunlde_Id,
@@ -4727,10 +4795,14 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 		response.Closure_Redeemed_Points = debit_Log.Closure_Redeemed_Points
 		response.Closure_Available_Points = debit_Log.Closure_Available_Points
 		//to do: credit mobile money amount --> merchant transfer
+		MobileMoney_MerchantPIN, err := DecryptHexString(redemption_Rules.MobileMoney_MerchantPIN)
+		if err != nil {
+			fmt.Println("error in decrypting artime evc pin", err.Error())
+		}
 
 		mm_CashIn_Reply, err := Uc.CGW.UC_GWClient.MM_Agent_CashIN_ToBonusWallet(MM.CashIN_Request{
 			SenderMSISDN:   redemption_Rules.MobileMoney_MerchantAccount,
-			SenderPIN:      redemption_Rules.MobileMoney_MerchantPIN,
+			SenderPIN:      MobileMoney_MerchantPIN,
 			ReceiverMSISDN: request.MSISDN,
 			Amount:         fmt.Sprintf("%f", response.Redemption_Amount),
 			Remark:         "Loyalty Redemption",
@@ -6593,7 +6665,13 @@ func (Uc *UserControl) PointsExpiry_Process() {
 										// do the work here
 										for _, loyalty_Account := range loyalty_Accounts {
 											chan_PointsExpiry_Controler <- 1
-											go Uc.PointsExpiry_ProcessExec(loyalty_Account)
+											finalAccount, err := Uc.Customer_Loyalty_Account_Get(loyalty_Account.Key)
+											if err != nil || len(finalAccount) == 0 {
+												break
+											}
+											if finalAccount[0].Coming_Expiry_Date.Year() == time.Now().Year() && finalAccount[0].Coming_Expiry_Date.Month() == time.Now().Month() && finalAccount[0].Coming_Expiry_Date.Day() == time.Now().Day() {
+												go Uc.PointsExpiry_ProcessExec(finalAccount[0])
+											}
 										}
 									}
 
@@ -6650,63 +6728,43 @@ func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account
 		return
 	}
 
-	point_Expiry_Rules_Na, exist := Map_Loyalty_Point_Expiry_Rules.CheckThenGet(plan.Expiry_Rules_Key)
-	if !exist {
-		expiry_log.ExpiryStatus = "failed"
-		expiry_log.ExpiryStatusDescription = "points expiry rules not found"
-		Uc.Write_Loyalty_Expiry_log(expiry_log)
-		<-chan_PointsExpiry_Controler
-		return
-	}
-	point_Expiry_Rules, ok := point_Expiry_Rules_Na.(Loyalty_Point_Expiry_Rules)
-	if !ok {
-		expiry_log.ExpiryStatus = "failed"
-		expiry_log.ExpiryStatusDescription = "points expiry rules type assertion issue"
-		Uc.Write_Loyalty_Expiry_log(expiry_log)
-		<-chan_PointsExpiry_Controler
-		return
-	}
-	if point_Expiry_Rules.Rolling_Expiration {
-		var Expiry_Date time.Time
-		if point_Expiry_Rules.Validity_Unit == "Month" {
-			Expiry_Date = account.Creation_date.AddDate(0, -1*point_Expiry_Rules.Validity_Duration, 0)
-		} else if point_Expiry_Rules.Validity_Unit == "Year" {
-			Expiry_Date = account.Creation_date.AddDate(-1*point_Expiry_Rules.Validity_Duration, 0, 0)
-		} else {
+	for _, pointKey := range account.Points_Detail_Keys {
+		pointsDetail, err := Uc.Customer_Loyalty_Account_Points_Details_Get(pointKey)
+		if err != nil {
 			expiry_log.ExpiryStatus = "failed"
-			expiry_log.ExpiryStatusDescription = "points expiry validity unit is not defined"
+			expiry_log.ExpiryStatusDescription = "points expiry rules not found"
 			Uc.Write_Loyalty_Expiry_log(expiry_log)
 			<-chan_PointsExpiry_Controler
 			return
 		}
-		YYYY, MM, _, _, _, _, _ := GetTimeParts(Expiry_Date)
-
-		var PointsDetail Customer_Loyalty_Account_Points_Detail
-		var lpdexist bool
-		PointsDetail_na, lpdexist := Map_Customer_Loyalty_Account_Points_Detail.CheckThenGet(account.Key + "|" + YYYY + MM)
-		if !lpdexist {
+		year, err := strconv.Atoi(pointsDetail[0].Year_Month[:4])
+		if err != nil {
+			expiry_log.ExpiryStatus = "failed"
+			expiry_log.ExpiryStatusDescription = "points expiry rules not found"
+			Uc.Write_Loyalty_Expiry_log(expiry_log)
 			<-chan_PointsExpiry_Controler
 			return
-		} else {
-			var ok bool
-			PointsDetail, ok = PointsDetail_na.(Customer_Loyalty_Account_Points_Detail)
-			if !ok {
-				<-chan_PointsExpiry_Controler
-				return
-			}
-			expired_Points := PointsDetail.Available_Points
-			expiry_log.Year_Month = YYYY + MM
-			expiry_log.Month_Awarded_Points = PointsDetail.Awarded_Points
-			expiry_log.Month_Redeemed_Points = PointsDetail.Redeemed_Points
-			expiry_log.Month_Available_Points = PointsDetail.Available_Points
-			expiry_log.Month_Expired_Points = PointsDetail.Available_Points
-			Map_Customer_Loyalty_Account_Points_Detail.Delete(account.Key + "|" + YYYY + MM)
+		}
+		month, err := strconv.Atoi(pointsDetail[0].Year_Month[4:])
+		if err == nil && (year < int(account.Initial_Date.Year()) || (year == account.Initial_Date.Year() && month < int(account.Initial_Date.Month()))) && pointsDetail[0].Available_Points > 0 {
+			expired_Points := pointsDetail[0].Available_Points
+			pointsDetail[0].Expired_Points = pointsDetail[0].Available_Points
+			pointsDetail[0].Available_Points = 0
+			pointsDetail[0].Expiry_Date = account.Coming_Expiry_Date
+			Map_Customer_Loyalty_Account_Points_Detail.Put(pointsDetail[0].Key, pointsDetail[0])
+
+			expiry_log.Year_Month = pointsDetail[0].Year_Month
+			expiry_log.Month_Awarded_Points = pointsDetail[0].Awarded_Points
+			expiry_log.Month_Redeemed_Points = pointsDetail[0].Redeemed_Points
+			expiry_log.Month_Available_Points = pointsDetail[0].Available_Points
+			expiry_log.Month_Expired_Points = pointsDetail[0].Available_Points
+			// Map_Customer_Loyalty_Account_Points_Detail.Delete(account.Key + "|" + YYYY + MM)
 			//remove detail key from account
-			account.Points_Detail_Keys = removeStringFromArray(account.Points_Detail_Keys, account.Key+"|"+YYYY+MM)
-			account.Expired_Points = account.Expired_Points + PointsDetail.Available_Points
-			account.Expiry_Date = time.Now()
-			account.Awarded_Points = account.Awarded_Points - PointsDetail.Available_Points
-			account.Available_Points = (account.Awarded_Points + account.Expired_Points) - account.Redeemed_Points //(Awarded_Points + Expired_Points) - Redeemed_Points
+			// account.Points_Detail_Keys = removeStringFromArray(account.Points_Detail_Keys, pointsDetail[0].Key)
+			account.Expired_Points = account.Expired_Points + expired_Points
+			account.Expiry_Date = account.Coming_Expiry_Date
+			// account.Awarded_Points = account.Awarded_Points - pointsDetail[0].Available_Points
+			account.Available_Points = account.Awarded_Points - (account.Expired_Points + account.Redeemed_Points) //(Awarded_Points + Expired_Points) - Redeemed_Points
 			Map_Customer_Loyalty_Account.Put(account.Key, account)
 			//update governance expiry
 			Uc.Loyalty_Governance_Expiry_Points_Credit(expired_Points)
@@ -6720,16 +6778,14 @@ func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account
 			if errNL != nil {
 				expiry_log.EndLoyaltyLevel = new_Loyalty_level_key
 			}
-		}
-		expiry_log.ExpiryStatus = "successful"
-		expiry_log.ExpiryStatusDescription = ""
-		Uc.Write_Loyalty_Expiry_log(expiry_log)
-		<-chan_PointsExpiry_Controler
-	} else if point_Expiry_Rules.Fix_Date_Expiration {
+			Map_Customer_Loyalty_Account.Put(account.Key, account)
 
-		<-chan_PointsExpiry_Controler
-	} else {
-		<-chan_PointsExpiry_Controler
+			expiry_log.ExpiryStatus = "successful"
+			expiry_log.ExpiryStatusDescription = ""
+			Uc.Write_Loyalty_Expiry_log(expiry_log)
+		}
+		// }
+		// <-chan_PointsExpiry_Controler
 	}
 }
 
