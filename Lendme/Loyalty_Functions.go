@@ -6643,57 +6643,59 @@ func (Uc *UserControl) PointsExpiry_Process() {
 	LOG_ID := "<<Points Expiry>>"
 	for range time.Tick(time.Second * 1) {
 		_CurrentDateTime := time.Now()
-		_hr, _mi, _se := _CurrentDateTime.Clock()
-		if _hr == 00 {
-			if _mi == 00 {
-				if _se < 60 {
-					if exec == 0 {
-						exec = 1
-						log.Println(LOG_ID + " triggered")
-						count, err := DAO_Customer_Loyalty_Account.Count(daoc.DAOCountParams{})
-						if err != nil {
-							log.Println(LOG_ID + " count get error: " + err.Error())
-						} else {
-							if count > 0 {
-								var QueryLimit int64 = 1000
-								var QueryPage int64 = 1
-								var endReached bool = false
-								var QueryIdx int64 = 0
-								for !endReached {
-									loyalty_Accounts, err := Uc.Customer_Loyalty_Account_GetPaginated(QueryPage, QueryLimit)
-									if err == nil {
-										if QueryIdx < count {
-											QueryPage = QueryPage + 1
-											QueryIdx = QueryIdx + QueryLimit
-										} else {
-											endReached = true
-										}
-										// do the work here
-										for _, loyalty_Account := range loyalty_Accounts {
-											chan_PointsExpiry_Controler <- 1
-											finalAccount, err := Uc.Customer_Loyalty_Account_Get(loyalty_Account.Key)
-											if err != nil || len(finalAccount) == 0 {
-												break
-											}
-											if finalAccount[0].Coming_Expiry_Date.Year() == time.Now().Year() && finalAccount[0].Coming_Expiry_Date.Month() == time.Now().Month() && finalAccount[0].Coming_Expiry_Date.Day() == time.Now().Day() {
-												go Uc.PointsExpiry_ProcessExec(finalAccount[0])
-											}
-										}
-									}
-
+		// _hr, _mi, _se := _CurrentDateTime.Clock()
+		_, _, _se := _CurrentDateTime.Clock()
+		// if _hr == 00 {
+		// 	if _mi == 00 {
+		// 		if _se < 60 {
+		if _se == 00 {
+			if exec == 0 {
+				exec = 1
+				log.Println(LOG_ID + " triggered")
+				count, err := DAO_Customer_Loyalty_Account.Count(daoc.DAOCountParams{})
+				if err != nil {
+					log.Println(LOG_ID + " count get error: " + err.Error())
+				} else {
+					if count > 0 {
+						var QueryLimit int64 = 1000
+						var QueryPage int64 = 1
+						var endReached bool = false
+						var QueryIdx int64 = 0
+						for !endReached {
+							loyalty_Accounts, err := Uc.Customer_Loyalty_Account_GetPaginated(QueryPage, QueryLimit)
+							if err == nil {
+								if QueryIdx < count {
+									QueryPage = QueryPage + 1
+									QueryIdx = QueryIdx + QueryLimit
+								} else {
+									endReached = true
 								}
-
+								// do the work here
+								for _, loyalty_Account := range loyalty_Accounts {
+									chan_PointsExpiry_Controler <- 1
+									finalAccount, err := Uc.Customer_Loyalty_Account_Get(loyalty_Account.Key)
+									if err != nil || len(finalAccount) == 0 {
+										break
+									}
+									if finalAccount[0].Coming_Expiry_Date.Year() == time.Now().Year() && finalAccount[0].Coming_Expiry_Date.Month() == time.Now().Month() && finalAccount[0].Coming_Expiry_Date.Day() == time.Now().Day() {
+										go Uc.PointsExpiry_ProcessExec(finalAccount[0])
+									}
+								}
 							}
+
 						}
-						log.Println(LOG_ID + " finished")
+
 					}
 				}
-			} else {
-				if exec == 1 {
-					exec = 0
-				}
+				log.Println(LOG_ID + " finished")
 			}
 		}
+		// } else {
+		// 	if exec == 1 {
+		// 		exec = 0
+		// 	}
+		// }
+		// }
 	}
 }
 
