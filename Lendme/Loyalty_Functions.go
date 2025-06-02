@@ -536,9 +536,11 @@ func (Uc *UserControl) InitializeLoyaltyDefaultUAT() {
 		Allow_Negative_Balance_ToRedeem:     false,
 		Allow_PendingLendme_ToRedeem:        false,
 		Available_MinPoints_for_Airtime:     100,
-		Airtime_AmountPerPoint:              0.5,
+		Airtime_Amount:                      2,
+		Airtime_Points:                      1,
 		Available_MinPoints_for_MobileMoney: 100,
-		MobileMoney_AmountPerPoint:          0.5,
+		MobileMoney_Amount:                  2,
+		MobileMoney_Points:                  1,
 		Bundles_MinPoints:                   100,
 		Bundles_Product_Catalogue_Channel:   "Loyalty_Default_Channel",
 		Bundles_Product_Catalogue_Plan:      "Loyalty_Default_Plan",
@@ -2170,7 +2172,8 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Add(Login string, request 
 	NewEntry.Airtime_Notification_Text = request.Airtime_Notification_Text
 	NewEntry.Airtime_MinPoints = request.Airtime_MinPoints
 	NewEntry.Available_MinPoints_for_Airtime = request.Available_MinPoints_for_Airtime
-	NewEntry.Airtime_AmountPerPoint = request.Airtime_AmountPerPoint
+	NewEntry.Airtime_Amount = request.Airtime_Amount
+	NewEntry.Airtime_Points = request.Airtime_Points
 	NewEntry.Airtime_EVC_Account = request.Airtime_EVC_Account
 	if request.Airtime_EVC_PIN == "" {
 		NewEntry.Airtime_EVC_PIN = ""
@@ -2184,7 +2187,8 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Add(Login string, request 
 	}
 	NewEntry.MobileMoney_MinPoints = request.MobileMoney_MinPoints
 	NewEntry.Available_MinPoints_for_MobileMoney = request.Available_MinPoints_for_MobileMoney
-	NewEntry.MobileMoney_AmountPerPoint = request.MobileMoney_AmountPerPoint
+	NewEntry.MobileMoney_Amount = request.MobileMoney_Amount
+	NewEntry.MobileMoney_Points = request.MobileMoney_Points
 	NewEntry.MobileMoney_MerchantAccount = request.MobileMoney_MerchantAccount
 	if request.MobileMoney_MerchantPIN == "" {
 		NewEntry.MobileMoney_MerchantPIN = ""
@@ -2268,7 +2272,8 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Edit(Login string, request
 	entry.Airtime_Notification_Text = request.Airtime_Notification_Text
 	entry.Airtime_MinPoints = request.Airtime_MinPoints
 	entry.Available_MinPoints_for_Airtime = request.Available_MinPoints_for_Airtime
-	entry.Airtime_AmountPerPoint = request.Airtime_AmountPerPoint
+	entry.Airtime_Amount = request.Airtime_Amount
+	entry.Airtime_Points = request.Airtime_Points
 	entry.Airtime_EVC_Account = request.Airtime_EVC_Account
 	if request.Airtime_EVC_PIN == "" {
 		entry.Airtime_EVC_PIN = ""
@@ -2281,7 +2286,8 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Edit(Login string, request
 	}
 	entry.MobileMoney_MinPoints = request.MobileMoney_MinPoints
 	entry.Available_MinPoints_for_MobileMoney = request.Available_MinPoints_for_MobileMoney
-	entry.MobileMoney_AmountPerPoint = request.MobileMoney_AmountPerPoint
+	entry.MobileMoney_Amount = request.MobileMoney_Amount
+	entry.MobileMoney_Points = request.MobileMoney_Points
 	entry.MobileMoney_MerchantAccount = request.MobileMoney_MerchantAccount
 
 	if request.MobileMoney_MerchantPIN == "" {
@@ -4309,7 +4315,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			return
 		}
 		//debit loyalty points
-		if redemption_Rules.Airtime_AmountPerPoint <= 0 {
+		if redemption_Rules.Airtime_Points <= 0 || redemption_Rules.Airtime_Amount <= 0 {
 			response.Status = "failed"
 			response.StatusCode = http.StatusBadRequest
 			response.StatusDescription = "airtime redeem rules are not defined"
@@ -4322,11 +4328,11 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 		//do the calculation
 		if response.Points_To_Redeem > 0 {
 			//calculate Redemption_Amount
-			response.Redemption_Amount = response.Points_To_Redeem * redemption_Rules.Airtime_AmountPerPoint
+			response.Redemption_Amount = (response.Points_To_Redeem * redemption_Rules.Airtime_Amount) / redemption_Rules.Airtime_Points
 		} else {
 			if response.Redemption_Amount > 0 {
 				//calculate Points_To_Redeem
-				response.Points_To_Redeem = response.Redemption_Amount / redemption_Rules.Airtime_AmountPerPoint
+				response.Points_To_Redeem = (response.Redemption_Amount * redemption_Rules.Airtime_Points) / redemption_Rules.Airtime_Amount
 			} else {
 				//return error
 				response.Status = "failed"
@@ -4719,7 +4725,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			return
 		}
 		//debit loyalty points
-		if redemption_Rules.MobileMoney_AmountPerPoint <= 0 {
+		if redemption_Rules.MobileMoney_Points <= 0 || redemption_Rules.MobileMoney_Amount <= 0 {
 			response.Status = "failed"
 			response.StatusCode = http.StatusBadRequest
 			response.StatusDescription = "mobile money redeem rules are not defined"
@@ -4732,11 +4738,11 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 		//do the calculation
 		if response.Points_To_Redeem > 0 {
 			//calculate Redemption_Amount
-			response.Redemption_Amount = response.Points_To_Redeem * redemption_Rules.MobileMoney_AmountPerPoint
+			response.Redemption_Amount = (response.Points_To_Redeem * redemption_Rules.MobileMoney_Amount) / redemption_Rules.MobileMoney_Points
 		} else {
 			if response.Redemption_Amount > 0 {
 				//calculate Points_To_Redeem
-				response.Points_To_Redeem = response.Redemption_Amount / redemption_Rules.MobileMoney_AmountPerPoint
+				response.Points_To_Redeem = (response.Redemption_Amount * redemption_Rules.MobileMoney_Points) / redemption_Rules.MobileMoney_Amount
 			} else {
 				//return error
 				response.Status = "failed"
