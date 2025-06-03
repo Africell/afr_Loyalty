@@ -203,7 +203,7 @@ func GetDefaultConfiguration() (err error) {
 	//Configuration = setDefaultConfiguration_SL_Loyalty()
 	//Configuration = setDefaultConfiguration_GM_Loyalty_Live()
 
-    Configuration =	setDefaultConfiguration_AO_Loyalty()
+	Configuration = setDefaultConfiguration_AO_Loyalty()
 
 	//	Configuration = setDefaultConfiguration_GM_Loyalty_Live()
 	//Configuration = setDefaultConfiguration_GM_Loyalty_Live()
@@ -1350,7 +1350,6 @@ func setDefaultConfiguration_SL_Loyalty() (Configuration ConfigType) {
 	return
 }
 
-<<<<<<< HEAD
 func setDefaultConfiguration_AO_Loyalty() (Configuration ConfigType) {
 	//Configuration.HttpOKAPIServicePort = "9291"
 	Configuration.HttpAppServicePort = "9290"           //lendme services
@@ -1457,7 +1456,7 @@ func setDefaultConfiguration_AO_Loyalty() (Configuration ConfigType) {
 
 	//SMPP
 	Configuration.SMPP.IP = "10.250.11.111" //"10.10.215.52"
-	Configuration.SMPP.Port ="15403" //"15403"
+	Configuration.SMPP.Port = "15403"       //"15403"
 
 	//Configuration.SMPP.Login = "lendme"
 	//Configuration.SMPP.Password = "lendmeP@ssw0rd"
@@ -1471,7 +1470,7 @@ func setDefaultConfiguration_AO_Loyalty() (Configuration ConfigType) {
 	Configuration.SMPP.Encoding = 0
 	//CGW
 	Configuration.CGW.Protocol = "http"
-	Configuration.CGW.Hostname = ""//"10.10.231.51"
+	Configuration.CGW.Hostname = "" //"10.10.231.51"
 	Configuration.CGW.Port = "9991"
 	Configuration.CGW.Module = "UCGW"
 	Configuration.CGW.Version = "V1"
@@ -1480,7 +1479,7 @@ func setDefaultConfiguration_AO_Loyalty() (Configuration ConfigType) {
 
 	Configuration.CGW_AUC.Description = "UCGW AUC service"
 	Configuration.CGW_AUC.Protocol = "http"
-	Configuration.CGW_AUC.Hostname = // "10.10.231.51"
+	Configuration.CGW_AUC.Hostname = "" // "10.10.231.51"
 	Configuration.CGW_AUC.Port = "9994"
 	Configuration.CGW_AUC.Module = "AUC"
 	Configuration.CGW_AUC.Version = "V1"
@@ -1497,8 +1496,8 @@ func setDefaultConfiguration_AO_Loyalty() (Configuration ConfigType) {
 	Configuration.Propylaea.S2S_Username = "Propylaea_Admin"
 	Configuration.Propylaea.S2S_Password = "uC@g$W$iRiS6$2@333dd"
 	Configuration.Propylaea.Timeout_After = 5 * time.Second
+}
 
-=======
 // ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Encryption functions
 // ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1560,6 +1559,5 @@ func decrypt(data []byte, passphrase string) (plaintext []byte, err error) {
 	if err != nil {
 		return
 	}
->>>>>>> f3d525cff1b94da26d70c30c10d45069c4b51980
 	return
 }
