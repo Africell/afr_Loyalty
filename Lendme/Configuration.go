@@ -197,6 +197,11 @@ func GetDefaultConfiguration() (err error) {
 
     Configuration =	setDefaultConfiguration_AO_Loyalty()
 
+=======
+	//	Configuration = setDefaultConfiguration_GM_Loyalty_Live()
+	//Configuration = setDefaultConfiguration_GM_Loyalty_Live()
+	Configuration = setDefaultConfiguration_GM_Loyalty_UAT()
+>>>>>>> f3d525cff1b94da26d70c30c10d45069c4b51980
 	return nil
 }
 

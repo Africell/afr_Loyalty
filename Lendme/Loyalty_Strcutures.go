@@ -374,7 +374,8 @@ type Loyalty_Point_Redemption_Rules struct {
 	Allow_PendingLendme_ToRedeem        bool    `bson:"Allow_PendingLendme_ToRedeem" json:"Allow_PendingLendme_ToRedeem"`
 	Airtime_MinPoints                   float64 `bson:"Airtime_MinPoints" json:"Airtime_MinPoints"`
 	Available_MinPoints_for_Airtime     float64 `bson:"Available_MinPoints_for_Airtime" json:"Available_MinPoints_for_Airtime"`
-	Airtime_AmountPerPoint              float64 `bson:"Airtime_AmountPerPoint" json:"Airtime_AmountPerPoint"`
+	Airtime_Amount                      float64 `bson:"Airtime_Amount" json:"Airtime_Amount"`
+	Airtime_Points                      float64 `bson:"Airtime_Points" json:"Airtime_Points"`
 	Airtime_EVC_Account                 string  `bson:"Airtime_EVC_Account" json:"Airtime_EVC_Account"`
 	Airtime_EVC_PIN                     string  `bson:"Airtime_EVC_PIN" json:"Airtime_EVC_PIN"`
 	Airtime_Notification                bool    `bson:"Airtime_Notification" json:"Airtime_Notification"`
@@ -382,7 +383,8 @@ type Loyalty_Point_Redemption_Rules struct {
 	Airtime_Notification_Text           string  `bson:"Airtime_Notification_Text" json:"Airtime_Notification_Text"`
 	MobileMoney_MinPoints               float64 `bson:"MobileMoney_MinPoints" json:"MobileMoney_MinPoints"`
 	Available_MinPoints_for_MobileMoney float64 `bson:"Available_MinPoints_for_MobileMoney" json:"Available_MinPoints_for_MobileMoney"`
-	MobileMoney_AmountPerPoint          float64 `bson:"MobileMoney_AmountPerPoint" json:"MobileMoney_AmountPerPoint"`
+	MobileMoney_Amount                  float64 `bson:"MobileMoney_Amount" json:"MobileMoney_Amount"`
+	MobileMoney_Points                  float64 `bson:"MobileMoney_Points" json:"MobileMoney_Points"`
 	MobileMoney_MerchantAccount         string  `bson:"MobileMoney_MerchantAccount" json:"MobileMoney_MerchantAccount"`
 	MobileMoney_MerchantPIN             string  `bson:"MobileMoney_MerchantPIN" json:"MobileMoney_MerchantPIN"`
 	MobileMoney_Notification            bool    `bson:"MobileMoney_Notification" json:"MobileMoney_Notification"`
@@ -414,7 +416,8 @@ type Loyalty_Point_Redemption_Rule struct {
 	Allow_PendingLendme_ToRedeem        bool    `bson:"Allow_PendingLendme_ToRedeem" json:"Allow_PendingLendme_ToRedeem"`
 	Airtime_MinPoints                   float64 `bson:"Airtime_MinPoints" json:"Airtime_MinPoints"`
 	Available_MinPoints_for_Airtime     float64 `bson:"Available_MinPoints_for_Airtime" json:"Available_MinPoints_for_Airtime"`
-	Airtime_AmountPerPoint              float64 `bson:"Airtime_AmountPerPoint" json:"Airtime_AmountPerPoint"`
+	Airtime_Amount                      float64 `bson:"Airtime_Amount" json:"Airtime_Amount"`
+	Airtime_Points                      float64 `bson:"Airtime_Points" json:"Airtime_Points"`
 	Airtime_EVC_Account                 string  `bson:"Airtime_EVC_Account" json:"-"`
 	Airtime_EVC_PIN                     string  `bson:"Airtime_EVC_PIN" json:"-"`
 	Airtime_Notification                bool    `bson:"Airtime_Notification" json:"Airtime_Notification"`
@@ -422,7 +425,8 @@ type Loyalty_Point_Redemption_Rule struct {
 	Airtime_Notification_Text           string  `bson:"Airtime_Notification_Text" json:"Airtime_Notification_Text"`
 	MobileMoney_MinPoints               float64 `bson:"MobileMoney_MinPoints" json:"MobileMoney_MinPoints"`
 	Available_MinPoints_for_MobileMoney float64 `bson:"Available_MinPoints_for_MobileMoney" json:"Available_MinPoints_for_MobileMoney"`
-	MobileMoney_AmountPerPoint          float64 `bson:"MobileMoney_AmountPerPoint" json:"MobileMoney_AmountPerPoint"`
+	MobileMoney_Amount                  float64 `bson:"MobileMoney_Amount" json:"MobileMoney_Amount"`
+	MobileMoney_Points                  float64 `bson:"MobileMoney_Points" json:"MobileMoney_Points"`
 	MobileMoney_MerchantAccount         string  `bson:"MobileMoney_MerchantAccount" json:"-"`
 	MobileMoney_MerchantPIN             string  `bson:"MobileMoney_MerchantPIN" json:"-"`
 	MobileMoney_Notification            bool    `bson:"MobileMoney_Notification" json:"MobileMoney_Notification"`
@@ -454,7 +458,8 @@ type Loyalty_Point_Redemption_Rules_AddRequest struct {
 	Allow_PendingLendme_ToRedeem        bool    `bson:"Allow_PendingLendme_ToRedeem" json:"Allow_PendingLendme_ToRedeem"`
 	Airtime_MinPoints                   float64 `bson:"Airtime_MinPoints" json:"Airtime_MinPoints"`
 	Available_MinPoints_for_Airtime     float64 `bson:"Available_MinPoints_for_Airtime" json:"Available_MinPoints_for_Airtime"`
-	Airtime_AmountPerPoint              float64 `bson:"Airtime_AmountPerPoint" json:"Airtime_AmountPerPoint"`
+	Airtime_Amount                      float64 `bson:"Airtime_Amount" json:"Airtime_Amount"`
+	Airtime_Points                      float64 `bson:"Airtime_Points" json:"Airtime_Points"`
 	Airtime_EVC_Account                 string  `bson:"Airtime_EVC_Account" json:"Airtime_EVC_Account"`
 	Airtime_EVC_PIN                     string  `bson:"Airtime_EVC_PIN" json:"Airtime_EVC_PIN"`
 	Airtime_Notification                bool    `bson:"Airtime_Notification" json:"Airtime_Notification"`
@@ -462,7 +467,8 @@ type Loyalty_Point_Redemption_Rules_AddRequest struct {
 	Airtime_Notification_Text           string  `bson:"Airtime_Notification_Text" json:"Airtime_Notification_Text"`
 	MobileMoney_MinPoints               float64 `bson:"MobileMoney_MinPoints" json:"MobileMoney_MinPoints"`
 	Available_MinPoints_for_MobileMoney float64 `bson:"Available_MinPoints_for_MobileMoney" json:"Available_MinPoints_for_MobileMoney"`
-	MobileMoney_AmountPerPoint          float64 `bson:"MobileMoney_AmountPerPoint" json:"MobileMoney_AmountPerPoint"`
+	MobileMoney_Amount                  float64 `bson:"MobileMoney_Amount" json:"MobileMoney_Amount"`
+	MobileMoney_Points                  float64 `bson:"MobileMoney_Points" json:"MobileMoney_Points"`
 	MobileMoney_MerchantAccount         string  `bson:"MobileMoney_MerchantAccount" json:"MobileMoney_MerchantAccount"`
 	MobileMoney_MerchantPIN             string  `bson:"MobileMoney_MerchantPIN" json:"MobileMoney_MerchantPIN"`
 	MobileMoney_Notification            bool    `bson:"MobileMoney_Notification" json:"MobileMoney_Notification"`
@@ -495,7 +501,8 @@ type Loyalty_Point_Redemption_Rules_EditRequest struct {
 	Allow_PendingLendme_ToRedeem        bool    `bson:"Allow_PendingLendme_ToRedeem" json:"Allow_PendingLendme_ToRedeem"`
 	Airtime_MinPoints                   float64 `bson:"Airtime_MinPoints" json:"Airtime_MinPoints"`
 	Available_MinPoints_for_Airtime     float64 `bson:"Available_MinPoints_for_Airtime" json:"Available_MinPoints_for_Airtime"`
-	Airtime_AmountPerPoint              float64 `bson:"Airtime_AmountPerPoint" json:"Airtime_AmountPerPoint"`
+	Airtime_Amount                      float64 `bson:"Airtime_Amount" json:"Airtime_Amount"`
+	Airtime_Points                      float64 `bson:"Airtime_Points" json:"Airtime_Points"`
 	Airtime_EVC_Account                 string  `bson:"Airtime_EVC_Account" json:"Airtime_EVC_Account"`
 	Airtime_EVC_PIN                     string  `bson:"Airtime_EVC_PIN" json:"Airtime_EVC_PIN"`
 	Airtime_Notification                bool    `bson:"Airtime_Notification" json:"Airtime_Notification"`
@@ -503,7 +510,8 @@ type Loyalty_Point_Redemption_Rules_EditRequest struct {
 	Airtime_Notification_Text           string  `bson:"Airtime_Notification_Text" json:"Airtime_Notification_Text"`
 	MobileMoney_MinPoints               float64 `bson:"MobileMoney_MinPoints" json:"MobileMoney_MinPoints"`
 	Available_MinPoints_for_MobileMoney float64 `bson:"Available_MinPoints_for_MobileMoney" json:"Available_MinPoints_for_MobileMoney"`
-	MobileMoney_AmountPerPoint          float64 `bson:"MobileMoney_AmountPerPoint" json:"MobileMoney_AmountPerPoint"`
+	MobileMoney_Amount                  float64 `bson:"MobileMoney_Amount" json:"MobileMoney_Amount"`
+	MobileMoney_Points                  float64 `bson:"MobileMoney_Points" json:"MobileMoney_Points"`
 	MobileMoney_MerchantAccount         string  `bson:"MobileMoney_MerchantAccount" json:"MobileMoney_MerchantAccount"`
 	MobileMoney_MerchantPIN             string  `bson:"MobileMoney_MerchantPIN" json:"MobileMoney_MerchantPIN"`
 	MobileMoney_Notification            bool    `bson:"MobileMoney_Notification" json:"MobileMoney_Notification"`
@@ -594,6 +602,7 @@ type Customer_Loyalty_Account struct {
 
 	Expired_Points float64   `bson:"Expired_Points" json:"Expired_Points"` //expired are deducted from Awarded_Points
 	Expiry_Date    time.Time `bson:"Expiry_Date" json:"Expiry_Date"`
+	Initial_Date   time.Time `bson:"Initial_Date" json:"Initial_Date"`
 
 	Outstanding_fraction_points float64 `bson:"Outstanding_fraction_points" json:"Outstanding_fraction_points"`
 
