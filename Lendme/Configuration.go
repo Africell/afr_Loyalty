@@ -201,16 +201,13 @@ func GetDefaultConfiguration() (err error) {
 	//Configuration = setDefaultConfiguration_SL_Live()
 	//Configuration = setDefaultConfiguration_GM_Loyalty()
 	//Configuration = setDefaultConfiguration_SL_Loyalty()
-<<<<<<< HEAD
 	//Configuration = setDefaultConfiguration_GM_Loyalty_Live()
 
     Configuration =	setDefaultConfiguration_AO_Loyalty()
 
-=======
 	//	Configuration = setDefaultConfiguration_GM_Loyalty_Live()
 	//Configuration = setDefaultConfiguration_GM_Loyalty_Live()
-	Configuration = setDefaultConfiguration_GM_Loyalty_UAT()
->>>>>>> f3d525cff1b94da26d70c30c10d45069c4b51980
+	// Configuration = setDefaultConfiguration_GM_Loyalty_UAT()
 	return nil
 }
 
