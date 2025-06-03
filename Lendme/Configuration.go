@@ -193,7 +193,10 @@ func GetDefaultConfiguration() (err error) {
 	//Configuration = setDefaultConfiguration_SL_Live()
 	//Configuration = setDefaultConfiguration_GM_Loyalty()
 	//Configuration = setDefaultConfiguration_SL_Loyalty()
-	Configuration = setDefaultConfiguration_GM_Loyalty_Live()
+	//Configuration = setDefaultConfiguration_GM_Loyalty_Live()
+
+    Configuration =	setDefaultConfiguration_AO_Loyalty()
+
 	return nil
 }
 
@@ -672,8 +675,8 @@ func setDefaultConfiguration_GM_Loyalty_Live() (Configuration ConfigType) {
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:5173")
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:4173")
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:4414")
-	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "https://okpaihr.africell.ao")
-	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "https://outlet.africell.ao")
+	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "https://okpaihr.africell.gm")
+	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "https://outlet.africell.gm")
 
 	Configuration.Operation = "Gambia"
 	Configuration.HostId = "Lendme-01"
@@ -893,17 +896,17 @@ func setDefaultConfiguration_SL_Live() (Configuration ConfigType) {
 	Configuration.OKAPI_AUC.Timeout_After = 5 * time.Second
 
 	// //mongoDB
-	// Configuration.MongoDB.ReplicaSet = "reps1"
-	// Configuration.MongoDB.UserName = "mongo-root"
-	// Configuration.MongoDB.Password = "Speci@LM0nG0P@ssw0rd_F0r_LeNdM#SL"
-	// Configuration.MongoDB.HostIP_1 = "10.10.247.21" //==>Primary
-	// Configuration.MongoDB.HostPort_1 = "9001"
-	// Configuration.MongoDB.HostIP_2 = "10.10.247.22" //==>Secondary
-	// Configuration.MongoDB.HostPort_2 = "9002"
-	// Configuration.MongoDB.HostIP_3 = "10.10.231.52" //==> Aribter
-	// Configuration.MongoDB.HostPort_3 = "9003"
-	// Configuration.MongoDB.HostIP_4 = ""
-	// Configuration.MongoDB.HostPort_4 = ""
+	Configuration.MongoDB.ReplicaSet = "reps0"
+	Configuration.MongoDB.UserName = "LendMeApp"
+	Configuration.MongoDB.Password = "LendMeApp_@@!!"
+	Configuration.MongoDB.HostIP_1 = "10.10.247.21" //==>Primary
+	Configuration.MongoDB.HostPort_1 = "9771"
+	Configuration.MongoDB.HostIP_2 = "10.10.247.22" //==>Secondary
+	Configuration.MongoDB.HostPort_2 = "9772"
+	Configuration.MongoDB.HostIP_3 = "10.10.247.20" //==> Aribter
+	Configuration.MongoDB.HostPort_3 = "9773"
+	Configuration.MongoDB.HostIP_4 = ""
+	Configuration.MongoDB.HostPort_4 = ""
 	////
 	// Configuration.MongoDB.ReplicaSet = ""
 	// Configuration.MongoDB.UserName = "mongo-root"
@@ -918,10 +921,10 @@ func setDefaultConfiguration_SL_Live() (Configuration ConfigType) {
 	// Configuration.MongoDB.HostPort_4 = ""
 
 	//mongoDB
-	Configuration.MongoDB.UserName = "db_root"
-	Configuration.MongoDB.Password = "P@s54D0Brdara_r@75S"
-	Configuration.MongoDB.HostIP_1 = "LendMe_db" //"host.docker.internal"
-	Configuration.MongoDB.HostPort_1 = "27017"   //"27017"
+	// Configuration.MongoDB.UserName = "db_root"
+	// Configuration.MongoDB.Password = "P@s54D0Brdara_r@75S"
+	// Configuration.MongoDB.HostIP_1 = "LendMe_db" //"host.docker.internal"
+	// Configuration.MongoDB.HostPort_1 = "27017"   //"27017"
 	///////////////////////////////////////MONGO DOCKER ///////////////////////////
 
 	Configuration.DB_Name_Loyalty = "Loyalty_DB"
@@ -1155,6 +1158,156 @@ func setDefaultConfiguration_SL_Loyalty() (Configuration ConfigType) {
 	Configuration.Propylaea.Protocol = "http"
 	Configuration.Propylaea.Port = "9900"
 	Configuration.Propylaea.Hostname = "10.10.231.51"
+	Configuration.Propylaea.Module = "Propylaea"
+	Configuration.Propylaea.Version = "V1"
+	Configuration.Propylaea.S2S_Username = "Propylaea_Admin"
+	Configuration.Propylaea.S2S_Password = "uC@g$W$iRiS6$2@333dd"
+	Configuration.Propylaea.Timeout_After = 5 * time.Second
+
+	return
+}
+
+func setDefaultConfiguration_AO_Loyalty() (Configuration ConfigType) {
+	//Configuration.HttpOKAPIServicePort = "9291"
+	Configuration.HttpAppServicePort = "9290"           //lendme services
+	Configuration.HttpAppLoyaltyServicePort = "9280"    //for USSD and Mobile App
+	Configuration.HttpAppLoyaltyManagementPort = "9281" //for OKAPI
+	Configuration.HttpAppLoyaltyFeedPort = "9282"       //for IN & MM live feed
+
+	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:3000")
+	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:5173")
+	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:4173")
+	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:4414")
+	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "https://okpaihruat.africell.ao")
+	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "https://okpaihruat.africell.ao")
+
+	Configuration.Operation = "Angola"
+	Configuration.HostId = "Lendme-01"
+	Configuration.DB_Name = "Lendme_DB"
+
+	Configuration.Version = "V1"
+	Configuration.Module = "Lendme"
+
+	Configuration.LoyaltyVersion = "V1"
+	Configuration.LoyaltyModule = "Loyalty"
+
+	Configuration.MSISDN_Prefix = "0"
+	Configuration.MSISDN_Short_len = 8
+	Configuration.CountryCode = "244"
+
+	Configuration.IsProduction = false
+	Configuration.IsLoyaltyProduction = false
+	Configuration.Min_Allowed_Amnt = 1
+	Configuration.Service_FeePerc = 0.15
+	Configuration.Min_Allowed_AON = 3
+	Configuration.Min_Avg3MRecharge = 0
+	Configuration.Min_LastRechargePeriod = 60
+	Configuration.Min_Allowed_Balance = 0
+	Configuration.Max_Allowed_Balance = 225
+	Configuration.ARPU_File_Path = "/home/Subs_ARPU/"
+
+	Configuration.App_AUC.Description = "App AUC service"
+	Configuration.App_AUC.Protocol = "http"
+	Configuration.App_AUC.Hostname = "Lendme_auc"
+	Configuration.App_AUC.Port = "9293"
+	Configuration.App_AUC.Module = "AUC"
+	Configuration.App_AUC.Version = "V1"
+	Configuration.App_AUC.S2S_Username = "Lendme_Admin"
+	Configuration.App_AUC.S2S_Password = "s@l$e$IrSW0$4"
+	Configuration.App_AUC.Timeout_After = 5 * time.Second
+
+	Configuration.OKAPI_AUC.Description = "OKAPI AUC service"
+	Configuration.OKAPI_AUC.Protocol = "http"
+	Configuration.OKAPI_AUC.Hostname = "10.250.3.148"
+	Configuration.OKAPI_AUC.Port = "9001"
+	Configuration.OKAPI_AUC.Module = "AUC"
+	Configuration.OKAPI_AUC.Version = "V1"
+	Configuration.OKAPI_AUC.S2S_Username = "Loyalty_OKAPI"
+	Configuration.OKAPI_AUC.S2S_Password = "]W8#x3D1USKUyH@p]s&D_"
+	Configuration.OKAPI_AUC.Timeout_After = 5 * time.Second
+
+	// //mongoDB
+	Configuration.MongoDB.ReplicaSet = "reps0"
+	Configuration.MongoDB.UserName = "mongo-root"
+	Configuration.MongoDB.Password = "Speci@LM0nG0P@ssw0rd_F0r_@ng0l@LenMeRepl##$$"
+	Configuration.MongoDB.HostIP_1 = "10.250.1.198" //==>Primary
+	Configuration.MongoDB.HostPort_1 = "9001"
+	Configuration.MongoDB.HostIP_2 = "10.250.1.199" //==>Secondary
+	Configuration.MongoDB.HostPort_2 = "9002"
+	Configuration.MongoDB.HostIP_3 = "10.250.1.197" //==> Aribter
+	Configuration.MongoDB.HostPort_3 = "9003"
+	Configuration.MongoDB.HostIP_4 = ""
+	Configuration.MongoDB.HostPort_4 = ""
+	////
+
+	Configuration.DB_Name_Loyalty = "Loyalty_DB"
+	Configuration.LoyaltyMongoDB.ReplicaSet = Configuration.MongoDB.ReplicaSet
+	Configuration.LoyaltyMongoDB.UserName = Configuration.MongoDB.UserName
+	Configuration.LoyaltyMongoDB.Password = Configuration.MongoDB.Password
+	Configuration.LoyaltyMongoDB.HostIP_1 = Configuration.MongoDB.HostIP_1
+	Configuration.LoyaltyMongoDB.HostPort_1 = Configuration.MongoDB.HostPort_1
+	Configuration.LoyaltyMongoDB.HostIP_2 = Configuration.MongoDB.HostIP_2
+	Configuration.LoyaltyMongoDB.HostPort_2 = Configuration.MongoDB.HostPort_2
+	Configuration.LoyaltyMongoDB.HostIP_3 = Configuration.MongoDB.HostIP_3
+	Configuration.LoyaltyMongoDB.HostPort_3 = Configuration.MongoDB.HostPort_3
+	Configuration.LoyaltyMongoDB.HostIP_4 = Configuration.MongoDB.HostIP_4
+	Configuration.LoyaltyMongoDB.HostPort_4 = Configuration.MongoDB.HostPort_4
+
+	Configuration.IN.IP = "" // "10.10.51.51"
+	Configuration.IN.Port = "8080"
+	Configuration.IN.WS_SOAP_Endpoint = "/axis2/services/WebService.WebServiceHttpSoap12Endpoint/"
+	Configuration.IN.WS_XMLNS_SOAP_Env = "http://schemas.xmlsoap.org/soap/envelope/"
+	Configuration.IN.WS_XMLNS_Web = "http://webservice.CSI.omvia.convergys.com"
+
+	Configuration.IN.WS_EVC_SOAP_Endpoint = "/axis2/services/ERechargeWebService.ERechargeWebServiceHttpSoap11Endpoint/"
+	Configuration.IN.WS_EVC_XMLNS_SOAP_Env = "http://schemas.xmlsoap.org/soap/envelope/"
+	Configuration.IN.WS_EVC_XMLNS_Web = "http://webservice.CSI.omvia.convergys.com"
+
+	Configuration.IN.Default_OpId = "lendme"
+	Configuration.IN.Default_OpPwd = "gu1vY6Q$"
+	Configuration.IN.Is_OpPwd_Required = true
+	Configuration.IN.Timeout = 5
+	Configuration.IN.PrintLogs = true
+
+	//http://10.95.64.6:15403/?systemid=lendme&password=lendmeP@ssw0rd&Originator=setest&dest_addr=243900100606&msg_text=test&registered_delivery=0&ston=5&snpi=0&dton=1&dnpi=1&encoding=1
+
+	//SMPP
+	Configuration.SMPP.IP = "10.250.11.111" //"10.10.215.52"
+	Configuration.SMPP.Port ="15403" //"15403"
+
+	//Configuration.SMPP.Login = "lendme"
+	//Configuration.SMPP.Password = "lendmeP@ssw0rd"
+	Configuration.SMPP.Login = "Loyalty"
+	Configuration.SMPP.Password = "Loyalty123"
+	Configuration.SMPP.TimeOut = 5 //in seconds
+	Configuration.SMPP.PrintLogs = true
+	Configuration.SMPP.MSISDN_Short_len = 8
+	Configuration.SMPP.CountryCodePrefix = "244"
+	Configuration.SMPP.DefaultSender = "Africell" //"Africell"
+	Configuration.SMPP.Encoding = 0
+	//CGW
+	Configuration.CGW.Protocol = "http"
+	Configuration.CGW.Hostname = ""//"10.10.231.51"
+	Configuration.CGW.Port = "9991"
+	Configuration.CGW.Module = "UCGW"
+	Configuration.CGW.Version = "V1"
+	Configuration.CGW.Timeout = 15 * time.Second
+	Configuration.CGW.S2S_AccessToken = ""
+
+	Configuration.CGW_AUC.Description = "UCGW AUC service"
+	Configuration.CGW_AUC.Protocol = "http"
+	Configuration.CGW_AUC.Hostname = // "10.10.231.51"
+	Configuration.CGW_AUC.Port = "9994"
+	Configuration.CGW_AUC.Module = "AUC"
+	Configuration.CGW_AUC.Version = "V1"
+	Configuration.CGW_AUC.S2S_Username = "UCGW_Admin"
+	Configuration.CGW_AUC.S2S_Password = "uC@g$W$iRiS6$2"
+	Configuration.CGW_AUC.Timeout_After = 5 * time.Second
+
+	Configuration.Propylaea.Description = "Product Design Center - Propylaea"
+	Configuration.Propylaea.Protocol = "http"
+	Configuration.Propylaea.Port = "9900"
+	Configuration.Propylaea.Hostname = "10.250.1.228"
 	Configuration.Propylaea.Module = "Propylaea"
 	Configuration.Propylaea.Version = "V1"
 	Configuration.Propylaea.S2S_Username = "Propylaea_Admin"
