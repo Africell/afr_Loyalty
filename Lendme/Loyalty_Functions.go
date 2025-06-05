@@ -5388,9 +5388,6 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 		points = response.PointsToCredit
 		Outstanding_fraction_points = loyalty_account.Outstanding_fraction_points
 	}
-	fmt.Println("response.PointsToCredit", response.PointsToCredit)
-	fmt.Println("points", points)
-	fmt.Println("Outstanding_fraction_points", Outstanding_fraction_points)
 	if points > 0 {
 		//response.OpeningAvailablePoints = (loyalty_account.Awarded_Points + loyalty_account.Expired_Points) - loyalty_account.Redeemed_Points
 		response.AwardedPoints = points
@@ -5780,16 +5777,10 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 			//award points on main GSM balance consumption based on amount
 			if award_request.EventAmount > 0 {
 				if rules.MainGSMBalance_Amount > 0 {
-					fmt.Println("award_request.EventAmount", award_request.EventAmount)
 					flt_fractions := award_request.EventAmount / rules.MainGSMBalance_Amount
-					fmt.Println("flt_fractions", flt_fractions)
 					flt_points := (flt_fractions * rules.MainGSMBalance_Points) + current_outstanding_points
-					fmt.Println("flt_points", flt_points)
 					int_points := int(flt_points)
-					fmt.Println("int_points", int_points)
 					outstanding_points = flt_points - float64(int_points)
-					fmt.Println("outstanding_points", outstanding_points)
-
 					return float64(int_points), outstanding_points
 				} else {
 					return 0, current_outstanding_points
@@ -5806,15 +5797,10 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 			//award points based amount
 			if award_request.EventAmount > 0 {
 				if rules.MainGSMBalance_Amount > 0 {
-					fmt.Println("award_request.EventAmountY", award_request.EventAmount)
 					flt_fractions := award_request.EventAmount / rules.MainGSMBalance_Amount
-					fmt.Println("flt_fractions", flt_fractions)
 					flt_points := (flt_fractions * rules.MainGSMBalance_Points) + current_outstanding_points
-					fmt.Println("flt_points", flt_points)
 					int_points := int(flt_points)
-					fmt.Println("int_points", int_points)
 					outstanding_points = flt_points - float64(int_points)
-					fmt.Println("outstanding_points", outstanding_points)
 					return float64(int_points), outstanding_points
 				} else {
 					return 0, current_outstanding_points
