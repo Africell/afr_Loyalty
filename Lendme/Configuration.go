@@ -80,6 +80,8 @@ type ConfigType struct {
 		WS_EVC_XMLNS_Web      string
 		Default_OpId          string
 		Default_OpPwd         string
+		AutoRenew_OpId        string
+		AutoRenew_OpPwd       string
 		Is_OpPwd_Required     bool
 		Timeout               time.Duration
 		PrintLogs             bool
@@ -185,6 +187,8 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 
 	Configuration.IN.Default_OpId = "lendme"
 	Configuration.IN.Default_OpPwd = ""
+	Configuration.IN.AutoRenew_OpId = "lendme"
+	Configuration.IN.AutoRenew_OpPwd = ""
 	Configuration.IN.Is_OpPwd_Required = false
 	Configuration.IN.Timeout = 5
 	Configuration.IN.PrintLogs = false
@@ -376,6 +380,8 @@ func setDefaultConfiguration_GM_Live() (Configuration ConfigType) {
 
 	Configuration.IN.Default_OpId = "lendme"
 	Configuration.IN.Default_OpPwd = "lenmeP@sw0rd"
+	Configuration.IN.AutoRenew_OpId = "lendme"
+	Configuration.IN.AutoRenew_OpPwd = "lenmeP@sw0rd"
 	Configuration.IN.Is_OpPwd_Required = true
 	Configuration.IN.Timeout = 5
 	Configuration.IN.PrintLogs = true
@@ -454,6 +460,8 @@ func setDefaultConfiguration_SL_Live() (Configuration ConfigType) {
 
 	Configuration.IN.Default_OpId = "lendme"
 	Configuration.IN.Default_OpPwd = "gu1vY6Q$"
+	Configuration.IN.AutoRenew_OpId = "lendme"
+	Configuration.IN.AutoRenew_OpPwd = "gu1vY6Q$"
 	Configuration.IN.Is_OpPwd_Required = true
 	Configuration.IN.Timeout = 5
 	Configuration.IN.PrintLogs = true

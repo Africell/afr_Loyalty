@@ -56,6 +56,8 @@ func NewUserControl() *UserControl {
 		Configuration.IN.Default_OpId,
 		Configuration.IN.Default_OpPwd,
 		Configuration.IN.Is_OpPwd_Required,
+		Configuration.IN.AutoRenew_OpId,
+		Configuration.IN.AutoRenew_OpPwd,
 		Configuration.IN.Timeout,
 		Configuration.IN.PrintLogs)
 
