@@ -3688,7 +3688,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_Edit(Login string, request Custo
 				ARPU:                              entry.ARPU,
 				Customer_Id:                       entry.Customer_Id,
 				Creation_date:                     entry.Creation_date,
-				Previous_Loyalty_Level_Key:        entry.Loyalty_Level_Key,
+				Previous_Loyalty_Level_Key:        entry.Previous_Loyalty_Level_Key,
 				Previous_Loyalty_Level_Date:       entry.Previous_Loyalty_Level_Date,
 				New_Loyalty_Level_Key:             entry.Loyalty_Level_Key,
 				New_Loyalty_Level_Date:            entry.Loyalty_Level_Date,
