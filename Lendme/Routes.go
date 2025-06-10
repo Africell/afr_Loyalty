@@ -74,6 +74,7 @@ func (Uc *UserControl) AddToAppRouter(router *mux.Router, UC *UserControl) {
 	for _, acc := range accessEntries.Data {
 		MapAccessEntry.Put(acc.Key, acc)
 	}
+	var existingEntries = make(map[string]AuthCenter.AccessEntry)
 
 	for _, route := range routes {
 		if route.AllowedFor_App {
@@ -127,6 +128,52 @@ func (Uc *UserControl) AddToAppRouter(router *mux.Router, UC *UserControl) {
 	}
 	router.Path("/metrics").Handler(CustomPrometheusHandler())
 	// router.Path("/metrics_latency").Handler(CustomPrometheusLatencyHandler())
+
+	Uc.Add_Lendme_ToAccessEntry(existingEntries)
+
+	var Lendme_Group = AuthCenter.UserAccessGroup{
+		GroupName:        "VAS - Lendme",
+		GroupDescription: "Access group for VAS - Lendme",
+		Locked:           false,
+		AddUser:          "Auto Create",
+		AddDate:          time.Now(),
+		LastModifyUser:   "Auto Create",
+		LastModifyDate:   time.Now(),
+	}
+
+	userAccessGroups, err := Uc.OKAPIAUC.AUCClient.ReadUserAccessGroup("Value Added Services")
+	if err != nil {
+		fmt.Println("Error Reading VAS - Lendme Group from AUC, shutting down !!!")
+	}
+	if len(userAccessGroups.Data) < 1 {
+
+		_, err := Uc.OKAPIAUC.AUCClient.CreateUserAccessGroup((Lendme_Group))
+		if err != nil {
+			fmt.Println("Error Creating VAS - Lendme Group, shutting down !!!")
+		}
+
+		AccessEntries_to_add := []AuthCenter.GroupAccessEntries_comprehensive{
+			{AccessKey: "Value Added Services", AccessMethod: "Module", Allowed: true},
+			{AccessKey: "Lendme", AccessMethod: "Module Main Menu", Allowed: true},
+			{AccessKey: "Credit Limit Scheme", AccessMethod: "Module Sub Menu L1", Allowed: true},
+			{AccessKey: "HTTP_Credit_Limit_Scheme", AccessMethod: "GET", Allowed: true},
+			{AccessKey: "HTTP_Credit_Limit_Scheme", AccessMethod: "POST", Allowed: true},
+			{AccessKey: "HTTP_Credit_Limit_Scheme", AccessMethod: "PUT", Allowed: true},
+			{AccessKey: "HTTP_Credit_Limit_Scheme", AccessMethod: "DELETE", Allowed: true},
+			{AccessKey: "Subscriber", AccessMethod: "Module Sub Menu L1", Allowed: true},
+			{AccessKey: "HTTP_Subscriber", AccessMethod: "GET", Allowed: true},
+			{AccessKey: "HTTP_Subscriber", AccessMethod: "POST", Allowed: true},
+			{AccessKey: "HTTP_Subscriber", AccessMethod: "PUT", Allowed: true},
+			{AccessKey: "HTTP_Subscriber", AccessMethod: "DELETE", Allowed: true},
+			{AccessKey: "HTTP_Lendme_Logs", AccessMethod: "GET", Allowed: true},
+		}
+		_, err = Uc.OKAPIAUC.AUCClient.GroupAccessEntriesForGroup_Comprehensive("VAS - Lendme", AccessEntries_to_add)
+
+		if err != nil {
+			fmt.Println(err)
+			fmt.Println("Error Creating VAS - Lendme, shutting down !!!")
+		}
+	}
 }
 
 func (Uc *UserControl) AddToLoyaltyServiceRouter(router *mux.Router, UC *UserControl) {
@@ -687,6 +734,86 @@ func (Uc *UserControl) Add_Loyalty_ToAccessEntry(existing map[string]AuthCenter.
 	}
 	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
 
+}
+
+func (Uc *UserControl) Add_Lendme_ToAccessEntry(existing map[string]AuthCenter.AccessEntry) {
+	// Access Method: Module, Module Main Menu, Module Sub Menu L1, Module Sub Menu L2
+	Module := "Value Added Services"
+	var ModuleDisplayOrder int64 = 13
+
+	//Module (Purple circles)
+	sd_ae := AuthCenter.AccessEntry{
+		AccessKey:            "Value Added Services",
+		AccessMethod:         "Module",
+		AccessKeyDescription: "Value Added Services Module",
+		DisplayName:          "Value Added Services",
+		DisplayOrder:         13,
+		Module:               Module,
+		ModuleDisplayOrder:   ModuleDisplayOrder,
+		Level1:               "",
+		Level1DisplayOrder:   0,
+		Level2:               "",
+		Level2DisplayOrder:   0,
+		Level3:               "",
+		Level3DisplayOrder:   0,
+	}
+	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
+
+	//Module Main Menu (yellow circles)
+	Level1 := "Lendme"
+	var Level1DisplayOrder int64 = 7
+
+	sd_ae = AuthCenter.AccessEntry{
+		AccessKey:            "Lendme",
+		AccessMethod:         "Module Main Menu",
+		AccessKeyDescription: "Lendme",
+		DisplayName:          "Lendme",
+		DisplayOrder:         13,
+		Module:               Module,
+		ModuleDisplayOrder:   ModuleDisplayOrder,
+		Level1:               Level1,
+		Level1DisplayOrder:   Level1DisplayOrder,
+		Level2:               "",
+		Level2DisplayOrder:   0,
+		Level3:               "",
+		Level3DisplayOrder:   0,
+	}
+	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
+
+	sd_ae = AuthCenter.AccessEntry{
+		AccessKey:            "Credit Limit Scheme",
+		AccessMethod:         "Module Sub Menu L1",
+		AccessKeyDescription: "Credit Limit Scheme",
+		DisplayName:          "Credit Limit Scheme",
+		DisplayOrder:         13,
+		Module:               Module,
+		ModuleDisplayOrder:   ModuleDisplayOrder,
+		Level1:               Level1,
+		Level1DisplayOrder:   Level1DisplayOrder,
+		Level2:               "Credit Limit Scheme",
+		Level2DisplayOrder:   1,
+		Level3:               "",
+		Level3DisplayOrder:   0,
+	}
+	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
+
+	sd_ae = AuthCenter.AccessEntry{
+		AccessKey:            "Subscriber",
+		AccessMethod:         "Module Sub Menu L1",
+		AccessKeyDescription: "Subscriber",
+		DisplayName:          "Subscriber",
+		DisplayOrder:         13,
+		Module:               Module,
+		ModuleDisplayOrder:   ModuleDisplayOrder,
+		Level1:               Level1,
+		Level1DisplayOrder:   Level1DisplayOrder,
+		Level2:               "Subscriber",
+		Level2DisplayOrder:   2,
+		Level3:               "",
+		Level3DisplayOrder:   0,
+		Routes:               []string{"HTTP_Lendme_Logs|GET"},
+	}
+	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
 }
 
 // /////////////////////////////////////////////////////////////////////////////////////////////////////
