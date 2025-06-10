@@ -3580,13 +3580,13 @@ func (Uc *UserControl) Customer_Loyalty_Account_Add(Login string, request Custom
 			AddDate:       time.Now(),
 		}
 		Welcome_Noti_Text := ""
-		Welcome_Noti_Text = Earningrecord.Level_Change_Notification_Text
+		Welcome_Noti_Text = Earningrecord.Welcome_Notification_Text
 		if Welcome_Noti_Text != "" {
 			Welcome_Noti_Text = strings.ReplaceAll(Welcome_Noti_Text, "{{WelcomePoints}}", fmt.Sprint(Earningrecord.Welcome_Points))
 			Welcome_Noti_Text = strings.ReplaceAll(Welcome_Noti_Text, "{{LoyaltyBalance}}", fmt.Sprint(Earningrecord.Welcome_Points))
 			Welcome_Noti_Text = strings.ReplaceAll(Welcome_Noti_Text, "{{NewLevel}}", fmt.Sprint(NewEntry.Loyalty_Level_Key))
 			WelcomeNotiLog.Payload = Welcome_Noti_Text
-			err := Send_SMS(Earningrecord.Level_Change_Notification_Sender, request.Key, Welcome_Noti_Text)
+			err := Send_SMS(Earningrecord.Welcome_Notification_Sender, request.Key, Welcome_Noti_Text)
 			if err != nil {
 				WelcomeNotiLog.Status = "Failed"
 				WelcomeNotiLog.Error = err.Error()
