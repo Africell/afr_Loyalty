@@ -141,7 +141,7 @@ func (Uc *UserControl) AddToAppRouter(router *mux.Router, UC *UserControl) {
 		LastModifyDate:   time.Now(),
 	}
 
-	userAccessGroups, err := Uc.OKAPIAUC.AUCClient.ReadUserAccessGroup("Value Added Services")
+	userAccessGroups, err := Uc.OKAPIAUC.AUCClient.ReadUserAccessGroup("VAS - Lendme")
 	if err != nil {
 		fmt.Println("Error Reading VAS - Lendme Group from AUC, shutting down !!!")
 	}
@@ -347,7 +347,7 @@ func (Uc *UserControl) AddToLoyaltyManagementRouter(router *mux.Router, UC *User
 		LastModifyDate:   time.Now(),
 	}
 
-	userAccessGroups, err := Uc.OKAPIAUC.AUCClient.ReadUserAccessGroup("Value Added Services")
+	userAccessGroups, err := Uc.OKAPIAUC.AUCClient.ReadUserAccessGroup("VAS - Loyalty")
 	if err != nil {
 		fmt.Println("Error Reading VAS - Loyalty Group from AUC, shutting down !!!")
 	}
