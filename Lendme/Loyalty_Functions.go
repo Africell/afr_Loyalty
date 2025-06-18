@@ -22,6 +22,7 @@ import (
 	"github.com/jinzhu/copier"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -6396,21 +6397,29 @@ func (Uc *UserControl) Customer_Loyalty_Account_GetAwardedPoints(startDate, endD
 		collName := "Col_Loyalty_AccountCreditPoints_log_" + dayStr
 		// Fetch the collection
 		collection := Uc.LoyaltyMongoDB.MongoDBClient.Database(MongoDB_DB_Name).Collection(collName)
+		pipeline := mongo.Pipeline{
+			{{Key: "$group", Value: bson.D{
+				{Key: "_id", Value: "$MSISDN"},
+				{Key: "totalPoints", Value: bson.D{{"$sum", "$AwardedPoints"}}},
+			}}},
+		}
 
-		cursor, err := collection.Find(context.Background(), bson.M{}) // use `filter` if needed
+		cursor, err := collection.Aggregate(context.Background(), pipeline)
 		if err != nil {
-			log.Printf("Skipping %s: %v", collName, err)
+			log.Printf("Aggregation failed for %s: %v", collName, err)
 			continue
 		}
 
-		var logs []Loyalty_AccountCreditPoints_log
-		if err := cursor.All(context.Background(), &logs); err != nil {
-			log.Printf("Failed parsing docs for %s: %v", collName, err)
-			continue
-		}
-
-		for _, logEntry := range logs {
-			results[logEntry.MSISDN] += logEntry.AwardedPoints
+		for cursor.Next(context.Background()) {
+			var doc struct {
+				MSISDN      string  `bson:"_id"`
+				TotalPoints float64 `bson:"totalPoints"`
+			}
+			if err := cursor.Decode(&doc); err != nil {
+				log.Printf("Failed decoding result for %s: %v", collName, err)
+				continue
+			}
+			results[doc.MSISDN] += doc.TotalPoints
 		}
 	}
 
