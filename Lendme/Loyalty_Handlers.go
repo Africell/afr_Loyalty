@@ -1,7 +1,9 @@
 package Lendme
 
 import (
+	"encoding/csv"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strconv"
@@ -2318,6 +2320,61 @@ func (Uc *UserControl) HTTP_Customer_Loyalty_Account_CreditPoints(w http.Respons
 	//execute the request
 	Uc.Loyalty_AccountCreditPoints(&validated_Headers, Request, &transaction)
 	Uc.HTTP_Customer_Loyalty_Account_CreditPoints_Response(w, r, &transaction, false)
+}
+
+func (Uc *UserControl) HTTP_Customer_Loyalty_Account_Get_Awarded_Points(w http.ResponseWriter, r *http.Request) {
+	var sr API_Standard_response
+	//**fill response source detail
+	SourceIp, _ := GetRequestIP(r)
+	sr.SourceIP = SourceIp
+	sr.Login = r.Header.Get("Login")
+	sr.SourceApp = r.Header.Get("SourceApp")
+	sr.AccessKey = r.URL.Path
+	sr.AccessMethod = r.Method
+	sr.HostId = Configuration.HostId
+	sr.ReceiveDate = time.Now()
+	sr.TransactionType = "Customer Loyalty Get Redemption Rules"
+
+	method := r.Method
+	switch method {
+	case "GET":
+		sr.TransactionType = sr.TransactionType + ""
+		// MSISDN := r.URL.Query().Get("MSISDN")
+		startDate := r.URL.Query().Get("startDate")
+		endDate := r.URL.Query().Get("endDate")
+		startDateDD, _ := time.ParseInLocation("1/2/2006", startDate, time.Local)
+		endDateDD, _ := time.ParseInLocation("1/2/2006", endDate, time.Local)
+		response, err := Uc.Customer_Loyalty_Account_GetAwardedPoints(startDateDD, endDateDD)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		w.Header().Set("Content-Disposition", "attachment; filename=awarded_points.csv")
+		w.Header().Set("Content-Type", "text/csv")
+
+		writer := csv.NewWriter(w)
+		defer writer.Flush()
+
+		writer.Write([]string{"MSISDN", "Awarded Points"})
+
+		for msisdn, points := range response {
+			writer.Write([]string{msisdn, fmt.Sprintf("%.2f", points)})
+		}
+		fmt.Println("err", err)
+		// json.NewEncoder(w).Encode(err)
+
+		// sr.Data = response
+	}
+	//successful response
+	// sr.Status = "successful"
+	// sr.StatusCode = http.StatusOK
+	// sr.StatusDescription = ""
+	// sr.ErrorDescription = ""
+	// Uc.HTTP_API_Standard_response(w, r, sr, true)
 }
 
 func (Uc *UserControl) HTTP_Customer_Loyalty_Account_CreditPoints_Response(w http.ResponseWriter, r *http.Request, transaction *Loyalty_AccountCreditPoints_log, DB_Write bool) {

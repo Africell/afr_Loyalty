@@ -6378,6 +6378,45 @@ func (Uc *UserControl) ReadAccountEventsDetailsFromMongoDB(startDate, endDate ti
 	return response, err
 }
 
+func (Uc *UserControl) Customer_Loyalty_Account_GetAwardedPoints(startDate, endDate time.Time) (response map[string]float64, err error) {
+	results := make(map[string]float64)
+
+	for d := startDate; !d.After(endDate); d = d.AddDate(0, 0, 1) {
+		monthStr := strconv.Itoa(int(d.Month()))
+		if len(monthStr) < 2 {
+			monthStr = "0" + monthStr
+		}
+		MongoDB_DB_Name := "Loyalty_DB_" + strconv.Itoa(d.Year()) + monthStr
+
+		var dayStr = strconv.Itoa(d.Day())
+		if len(dayStr) < 2 {
+			dayStr = "0" + dayStr
+		}
+
+		collName := "Col_Loyalty_AccountCreditPoints_log_" + dayStr
+		// Fetch the collection
+		collection := Uc.LoyaltyMongoDB.MongoDBClient.Database(MongoDB_DB_Name).Collection(collName)
+
+		cursor, err := collection.Find(context.Background(), bson.M{}) // use `filter` if needed
+		if err != nil {
+			log.Printf("Skipping %s: %v", collName, err)
+			continue
+		}
+
+		var logs []Loyalty_AccountCreditPoints_log
+		if err := cursor.All(context.Background(), &logs); err != nil {
+			log.Printf("Failed parsing docs for %s: %v", collName, err)
+			continue
+		}
+
+		for _, logEntry := range logs {
+			results[logEntry.MSISDN] += logEntry.AwardedPoints
+		}
+	}
+
+	return results, nil
+}
+
 func (Uc *UserControl) Customer_Loyalty_Account_Getlogs(Type string, startDate, endDate time.Time, MSISDN string, Filter string) (response []Loyalty_Logs, err error) {
 	var allLogs []Loyalty_Logs
 	if Type == "All Logs" || Type == "Debit Logs" {
