@@ -314,6 +314,15 @@ func (uc *UserControl) LoyaltyIndexesMaintenanceProcess() {
 		}
 	}
 
+	exists, err = DAO_Loyalty_AccountCreditPoints_log.CheckAndCreateIndex("Idx_LoyaltyAutoIncrement_MSISDN", []string{"MSISDN"}, true)
+	if err != nil {
+		log.Println("Error checking and creating index Idx_LoyaltyAutoIncrement_MSISDN: ", err)
+	} else {
+		if !exists {
+			log.Println("Index Idx_LoyaltyAutoIncrement_MSISDN created")
+		}
+	}
+
 }
 
 func (Uc *UserControl) Write_Loyalty_Event_Log(record Loyalty_Event_Log) {
