@@ -49,7 +49,9 @@ type ConfigType struct {
 	Min_Allowed_Balance    float64
 	Max_Allowed_Balance    float64
 
-	ARPU_File_Path string
+	ARPU_File_Path             string
+	ARPU_File_Prefix           string
+	ARPU_File_Column_Separator string
 
 	Lendme_EVC_Dealer_MSISDN string
 	Lendme_EVC_Dealer_PIN    string
@@ -248,6 +250,8 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 	Configuration.Min_Allowed_Balance = 0
 	Configuration.Max_Allowed_Balance = 1000
 	Configuration.ARPU_File_Path = "/home/Subs_ARPU/"
+	Configuration.ARPU_File_Prefix = "Rgs_"
+	Configuration.ARPU_File_Column_Separator = ","
 
 	Configuration.App_AUC.Description = "App AUC service"
 	Configuration.App_AUC.Protocol = "http"
@@ -398,6 +402,8 @@ func setDefaultConfiguration_GM_Live() (Configuration ConfigType) {
 	Configuration.Min_Allowed_Balance = 0
 	Configuration.Max_Allowed_Balance = 677
 	Configuration.ARPU_File_Path = "/home/Subs_ARPU/"
+	Configuration.ARPU_File_Prefix = "Rgs_"
+	Configuration.ARPU_File_Column_Separator = ","
 
 	Configuration.App_AUC.Description = "App AUC service"
 	Configuration.App_AUC.Protocol = "http"
@@ -540,6 +546,8 @@ func setDefaultConfiguration_GM_Loyalty() (Configuration ConfigType) {
 	Configuration.Min_Allowed_Balance = 0
 	Configuration.Max_Allowed_Balance = 677
 	Configuration.ARPU_File_Path = "/home/Subs_ARPU/"
+	Configuration.ARPU_File_Prefix = "Rgs_"
+	Configuration.ARPU_File_Column_Separator = ","
 
 	Configuration.App_AUC.Description = "App AUC service"
 	Configuration.App_AUC.Protocol = "http"
@@ -712,6 +720,8 @@ func setDefaultConfiguration_GM_Loyalty_Live() (Configuration ConfigType) {
 	Configuration.Min_Allowed_Balance = 0
 	Configuration.Max_Allowed_Balance = 677
 	Configuration.ARPU_File_Path = "/home/Subs_ARPU/"
+	Configuration.ARPU_File_Prefix = "Rgs_"
+	Configuration.ARPU_File_Column_Separator = ","
 
 	Configuration.App_AUC.Description = "App AUC service"
 	Configuration.App_AUC.Protocol = "http"
@@ -884,6 +894,8 @@ func setDefaultConfiguration_GM_Loyalty_UAT() (Configuration ConfigType) {
 	Configuration.Min_Allowed_Balance = 0
 	Configuration.Max_Allowed_Balance = 677
 	Configuration.ARPU_File_Path = "/home/Subs_ARPU/"
+	Configuration.ARPU_File_Prefix = "Rgs_"
+	Configuration.ARPU_File_Column_Separator = ","
 
 	Configuration.App_AUC.Description = "App AUC service"
 	Configuration.App_AUC.Protocol = "http"
@@ -1056,6 +1068,8 @@ func setDefaultConfiguration_SL_Live() (Configuration ConfigType) {
 	Configuration.Min_Allowed_Balance = 0
 	Configuration.Max_Allowed_Balance = 225
 	Configuration.ARPU_File_Path = "/home/Subs_ARPU/"
+	Configuration.ARPU_File_Prefix = "Rgs_"
+	Configuration.ARPU_File_Column_Separator = ","
 
 	Configuration.App_AUC.Description = "App AUC service"
 	Configuration.App_AUC.Protocol = "http"
@@ -1219,6 +1233,8 @@ func setDefaultConfiguration_SL_Loyalty() (Configuration ConfigType) {
 	Configuration.Min_Allowed_Balance = 0
 	Configuration.Max_Allowed_Balance = 225
 	Configuration.ARPU_File_Path = "/home/Subs_ARPU/"
+	Configuration.ARPU_File_Prefix = "Rgs_"
+	Configuration.ARPU_File_Column_Separator = ","
 
 	Configuration.App_AUC.Description = "App AUC service"
 	Configuration.App_AUC.Protocol = "http"
@@ -1387,6 +1403,8 @@ func setDefaultConfiguration_AO_Loyalty() (Configuration ConfigType) {
 	Configuration.Min_Allowed_Balance = 0
 	Configuration.Max_Allowed_Balance = 225
 	Configuration.ARPU_File_Path = "/home/Subs_ARPU/"
+	Configuration.ARPU_File_Prefix = "lendme_"
+	Configuration.ARPU_File_Column_Separator = ";"
 
 	Configuration.App_AUC.Description = "App AUC service"
 	Configuration.App_AUC.Protocol = "http"
@@ -1537,6 +1555,8 @@ func setDefaultConfiguration_AO_Loyalty_UAT() (Configuration ConfigType) {
 	Configuration.Min_Allowed_Balance = 0
 	Configuration.Max_Allowed_Balance = 225
 	Configuration.ARPU_File_Path = "/home/Subs_ARPU/"
+	Configuration.ARPU_File_Prefix = "lendme_"
+	Configuration.ARPU_File_Column_Separator = ";"
 
 	Configuration.App_AUC.Description = "App AUC service"
 	Configuration.App_AUC.Protocol = "http"

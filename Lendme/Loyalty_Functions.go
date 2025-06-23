@@ -22,6 +22,7 @@ import (
 	"github.com/jinzhu/copier"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -310,6 +311,15 @@ func (uc *UserControl) LoyaltyIndexesMaintenanceProcess() {
 	} else {
 		if !exists {
 			log.Println("Index Idx_Loyalty_Campaign_Account_Key created")
+		}
+	}
+
+	exists, err = DAO_Loyalty_AccountCreditPoints_log.CheckAndCreateIndex("Idx_LoyaltyAutoIncrement_MSISDN", []string{"MSISDN"}, true)
+	if err != nil {
+		log.Println("Error checking and creating index Idx_LoyaltyAutoIncrement_MSISDN: ", err)
+	} else {
+		if !exists {
+			log.Println("Index Idx_LoyaltyAutoIncrement_MSISDN created")
 		}
 	}
 
@@ -6378,6 +6388,53 @@ func (Uc *UserControl) ReadAccountEventsDetailsFromMongoDB(startDate, endDate ti
 	return response, err
 }
 
+func (Uc *UserControl) Customer_Loyalty_Account_GetAwardedPoints(startDate, endDate time.Time) (response map[string]float64, err error) {
+	results := make(map[string]float64)
+
+	for d := startDate; !d.After(endDate); d = d.AddDate(0, 0, 1) {
+		monthStr := strconv.Itoa(int(d.Month()))
+		if len(monthStr) < 2 {
+			monthStr = "0" + monthStr
+		}
+		MongoDB_DB_Name := "Loyalty_DB_" + strconv.Itoa(d.Year()) + monthStr
+
+		var dayStr = strconv.Itoa(d.Day())
+		if len(dayStr) < 2 {
+			dayStr = "0" + dayStr
+		}
+
+		collName := "Col_Loyalty_AccountCreditPoints_log_" + dayStr
+		// Fetch the collection
+		collection := Uc.LoyaltyMongoDB.MongoDBClient.Database(MongoDB_DB_Name).Collection(collName)
+		pipeline := mongo.Pipeline{
+			{{Key: "$group", Value: bson.D{
+				{Key: "_id", Value: "$MSISDN"},
+				{Key: "totalPoints", Value: bson.D{{"$sum", "$AwardedPoints"}}},
+			}}},
+		}
+
+		cursor, err := collection.Aggregate(context.Background(), pipeline)
+		if err != nil {
+			log.Printf("Aggregation failed for %s: %v", collName, err)
+			continue
+		}
+
+		for cursor.Next(context.Background()) {
+			var doc struct {
+				MSISDN      string  `bson:"_id"`
+				TotalPoints float64 `bson:"totalPoints"`
+			}
+			if err := cursor.Decode(&doc); err != nil {
+				log.Printf("Failed decoding result for %s: %v", collName, err)
+				continue
+			}
+			results[doc.MSISDN] += doc.TotalPoints
+		}
+	}
+
+	return results, nil
+}
+
 func (Uc *UserControl) Customer_Loyalty_Account_Getlogs(Type string, startDate, endDate time.Time, MSISDN string, Filter string) (response []Loyalty_Logs, err error) {
 	var allLogs []Loyalty_Logs
 	if Type == "All Logs" || Type == "Debit Logs" {
@@ -6643,59 +6700,58 @@ func (Uc *UserControl) PointsExpiry_Process() {
 	LOG_ID := "<<Points Expiry>>"
 	for range time.Tick(time.Second * 1) {
 		_CurrentDateTime := time.Now()
-		// _hr, _mi, _se := _CurrentDateTime.Clock()
-		_, _, _se := _CurrentDateTime.Clock()
-		// if _hr == 00 {
-		// 	if _mi == 00 {
-		// 		if _se < 60 {
-		if _se == 00 {
-			if exec == 0 {
-				exec = 1
-				log.Println(LOG_ID + " triggered")
-				count, err := DAO_Customer_Loyalty_Account.Count(daoc.DAOCountParams{})
-				if err != nil {
-					log.Println(LOG_ID + " count get error: " + err.Error())
-				} else {
-					if count > 0 {
-						var QueryLimit int64 = 1000
-						var QueryPage int64 = 1
-						var endReached bool = false
-						var QueryIdx int64 = 0
-						for !endReached {
-							loyalty_Accounts, err := Uc.Customer_Loyalty_Account_GetPaginated(QueryPage, QueryLimit)
-							if err == nil {
-								if QueryIdx < count {
-									QueryPage = QueryPage + 1
-									QueryIdx = QueryIdx + QueryLimit
-								} else {
-									endReached = true
-								}
-								// do the work here
-								for _, loyalty_Account := range loyalty_Accounts {
-									chan_PointsExpiry_Controler <- 1
-									finalAccount, err := Uc.Customer_Loyalty_Account_Get(loyalty_Account.Key)
-									if err != nil || len(finalAccount) == 0 {
-										break
+		_hr, _mi, _se := _CurrentDateTime.Clock()
+		if _hr == 00 {
+			if _mi == 00 {
+				if _se < 60 {
+					if exec == 0 {
+						exec = 1
+						log.Println(LOG_ID + " triggered")
+						count, err := DAO_Customer_Loyalty_Account.Count(daoc.DAOCountParams{})
+						if err != nil {
+							log.Println(LOG_ID + " count get error: " + err.Error())
+						} else {
+							if count > 0 {
+								var QueryLimit int64 = 1000
+								var QueryPage int64 = 1
+								var endReached bool = false
+								var QueryIdx int64 = 0
+								for !endReached {
+									loyalty_Accounts, err := Uc.Customer_Loyalty_Account_GetPaginated(QueryPage, QueryLimit)
+									if err == nil {
+										if QueryIdx < count {
+											QueryPage = QueryPage + 1
+											QueryIdx = QueryIdx + QueryLimit
+										} else {
+											endReached = true
+										}
+										// do the work here
+										for _, loyalty_Account := range loyalty_Accounts {
+											chan_PointsExpiry_Controler <- 1
+											finalAccount, err := Uc.Customer_Loyalty_Account_Get(loyalty_Account.Key)
+											if err != nil || len(finalAccount) == 0 {
+												break
+											}
+											if finalAccount[0].Coming_Expiry_Date.Year() == time.Now().Year() && finalAccount[0].Coming_Expiry_Date.Month() == time.Now().Month() && finalAccount[0].Coming_Expiry_Date.Day() == time.Now().Day() {
+												go Uc.PointsExpiry_ProcessExec(finalAccount[0])
+											}
+										}
 									}
-									if finalAccount[0].Coming_Expiry_Date.Year() == time.Now().Year() && finalAccount[0].Coming_Expiry_Date.Month() == time.Now().Month() && finalAccount[0].Coming_Expiry_Date.Day() == time.Now().Day() {
-										go Uc.PointsExpiry_ProcessExec(finalAccount[0])
-									}
+
 								}
+
 							}
-
 						}
-
+						log.Println(LOG_ID + " finished")
 					}
 				}
-				log.Println(LOG_ID + " finished")
+			} else {
+				if exec == 1 {
+					exec = 0
+				}
 			}
+
 		}
-		// } else {
-		// 	if exec == 1 {
-		// 		exec = 0
-		// 	}
-		// }
-		// }
 	}
 }
 

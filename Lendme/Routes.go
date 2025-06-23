@@ -430,6 +430,8 @@ func (Uc *UserControl) AddToLoyaltyManagementRouter(router *mux.Router, UC *User
 			{AccessKey: "HTTP_Customer_Loyalty_Account_CreditPoints", AccessMethod: "PUT", Allowed: true},
 			{AccessKey: "HTTP_Customer_Loyalty_Account_DebitPoints", AccessMethod: "PUT", Allowed: true},
 			{AccessKey: "HTTP_Loyalty_Products_Catalogue", AccessMethod: "GET", Allowed: true},
+			{AccessKey: "Customer Awarded Points", AccessMethod: "Module Sub Menu L1", Allowed: true},
+			{AccessKey: "HTTP_Customer_Loyalty_Account_Get_Awarded_Points", AccessMethod: "GET", Allowed: true},
 		}
 		_, err = Uc.OKAPIAUC.AUCClient.GroupAccessEntriesForGroup_Comprehensive("VAS - Loyalty", AccessEntries_to_add)
 
@@ -727,8 +729,25 @@ func (Uc *UserControl) Add_Loyalty_ToAccessEntry(existing map[string]AuthCenter.
 		ModuleDisplayOrder:   ModuleDisplayOrder,
 		Level1:               Level1,
 		Level1DisplayOrder:   Level1DisplayOrder,
-		Level2:               "Customer ExclCOS Exclusionusion",
+		Level2:               "Customer COS Exclusion",
 		Level2DisplayOrder:   12,
+		Level3:               "",
+		Level3DisplayOrder:   0,
+	}
+	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
+
+	sd_ae = AuthCenter.AccessEntry{
+		AccessKey:            "Customer Awarded Points",
+		AccessMethod:         "Module Sub Menu L1",
+		AccessKeyDescription: "Customer Awarded Points",
+		DisplayName:          "Customer Awarded Points",
+		DisplayOrder:         13,
+		Module:               Module,
+		ModuleDisplayOrder:   ModuleDisplayOrder,
+		Level1:               Level1,
+		Level1DisplayOrder:   Level1DisplayOrder,
+		Level2:               "Customer Awarded Points",
+		Level2DisplayOrder:   13,
 		Level3:               "",
 		Level3DisplayOrder:   0,
 	}

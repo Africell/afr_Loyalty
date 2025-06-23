@@ -1942,6 +1942,29 @@ func (UC *UserControl) Add_LoyaltyManagementRoutes(R *Routes) {
 		true,                  //AllowedFor_App
 	}
 	*R = append(*R, r)
+	Level1 = "Customer Awarded Points"
+	Level1DisplayOrder = Level1DisplayOrder + 1
+	r = Route{
+		"HTTP_Customer_Loyalty_Account_Get_Awarded_Points",
+		"GET",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Customer_Loyalty_Account_Get_Awarded_Points/",
+		Use(UC.HTTP_Customer_Loyalty_Account_Get_Awarded_Points, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
+		true,
+		"Customer Awarded Points - Read", // DisplayName
+		DisplayOrder,                     // DisplayOrder
+		Module,                           // Module
+		ModuleDisplayOrder,               //ModuleDisplayOrder
+		Level1,                           // Level1
+		Level1DisplayOrder,               // Level1DisplayOrder
+		"",                               // Level2
+		0,                                // Level2DisplayOrder
+		"",                               // Level3
+		0,                                // Level3DisplayOrder
+		true,                             //AllowedFor_OKAPI
+		true,                             //AllowedFor_App
+	}
+	*R = append(*R, r)
+
 }
 
 func (UC *UserControl) Add_LoyaltyFeedRoutes(R *Routes) {

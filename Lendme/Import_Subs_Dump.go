@@ -55,7 +55,7 @@ func (Uc *UserControl) Import_Subscribers_Dump_LineByLine(FileName string) (err 
 		}
 		if len(line) > 0 {
 			//log.Println(string(line))
-			result := strings.Split(string(line), ",")
+			result := strings.Split(string(line), Configuration.ARPU_File_Column_Separator)
 			if len(result) == 11 {
 				//file fields: MSISDN, Cos ID, Enrol Date, Last Credited, Loyalty Status, Credit Limit, Revenue,
 				//	Recharge, Last Recharge date, Dealer bundle recharge, Last Dealer bundle recharge date
@@ -264,7 +264,7 @@ func (Uc *UserControl) Auto_Import_Subscribers_Dump() (err error) {
 	for range time.Tick(time.Second * 60) {
 		if exec == 0 {
 			timeparts := GetTimeParts_V2(time.Now().Add(-24 * time.Hour))
-			fileName := "Rgs_" + timeparts.YYYY + timeparts.MM + timeparts.DD + ".txt"
+			fileName := Configuration.ARPU_File_Prefix + timeparts.YYYY + timeparts.MM + timeparts.DD + ".txt"
 			//check if file exist
 			FullFileName := Configuration.ARPU_File_Path + fileName
 			if CheckIfExists(FullFileName) {
