@@ -198,12 +198,12 @@ type ConfigType struct {
 func GetDefaultConfiguration() (err error) {
 	//Configuration = setDefaultConfiguration_DRC_Live()
 	//	Configuration = setDefaultConfiguration_GM_Live()
-	//Configuration = setDefaultConfiguration_SL_Live()
+	Configuration = setDefaultConfiguration_SL_Live()
 	//Configuration = setDefaultConfiguration_GM_Loyalty()
 	//Configuration = setDefaultConfiguration_SL_Loyalty()
 
 	// Configuration = setDefaultConfiguration_AO_Loyalty()
-	Configuration = setDefaultConfiguration_AO_Loyalty_UAT()
+	//Configuration = setDefaultConfiguration_AO_Loyalty_UAT()
 
 	//Configuration = setDefaultConfiguration_GM_Loyalty_Live()
 	// Configuration = setDefaultConfiguration_GM_Loyalty_UAT()
@@ -1046,7 +1046,7 @@ func setDefaultConfiguration_SL_Live() (Configuration ConfigType) {
 	Configuration.MSISDN_Short_len = 8
 	Configuration.CountryCode = "232"
 
-	Configuration.IsProduction = false
+	Configuration.IsProduction = true
 	Configuration.IsLoyaltyProduction = false
 	Configuration.Min_Allowed_Amnt = 1
 	Configuration.Service_FeePerc = 0.15
@@ -1645,7 +1645,7 @@ func setDefaultConfiguration_AO_Loyalty_UAT() (Configuration ConfigType) {
 	Configuration.Propylaea.S2S_Username = "Propylaea_Admin"
 	Configuration.Propylaea.S2S_Password = "uC@g$W$iRiS6$2@333dd"
 	Configuration.Propylaea.Timeout_After = 5 * time.Second
-	
+
 	return
 }
 
