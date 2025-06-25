@@ -1673,7 +1673,7 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_Angola() {
 	}
 
 	request = Credit_Limit_Scheme_Add_Request{
-		Key:                 "0_2001_5000_3_9",
+		Key:                 "0_2001_5000_9_24",
 		Scheme_Id:           0,
 		Amount_From:         2001,
 		Amount_Till:         5000,
@@ -1687,7 +1687,7 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_Angola() {
 	}
 
 	request = Credit_Limit_Scheme_Add_Request{
-		Key:                 "0_5001_999999999_3_9",
+		Key:                 "0_5001_999999999_9_24",
 		Scheme_Id:           0,
 		Amount_From:         5001,
 		Amount_Till:         999999999,
@@ -1701,7 +1701,7 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_Angola() {
 	}
 
 	request = Credit_Limit_Scheme_Add_Request{
-		Key:                 "0_200_2000_9_24",
+		Key:                 "0_200_2000_24_9999999",
 		Scheme_Id:           0,
 		Amount_From:         200,
 		Amount_Till:         2000,
@@ -1715,7 +1715,7 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_Angola() {
 	}
 
 	request = Credit_Limit_Scheme_Add_Request{
-		Key:                 "0_2001_5000_3_9",
+		Key:                 "0_2001_5000_24_9999999",
 		Scheme_Id:           0,
 		Amount_From:         2001,
 		Amount_Till:         5000,
@@ -1729,7 +1729,7 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_Angola() {
 	}
 
 	request = Credit_Limit_Scheme_Add_Request{
-		Key:                 "0_5001_999999999_3_9",
+		Key:                 "0_5001_999999999_24_9999999",
 		Scheme_Id:           0,
 		Amount_From:         5001,
 		Amount_Till:         999999999,
