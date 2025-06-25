@@ -2507,11 +2507,11 @@ func (Uc *UserControl) GetCustomerMainBalance(MSISDN string) (balance_RBB float6
 		for _, balances := range balanceGroupes.Balances {
 			RBB_BAL_ELEM_int, _ := strconv.Atoi(RBB_BAL_ELEM)
 			if balances.Elem == RBB_BAL_ELEM_int {
-				balance_RBB = balances.CurrentBal
+				balance_RBB = balances.CurrentBal * -1
 			}
 			EVC_BAL_ELEM_int, _ := strconv.Atoi(EVC_BAL_ELEM)
 			if balances.Elem == EVC_BAL_ELEM_int {
-				balance_EVC = balances.CurrentBal
+				balance_EVC = balances.CurrentBal * -1
 			}
 		}
 	}
