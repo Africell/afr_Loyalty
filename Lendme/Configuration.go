@@ -1395,13 +1395,13 @@ func setDefaultConfiguration_AO_Loyalty() (Configuration ConfigType) {
 
 	Configuration.IsProduction = false
 	Configuration.IsLoyaltyProduction = false
-	Configuration.Min_Allowed_Amnt = 1
+	Configuration.Min_Allowed_Amnt = 50
 	Configuration.Service_FeePerc = 0.15
 	Configuration.Min_Allowed_AON = 3
-	Configuration.Min_Avg3MRecharge = 0
+	Configuration.Min_Avg3MRecharge = 200
 	Configuration.Min_LastRechargePeriod = 60
 	Configuration.Min_Allowed_Balance = 0
-	Configuration.Max_Allowed_Balance = 225
+	Configuration.Max_Allowed_Balance = 100
 	Configuration.ARPU_File_Path = "/home/Subs_ARPU/"
 	Configuration.ARPU_File_Prefix = "lendme_"
 	Configuration.ARPU_File_Column_Separator = ";"
@@ -1547,13 +1547,13 @@ func setDefaultConfiguration_AO_Loyalty_UAT() (Configuration ConfigType) {
 
 	Configuration.IsProduction = false
 	Configuration.IsLoyaltyProduction = false
-	Configuration.Min_Allowed_Amnt = 1
+	Configuration.Min_Allowed_Amnt = 50
 	Configuration.Service_FeePerc = 0.15
 	Configuration.Min_Allowed_AON = 3
-	Configuration.Min_Avg3MRecharge = 0
+	Configuration.Min_Avg3MRecharge = 200
 	Configuration.Min_LastRechargePeriod = 60
 	Configuration.Min_Allowed_Balance = 0
-	Configuration.Max_Allowed_Balance = 225
+	Configuration.Max_Allowed_Balance = 100
 	Configuration.ARPU_File_Path = "/home/Subs_ARPU/"
 	Configuration.ARPU_File_Prefix = "lendme_"
 	Configuration.ARPU_File_Column_Separator = ";"
