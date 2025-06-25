@@ -6407,9 +6407,12 @@ func (Uc *UserControl) Customer_Loyalty_Account_GetAwardedPoints(startDate, endD
 		// Fetch the collection
 		collection := Uc.LoyaltyMongoDB.MongoDBClient.Database(MongoDB_DB_Name).Collection(collName)
 		pipeline := mongo.Pipeline{
+			{{Key: "$match", Value: bson.D{
+				{Key: "AwardedPoints", Value: bson.D{{Key: "$gt", Value: 0}}},
+			}}},
 			{{Key: "$group", Value: bson.D{
 				{Key: "_id", Value: "$MSISDN"},
-				{Key: "totalPoints", Value: bson.D{{"$sum", "$AwardedPoints"}}},
+				{Key: "totalPoints", Value: bson.D{{Key: "$sum", Value: "$AwardedPoints"}}},
 			}}},
 		}
 
