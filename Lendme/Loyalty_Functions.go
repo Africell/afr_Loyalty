@@ -6423,11 +6423,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_GetAwardedPoints(startDate, endD
 				{Key: "afrimoneyPoints", Value: bson.D{
 					{Key: "$sum", Value: bson.D{
 						{Key: "$cond", Value: bson.A{
-							bson.D{
-								{Key: "$and", Value: bson.A{
-									bson.D{{Key: "$eq", Value: bson.A{"$EventSource", "MobileMoney_feed"}}},
-								}},
-							},
+							bson.D{{Key: "$eq", Value: bson.A{"$EventSource", "MobileMoney_feed"}}},
 							"$AwardedPoints", // if condition is true
 							0,                // if false
 						}},
@@ -6454,6 +6450,8 @@ func (Uc *UserControl) Customer_Loyalty_Account_GetAwardedPoints(startDate, endD
 				continue
 			}
 			existing := results[doc.MSISDN]
+			fmt.Println("doc.MSISDN", doc.MSISDN)
+			fmt.Println("existing", existing)
 			cusAccount, err := Uc.Customer_Loyalty_Account_Get(doc.MSISDN)
 			if err != nil {
 				fmt.Println("err", err)
@@ -6461,7 +6459,6 @@ func (Uc *UserControl) Customer_Loyalty_Account_GetAwardedPoints(startDate, endD
 			if err == nil && len(cusAccount) > 0 {
 				existing.loyaltyLevel = cusAccount[0].Loyalty_Level_Key
 			} else {
-				fmt.Println("cusAccount", cusAccount)
 			}
 			existing.TotalPoints += doc.TotalPoints
 			existing.afrimoneyPoints += doc.afrimoneyPoints
