@@ -6450,9 +6450,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_GetAwardedPoints(startDate, endD
 				continue
 			}
 			existing := results[doc.MSISDN]
-			fmt.Println("doc.MSISDN", doc.MSISDN)
-			fmt.Println("existing", existing)
-			cusAccount, err := Uc.Customer_Loyalty_Account_Get(doc.MSISDN)
+			cusAccount, err := Uc.Customer_Loyalty_Account_Get(fmt.Sprintf("%v", doc.MSISDN))
 			if err != nil {
 				fmt.Println("err", err)
 			}
