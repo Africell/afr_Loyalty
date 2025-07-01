@@ -6391,8 +6391,8 @@ func (Uc *UserControl) ReadAccountEventsDetailsFromMongoDB(startDate, endDate ti
 type LoyaltySummary struct {
 	MSISDN          string  `bson:"_id"`
 	TotalPoints     float64 `bson:"totalPoints"`
-	loyaltyLevel    string  `bson:"loyaltyLevel"`
-	afrimoneyPoints float64 `bson:"afrimoneyPoints"`
+	LoyaltyLevel    string  `bson:"loyaltyLevel"`
+	AfrimoneyPoints float64 `bson:"afrimoneyPoints"`
 }
 
 func (Uc *UserControl) Customer_Loyalty_Account_GetAwardedPoints(startDate, endDate time.Time) (response map[string]LoyaltySummary, err error) {
@@ -6442,8 +6442,8 @@ func (Uc *UserControl) Customer_Loyalty_Account_GetAwardedPoints(startDate, endD
 			var doc struct {
 				MSISDN          string  `bson:"_id"`
 				TotalPoints     float64 `bson:"totalPoints"`
-				loyaltyLevel    string  `bson:"loyaltyLevel"`
-				afrimoneyPoints float64 `bson:"afrimoneyPoints"`
+				LoyaltyLevel    string  `bson:"loyaltyLevel"`
+				AfrimoneyPoints float64 `bson:"afrimoneyPoints"`
 			}
 			if err := cursor.Decode(&doc); err != nil {
 				log.Printf("Failed decoding result for %s: %v", collName, err)
@@ -6455,11 +6455,11 @@ func (Uc *UserControl) Customer_Loyalty_Account_GetAwardedPoints(startDate, endD
 				fmt.Println("err", err)
 			}
 			if err == nil && len(cusAccount) > 0 {
-				existing.loyaltyLevel = cusAccount[0].Loyalty_Level_Key
+				existing.LoyaltyLevel = cusAccount[0].Loyalty_Level_Key
 			} else {
 			}
 			existing.TotalPoints += doc.TotalPoints
-			existing.afrimoneyPoints += doc.afrimoneyPoints
+			existing.AfrimoneyPoints += doc.AfrimoneyPoints
 			results[doc.MSISDN] = existing
 		}
 	}

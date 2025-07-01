@@ -2362,7 +2362,7 @@ func (Uc *UserControl) HTTP_Customer_Loyalty_Account_Get_Awarded_Points(w http.R
 		writer.Write([]string{"MSISDN", "Awarded Points", "Loyalty Level", "Afrimony points"})
 
 		for msisdn, data := range response {
-			writer.Write([]string{msisdn, fmt.Sprintf("%.2f", data.TotalPoints), data.loyaltyLevel, fmt.Sprintf("%.2f", data.afrimoneyPoints)})
+			writer.Write([]string{msisdn, fmt.Sprintf("%.2f", data.TotalPoints), data.LoyaltyLevel, fmt.Sprintf("%.2f", data.AfrimoneyPoints)})
 		}
 		fmt.Println("err", err)
 		// json.NewEncoder(w).Encode(err)
