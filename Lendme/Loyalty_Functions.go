@@ -6388,8 +6388,15 @@ func (Uc *UserControl) ReadAccountEventsDetailsFromMongoDB(startDate, endDate ti
 	return response, err
 }
 
-func (Uc *UserControl) Customer_Loyalty_Account_GetAwardedPoints(startDate, endDate time.Time) (response map[string]float64, err error) {
-	results := make(map[string]float64)
+type LoyaltySummary struct {
+	MSISDN          string  `bson:"_id"`
+	TotalPoints     float64 `bson:"totalPoints"`
+	loyaltyLevel    string  `bson:"loyaltyLevel"`
+	afrimoneyPoints float64 `bson:"afrimoneyPoints"`
+}
+
+func (Uc *UserControl) Customer_Loyalty_Account_GetAwardedPoints(startDate, endDate time.Time) (response map[string]LoyaltySummary, err error) {
+	results := make(map[string]LoyaltySummary)
 
 	for d := startDate; !d.After(endDate); d = d.AddDate(0, 0, 1) {
 		monthStr := strconv.Itoa(int(d.Month()))
@@ -6413,6 +6420,19 @@ func (Uc *UserControl) Customer_Loyalty_Account_GetAwardedPoints(startDate, endD
 			{{Key: "$group", Value: bson.D{
 				{Key: "_id", Value: "$MSISDN"},
 				{Key: "totalPoints", Value: bson.D{{Key: "$sum", Value: "$AwardedPoints"}}},
+				{Key: "mobileMoneyPoints", Value: bson.D{
+					{Key: "$sum", Value: bson.D{
+						{Key: "$cond", Value: bson.A{
+							bson.D{
+								{Key: "$and", Value: bson.A{
+									bson.D{{Key: "$eq", Value: bson.A{"$EventSource", "MobileMoney_feed"}}},
+								}},
+							},
+							"$AwardedPoints", // if condition is true
+							0,                // if false
+						}},
+					}},
+				}},
 			}}},
 		}
 
@@ -6424,14 +6444,23 @@ func (Uc *UserControl) Customer_Loyalty_Account_GetAwardedPoints(startDate, endD
 
 		for cursor.Next(context.Background()) {
 			var doc struct {
-				MSISDN      string  `bson:"_id"`
-				TotalPoints float64 `bson:"totalPoints"`
+				MSISDN          string  `bson:"_id"`
+				TotalPoints     float64 `bson:"totalPoints"`
+				loyaltyLevel    string  `bson:"loyaltyLevel"`
+				afrimoneyPoints float64 `bson:"afrimoneyPoints"`
 			}
 			if err := cursor.Decode(&doc); err != nil {
 				log.Printf("Failed decoding result for %s: %v", collName, err)
 				continue
 			}
-			results[doc.MSISDN] += doc.TotalPoints
+			existing := results[doc.MSISDN]
+			cusAccount, err := Uc.Customer_Loyalty_Account_Get(doc.MSISDN)
+			if err == nil && len(cusAccount) > 0 {
+				existing.loyaltyLevel = cusAccount[0].Loyalty_Level_Key
+			}
+			existing.TotalPoints += doc.TotalPoints
+			existing.afrimoneyPoints += doc.afrimoneyPoints
+			results[doc.MSISDN] = existing
 		}
 	}
 
