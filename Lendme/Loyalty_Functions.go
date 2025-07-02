@@ -3801,8 +3801,6 @@ func (Uc *UserControl) Customer_Loyalty_Account_Get(Key string) (entries []Custo
 		}
 		return entries, nil
 	} else {
-		fmt.Println("Key", Key)
-		fmt.Printf("Key type: %T\n", Key)
 		entry_na, exits := Map_Customer_Loyalty_Account.CheckThenGet(Key)
 		if !exits {
 			err = errors.New("key does not exist")
@@ -6286,6 +6284,10 @@ func (Uc *UserControl) ReadAccountLevelChangeDetailsFromMongoDB(startDate, endDa
 		// Build the filter for the date range
 		filter := bson.D{
 			{Key: "MSISDN", Value: MSISDN},
+			{Key: "Level_Change_Date", Value: bson.D{
+				{Key: "$gte", Value: startDate},
+				{Key: "$lte", Value: endDate},
+			}},
 		}
 		skip := (page - 1) * limit
 
@@ -6451,11 +6453,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_GetAwardedPoints(startDate, endD
 				log.Printf("Failed decoding result for %s: %v", collName, err)
 				continue
 			}
-			existing, exists := results[doc.MSISDN]
-			if !exists {
-				fmt.Println("entered", doc.MSISDN)
-				results[doc.MSISDN] = LoyaltySummary{}
-			}
+			existing := results[doc.MSISDN]
 			entry_na, exits := Map_Customer_Loyalty_Account.CheckThenGet(doc.MSISDN)
 			if !exits {
 				fmt.Println("key does not exist")
