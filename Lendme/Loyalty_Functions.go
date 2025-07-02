@@ -6451,14 +6451,20 @@ func (Uc *UserControl) Customer_Loyalty_Account_GetAwardedPoints(startDate, endD
 				log.Printf("Failed decoding result for %s: %v", collName, err)
 				continue
 			}
-			existing := results[doc.MSISDN]
-			cusAccount, err := Uc.Customer_Loyalty_Account_Get(doc.MSISDN)
-			if err != nil {
-				fmt.Println("err", err)
+			existing, exists := results[doc.MSISDN]
+			if !exists {
+				fmt.Println("entered", doc.MSISDN)
+				results[doc.MSISDN] = LoyaltySummary{}
 			}
-			if err == nil && len(cusAccount) > 0 {
-				existing.LoyaltyLevel = cusAccount[0].Loyalty_Level_Key
+			entry_na, exits := Map_Customer_Loyalty_Account.CheckThenGet(doc.MSISDN)
+			if !exits {
+				fmt.Println("key does not exist")
 			}
+			cusAccount, ok := entry_na.(Customer_Loyalty_Account)
+			if !ok {
+				fmt.Println("error in type assertion")
+			}
+			existing.LoyaltyLevel = cusAccount.Loyalty_Level_Key
 			existing.TotalPoints += doc.TotalPoints
 			existing.AfrimoneyPoints += doc.AfrimoneyPoints
 			results[doc.MSISDN] = existing
