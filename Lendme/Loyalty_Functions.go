@@ -3802,6 +3802,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_Get(Key string) (entries []Custo
 		return entries, nil
 	} else {
 		fmt.Println("Key", Key)
+		fmt.Printf("Key type: %T\n", Key)
 		entry_na, exits := Map_Customer_Loyalty_Account.CheckThenGet(Key)
 		if !exits {
 			err = errors.New("key does not exist")
@@ -6451,7 +6452,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_GetAwardedPoints(startDate, endD
 				continue
 			}
 			existing := results[doc.MSISDN]
-			cusAccount, err := Uc.Customer_Loyalty_Account_Get(fmt.Sprintf("%v", doc.MSISDN))
+			cusAccount, err := Uc.Customer_Loyalty_Account_Get(doc.MSISDN)
 			if err != nil {
 				fmt.Println("err", err)
 			}
