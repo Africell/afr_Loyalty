@@ -3801,6 +3801,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_Get(Key string) (entries []Custo
 		}
 		return entries, nil
 	} else {
+		fmt.Println("Key", Key)
 		entry_na, exits := Map_Customer_Loyalty_Account.CheckThenGet(Key)
 		if !exits {
 			err = errors.New("key does not exist")
@@ -6456,7 +6457,6 @@ func (Uc *UserControl) Customer_Loyalty_Account_GetAwardedPoints(startDate, endD
 			}
 			if err == nil && len(cusAccount) > 0 {
 				existing.LoyaltyLevel = cusAccount[0].Loyalty_Level_Key
-			} else {
 			}
 			existing.TotalPoints += doc.TotalPoints
 			existing.AfrimoneyPoints += doc.AfrimoneyPoints
