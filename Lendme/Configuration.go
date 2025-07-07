@@ -982,7 +982,7 @@ func setDefaultConfiguration_GM_Loyalty_UAT() (Configuration ConfigType) {
 
 	Configuration.CGW_AUC.Description = "UCGW AUC service"
 	Configuration.CGW_AUC.Protocol = "http"
-	Configuration.CGW_AUC.Hostname = "10.30.0.140"
+	Configuration.CGW_AUC.Hostname = "10.30.0.119"
 	Configuration.CGW_AUC.Port = "9994"
 	Configuration.CGW_AUC.Module = "AUC"
 	Configuration.CGW_AUC.Version = "V1"
@@ -991,7 +991,7 @@ func setDefaultConfiguration_GM_Loyalty_UAT() (Configuration ConfigType) {
 	Configuration.CGW_AUC.Timeout_After = 5 * time.Second
 
 	Configuration.CGW.Protocol = "http"
-	Configuration.CGW.Hostname = "10.30.0.140"
+	Configuration.CGW.Hostname = "10.30.0.119"
 	Configuration.CGW.Port = "9991"
 	Configuration.CGW.Module = "UCGW"
 	Configuration.CGW.Version = "V1"
@@ -1000,7 +1000,7 @@ func setDefaultConfiguration_GM_Loyalty_UAT() (Configuration ConfigType) {
 	Configuration.Propylaea.Description = "Product Design Center - Propylaea"
 	Configuration.Propylaea.Protocol = "http"
 	Configuration.Propylaea.Port = "9900"
-	Configuration.Propylaea.Hostname = "10.30.0.140"
+	Configuration.Propylaea.Hostname = "10.30.0.119"
 	Configuration.Propylaea.Module = "Propylaea"
 	Configuration.Propylaea.Version = "V1"
 	Configuration.Propylaea.S2S_Username = "Propylaea_Admin"
