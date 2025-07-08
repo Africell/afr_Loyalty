@@ -1,3 +1,4 @@
+go build -o afr_Lendme_d .\afr_Lendme_main.go
 docker image build --tag local:LendMe_v1.0.0 . 
 docker save -o LendMe_v1.0.0.tar local:LendMe_v1.0.0 
 

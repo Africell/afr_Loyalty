@@ -200,7 +200,7 @@ type ConfigType struct {
 func GetDefaultConfiguration() (err error) {
 	//Configuration = setDefaultConfiguration_DRC_Live()
 	//	Configuration = setDefaultConfiguration_GM_Live()
-	Configuration = setDefaultConfiguration_SL_Live()
+	// Configuration = setDefaultConfiguration_SL_Live()
 	//Configuration = setDefaultConfiguration_GM_Loyalty()
 	//Configuration = setDefaultConfiguration_SL_Loyalty()
 
@@ -208,7 +208,7 @@ func GetDefaultConfiguration() (err error) {
 	//Configuration = setDefaultConfiguration_AO_Loyalty_UAT()
 
 	//Configuration = setDefaultConfiguration_GM_Loyalty_Live()
-	// Configuration = setDefaultConfiguration_GM_Loyalty_UAT()
+	Configuration = setDefaultConfiguration_GM_Loyalty_UAT()
 	return nil
 }
 
@@ -1223,7 +1223,7 @@ func setDefaultConfiguration_SL_Loyalty() (Configuration ConfigType) {
 	Configuration.MSISDN_Short_len = 8
 	Configuration.CountryCode = "232"
 
-	Configuration.IsProduction = false
+	Configuration.IsProduction = true
 	Configuration.IsLoyaltyProduction = false
 	Configuration.Min_Allowed_Amnt = 1
 	Configuration.Service_FeePerc = 0.15
