@@ -2359,10 +2359,10 @@ func (Uc *UserControl) HTTP_Customer_Loyalty_Account_Get_Awarded_Points(w http.R
 		writer := csv.NewWriter(w)
 		defer writer.Flush()
 
-		writer.Write([]string{"MSISDN", "Awarded Points", "Loyalty Level", "Afrimony points"})
+		writer.Write([]string{"MSISDN", "Awarded Points", "Loyalty Level", "Afrimony Points", "Current Points", "Acumalted Points"})
 
 		for msisdn, data := range response {
-			writer.Write([]string{msisdn, fmt.Sprintf("%.2f", data.TotalPoints), data.LoyaltyLevel, fmt.Sprintf("%.2f", data.AfrimoneyPoints)})
+			writer.Write([]string{msisdn, fmt.Sprintf("%.2f", data.TotalPoints), data.LoyaltyLevel, fmt.Sprintf("%.2f", data.AfrimoneyPoints), fmt.Sprintf("%.2f", data.Current_Points), fmt.Sprintf("%.2f", data.Accumulated_Points)})
 		}
 		fmt.Println("err", err)
 		// json.NewEncoder(w).Encode(err)

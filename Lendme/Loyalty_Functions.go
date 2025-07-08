@@ -6393,10 +6393,12 @@ func (Uc *UserControl) ReadAccountEventsDetailsFromMongoDB(startDate, endDate ti
 }
 
 type LoyaltySummary struct {
-	MSISDN          string  `bson:"_id"`
-	TotalPoints     float64 `bson:"totalPoints"`
-	LoyaltyLevel    string  `bson:"loyaltyLevel"`
-	AfrimoneyPoints float64 `bson:"afrimoneyPoints"`
+	MSISDN             string  `bson:"_id"`
+	TotalPoints        float64 `bson:"totalPoints"`
+	LoyaltyLevel       string  `bson:"loyaltyLevel"`
+	AfrimoneyPoints    float64 `bson:"afrimoneyPoints"`
+	Accumulated_Points float64 `bson:"accumulated_Points"`
+	Current_Points     float64 `bson:"current_Points"`
 }
 
 func (Uc *UserControl) Customer_Loyalty_Account_GetAwardedPoints(startDate, endDate time.Time) (response map[string]LoyaltySummary, err error) {
@@ -6443,12 +6445,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_GetAwardedPoints(startDate, endD
 		}
 
 		for cursor.Next(context.Background()) {
-			var doc struct {
-				MSISDN          string  `bson:"_id"`
-				TotalPoints     float64 `bson:"totalPoints"`
-				LoyaltyLevel    string  `bson:"loyaltyLevel"`
-				AfrimoneyPoints float64 `bson:"afrimoneyPoints"`
-			}
+			var doc LoyaltySummary
 			if err := cursor.Decode(&doc); err != nil {
 				log.Printf("Failed decoding result for %s: %v", collName, err)
 				continue
@@ -6463,6 +6460,8 @@ func (Uc *UserControl) Customer_Loyalty_Account_GetAwardedPoints(startDate, endD
 				fmt.Println("error in type assertion")
 			}
 			existing.LoyaltyLevel = cusAccount.Loyalty_Level_Key
+			existing.Current_Points = cusAccount.Available_Points
+			existing.Accumulated_Points = cusAccount.Awarded_Points
 			existing.TotalPoints += doc.TotalPoints
 			existing.AfrimoneyPoints += doc.AfrimoneyPoints
 			results[doc.MSISDN] = existing
