@@ -4486,9 +4486,9 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			Airtime_Noti_Text = record.Airtime_Notification_Text
 
 			if Airtime_Noti_Text != "" {
-				Airtime_Noti_Text = strings.ReplaceAll(Airtime_Noti_Text, "{{PointsDeducted}}", fmt.Sprint(response.Points_To_Redeem))
-				Airtime_Noti_Text = strings.ReplaceAll(Airtime_Noti_Text, "{{AirtimeAwarded}}", fmt.Sprint(response.Redemption_Amount))
-				Airtime_Noti_Text = strings.ReplaceAll(Airtime_Noti_Text, "{{LoyaltyBalance}}", fmt.Sprint(response.Closure_Available_Points))
+				Airtime_Noti_Text = strings.ReplaceAll(Airtime_Noti_Text, "{{ PointsDeducted }}", fmt.Sprint(response.Points_To_Redeem))
+				Airtime_Noti_Text = strings.ReplaceAll(Airtime_Noti_Text, "{{ AirtimeAwarded }}", fmt.Sprint(response.Redemption_Amount))
+				Airtime_Noti_Text = strings.ReplaceAll(Airtime_Noti_Text, "{{ LoyaltyBalance }}", fmt.Sprint(response.Closure_Available_Points))
 				AirtimeNotiLog.Payload = Airtime_Noti_Text
 				err := Send_SMS(record.Airtime_Notification_Sender, response.MSISDN, Airtime_Noti_Text)
 				if err != nil {
@@ -4677,11 +4677,21 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			}
 			Bundle_Noti_Text := ""
 			Bundle_Noti_Text = record.Bundles_Notification_Text
+			bundle, err := Uc.Propylaea.PropylaeaClient.Get_Bundle(response.Redemption_Bunlde_Id, "", "", "")
+			if err != nil {
+				fmt.Println("failed to get bundle")
+			}
+			var bundleName string
+			if err == nil && len(bundle.Data) > 0 {
+				bundleName = fmt.Sprint(bundle.Data[0].Name_Lang1)
+			} else {
+				bundleName = ""
+			}
 
 			if Bundle_Noti_Text != "" {
-				Bundle_Noti_Text = strings.ReplaceAll(Bundle_Noti_Text, "{{PointsDeducted}}", fmt.Sprint(response.Points_To_Redeem))
-				Bundle_Noti_Text = strings.ReplaceAll(Bundle_Noti_Text, "{{BundleName}}", fmt.Sprint(response.Redemption_Bunlde_Id))
-				Bundle_Noti_Text = strings.ReplaceAll(Bundle_Noti_Text, "{{LoyaltyBalance}}", fmt.Sprint(response.Closure_Available_Points))
+				Bundle_Noti_Text = strings.ReplaceAll(Bundle_Noti_Text, "{{ PointsDeducted }}", fmt.Sprint(response.Points_To_Redeem))
+				Bundle_Noti_Text = strings.ReplaceAll(Bundle_Noti_Text, "{{ BundleName }}", fmt.Sprint(bundleName))
+				Bundle_Noti_Text = strings.ReplaceAll(Bundle_Noti_Text, "{{ LoyaltyBalance }}", fmt.Sprint(response.Closure_Available_Points))
 				BundleNotiLog.Payload = Bundle_Noti_Text
 				err := Send_SMS(record.Bundles_Notification_Sender, response.MSISDN, Bundle_Noti_Text)
 				if err != nil {
@@ -4895,9 +4905,9 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			MobileMoney_Noti_Text = record.MobileMoney_Notification_Text
 
 			if MobileMoney_Noti_Text != "" {
-				MobileMoney_Noti_Text = strings.ReplaceAll(MobileMoney_Noti_Text, "{{PointsDeducted}}", fmt.Sprint(response.Points_To_Redeem))
-				MobileMoney_Noti_Text = strings.ReplaceAll(MobileMoney_Noti_Text, "{{MobileMoneyAwarded}}", fmt.Sprint(response.Redemption_Amount))
-				MobileMoney_Noti_Text = strings.ReplaceAll(MobileMoney_Noti_Text, "{{LoyaltyBalance}}", fmt.Sprint(response.Closure_Available_Points))
+				MobileMoney_Noti_Text = strings.ReplaceAll(MobileMoney_Noti_Text, "{{ PointsDeducted }}", fmt.Sprint(response.Points_To_Redeem))
+				MobileMoney_Noti_Text = strings.ReplaceAll(MobileMoney_Noti_Text, "{{ MobileMoneyAwarded }}", fmt.Sprint(response.Redemption_Amount))
+				MobileMoney_Noti_Text = strings.ReplaceAll(MobileMoney_Noti_Text, "{{ LoyaltyBalance }}", fmt.Sprint(response.Closure_Available_Points))
 				MobileMoneyNotiLog.Payload = MobileMoney_Noti_Text
 				err := Send_SMS(record.MobileMoney_Notification_Sender, response.MSISDN, MobileMoney_Noti_Text)
 				if err != nil {
@@ -5071,9 +5081,9 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			SpinWin_Noti_Text = record.FreeSpinAndWin_Notification_Text
 
 			if SpinWin_Noti_Text != "" {
-				SpinWin_Noti_Text = strings.ReplaceAll(SpinWin_Noti_Text, "{{PointsDeducted}}", fmt.Sprint(response.Points_To_Redeem))
-				SpinWin_Noti_Text = strings.ReplaceAll(SpinWin_Noti_Text, "{{SpinsAwarded}}", fmt.Sprint(response.Redemption_Amount))
-				SpinWin_Noti_Text = strings.ReplaceAll(SpinWin_Noti_Text, "{{LoyaltyBalance}}", fmt.Sprint(response.Closure_Available_Points))
+				SpinWin_Noti_Text = strings.ReplaceAll(SpinWin_Noti_Text, "{{ PointsDeducted }}", fmt.Sprint(response.Points_To_Redeem))
+				SpinWin_Noti_Text = strings.ReplaceAll(SpinWin_Noti_Text, "{{ SpinsAwarded }}", fmt.Sprint(response.Redemption_Amount))
+				SpinWin_Noti_Text = strings.ReplaceAll(SpinWin_Noti_Text, "{{ LoyaltyBalance }}", fmt.Sprint(response.Closure_Available_Points))
 				SpinWinNotiLog.Payload = SpinWin_Noti_Text
 				err := Send_SMS(record.FreeSpinAndWin_Notification_Sender, response.MSISDN, SpinWin_Noti_Text)
 				if err != nil {
