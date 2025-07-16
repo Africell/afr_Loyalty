@@ -4144,7 +4144,18 @@ func (Uc *UserControl) Customer_Loyalty_Account_GetRedemptionProductCatalogue(MS
 	// }
 	return response, nil
 }
-
+func FormatMBs(mb float64) string {
+	if mb >= 1024*1024 {
+		// 1 TB or more
+		return fmt.Sprintf("%.2f TB", mb/1024/1024)
+	} else if mb >= 1024 {
+		// 1 GB or more
+		return fmt.Sprintf("%.2f GB", mb/1024)
+	} else {
+		// Less than 1 GB
+		return fmt.Sprintf("%.0f MB", mb)
+	}
+}
 func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_Header, request Loyalty_Redemption_Request, response *Loyalty_Redemption_log) {
 	response.ReceiveDate = time.Now()
 	//fill the request header info
@@ -4801,7 +4812,9 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 
 			totalMBs := MBs + Bonus_MBs
 			if totalMBs > 0 {
-				sizeParts = append(sizeParts, fmt.Sprintf("%d MBs", totalMBs))
+
+				formatted := FormatMBs(float64(totalMBs))
+				sizeParts = append(sizeParts, formatted)
 			}
 
 			totalSMS := SMS + Bonus_SMS
@@ -4816,6 +4829,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 
 			Size := strings.Join(sizeParts, " + ")
 			fmt.Println("Size:", Size)
+
 			Validity := fmt.Sprintf("%d %s", Validity_value, Validity_type)
 			if Bundle_Noti_Text != "" {
 				Bundle_Noti_Text = strings.ReplaceAll(Bundle_Noti_Text, "{{ PointsDeducted }}", fmt.Sprint(response.Points_To_Redeem))
