@@ -15,6 +15,7 @@ import (
 
 	SpinAndWin "afr_SpinAndWin_be/SpinAndWinClient"
 	PropC "afr_propylaea/PropylaeaClient"
+	"afr_propylaea/propylaea"
 	"afr_unified_charging_gateway/Unified_charging_gateway_Client"
 
 	MM "afr_sb_mm"
@@ -4676,21 +4677,151 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 				AddDate:       time.Now(),
 			}
 			Bundle_Noti_Text := ""
+			var bundle propylaea.Bundle
 			Bundle_Noti_Text = record.Bundles_Notification_Text
-			bundle, err := Uc.Propylaea.PropylaeaClient.Get_Bundle(response.Redemption_Bunlde_Id, "", "", "")
+			bundleResponse, err := Uc.Propylaea.PropylaeaClient.Get_Bundle(response.Redemption_Bunlde_Id, "", "", "")
 			if err != nil {
 				fmt.Println("failed to get bundle")
 			}
 			var bundleName string
-			if err == nil && len(bundle.Data) > 0 {
-				bundleName = fmt.Sprint(bundle.Data[0].Name_Lang1)
+			if err == nil && len(bundleResponse.Data) > 0 {
+				bundle = bundleResponse.Data[0]
 			} else {
 				bundleName = ""
 			}
+			// Variables to replace
+			Minutes := 0.0
+			MBs := 0
+			SMS := 0
+			Bonus_Minutes := 0.0
+			Bonus_MBs := 0
+			Bonus_SMS := 0
 
+			Validity_value := bundle.Validity_Value
+			Validity_type := ""
+			// Minutes and SMSs from IN tokens
+			seconds := 0.0
+			bonus_seconds := 0.0
+			for _, token := range bundle.IN_Tokens {
+				if token.Token_Type == "SMS (whole SMS messages)" {
+					if token.IsBonus {
+						Bonus_SMS += int(token.Token_Value)
+					} else {
+						SMS += int(token.Token_Value)
+					}
+				} else if token.Token_Type == "time (seconds)" {
+					if token.IsBonus {
+						bonus_seconds += token.Token_Value
+					} else {
+						seconds += token.Token_Value
+					}
+				}
+			}
+
+			if seconds > 0 {
+				Minutes = seconds / 60
+			}
+			if bonus_seconds > 0 {
+				Bonus_Minutes = bonus_seconds / 60
+			}
+			fmt.Println("Minutes", Minutes)
+			fmt.Println("Bonus_Minutes", Bonus_Minutes)
+			// MBs from Alepo and Protei
+			var DO_bytes int64 = 0
+			var bonus_DO_bytes int64 = 0
+			for _, DO_A := range bundle.Data_Offers {
+				size, err := strconv.ParseInt(DO_A.Offer_Size_Value, 10, 64)
+				if err != nil {
+					fmt.Println("Error parsing Alepo Offer size value ", DO_A)
+					continue
+				}
+				if DO_A.IsBonus {
+					if DO_A.Offer_Size_Unit == "MB" {
+						size += (size * 1024 * 1024)
+					} else if DO_A.Offer_Size_Unit == "GB" {
+						size += (size * 1024 * 1024 * 1024)
+					}
+					bonus_DO_bytes += size
+
+				} else {
+					if DO_A.Offer_Size_Unit == "MB" {
+						size += (size * 1024 * 1024)
+					} else if DO_A.Offer_Size_Unit == "GB" {
+						size += (size * 1024 * 1024 * 1024)
+					}
+					DO_bytes += size
+				}
+			}
+
+			if DO_bytes > 0 {
+				MBs = int(DO_bytes / 1024 / 1024)
+			}
+			if bonus_DO_bytes > 0 {
+				Bonus_MBs = int(bonus_DO_bytes / 1024 / 1024)
+			}
+			fmt.Println("MBs", MBs)
+			fmt.Println("Bonus_MBs", Bonus_MBs)
+
+			// Expiry Date from bundle Validity
+			switch bundle.Validity_Type {
+			case "Hourly":
+				if bundle.Validity_Value == 1 {
+					Validity_type = "hour"
+				} else {
+					Validity_type = "hours"
+				}
+			case "Daily":
+				if bundle.Validity_Value == 1 {
+					Validity_type = "day"
+				} else {
+					Validity_type = "days"
+				}
+			case "Weekly":
+				if bundle.Validity_Value == 1 {
+					Validity_type = "week"
+				} else {
+					Validity_type = "weeks"
+				}
+			case "Monthly":
+				if bundle.Validity_Value == 1 {
+					Validity_type = "month"
+				} else {
+					Validity_type = "months"
+				}
+			case "Yearly":
+				if bundle.Validity_Value == 1 {
+					Validity_type = "year"
+				} else {
+					Validity_type = "years"
+				}
+			}
+			fmt.Println("Validity_type", Validity_type)
+			fmt.Println("Validity_value", Validity_value)
+			sizeParts := []string{}
+
+			totalMBs := MBs + Bonus_MBs
+			if totalMBs > 0 {
+				sizeParts = append(sizeParts, fmt.Sprintf("%d MBs", totalMBs))
+			}
+
+			totalSMS := SMS + Bonus_SMS
+			if totalSMS > 0 {
+				sizeParts = append(sizeParts, fmt.Sprintf("%d SMS", totalSMS))
+			}
+
+			totalMinutes := Minutes + Bonus_Minutes
+			if totalMinutes > 0 {
+				sizeParts = append(sizeParts, fmt.Sprintf("%.0f Minutes", totalMinutes))
+			}
+
+			Size := strings.Join(sizeParts, " + ")
+			fmt.Println("Size:", Size)
+			Validity := fmt.Sprintf("%d %s", Validity_value, Validity_type)
 			if Bundle_Noti_Text != "" {
 				Bundle_Noti_Text = strings.ReplaceAll(Bundle_Noti_Text, "{{ PointsDeducted }}", fmt.Sprint(response.Points_To_Redeem))
 				Bundle_Noti_Text = strings.ReplaceAll(Bundle_Noti_Text, "{{ BundleName }}", fmt.Sprint(bundleName))
+				Bundle_Noti_Text = strings.ReplaceAll(Bundle_Noti_Text, "{{ BundleSize }}", fmt.Sprint(Size))
+				Bundle_Noti_Text = strings.ReplaceAll(Bundle_Noti_Text, "{{ BundleValidity }}", fmt.Sprint(Validity))
 				Bundle_Noti_Text = strings.ReplaceAll(Bundle_Noti_Text, "{{ LoyaltyBalance }}", fmt.Sprint(response.Closure_Available_Points))
 				BundleNotiLog.Payload = Bundle_Noti_Text
 				err := Send_SMS(record.Bundles_Notification_Sender, response.MSISDN, Bundle_Noti_Text)
