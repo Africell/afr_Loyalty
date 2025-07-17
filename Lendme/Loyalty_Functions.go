@@ -6119,35 +6119,70 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 			}
 			return 0, current_outstanding_points
 		case "RC": //self recharge
-			if rules.MM_RC_Bundle_Award_Type == "Transaction" {
-				if rules.MM_RC_Airtime_Points > 0 {
-					return rules.MM_RC_Airtime_Points, current_outstanding_points
+			if CheckMMEventDetailType(award_request.EventDetail) == "AFRICELL DATA" {
+				if rules.MM_RC_Bundle_Award_Type == "Transaction" {
+					if rules.MM_RC_Airtime_Points > 0 {
+						return rules.MM_RC_Airtime_Points, current_outstanding_points
+					}
+				} else if rules.MM_RC_Airtime_Award_Type == "Amount" {
+					if rules.MM_RC_Airtime_Amount > 0 && award_request.EventAmount > 0 {
+						flt_fractions := award_request.EventAmount / rules.MM_RC_Airtime_Amount
+						flt_points := (flt_fractions * rules.MM_RC_Airtime_Points) + current_outstanding_points
+						int_points := int(flt_points)
+						outstanding_points = flt_points - float64(int_points)
+						return float64(int_points), outstanding_points
+					}
 				}
-			} else if rules.MM_RC_Airtime_Award_Type == "Amount" {
-				if rules.MM_RC_Airtime_Amount > 0 && award_request.EventAmount > 0 {
-					flt_fractions := award_request.EventAmount / rules.MM_RC_Airtime_Amount
-					flt_points := (flt_fractions * rules.MM_RC_Airtime_Points) + current_outstanding_points
-					int_points := int(flt_points)
-					outstanding_points = flt_points - float64(int_points)
-					return float64(int_points), outstanding_points
+				return 0, current_outstanding_points
+			} else {
+				if rules.MM_RC_Bundle_Award_Type == "Transaction" {
+					if rules.MM_RC_Airtime_Points > 0 {
+						return rules.MM_RC_Airtime_Points, current_outstanding_points
+					}
+				} else if rules.MM_RC_Airtime_Award_Type == "Amount" {
+					if rules.MM_RC_Airtime_Amount > 0 && award_request.EventAmount > 0 {
+						flt_fractions := award_request.EventAmount / rules.MM_RC_Airtime_Amount
+						flt_points := (flt_fractions * rules.MM_RC_Airtime_Points) + current_outstanding_points
+						int_points := int(flt_points)
+						outstanding_points = flt_points - float64(int_points)
+						return float64(int_points), outstanding_points
+					}
 				}
+				return 0, current_outstanding_points
 			}
-			return 0, current_outstanding_points
 		case "CTMMOREQ": //recharge for others
-			if rules.MM_CTMMOREQ_Airtime_Award_Type == "Transaction" {
-				if rules.MM_CTMMOREQ_Airtime_Points > 0 {
-					return rules.MM_CTMMOREQ_Airtime_Points, current_outstanding_points
+
+			if CheckMMEventDetailType(award_request.EventDetail) == "AFRICELL DATA" {
+				if rules.MM_CTMMOREQ_Airtime_Award_Type == "Transaction" {
+					if rules.MM_CTMMOREQ_Airtime_Points > 0 {
+						return rules.MM_CTMMOREQ_Airtime_Points, current_outstanding_points
+					}
+				} else if rules.MM_CTMMOREQ_Airtime_Award_Type == "Amount" {
+					if rules.MM_CTMMOREQ_Airtime_Amount > 0 && award_request.EventAmount > 0 {
+						flt_fractions := award_request.EventAmount / rules.MM_CTMMOREQ_Airtime_Amount
+						flt_points := (flt_fractions * rules.MM_CTMMOREQ_Airtime_Points) + current_outstanding_points
+						int_points := int(flt_points)
+						outstanding_points = flt_points - float64(int_points)
+						return float64(int_points), outstanding_points
+					}
 				}
-			} else if rules.MM_CTMMOREQ_Airtime_Award_Type == "Amount" {
-				if rules.MM_CTMMOREQ_Airtime_Amount > 0 && award_request.EventAmount > 0 {
-					flt_fractions := award_request.EventAmount / rules.MM_CTMMOREQ_Airtime_Amount
-					flt_points := (flt_fractions * rules.MM_CTMMOREQ_Airtime_Points) + current_outstanding_points
-					int_points := int(flt_points)
-					outstanding_points = flt_points - float64(int_points)
-					return float64(int_points), outstanding_points
+				return 0, current_outstanding_points
+			} else {
+				if rules.MM_CTMMOREQ_Airtime_Award_Type == "Transaction" {
+					if rules.MM_CTMMOREQ_Airtime_Points > 0 {
+						return rules.MM_CTMMOREQ_Airtime_Points, current_outstanding_points
+					}
+				} else if rules.MM_CTMMOREQ_Airtime_Award_Type == "Amount" {
+					if rules.MM_CTMMOREQ_Airtime_Amount > 0 && award_request.EventAmount > 0 {
+						flt_fractions := award_request.EventAmount / rules.MM_CTMMOREQ_Airtime_Amount
+						flt_points := (flt_fractions * rules.MM_CTMMOREQ_Airtime_Points) + current_outstanding_points
+						int_points := int(flt_points)
+						outstanding_points = flt_points - float64(int_points)
+						return float64(int_points), outstanding_points
+					}
 				}
+				return 0, current_outstanding_points
 			}
-			return 0, current_outstanding_points
 		case "CBWREQ": //recharge for others
 			if rules.MM_CBWREQ_Award_Type == "Transaction" {
 				if rules.MM_CBWREQ_Points > 0 {
@@ -6175,6 +6210,15 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 		}
 	}
 	return
+}
+
+func CheckMMEventDetailType(EventDetail string) (response string) {
+	indexOf := strings.Index(EventDetail, " - ")
+	if indexOf > 0 {
+		return EventDetail[0:indexOf]
+	} else {
+		return ""
+	}
 }
 
 func (Uc *UserControl) Customer_Loyalty_Account_GetDebitPoints_log(startDate, endDate time.Time, MSISDN string, Filter string) (response []Loyalty_AccountDebitPoints_log, err error) {
