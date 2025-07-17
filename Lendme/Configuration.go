@@ -264,8 +264,8 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 	Configuration.App_AUC.Timeout_After = 5 * time.Second
 
 	Configuration.OKAPI_AUC.Description = "OKAPI AUC service"
-	Configuration.OKAPI_AUC.Protocol = "https"
-	Configuration.OKAPI_AUC.Hostname = "auc"
+	Configuration.OKAPI_AUC.Protocol = "http"
+	Configuration.OKAPI_AUC.Hostname = "10.95.72.166"
 	Configuration.OKAPI_AUC.Port = "9001"
 	Configuration.OKAPI_AUC.Module = "AUC"
 	Configuration.OKAPI_AUC.Version = "V1"
@@ -288,9 +288,9 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 	Configuration.MongoDB.ReplicaSet = "reps1"
 	Configuration.MongoDB.UserName = "db_root"
 	Configuration.MongoDB.Password = "B3202T@soSo0612w6"
-	Configuration.MongoDB.HostIP_1 = "10.95.64.177" //==> Primary
+	Configuration.MongoDB.HostIP_1 = "10.95.72.177" //==> Primary
 	Configuration.MongoDB.HostPort_1 = "9001"
-	Configuration.MongoDB.HostIP_2 = "10.95.64.176" //==>secondary
+	Configuration.MongoDB.HostIP_2 = "10.95.72.176" //==>secondary
 	Configuration.MongoDB.HostPort_2 = "9002"
 	Configuration.MongoDB.HostIP_3 = "10.95.32.22" //==> Aribter
 	Configuration.MongoDB.HostPort_3 = "9003"
@@ -330,14 +330,14 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 	//http://10.95.64.6:15403/?systemid=lendme&password=lendmeP@ssw0rd&Originator=setest&dest_addr=243900100606&msg_text=test&registered_delivery=0&ston=5&snpi=0&dton=1&dnpi=1&encoding=1
 
 	//SMPP
-	Configuration.SMPP.IP = "10.95.64.6" //// floating IS IP: "10.250.8.53", test IP VPN: "10.250.0.52" (or .50, .51)
+	Configuration.SMPP.IP = "10.95.72.6" //// floating IS IP: "10.250.8.53", test IP VPN: "10.250.0.52" (or .50, .51)
 	Configuration.SMPP.Port = "15403"
 	Configuration.SMPP.Login = "lendme"
 	Configuration.SMPP.Password = "lendmeP@ssw0rd"
 
 	Configuration.CGW_AUC.Description = "UCGW AUC service"
 	Configuration.CGW_AUC.Protocol = "http"
-	Configuration.CGW_AUC.Hostname = "10.95.64.95"
+	Configuration.CGW_AUC.Hostname = "10.95.72.95"
 	Configuration.CGW_AUC.Port = "9994"
 	Configuration.CGW_AUC.Module = "AUC"
 	Configuration.CGW_AUC.Version = "V1"
@@ -346,16 +346,16 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 	Configuration.CGW_AUC.Timeout_After = 5 * time.Second
 
 	Configuration.CGW.Protocol = "http"
-	Configuration.CGW.Hostname = "10.95.64.95"
+	Configuration.CGW.Hostname = "10.95.72.95"
 	Configuration.CGW.Port = "9991"
 	Configuration.CGW.Module = "UCGW"
 	Configuration.CGW.Version = "V1"
 	Configuration.CGW.Timeout = 15 * time.Second
 
 	Configuration.Propylaea.Description = "Product Design Center - Propylaea"
-	Configuration.Propylaea.Protocol = "https"
-	Configuration.Propylaea.Port = "443"
-	Configuration.Propylaea.Hostname = "sapp.africell.cd"
+	Configuration.Propylaea.Protocol = "http"
+	Configuration.Propylaea.Port = "9900"
+	Configuration.Propylaea.Hostname = "10.95.72.95"
 	Configuration.Propylaea.Module = "Propylaea"
 	Configuration.Propylaea.Version = "V1"
 	Configuration.Propylaea.S2S_Username = "Propylaea_Admin"
@@ -1534,7 +1534,6 @@ func setDefaultConfiguration_SL_Loyalty_UAT() (Configuration ConfigType) {
 
 	return
 }
-
 
 func setDefaultConfiguration_AO_Loyalty() (Configuration ConfigType) {
 	//Configuration.HttpOKAPIServicePort = "9291"
