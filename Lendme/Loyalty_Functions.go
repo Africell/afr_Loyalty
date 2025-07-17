@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"reflect"
 	"sort"
@@ -4741,11 +4742,18 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			var DO_bytes int64 = 0
 			var bonus_DO_bytes int64 = 0
 			for _, DO_A := range bundle.Data_Offers {
-				size, err := strconv.ParseInt(DO_A.Offer_Size_Value, 10, 64)
-				if err != nil {
-					fmt.Println("Error parsing Alepo Offer size value ", DO_A)
-					continue
+				var size int64
+				floatSize, err := strconv.ParseFloat(DO_A.Offer_Size_Value, 64)
+				if err == nil {
+					size = int64(math.Round(floatSize)) // or math.Floor / math.Ceil
+				} else {
+					size, err = strconv.ParseInt(DO_A.Offer_Size_Value, 10, 64)
+					if err != nil {
+						fmt.Println("Error parsing Alepo Offer size value:", DO_A.Offer_Size_Value)
+						continue
+					}
 				}
+
 				if DO_A.IsBonus {
 					if DO_A.Offer_Size_Unit == "MB" {
 						size += (size * 1024 * 1024)
