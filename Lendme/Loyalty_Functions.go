@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"math"
 	"net/http"
 	"reflect"
 	"sort"
@@ -4739,20 +4738,18 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			fmt.Println("Minutes", Minutes)
 			fmt.Println("Bonus_Minutes", Bonus_Minutes)
 			// MBs from Alepo and Protei
-			var DO_bytes int64 = 0
-			var bonus_DO_bytes int64 = 0
+			var DO_bytes float64 = 0
+			var bonus_DO_bytes float64 = 0
 			for _, DO_A := range bundle.Data_Offers {
-				var size int64
-				floatSize, err := strconv.ParseFloat(DO_A.Offer_Size_Value, 64)
-				if err == nil {
-					size = int64(math.Round(floatSize)) // or math.Floor / math.Ceil
-				} else {
-					size, err = strconv.ParseInt(DO_A.Offer_Size_Value, 10, 64)
-					if err != nil {
-						fmt.Println("Error parsing Alepo Offer size value:", DO_A.Offer_Size_Value)
-						continue
-					}
+				var size float64
+				size, err := strconv.ParseFloat(DO_A.Offer_Size_Value, 64)
+				if err != nil {
+					fmt.Println("Error parsing Alepo Offer size value:", DO_A.Offer_Size_Value)
+					continue
 				}
+
+				// Use size as float64 here
+				fmt.Printf("Parsed size: %.2f\n", size) // e.g., show 2 decimal places
 
 				if DO_A.IsBonus {
 					if DO_A.Offer_Size_Unit == "MB" {
