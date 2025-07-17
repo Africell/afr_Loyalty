@@ -5,6 +5,7 @@ import (
 	"context"
 	"daoc"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -2715,7 +2716,8 @@ func (Uc *UserControl) Lendme_PayBack(Source, MSISDN string, RechargeAmount floa
 		go SendSMS("Africell", SMS_MSISDN, SMSText)
 	} else if Configuration.Operation == "DRC" {
 		//SMSText := "Cher abonne, merci d'avoir paye le montant emprunte par Lendme de " + PaidAmount_str + "u"
-		SMSText := "Cher abonne, merci d'avoir paye le montant emprunte par Le service pretez moi de" + PaidAmount_str + "u"
+		// SMSText := "Cher abonne, merci d'avoir paye le montant emprunte par Le service pretez moi de" + PaidAmount_str + "u"
+		SMSText := "Felicitations ! Votre compte a ete credite de " + fmt.Sprint(Round((DebitAmount), 1, 2)) + " unites et " + fmt.Sprint(Round((DebitfeeAmount), 1, 2)) + " unites des frais. Pour verifier votre solde, tapez *1099#"
 		go SendSMS("Africell", subscriber.Key, SMSText)
 	} else if Configuration.Operation == "SierraLeone" {
 		SMS_MSISDN := subscriber.Key

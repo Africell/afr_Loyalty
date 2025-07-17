@@ -311,8 +311,9 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 	Configuration.LoyaltyMongoDB.HostIP_4 = Configuration.MongoDB.HostIP_4
 	Configuration.LoyaltyMongoDB.HostPort_4 = Configuration.MongoDB.HostPort_4
 
-	Configuration.IN.IP = "10.70.1.38"
-	Configuration.IN.Port = "8080"
+	Configuration.IN.IP = "10.95.73.12" //"10.70.1.59"
+	Configuration.IN.Port = "8444"
+
 	Configuration.IN.WS_SOAP_Endpoint = "/axis2/services/WebService.WebServiceHttpSoap12Endpoint/"
 	Configuration.IN.WS_XMLNS_SOAP_Env = "http://schemas.xmlsoap.org/soap/envelope/"
 	Configuration.IN.WS_XMLNS_Web = "http://webservice.CSI.omvia.convergys.com"
@@ -322,15 +323,15 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 	Configuration.IN.WS_EVC_XMLNS_Web = "http://webservice.CSI.omvia.convergys.com"
 
 	Configuration.IN.Default_OpId = "lendme"
-	Configuration.IN.Default_OpPwd = ""
-	Configuration.IN.Is_OpPwd_Required = false
+	Configuration.IN.Default_OpPwd = "P@ssw0rd"
+	Configuration.IN.Is_OpPwd_Required = true
 	Configuration.IN.Timeout = 5
 	Configuration.IN.PrintLogs = false
 
 	//http://10.95.64.6:15403/?systemid=lendme&password=lendmeP@ssw0rd&Originator=setest&dest_addr=243900100606&msg_text=test&registered_delivery=0&ston=5&snpi=0&dton=1&dnpi=1&encoding=1
 
 	//SMPP
-	Configuration.SMPP.IP = "10.95.72.6" //// floating IS IP: "10.250.8.53", test IP VPN: "10.250.0.52" (or .50, .51)
+	Configuration.SMPP.IP = "10.95.64.6" //// floating IS IP: "10.250.8.53", test IP VPN: "10.250.0.52" (or .50, .51)
 	Configuration.SMPP.Port = "15403"
 	Configuration.SMPP.Login = "lendme"
 	Configuration.SMPP.Password = "lendmeP@ssw0rd"
