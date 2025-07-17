@@ -6121,13 +6121,13 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 		case "RC": //self recharge
 			if CheckMMEventDetailType(award_request.EventDetail) == "AFRICELL DATA" {
 				if rules.MM_RC_Bundle_Award_Type == "Transaction" {
-					if rules.MM_RC_Airtime_Points > 0 {
-						return rules.MM_RC_Airtime_Points, current_outstanding_points
+					if rules.MM_RC_Bundle_Points > 0 {
+						return rules.MM_RC_Bundle_Points, current_outstanding_points
 					}
-				} else if rules.MM_RC_Airtime_Award_Type == "Amount" {
-					if rules.MM_RC_Airtime_Amount > 0 && award_request.EventAmount > 0 {
-						flt_fractions := award_request.EventAmount / rules.MM_RC_Airtime_Amount
-						flt_points := (flt_fractions * rules.MM_RC_Airtime_Points) + current_outstanding_points
+				} else if rules.MM_RC_Bundle_Award_Type == "Amount" {
+					if rules.MM_RC_Bundle_Amount > 0 && award_request.EventAmount > 0 {
+						flt_fractions := award_request.EventAmount / rules.MM_RC_Bundle_Amount
+						flt_points := (flt_fractions * rules.MM_RC_Bundle_Points) + current_outstanding_points
 						int_points := int(flt_points)
 						outstanding_points = flt_points - float64(int_points)
 						return float64(int_points), outstanding_points
@@ -6135,7 +6135,7 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 				}
 				return 0, current_outstanding_points
 			} else {
-				if rules.MM_RC_Bundle_Award_Type == "Transaction" {
+				if rules.MM_RC_Airtime_Award_Type == "Transaction" {
 					if rules.MM_RC_Airtime_Points > 0 {
 						return rules.MM_RC_Airtime_Points, current_outstanding_points
 					}
@@ -6151,16 +6151,15 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 				return 0, current_outstanding_points
 			}
 		case "CTMMOREQ": //recharge for others
-
 			if CheckMMEventDetailType(award_request.EventDetail) == "AFRICELL DATA" {
-				if rules.MM_CTMMOREQ_Airtime_Award_Type == "Transaction" {
-					if rules.MM_CTMMOREQ_Airtime_Points > 0 {
-						return rules.MM_CTMMOREQ_Airtime_Points, current_outstanding_points
+				if rules.MM_CTMMOREQ_Bundle_Award_Type == "Transaction" {
+					if rules.MM_CTMMOREQ_Bundle_Points > 0 {
+						return rules.MM_CTMMOREQ_Bundle_Points, current_outstanding_points
 					}
-				} else if rules.MM_CTMMOREQ_Airtime_Award_Type == "Amount" {
-					if rules.MM_CTMMOREQ_Airtime_Amount > 0 && award_request.EventAmount > 0 {
-						flt_fractions := award_request.EventAmount / rules.MM_CTMMOREQ_Airtime_Amount
-						flt_points := (flt_fractions * rules.MM_CTMMOREQ_Airtime_Points) + current_outstanding_points
+				} else if rules.MM_CTMMOREQ_Bundle_Award_Type == "Amount" {
+					if rules.MM_CTMMOREQ_Bundle_Amount > 0 && award_request.EventAmount > 0 {
+						flt_fractions := award_request.EventAmount / rules.MM_CTMMOREQ_Bundle_Amount
+						flt_points := (flt_fractions * rules.MM_CTMMOREQ_Bundle_Points) + current_outstanding_points
 						int_points := int(flt_points)
 						outstanding_points = flt_points - float64(int_points)
 						return float64(int_points), outstanding_points
@@ -6213,6 +6212,7 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 }
 
 func CheckMMEventDetailType(EventDetail string) (response string) {
+	fmt.Println("EventDetail", EventDetail)
 	indexOf := strings.Index(EventDetail, " - ")
 	if indexOf > 0 {
 		return EventDetail[0:indexOf]
