@@ -7,6 +7,7 @@ import (
 	INClient "afr_sb_in"
 	UCGW_client "afr_unified_charging_gateway/Unified_charging_gateway_Client"
 	"daoc"
+	"log"
 )
 
 var CGWHostConfig UCGW_client.UC_GW_Client
@@ -37,6 +38,7 @@ func NewUserControl() *UserControl {
 		Configuration.MongoDB.HostIP_4,
 		Configuration.MongoDB.HostPort_4,
 	)
+	log.Println(MongoHostConfig)
 	LoyaltyMongoHostConfig := daoc.InitMongoHost(Configuration.LoyaltyMongoDB.ReplicaSet,
 		Configuration.LoyaltyMongoDB.UserName,
 		Configuration.LoyaltyMongoDB.Password,
@@ -49,6 +51,7 @@ func NewUserControl() *UserControl {
 		Configuration.LoyaltyMongoDB.HostIP_4,
 		Configuration.LoyaltyMongoDB.HostPort_4,
 	)
+		log.Println(LoyaltyMongoHostConfig)
 	App_AUCHostConfig := AuthCenterClient.InitHostConfig(Configuration.App_AUC.Protocol,
 		Configuration.App_AUC.Hostname,
 		Configuration.App_AUC.Port,
@@ -58,6 +61,7 @@ func NewUserControl() *UserControl {
 		Configuration.App_AUC.S2S_Username,
 		Configuration.App_AUC.S2S_Password,
 		Configuration.App_AUC.Timeout_After)
+			log.Println(App_AUCHostConfig)
 	OKAPI_AUCHostConfig := AuthCenterClient.InitHostConfig(Configuration.OKAPI_AUC.Protocol,
 		Configuration.OKAPI_AUC.Hostname,
 		Configuration.OKAPI_AUC.Port,
@@ -67,6 +71,7 @@ func NewUserControl() *UserControl {
 		Configuration.OKAPI_AUC.S2S_Username,
 		Configuration.OKAPI_AUC.S2S_Password,
 		Configuration.OKAPI_AUC.Timeout_After)
+		log.Println(OKAPI_AUCHostConfig)
 	INHostConfig := INClient.InitHostConfig(Configuration.IN.IP,
 		Configuration.IN.Port,
 		Configuration.IN.WS_SOAP_Endpoint,
@@ -82,7 +87,7 @@ func NewUserControl() *UserControl {
 		"",
 		Configuration.IN.Timeout,
 		Configuration.IN.PrintLogs)
-
+	log.Println(INHostConfig)
 	CGWAUC := AuthCenterClient.InitHostConfig(Configuration.CGW_AUC.Protocol,
 		Configuration.CGW_AUC.Hostname,
 		Configuration.CGW_AUC.Port,
@@ -92,7 +97,7 @@ func NewUserControl() *UserControl {
 		Configuration.CGW_AUC.S2S_Username,
 		Configuration.CGW_AUC.S2S_Password,
 		Configuration.CGW_AUC.Timeout_After)
-
+log.Println(CGWAUC)
 	CGWHostConfig = UCGW_client.UC_GW_Client{
 		Protocol:   Configuration.CGW.Protocol,
 		Hostname:   Configuration.CGW.Hostname,
@@ -102,7 +107,7 @@ func NewUserControl() *UserControl {
 		Timeout:    10 * Configuration.CGW.Timeout,
 		AUC_client: AuthCenterClient.NewAUCClient(CGWAUC).AUCClient,
 	}
-
+log.Println(CGWHostConfig)
 	propylaea_config := Prop.Propylaea_Client{
 		Protocol:        Configuration.Propylaea.Protocol, // or https
 		Hostname:        Configuration.Propylaea.Hostname,
@@ -113,7 +118,7 @@ func NewUserControl() *UserControl {
 		Timeout:         10 * Configuration.Propylaea.Timeout_After, //timeout if no reply after X seconds
 		AUC_client:      AuthCenterClient.NewAUCClient(OKAPI_AUCHostConfig).AUCClient,
 	}
-
+log.Println(propylaea_config)
 	SpinAndWinAUC := AuthCenterClient.InitHostConfig(Configuration.SpinAndWin_AUC.Protocol,
 		Configuration.SpinAndWin_AUC.Hostname,
 		Configuration.SpinAndWin_AUC.Port,
@@ -123,7 +128,7 @@ func NewUserControl() *UserControl {
 		Configuration.SpinAndWin_AUC.S2S_Username,
 		Configuration.SpinAndWin_AUC.S2S_Password,
 		Configuration.SpinAndWin_AUC.Timeout_After)
-
+log.Println(SpinAndWinAUC)
 	SpinAndWinHostConfig = SpinAndWin_client.SpinAndWin_Client{
 		Protocol:   Configuration.SpinAndWin.Protocol,
 		Hostname:   Configuration.SpinAndWin.Hostname,
@@ -133,7 +138,7 @@ func NewUserControl() *UserControl {
 		Timeout:    10 * Configuration.SpinAndWin.Timeout,
 		AUC_client: AuthCenterClient.NewAUCClient(SpinAndWinAUC).AUCClient,
 	}
-
+log.Println(SpinAndWinHostConfig)
 	UC := &UserControl{
 		MongoDB:        daoc.NewMongoDBClient(MongoHostConfig),
 		LoyaltyMongoDB: daoc.NewMongoDBClient(LoyaltyMongoHostConfig),
