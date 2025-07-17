@@ -163,30 +163,36 @@ type Loyalty_Point_Earning_Rules struct {
 	GSM_EVC_Bundle_Amount     float64 `bson:"GSM_EVC_Bundle_Amount" json:"GSM_EVC_Bundle_Amount"`
 	GSM_EVC_Bundle_Points     float64 `bson:"GSM_EVC_Bundle_Points" json:"GSM_EVC_Bundle_Points"`
 	//Mobile Money
-	MM_P2P_Award_Type      string  `bson:"MM_P2P_Award_Type" json:"MM_P2P_Award_Type"` //"Transaction" or "Amount"
-	MM_P2P_Amount          float64 `bson:"MM_P2P_Amount" json:"MM_P2P_Amount"`
-	MM_P2P_Points          float64 `bson:"MM_P2P_Points" json:"MM_P2P_Points"`
-	MM_CASHIN_Award_Type   string  `bson:"MM_CASHIN_Award_Type" json:"MM_CASHIN_Award_Type"` //"Transaction" or "Amount"
-	MM_CASHIN_Amount       float64 `bson:"MM_CASHIN_Amount" json:"MM_CASHIN_Amount"`
-	MM_CASHIN_Points       float64 `bson:"MM_CASHIN_Points" json:"MM_CASHIN_Points"`
-	MM_CASHOUT_Award_Type  string  `bson:"MM_CASHOUT_Award_Type" json:"MM_CASHOUT_Award_Type"` //"Transaction" or "Amount"
-	MM_CASHOUT_Amount      float64 `bson:"MM_CASHOUT_Amount" json:"MM_CASHOUT_Amount"`
-	MM_CASHOUT_Points      float64 `bson:"MM_CASHOUT_Points" json:"MM_CASHOUT_Points"`
-	MM_MERCHPAY_Award_Type string  `bson:"MM_MERCHPAY_Award_Type" json:"MM_MERCHPAY_Award_Type"` //"Transaction" or "Amount"
-	MM_MERCHPAY_Amount     float64 `bson:"MM_MERCHPAY_Amount" json:"MM_MERCHPAY_Amount"`
-	MM_MERCHPAY_Points     float64 `bson:"MM_MERCHPAY_Points" json:"MM_MERCHPAY_Points"`
-	MM_BILLPAY_Award_Type  string  `bson:"MM_BILLPAY_Award_Type" json:"MM_BILLPAY_Award_Type"` //"Transaction" or "Amount"
-	MM_BILLPAY_Amount      float64 `bson:"MM_BILLPAY_Amount" json:"MM_BILLPAY_Amount"`
-	MM_BILLPAY_Points      float64 `bson:"MM_BILLPAY_Points" json:"MM_BILLPAY_Points"`
-	MM_RC_Award_Type       string  `bson:"MM_RC_Award_Type" json:"MM_RC_Award_Type"` //"Transaction" or "Amount"
-	MM_RC_Amount           float64 `bson:"MM_RC_Amount" json:"MM_RC_Amount"`
-	MM_RC_Points           float64 `bson:"MM_RC_Points" json:"MM_RC_Points"`
-	MM_CTMMOREQ_Award_Type string  `bson:"MM_CTMMOREQ_Award_Type" json:"MM_CTMMOREQ_Award_Type"` //"Transaction" or "Amount"
-	MM_CTMMOREQ_Amount     float64 `bson:"MM_CTMMOREQ_Amount" json:"MM_CTMMOREQ_Amount"`
-	MM_CTMMOREQ_Points     float64 `bson:"MM_CTMMOREQ_Points" json:"MM_CTMMOREQ_Points"`
-	MM_CBWREQ_Award_Type   string  `bson:"MM_CBWREQ_Award_Type" json:"MM_CBWREQ_Award_Type"` //"Transaction" or "Amount"
-	MM_CBWREQ_Amount       float64 `bson:"MM_CBWREQ_Amount" json:"MM_CBWREQ_Amount"`
-	MM_CBWREQ_Points       float64 `bson:"MM_CBWREQ_Points" json:"MM_CBWREQ_Points"`
+	MM_P2P_Award_Type              string  `bson:"MM_P2P_Award_Type" json:"MM_P2P_Award_Type"` //"Transaction" or "Amount"
+	MM_P2P_Amount                  float64 `bson:"MM_P2P_Amount" json:"MM_P2P_Amount"`
+	MM_P2P_Points                  float64 `bson:"MM_P2P_Points" json:"MM_P2P_Points"`
+	MM_CASHIN_Award_Type           string  `bson:"MM_CASHIN_Award_Type" json:"MM_CASHIN_Award_Type"` //"Transaction" or "Amount"
+	MM_CASHIN_Amount               float64 `bson:"MM_CASHIN_Amount" json:"MM_CASHIN_Amount"`
+	MM_CASHIN_Points               float64 `bson:"MM_CASHIN_Points" json:"MM_CASHIN_Points"`
+	MM_CASHOUT_Award_Type          string  `bson:"MM_CASHOUT_Award_Type" json:"MM_CASHOUT_Award_Type"` //"Transaction" or "Amount"
+	MM_CASHOUT_Amount              float64 `bson:"MM_CASHOUT_Amount" json:"MM_CASHOUT_Amount"`
+	MM_CASHOUT_Points              float64 `bson:"MM_CASHOUT_Points" json:"MM_CASHOUT_Points"`
+	MM_MERCHPAY_Award_Type         string  `bson:"MM_MERCHPAY_Award_Type" json:"MM_MERCHPAY_Award_Type"` //"Transaction" or "Amount"
+	MM_MERCHPAY_Amount             float64 `bson:"MM_MERCHPAY_Amount" json:"MM_MERCHPAY_Amount"`
+	MM_MERCHPAY_Points             float64 `bson:"MM_MERCHPAY_Points" json:"MM_MERCHPAY_Points"`
+	MM_BILLPAY_Award_Type          string  `bson:"MM_BILLPAY_Award_Type" json:"MM_BILLPAY_Award_Type"` //"Transaction" or "Amount"
+	MM_BILLPAY_Amount              float64 `bson:"MM_BILLPAY_Amount" json:"MM_BILLPAY_Amount"`
+	MM_BILLPAY_Points              float64 `bson:"MM_BILLPAY_Points" json:"MM_BILLPAY_Points"`
+	MM_RC_Bundle_Award_Type        string  `bson:"MM_RC_Bundle_Award_Type" json:"MM_RC_Bundle_Award_Type"` //"Transaction" or "Amount"
+	MM_RC_Bundle_Amount            float64 `bson:"MM_RC_Bundle_Amount" json:"MM_RC_Bundle_Amount"`
+	MM_RC_Bundle_Points            float64 `bson:"MM_RC_Bundle_Points" json:"MM_RC_Bundle_Points"`
+	MM_RC_Airtime_Award_Type       string  `bson:"MM_RC_Airtime_Award_Type" json:"MM_RC_Airtime_Award_Type"` //"Transaction" or "Amount"
+	MM_RC_Airtime_Amount           float64 `bson:"MM_RC_Airtime_Amount" json:"MM_RC_Airtime_Amount"`
+	MM_RC_Airtime_Points           float64 `bson:"MM_RC_Airtime_Points" json:"MM_RC_Airtime_Points"`
+	MM_CTMMOREQ_Bundle_Award_Type  string  `bson:"MM_CTMMOREQ_Bundle_Award_Type" json:"MM_CTMMOREQ_Bundle_Award_Type"` //"Transaction" or "Amount"
+	MM_CTMMOREQ_Bundle_Amount      float64 `bson:"MM_CTMMOREQ_Bundle_Amount" json:"MM_CTMMOREQ_Bundle_Amount"`
+	MM_CTMMOREQ_Bundle_Points      float64 `bson:"MM_CTMMOREQ_Bundle_Points" json:"MM_CTMMOREQ_Bundle_Points"`
+	MM_CTMMOREQ_Airtime_Award_Type string  `bson:"MM_CTMMOREQ_Airtime_Award_Type" json:"MM_CTMMOREQ_Airtime_Award_Type"` //"Transaction" or "Amount"
+	MM_CTMMOREQ_Airtime_Amount     float64 `bson:"MM_CTMMOREQ_Airtime_Amount" json:"MM_CTMMOREQ_Airtime_Amount"`
+	MM_CTMMOREQ_Airtime_Points     float64 `bson:"MM_CTMMOREQ_Airtime_Points" json:"MM_CTMMOREQ_Airtime_Points"`
+	MM_CBWREQ_Award_Type           string  `bson:"MM_CBWREQ_Award_Type" json:"MM_CBWREQ_Award_Type"` //"Transaction" or "Amount"
+	MM_CBWREQ_Amount               float64 `bson:"MM_CBWREQ_Amount" json:"MM_CBWREQ_Amount"`
+	MM_CBWREQ_Points               float64 `bson:"MM_CBWREQ_Points" json:"MM_CBWREQ_Points"`
 	//Mobile money airtime --> detected from IN live feed
 	MM_Airtime_Award_Type string  `bson:"MM_Airtime_Award_Type" json:"MM_Airtime_Award_Type"` //"Transaction" or "Amount"
 	MM_Airtime_Amount     float64 `bson:"MM_Airtime_Amount" json:"MM_Airtime_Amount"`
@@ -225,30 +231,36 @@ type Loyalty_Point_Earning_Rules_AddRequest struct {
 	GSM_EVC_Bundle_Amount     float64 `bson:"GSM_EVC_Bundle_Amount" json:"GSM_EVC_Bundle_Amount"`
 	GSM_EVC_Bundle_Points     float64 `bson:"GSM_EVC_Bundle_Points" json:"GSM_EVC_Bundle_Points"`
 	//Mobile Money
-	MM_P2P_Award_Type      string  `bson:"MM_P2P_Award_Type" json:"MM_P2P_Award_Type"` //"Transaction" or "Amount"
-	MM_P2P_Amount          float64 `bson:"MM_P2P_Amount" json:"MM_P2P_Amount"`
-	MM_P2P_Points          float64 `bson:"MM_P2P_Points" json:"MM_P2P_Points"`
-	MM_CASHIN_Award_Type   string  `bson:"MM_CASHIN_Award_Type" json:"MM_CASHIN_Award_Type"` //"Transaction" or "Amount"
-	MM_CASHIN_Amount       float64 `bson:"MM_CASHIN_Amount" json:"MM_CASHIN_Amount"`
-	MM_CASHIN_Points       float64 `bson:"MM_CASHIN_Points" json:"MM_CASHIN_Points"`
-	MM_CASHOUT_Award_Type  string  `bson:"MM_CASHOUT_Award_Type" json:"MM_CASHOUT_Award_Type"` //"Transaction" or "Amount"
-	MM_CASHOUT_Amount      float64 `bson:"MM_CASHOUT_Amount" json:"MM_CASHOUT_Amount"`
-	MM_CASHOUT_Points      float64 `bson:"MM_CASHOUT_Points" json:"MM_CASHOUT_Points"`
-	MM_MERCHPAY_Award_Type string  `bson:"MM_MERCHPAY_Award_Type" json:"MM_MERCHPAY_Award_Type"` //"Transaction" or "Amount"
-	MM_MERCHPAY_Amount     float64 `bson:"MM_MERCHPAY_Amount" json:"MM_MERCHPAY_Amount"`
-	MM_MERCHPAY_Points     float64 `bson:"MM_MERCHPAY_Points" json:"MM_MERCHPAY_Points"`
-	MM_BILLPAY_Award_Type  string  `bson:"MM_BILLPAY_Award_Type" json:"MM_BILLPAY_Award_Type"` //"Transaction" or "Amount"
-	MM_BILLPAY_Amount      float64 `bson:"MM_BILLPAY_Amount" json:"MM_BILLPAY_Amount"`
-	MM_BILLPAY_Points      float64 `bson:"MM_BILLPAY_Points" json:"MM_BILLPAY_Points"`
-	MM_RC_Award_Type       string  `bson:"MM_RC_Award_Type" json:"MM_RC_Award_Type"` //"Transaction" or "Amount"
-	MM_RC_Amount           float64 `bson:"MM_RC_Amount" json:"MM_RC_Amount"`
-	MM_RC_Points           float64 `bson:"MM_RC_Points" json:"MM_RC_Points"`
-	MM_CTMMOREQ_Award_Type string  `bson:"MM_CTMMOREQ_Award_Type" json:"MM_CTMMOREQ_Award_Type"` //"Transaction" or "Amount"
-	MM_CTMMOREQ_Amount     float64 `bson:"MM_CTMMOREQ_Amount" json:"MM_CTMMOREQ_Amount"`
-	MM_CTMMOREQ_Points     float64 `bson:"MM_CTMMOREQ_Points" json:"MM_CTMMOREQ_Points"`
-	MM_CBWREQ_Award_Type   string  `bson:"MM_CBWREQ_Award_Type" json:"MM_CBWREQ_Award_Type"` //"Transaction" or "Amount"
-	MM_CBWREQ_Amount       float64 `bson:"MM_CBWREQ_Amount" json:"MM_CBWREQ_Amount"`
-	MM_CBWREQ_Points       float64 `bson:"MM_CBWREQ_Points" json:"MM_CBWREQ_Points"`
+	MM_P2P_Award_Type              string  `bson:"MM_P2P_Award_Type" json:"MM_P2P_Award_Type"` //"Transaction" or "Amount"
+	MM_P2P_Amount                  float64 `bson:"MM_P2P_Amount" json:"MM_P2P_Amount"`
+	MM_P2P_Points                  float64 `bson:"MM_P2P_Points" json:"MM_P2P_Points"`
+	MM_CASHIN_Award_Type           string  `bson:"MM_CASHIN_Award_Type" json:"MM_CASHIN_Award_Type"` //"Transaction" or "Amount"
+	MM_CASHIN_Amount               float64 `bson:"MM_CASHIN_Amount" json:"MM_CASHIN_Amount"`
+	MM_CASHIN_Points               float64 `bson:"MM_CASHIN_Points" json:"MM_CASHIN_Points"`
+	MM_CASHOUT_Award_Type          string  `bson:"MM_CASHOUT_Award_Type" json:"MM_CASHOUT_Award_Type"` //"Transaction" or "Amount"
+	MM_CASHOUT_Amount              float64 `bson:"MM_CASHOUT_Amount" json:"MM_CASHOUT_Amount"`
+	MM_CASHOUT_Points              float64 `bson:"MM_CASHOUT_Points" json:"MM_CASHOUT_Points"`
+	MM_MERCHPAY_Award_Type         string  `bson:"MM_MERCHPAY_Award_Type" json:"MM_MERCHPAY_Award_Type"` //"Transaction" or "Amount"
+	MM_MERCHPAY_Amount             float64 `bson:"MM_MERCHPAY_Amount" json:"MM_MERCHPAY_Amount"`
+	MM_MERCHPAY_Points             float64 `bson:"MM_MERCHPAY_Points" json:"MM_MERCHPAY_Points"`
+	MM_BILLPAY_Award_Type          string  `bson:"MM_BILLPAY_Award_Type" json:"MM_BILLPAY_Award_Type"` //"Transaction" or "Amount"
+	MM_BILLPAY_Amount              float64 `bson:"MM_BILLPAY_Amount" json:"MM_BILLPAY_Amount"`
+	MM_BILLPAY_Points              float64 `bson:"MM_BILLPAY_Points" json:"MM_BILLPAY_Points"`
+	MM_RC_Bundle_Award_Type        string  `bson:"MM_RC_Bundle_Award_Type" json:"MM_RC_Bundle_Award_Type"` //"Transaction" or "Amount"
+	MM_RC_Bundle_Amount            float64 `bson:"MM_RC_Bundle_Amount" json:"MM_RC_Bundle_Amount"`
+	MM_RC_Bundle_Points            float64 `bson:"MM_RC_Bundle_Points" json:"MM_RC_Bundle_Points"`
+	MM_RC_Airtime_Award_Type       string  `bson:"MM_RC_Airtime_Award_Type" json:"MM_RC_Airtime_Award_Type"` //"Transaction" or "Amount"
+	MM_RC_Airtime_Amount           float64 `bson:"MM_RC_Airtime_Amount" json:"MM_RC_Airtime_Amount"`
+	MM_RC_Airtime_Points           float64 `bson:"MM_RC_Airtime_Points" json:"MM_RC_Airtime_Points"`
+	MM_CTMMOREQ_Bundle_Award_Type  string  `bson:"MM_CTMMOREQ_Bundle_Award_Type" json:"MM_CTMMOREQ_Bundle_Award_Type"` //"Transaction" or "Amount"
+	MM_CTMMOREQ_Bundle_Amount      float64 `bson:"MM_CTMMOREQ_Bundle_Amount" json:"MM_CTMMOREQ_Bundle_Amount"`
+	MM_CTMMOREQ_Bundle_Points      float64 `bson:"MM_CTMMOREQ_Bundle_Points" json:"MM_CTMMOREQ_Bundle_Points"`
+	MM_CTMMOREQ_Airtime_Award_Type string  `bson:"MM_CTMMOREQ_Airtime_Award_Type" json:"MM_CTMMOREQ_Airtime_Award_Type"` //"Transaction" or "Amount"
+	MM_CTMMOREQ_Airtime_Amount     float64 `bson:"MM_CTMMOREQ_Airtime_Amount" json:"MM_CTMMOREQ_Airtime_Amount"`
+	MM_CTMMOREQ_Airtime_Points     float64 `bson:"MM_CTMMOREQ_Airtime_Points" json:"MM_CTMMOREQ_Airtime_Points"`
+	MM_CBWREQ_Award_Type           string  `bson:"MM_CBWREQ_Award_Type" json:"MM_CBWREQ_Award_Type"` //"Transaction" or "Amount"
+	MM_CBWREQ_Amount               float64 `bson:"MM_CBWREQ_Amount" json:"MM_CBWREQ_Amount"`
+	MM_CBWREQ_Points               float64 `bson:"MM_CBWREQ_Points" json:"MM_CBWREQ_Points"`
 	//Mobile money airtime --> detected from IN live feed
 	MM_Airtime_Award_Type string  `bson:"MM_Airtime_Award_Type" json:"MM_Airtime_Award_Type"` //"Transaction" or "Amount"
 	MM_Airtime_Amount     float64 `bson:"MM_Airtime_Amount" json:"MM_Airtime_Amount"`
@@ -288,30 +300,36 @@ type Loyalty_Point_Earning_Rules_EditRequest struct {
 	GSM_EVC_Bundle_Amount     float64 `bson:"GSM_EVC_Bundle_Amount" json:"GSM_EVC_Bundle_Amount"`
 	GSM_EVC_Bundle_Points     float64 `bson:"GSM_EVC_Bundle_Points" json:"GSM_EVC_Bundle_Points"`
 	//Mobile Money
-	MM_P2P_Award_Type      string  `bson:"MM_P2P_Award_Type" json:"MM_P2P_Award_Type"` //"Transaction" or "Amount"
-	MM_P2P_Amount          float64 `bson:"MM_P2P_Amount" json:"MM_P2P_Amount"`
-	MM_P2P_Points          float64 `bson:"MM_P2P_Points" json:"MM_P2P_Points"`
-	MM_CASHIN_Award_Type   string  `bson:"MM_CASHIN_Award_Type" json:"MM_CASHIN_Award_Type"` //"Transaction" or "Amount"
-	MM_CASHIN_Amount       float64 `bson:"MM_CASHIN_Amount" json:"MM_CASHIN_Amount"`
-	MM_CASHIN_Points       float64 `bson:"MM_CASHIN_Points" json:"MM_CASHIN_Points"`
-	MM_CASHOUT_Award_Type  string  `bson:"MM_CASHOUT_Award_Type" json:"MM_CASHOUT_Award_Type"` //"Transaction" or "Amount"
-	MM_CASHOUT_Amount      float64 `bson:"MM_CASHOUT_Amount" json:"MM_CASHOUT_Amount"`
-	MM_CASHOUT_Points      float64 `bson:"MM_CASHOUT_Points" json:"MM_CASHOUT_Points"`
-	MM_MERCHPAY_Award_Type string  `bson:"MM_MERCHPAY_Award_Type" json:"MM_MERCHPAY_Award_Type"` //"Transaction" or "Amount"
-	MM_MERCHPAY_Amount     float64 `bson:"MM_MERCHPAY_Amount" json:"MM_MERCHPAY_Amount"`
-	MM_MERCHPAY_Points     float64 `bson:"MM_MERCHPAY_Points" json:"MM_MERCHPAY_Points"`
-	MM_BILLPAY_Award_Type  string  `bson:"MM_BILLPAY_Award_Type" json:"MM_BILLPAY_Award_Type"` //"Transaction" or "Amount"
-	MM_BILLPAY_Amount      float64 `bson:"MM_BILLPAY_Amount" json:"MM_BILLPAY_Amount"`
-	MM_BILLPAY_Points      float64 `bson:"MM_BILLPAY_Points" json:"MM_BILLPAY_Points"`
-	MM_RC_Award_Type       string  `bson:"MM_RC_Award_Type" json:"MM_RC_Award_Type"` //"Transaction" or "Amount"
-	MM_RC_Amount           float64 `bson:"MM_RC_Amount" json:"MM_RC_Amount"`
-	MM_RC_Points           float64 `bson:"MM_RC_Points" json:"MM_RC_Points"`
-	MM_CTMMOREQ_Award_Type string  `bson:"MM_CTMMOREQ_Award_Type" json:"MM_CTMMOREQ_Award_Type"` //"Transaction" or "Amount"
-	MM_CTMMOREQ_Amount     float64 `bson:"MM_CTMMOREQ_Amount" json:"MM_CTMMOREQ_Amount"`
-	MM_CTMMOREQ_Points     float64 `bson:"MM_CTMMOREQ_Points" json:"MM_CTMMOREQ_Points"`
-	MM_CBWREQ_Award_Type   string  `bson:"MM_CBWREQ_Award_Type" json:"MM_CBWREQ_Award_Type"` //"Transaction" or "Amount"
-	MM_CBWREQ_Amount       float64 `bson:"MM_CBWREQ_Amount" json:"MM_CBWREQ_Amount"`
-	MM_CBWREQ_Points       float64 `bson:"MM_CBWREQ_Points" json:"MM_CBWREQ_Points"`
+	MM_P2P_Award_Type              string  `bson:"MM_P2P_Award_Type" json:"MM_P2P_Award_Type"` //"Transaction" or "Amount"
+	MM_P2P_Amount                  float64 `bson:"MM_P2P_Amount" json:"MM_P2P_Amount"`
+	MM_P2P_Points                  float64 `bson:"MM_P2P_Points" json:"MM_P2P_Points"`
+	MM_CASHIN_Award_Type           string  `bson:"MM_CASHIN_Award_Type" json:"MM_CASHIN_Award_Type"` //"Transaction" or "Amount"
+	MM_CASHIN_Amount               float64 `bson:"MM_CASHIN_Amount" json:"MM_CASHIN_Amount"`
+	MM_CASHIN_Points               float64 `bson:"MM_CASHIN_Points" json:"MM_CASHIN_Points"`
+	MM_CASHOUT_Award_Type          string  `bson:"MM_CASHOUT_Award_Type" json:"MM_CASHOUT_Award_Type"` //"Transaction" or "Amount"
+	MM_CASHOUT_Amount              float64 `bson:"MM_CASHOUT_Amount" json:"MM_CASHOUT_Amount"`
+	MM_CASHOUT_Points              float64 `bson:"MM_CASHOUT_Points" json:"MM_CASHOUT_Points"`
+	MM_MERCHPAY_Award_Type         string  `bson:"MM_MERCHPAY_Award_Type" json:"MM_MERCHPAY_Award_Type"` //"Transaction" or "Amount"
+	MM_MERCHPAY_Amount             float64 `bson:"MM_MERCHPAY_Amount" json:"MM_MERCHPAY_Amount"`
+	MM_MERCHPAY_Points             float64 `bson:"MM_MERCHPAY_Points" json:"MM_MERCHPAY_Points"`
+	MM_BILLPAY_Award_Type          string  `bson:"MM_BILLPAY_Award_Type" json:"MM_BILLPAY_Award_Type"` //"Transaction" or "Amount"
+	MM_BILLPAY_Amount              float64 `bson:"MM_BILLPAY_Amount" json:"MM_BILLPAY_Amount"`
+	MM_BILLPAY_Points              float64 `bson:"MM_BILLPAY_Points" json:"MM_BILLPAY_Points"`
+	MM_RC_Bundle_Award_Type        string  `bson:"MM_RC_Bundle_Award_Type" json:"MM_RC_Bundle_Award_Type"` //"Transaction" or "Amount"
+	MM_RC_Bundle_Amount            float64 `bson:"MM_RC_Bundle_Amount" json:"MM_RC_Bundle_Amount"`
+	MM_RC_Bundle_Points            float64 `bson:"MM_RC_Bundle_Points" json:"MM_RC_Bundle_Points"`
+	MM_RC_Airtime_Award_Type       string  `bson:"MM_RC_Airtime_Award_Type" json:"MM_RC_Airtime_Award_Type"` //"Transaction" or "Amount"
+	MM_RC_Airtime_Amount           float64 `bson:"MM_RC_Airtime_Amount" json:"MM_RC_Airtime_Amount"`
+	MM_RC_Airtime_Points           float64 `bson:"MM_RC_Airtime_Points" json:"MM_RC_Airtime_Points"`
+	MM_CTMMOREQ_Bundle_Award_Type  string  `bson:"MM_CTMMOREQ_Bundle_Award_Type" json:"MM_CTMMOREQ_Bundle_Award_Type"` //"Transaction" or "Amount"
+	MM_CTMMOREQ_Bundle_Amount      float64 `bson:"MM_CTMMOREQ_Bundle_Amount" json:"MM_CTMMOREQ_Bundle_Amount"`
+	MM_CTMMOREQ_Bundle_Points      float64 `bson:"MM_CTMMOREQ_Bundle_Points" json:"MM_CTMMOREQ_Bundle_Points"`
+	MM_CTMMOREQ_Airtime_Award_Type string  `bson:"MM_CTMMOREQ_Airtime_Award_Type" json:"MM_CTMMOREQ_Airtime_Award_Type"` //"Transaction" or "Amount"
+	MM_CTMMOREQ_Airtime_Amount     float64 `bson:"MM_CTMMOREQ_Airtime_Amount" json:"MM_CTMMOREQ_Airtime_Amount"`
+	MM_CTMMOREQ_Airtime_Points     float64 `bson:"MM_CTMMOREQ_Airtime_Points" json:"MM_CTMMOREQ_Airtime_Points"`
+	MM_CBWREQ_Award_Type           string  `bson:"MM_CBWREQ_Award_Type" json:"MM_CBWREQ_Award_Type"` //"Transaction" or "Amount"
+	MM_CBWREQ_Amount               float64 `bson:"MM_CBWREQ_Amount" json:"MM_CBWREQ_Amount"`
+	MM_CBWREQ_Points               float64 `bson:"MM_CBWREQ_Points" json:"MM_CBWREQ_Points"`
 	//Mobile money airtime --> detected from IN live feed
 	MM_Airtime_Award_Type string  `bson:"MM_Airtime_Award_Type" json:"MM_Airtime_Award_Type"` //"Transaction" or "Amount"
 	MM_Airtime_Amount     float64 `bson:"MM_Airtime_Amount" json:"MM_Airtime_Amount"`
