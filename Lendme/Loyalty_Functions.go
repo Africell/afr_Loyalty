@@ -496,39 +496,45 @@ func (Uc *UserControl) InitializeLoyaltyDefaultUAT() {
 		AON_Till:    999999999,
 	})
 	Uc.Loyalty_Point_Earning_Rules_Add("Default", Loyalty_Point_Earning_Rules_AddRequest{
-		Key:                        "Default_Earning_Rules",
-		Description:                "Default_Earning_Rules",
-		Welcome_Points:             5,
-		MobileAppDaily_Login:       1,
-		MainGSMBalance_Amount:      10,
-		MainGSMBalance_Points:      1,
-		GSM_SC_Airtime_Award_Type:  "Transaction",
-		GSM_EVC_Airtime_Award_Type: "Transaction",
-		GSM_EVC_Bundle_Award_Type:  "Transaction",
-		MM_P2P_Award_Type:          "Transaction",
-		MM_P2P_Amount:              0,
-		MM_P2P_Points:              1,
-		MM_CASHIN_Award_Type:       "Transaction",
-		MM_CASHIN_Amount:           0,
-		MM_CASHIN_Points:           1,
-		MM_CASHOUT_Award_Type:      "Transaction",
-		MM_CASHOUT_Amount:          0,
-		MM_CASHOUT_Points:          1,
-		MM_MERCHPAY_Award_Type:     "Transaction",
-		MM_MERCHPAY_Amount:         0,
-		MM_MERCHPAY_Points:         1,
-		MM_BILLPAY_Award_Type:      "Transaction",
-		MM_BILLPAY_Amount:          0,
-		MM_BILLPAY_Points:          1,
-		MM_RC_Award_Type:           "Amount",
-		MM_RC_Amount:               15,
-		MM_RC_Points:               1,
-		MM_CTMMOREQ_Award_Type:     "Amount",
-		MM_CTMMOREQ_Amount:         15,
-		MM_CTMMOREQ_Points:         1,
-		MM_CBWREQ_Award_Type:       "Transaction",
-		MM_CBWREQ_Amount:           0,
-		MM_CBWREQ_Points:           1,
+		Key:                            "Default_Earning_Rules",
+		Description:                    "Default_Earning_Rules",
+		Welcome_Points:                 5,
+		MobileAppDaily_Login:           1,
+		MainGSMBalance_Amount:          10,
+		MainGSMBalance_Points:          1,
+		GSM_SC_Airtime_Award_Type:      "Transaction",
+		GSM_EVC_Airtime_Award_Type:     "Transaction",
+		GSM_EVC_Bundle_Award_Type:      "Transaction",
+		MM_P2P_Award_Type:              "Transaction",
+		MM_P2P_Amount:                  0,
+		MM_P2P_Points:                  1,
+		MM_CASHIN_Award_Type:           "Transaction",
+		MM_CASHIN_Amount:               0,
+		MM_CASHIN_Points:               1,
+		MM_CASHOUT_Award_Type:          "Transaction",
+		MM_CASHOUT_Amount:              0,
+		MM_CASHOUT_Points:              1,
+		MM_MERCHPAY_Award_Type:         "Transaction",
+		MM_MERCHPAY_Amount:             0,
+		MM_MERCHPAY_Points:             1,
+		MM_BILLPAY_Award_Type:          "Transaction",
+		MM_BILLPAY_Amount:              0,
+		MM_BILLPAY_Points:              1,
+		MM_RC_Bundle_Award_Type:        "Amount",
+		MM_RC_Bundle_Amount:            15,
+		MM_RC_Bundle_Points:            1,
+		MM_RC_Airtime_Award_Type:       "Amount",
+		MM_RC_Airtime_Amount:           15,
+		MM_RC_Airtime_Points:           1,
+		MM_CTMMOREQ_Bundle_Award_Type:  "Amount",
+		MM_CTMMOREQ_Bundle_Amount:      15,
+		MM_CTMMOREQ_Bundle_Points:      1,
+		MM_CTMMOREQ_Airtime_Award_Type: "Amount",
+		MM_CTMMOREQ_Airtime_Amount:     15,
+		MM_CTMMOREQ_Airtime_Points:     1,
+		MM_CBWREQ_Award_Type:           "Transaction",
+		MM_CBWREQ_Amount:               0,
+		MM_CBWREQ_Points:               1,
 	})
 	Uc.Loyalty_Point_Expiry_Rules_Add("Default", Loyalty_Point_Expiry_Rules_AddRequest{
 		Key:                     "Default_Expiry_Rules",
@@ -1431,27 +1437,49 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Add(Login string, request Loy
 	} else {
 		request.MM_BILLPAY_Amount = 0
 	}
-	if request.MM_RC_Award_Type == "Amount" {
-		if request.MM_RC_Amount > 0 && request.MM_RC_Amount < 1 {
+	if request.MM_RC_Bundle_Award_Type == "Amount" {
+		if request.MM_RC_Bundle_Amount > 0 && request.MM_RC_Bundle_Amount < 1 {
 			err = errors.New("invalid MM recharge for self value")
 			return Id, err
 		}
-	} else if request.MM_RC_Award_Type != "Transaction" {
+	} else if request.MM_RC_Bundle_Award_Type != "Transaction" {
 		err = errors.New("invalid MM recharge for self Award Type")
 		return Id, err
 	} else {
-		request.MM_RC_Amount = 0
+		request.MM_RC_Bundle_Amount = 0
 	}
-	if request.MM_CTMMOREQ_Award_Type == "Amount" {
-		if request.MM_CTMMOREQ_Amount > 0 && request.MM_CTMMOREQ_Amount < 1 {
+	if request.MM_RC_Airtime_Award_Type == "Amount" {
+		if request.MM_RC_Airtime_Amount > 0 && request.MM_RC_Airtime_Amount < 1 {
+			err = errors.New("invalid MM recharge for self value")
+			return Id, err
+		}
+	} else if request.MM_RC_Airtime_Award_Type != "Transaction" {
+		err = errors.New("invalid MM recharge for self Award Type")
+		return Id, err
+	} else {
+		request.MM_RC_Airtime_Amount = 0
+	}
+	if request.MM_CTMMOREQ_Bundle_Award_Type == "Amount" {
+		if request.MM_CTMMOREQ_Bundle_Amount > 0 && request.MM_CTMMOREQ_Bundle_Amount < 1 {
 			err = errors.New("invalid MM recharge for others value")
 			return Id, err
 		}
-	} else if request.MM_CTMMOREQ_Award_Type != "Transaction" {
+	} else if request.MM_CTMMOREQ_Bundle_Award_Type != "Transaction" {
 		err = errors.New("invalid MM recharge for others Award Type")
 		return Id, err
 	} else {
-		request.MM_CTMMOREQ_Amount = 0
+		request.MM_CTMMOREQ_Bundle_Amount = 0
+	}
+	if request.MM_CTMMOREQ_Airtime_Award_Type == "Amount" {
+		if request.MM_CTMMOREQ_Airtime_Amount > 0 && request.MM_CTMMOREQ_Airtime_Amount < 1 {
+			err = errors.New("invalid MM recharge for others value")
+			return Id, err
+		}
+	} else if request.MM_CTMMOREQ_Airtime_Award_Type != "Transaction" {
+		err = errors.New("invalid MM recharge for others Award Type")
+		return Id, err
+	} else {
+		request.MM_CTMMOREQ_Airtime_Amount = 0
 	}
 	if request.MM_CBWREQ_Award_Type == "Amount" {
 		if request.MM_CBWREQ_Amount > 0 && request.MM_CBWREQ_Amount < 1 {
@@ -1501,7 +1529,7 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Add(Login string, request Loy
 		}
 	}
 	if len(entries) > 0 {
-		if entries[0].MaxAllowedPoints_PerTransaction < request.MM_BILLPAY_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_CASHIN_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_CASHOUT_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_CBWREQ_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_CTMMOREQ_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_MERCHPAY_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_P2P_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_RC_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MainGSMBalance_Points {
+		if entries[0].MaxAllowedPoints_PerTransaction < request.MM_BILLPAY_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_CASHIN_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_CASHOUT_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_CBWREQ_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_CTMMOREQ_Bundle_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_CTMMOREQ_Airtime_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_MERCHPAY_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_P2P_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_RC_Bundle_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_RC_Airtime_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MainGSMBalance_Points {
 			err = errors.New("points can not exceed the maximum allowed points per transaction")
 			return Id, err
 		}
@@ -1546,12 +1574,18 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Add(Login string, request Loy
 	NewEntry.MM_BILLPAY_Award_Type = request.MM_BILLPAY_Award_Type
 	NewEntry.MM_BILLPAY_Amount = request.MM_BILLPAY_Amount
 	NewEntry.MM_BILLPAY_Points = request.MM_BILLPAY_Points
-	NewEntry.MM_RC_Award_Type = request.MM_RC_Award_Type
-	NewEntry.MM_RC_Amount = request.MM_RC_Amount
-	NewEntry.MM_RC_Points = request.MM_RC_Points
-	NewEntry.MM_CTMMOREQ_Award_Type = request.MM_CTMMOREQ_Award_Type
-	NewEntry.MM_CTMMOREQ_Amount = request.MM_CTMMOREQ_Amount
-	NewEntry.MM_CTMMOREQ_Points = request.MM_CTMMOREQ_Points
+	NewEntry.MM_RC_Bundle_Award_Type = request.MM_RC_Bundle_Award_Type
+	NewEntry.MM_RC_Bundle_Amount = request.MM_RC_Bundle_Amount
+	NewEntry.MM_RC_Bundle_Points = request.MM_RC_Bundle_Points
+	NewEntry.MM_RC_Airtime_Award_Type = request.MM_RC_Airtime_Award_Type
+	NewEntry.MM_RC_Airtime_Amount = request.MM_RC_Airtime_Amount
+	NewEntry.MM_RC_Airtime_Points = request.MM_RC_Airtime_Points
+	NewEntry.MM_CTMMOREQ_Bundle_Award_Type = request.MM_CTMMOREQ_Bundle_Award_Type
+	NewEntry.MM_CTMMOREQ_Bundle_Amount = request.MM_CTMMOREQ_Bundle_Amount
+	NewEntry.MM_CTMMOREQ_Bundle_Points = request.MM_CTMMOREQ_Bundle_Points
+	NewEntry.MM_CTMMOREQ_Airtime_Award_Type = request.MM_CTMMOREQ_Airtime_Award_Type
+	NewEntry.MM_CTMMOREQ_Airtime_Amount = request.MM_CTMMOREQ_Airtime_Amount
+	NewEntry.MM_CTMMOREQ_Airtime_Points = request.MM_CTMMOREQ_Airtime_Points
 	NewEntry.MM_CBWREQ_Award_Type = request.MM_CBWREQ_Award_Type
 	NewEntry.MM_CBWREQ_Amount = request.MM_CBWREQ_Amount
 	NewEntry.MM_CBWREQ_Points = request.MM_CBWREQ_Points
@@ -1676,27 +1710,49 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Edit(Login string, request Lo
 	} else {
 		request.MM_BILLPAY_Amount = 0
 	}
-	if request.MM_RC_Award_Type == "Amount" {
-		if request.MM_RC_Amount > 0 && request.MM_RC_Amount < 1 {
+	if request.MM_RC_Bundle_Award_Type == "Amount" {
+		if request.MM_RC_Bundle_Amount > 0 && request.MM_RC_Bundle_Amount < 1 {
 			err = errors.New("invalid MM recharge for self value")
 			return Id, err
 		}
-	} else if request.MM_RC_Award_Type != "Transaction" {
+	} else if request.MM_RC_Bundle_Award_Type != "Transaction" {
 		err = errors.New("invalid MM recharge for self Award Type")
 		return Id, err
 	} else {
-		request.MM_RC_Amount = 0
+		request.MM_RC_Bundle_Amount = 0
 	}
-	if request.MM_CTMMOREQ_Award_Type == "Amount" {
-		if request.MM_CTMMOREQ_Amount > 0 && request.MM_CTMMOREQ_Amount < 1 {
+	if request.MM_RC_Airtime_Award_Type == "Amount" {
+		if request.MM_RC_Airtime_Amount > 0 && request.MM_RC_Airtime_Amount < 1 {
+			err = errors.New("invalid MM recharge for self value")
+			return Id, err
+		}
+	} else if request.MM_RC_Airtime_Award_Type != "Transaction" {
+		err = errors.New("invalid MM recharge for self Award Type")
+		return Id, err
+	} else {
+		request.MM_RC_Airtime_Amount = 0
+	}
+	if request.MM_CTMMOREQ_Bundle_Award_Type == "Amount" {
+		if request.MM_CTMMOREQ_Bundle_Amount > 0 && request.MM_CTMMOREQ_Bundle_Amount < 1 {
 			err = errors.New("invalid MM recharge for others value")
 			return Id, err
 		}
-	} else if request.MM_CTMMOREQ_Award_Type != "Transaction" {
+	} else if request.MM_CTMMOREQ_Bundle_Award_Type != "Transaction" {
 		err = errors.New("invalid MM recharge for others Award Type")
 		return Id, err
 	} else {
-		request.MM_CTMMOREQ_Amount = 0
+		request.MM_CTMMOREQ_Bundle_Amount = 0
+	}
+	if request.MM_CTMMOREQ_Airtime_Award_Type == "Amount" {
+		if request.MM_CTMMOREQ_Airtime_Amount > 0 && request.MM_CTMMOREQ_Airtime_Amount < 1 {
+			err = errors.New("invalid MM recharge for others value")
+			return Id, err
+		}
+	} else if request.MM_CTMMOREQ_Airtime_Award_Type != "Transaction" {
+		err = errors.New("invalid MM recharge for others Award Type")
+		return Id, err
+	} else {
+		request.MM_CTMMOREQ_Airtime_Amount = 0
 	}
 	if request.MM_CBWREQ_Award_Type == "Amount" {
 		if request.MM_CBWREQ_Amount > 0 && request.MM_CBWREQ_Amount < 1 {
@@ -1757,7 +1813,7 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Edit(Login string, request Lo
 		}
 	}
 	if len(entries) > 0 {
-		if entries[0].MaxAllowedPoints_PerTransaction < request.MM_BILLPAY_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_CASHIN_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_CASHOUT_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_CBWREQ_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_CTMMOREQ_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_MERCHPAY_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_P2P_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_RC_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MainGSMBalance_Points {
+		if entries[0].MaxAllowedPoints_PerTransaction < request.MM_BILLPAY_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_CASHIN_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_CASHOUT_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_CBWREQ_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_CTMMOREQ_Bundle_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_CTMMOREQ_Airtime_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_MERCHPAY_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_P2P_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_RC_Bundle_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_RC_Airtime_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MainGSMBalance_Points {
 			err = errors.New("points can not exceed the maximum allowed points per transaction")
 			return Id, err
 		}
@@ -1801,12 +1857,18 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Edit(Login string, request Lo
 	entry.MM_BILLPAY_Award_Type = request.MM_BILLPAY_Award_Type
 	entry.MM_BILLPAY_Amount = request.MM_BILLPAY_Amount
 	entry.MM_BILLPAY_Points = request.MM_BILLPAY_Points
-	entry.MM_RC_Award_Type = request.MM_RC_Award_Type
-	entry.MM_RC_Amount = request.MM_RC_Amount
-	entry.MM_RC_Points = request.MM_RC_Points
-	entry.MM_CTMMOREQ_Award_Type = request.MM_CTMMOREQ_Award_Type
-	entry.MM_CTMMOREQ_Amount = request.MM_CTMMOREQ_Amount
-	entry.MM_CTMMOREQ_Points = request.MM_CTMMOREQ_Points
+	entry.MM_RC_Bundle_Award_Type = request.MM_RC_Bundle_Award_Type
+	entry.MM_RC_Bundle_Amount = request.MM_RC_Bundle_Amount
+	entry.MM_RC_Bundle_Points = request.MM_RC_Bundle_Points
+	entry.MM_RC_Airtime_Award_Type = request.MM_RC_Airtime_Award_Type
+	entry.MM_RC_Airtime_Amount = request.MM_RC_Airtime_Amount
+	entry.MM_RC_Airtime_Points = request.MM_RC_Airtime_Points
+	entry.MM_CTMMOREQ_Bundle_Award_Type = request.MM_CTMMOREQ_Bundle_Award_Type
+	entry.MM_CTMMOREQ_Bundle_Amount = request.MM_CTMMOREQ_Bundle_Amount
+	entry.MM_CTMMOREQ_Bundle_Points = request.MM_CTMMOREQ_Bundle_Points
+	entry.MM_CTMMOREQ_Airtime_Award_Type = request.MM_CTMMOREQ_Airtime_Award_Type
+	entry.MM_CTMMOREQ_Airtime_Amount = request.MM_CTMMOREQ_Airtime_Amount
+	entry.MM_CTMMOREQ_Airtime_Points = request.MM_CTMMOREQ_Airtime_Points
 	entry.MM_CBWREQ_Award_Type = request.MM_CBWREQ_Award_Type
 	entry.MM_CBWREQ_Amount = request.MM_CBWREQ_Amount
 	entry.MM_CBWREQ_Points = request.MM_CBWREQ_Points
@@ -6057,35 +6119,69 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 			}
 			return 0, current_outstanding_points
 		case "RC": //self recharge
-			if rules.MM_RC_Award_Type == "Transaction" {
-				if rules.MM_RC_Points > 0 {
-					return rules.MM_RC_Points, current_outstanding_points
+			if CheckMMEventDetailType(award_request.EventDetail) == "AFRICELL DATA" {
+				if rules.MM_RC_Bundle_Award_Type == "Transaction" {
+					if rules.MM_RC_Bundle_Points > 0 {
+						return rules.MM_RC_Bundle_Points, current_outstanding_points
+					}
+				} else if rules.MM_RC_Bundle_Award_Type == "Amount" {
+					if rules.MM_RC_Bundle_Amount > 0 && award_request.EventAmount > 0 {
+						flt_fractions := award_request.EventAmount / rules.MM_RC_Bundle_Amount
+						flt_points := (flt_fractions * rules.MM_RC_Bundle_Points) + current_outstanding_points
+						int_points := int(flt_points)
+						outstanding_points = flt_points - float64(int_points)
+						return float64(int_points), outstanding_points
+					}
 				}
-			} else if rules.MM_RC_Award_Type == "Amount" {
-				if rules.MM_RC_Amount > 0 && award_request.EventAmount > 0 {
-					flt_fractions := award_request.EventAmount / rules.MM_RC_Amount
-					flt_points := (flt_fractions * rules.MM_RC_Points) + current_outstanding_points
-					int_points := int(flt_points)
-					outstanding_points = flt_points - float64(int_points)
-					return float64(int_points), outstanding_points
+				return 0, current_outstanding_points
+			} else {
+				if rules.MM_RC_Airtime_Award_Type == "Transaction" {
+					if rules.MM_RC_Airtime_Points > 0 {
+						return rules.MM_RC_Airtime_Points, current_outstanding_points
+					}
+				} else if rules.MM_RC_Airtime_Award_Type == "Amount" {
+					if rules.MM_RC_Airtime_Amount > 0 && award_request.EventAmount > 0 {
+						flt_fractions := award_request.EventAmount / rules.MM_RC_Airtime_Amount
+						flt_points := (flt_fractions * rules.MM_RC_Airtime_Points) + current_outstanding_points
+						int_points := int(flt_points)
+						outstanding_points = flt_points - float64(int_points)
+						return float64(int_points), outstanding_points
+					}
 				}
+				return 0, current_outstanding_points
 			}
-			return 0, current_outstanding_points
 		case "CTMMOREQ": //recharge for others
-			if rules.MM_CTMMOREQ_Award_Type == "Transaction" {
-				if rules.MM_CTMMOREQ_Points > 0 {
-					return rules.MM_CTMMOREQ_Points, current_outstanding_points
+			if CheckMMEventDetailType(award_request.EventDetail) == "AFRICELL DATA" {
+				if rules.MM_CTMMOREQ_Bundle_Award_Type == "Transaction" {
+					if rules.MM_CTMMOREQ_Bundle_Points > 0 {
+						return rules.MM_CTMMOREQ_Bundle_Points, current_outstanding_points
+					}
+				} else if rules.MM_CTMMOREQ_Bundle_Award_Type == "Amount" {
+					if rules.MM_CTMMOREQ_Bundle_Amount > 0 && award_request.EventAmount > 0 {
+						flt_fractions := award_request.EventAmount / rules.MM_CTMMOREQ_Bundle_Amount
+						flt_points := (flt_fractions * rules.MM_CTMMOREQ_Bundle_Points) + current_outstanding_points
+						int_points := int(flt_points)
+						outstanding_points = flt_points - float64(int_points)
+						return float64(int_points), outstanding_points
+					}
 				}
-			} else if rules.MM_CTMMOREQ_Award_Type == "Amount" {
-				if rules.MM_CTMMOREQ_Amount > 0 && award_request.EventAmount > 0 {
-					flt_fractions := award_request.EventAmount / rules.MM_CTMMOREQ_Amount
-					flt_points := (flt_fractions * rules.MM_CTMMOREQ_Points) + current_outstanding_points
-					int_points := int(flt_points)
-					outstanding_points = flt_points - float64(int_points)
-					return float64(int_points), outstanding_points
+				return 0, current_outstanding_points
+			} else {
+				if rules.MM_CTMMOREQ_Airtime_Award_Type == "Transaction" {
+					if rules.MM_CTMMOREQ_Airtime_Points > 0 {
+						return rules.MM_CTMMOREQ_Airtime_Points, current_outstanding_points
+					}
+				} else if rules.MM_CTMMOREQ_Airtime_Award_Type == "Amount" {
+					if rules.MM_CTMMOREQ_Airtime_Amount > 0 && award_request.EventAmount > 0 {
+						flt_fractions := award_request.EventAmount / rules.MM_CTMMOREQ_Airtime_Amount
+						flt_points := (flt_fractions * rules.MM_CTMMOREQ_Airtime_Points) + current_outstanding_points
+						int_points := int(flt_points)
+						outstanding_points = flt_points - float64(int_points)
+						return float64(int_points), outstanding_points
+					}
 				}
+				return 0, current_outstanding_points
 			}
-			return 0, current_outstanding_points
 		case "CBWREQ": //recharge for others
 			if rules.MM_CBWREQ_Award_Type == "Transaction" {
 				if rules.MM_CBWREQ_Points > 0 {
@@ -6113,6 +6209,16 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 		}
 	}
 	return
+}
+
+func CheckMMEventDetailType(EventDetail string) (response string) {
+	fmt.Println("EventDetail", EventDetail)
+	indexOf := strings.Index(EventDetail, " - ")
+	if indexOf > 0 {
+		return EventDetail[0:indexOf]
+	} else {
+		return ""
+	}
 }
 
 func (Uc *UserControl) Customer_Loyalty_Account_GetDebitPoints_log(startDate, endDate time.Time, MSISDN string, Filter string) (response []Loyalty_AccountDebitPoints_log, err error) {

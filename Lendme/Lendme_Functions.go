@@ -5,6 +5,7 @@ import (
 	"context"
 	"daoc"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -2715,7 +2716,8 @@ func (Uc *UserControl) Lendme_PayBack(Source, MSISDN string, RechargeAmount floa
 		go SendSMS("Africell", SMS_MSISDN, SMSText)
 	} else if Configuration.Operation == "DRC" {
 		//SMSText := "Cher abonne, merci d'avoir paye le montant emprunte par Lendme de " + PaidAmount_str + "u"
-		SMSText := "Cher abonne, merci d'avoir paye le montant emprunte par Le service pretez moi de" + PaidAmount_str + "u"
+		// SMSText := "Cher abonne, merci d'avoir paye le montant emprunte par Le service pretez moi de" + PaidAmount_str + "u"
+		SMSText := "Felicitations ! Votre compte a ete credite de " + fmt.Sprint(Round((DebitAmount), 1, 2)) + " unites et " + fmt.Sprint(Round((DebitfeeAmount), 1, 2)) + " unites des frais. Pour verifier votre solde, tapez *1099#"
 		go SendSMS("Africell", subscriber.Key, SMSText)
 	} else if Configuration.Operation == "SierraLeone" {
 		SMS_MSISDN := subscriber.Key
@@ -3070,7 +3072,7 @@ func (Uc *UserControl) Auto_GetOutstandingSummary() {
 // /////////////////////////////////////////////////////////////////////////////////////////////////////
 func SendSMS(Sender string, target string, SMSText string) (_rErr error) {
 	log.Println("Sending SMS: Sender (" + Sender + "), Target (" + target + "), text (" + SMSText + ") ")
-	url := "http://" + Configuration.SMPP.IP + ":" + Configuration.SMPP.Port + "/?systemid=" + Configuration.SMPP.Login + "&password=" + Configuration.SMPP.Password + "&Originator=" + Sender + "&dest_addr=" + target + "&msg_text=" + url.QueryEscape(SMSText) + "&encoding=0&ston=5&snpi=0&dton=1&registered_delivery=0"
+	url := "http://" + Configuration.SMPP.IP + ":" + Configuration.SMPP.Port + "/?systemid=" + Configuration.SMPP.Login + "&password=" + Configuration.SMPP.Password + "&Originator=" + Sender + "&dest_addr=" + target + "&msg_text=" + url.QueryEscape(SMSText) + "&encoding=1&ston=5&snpi=0&dton=1&registered_delivery=0"
 	//-------------- Encoding used in DRC and GM Start
 	//"&ston=5&snpi=0&dton=1&dnpi=1&encoding=1"
 	//-------------- Encoding used in DRC and GM End

@@ -12,6 +12,7 @@ import (
 )
 
 func (GWClient *Lendme_Client) generic_http_call(request Generic_http_call_Request) (response Generic_http_call_Response, err error) {
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	if len(request.Load) > 0 {
 		request.Req, err = http.NewRequest(request.Method, request.Url, bytes.NewBuffer(request.Load))
 	} else {
@@ -22,8 +23,19 @@ func (GWClient *Lendme_Client) generic_http_call(request Generic_http_call_Reque
 	}
 	request.Req.Header.Set("Content-Type", "application/json")
 	request.Req.Header.Set("Connection", "close")
-	request.Req.Header.Set("Authorization", "Bearer "+request.Token)
-
+	if len(request.OTP) > 0 {
+		request.Req.Header.Set("OTP", request.OTP)
+	}
+	if len(request.Token) > 0 {
+		request.Req.Header.Set("Authorization", "Bearer "+request.Token)
+	} else if len(request.BasicAuth_User) > 0 {
+		request.Req.SetBasicAuth(request.BasicAuth_User, request.BasicAuth_Password)
+	}
+	if len(request.Headers) > 0 {
+		for h_key, h_val := range request.Headers {
+			request.Req.Header.Set(h_key, h_val)
+		}
+	}
 	if len(request.QueryParameters) > 0 {
 		q := request.Req.URL.Query()
 		for qry_key, qry_val := range request.QueryParameters {

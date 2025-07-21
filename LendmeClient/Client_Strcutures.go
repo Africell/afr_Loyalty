@@ -55,12 +55,16 @@ type Lendme_Subscriber struct {
 // Loyalty structures
 // **********************************************************************************************
 type Generic_http_call_Request struct {
-	Req             *http.Request
-	Url             string
-	Method          string
-	Token           string
-	QueryParameters map[string]string
-	Load            []byte
+	Req                *http.Request
+	Url                string
+	Method             string
+	Token              string
+	BasicAuth_User     string
+	BasicAuth_Password string
+	OTP                string
+	QueryParameters    map[string]string
+	Headers            map[string]string
+	Load               []byte
 }
 
 type Generic_http_call_Response struct {
