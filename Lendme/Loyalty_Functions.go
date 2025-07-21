@@ -5948,7 +5948,11 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 		case "SSR_3": //scratch card recharge
 			if rules.GSM_SC_Airtime_Award_Type == "Transaction" {
 				if rules.GSM_SC_Airtime_Points > 0 {
-					return rules.GSM_SC_Airtime_Points, current_outstanding_points
+					// return rules.GSM_SC_Airtime_Points, current_outstanding_points
+					flt_points := rules.GSM_SC_Airtime_Points + current_outstanding_points
+					int_points := int(flt_points)
+					outstanding_points = flt_points - float64(int_points)
+					return float64(int_points), outstanding_points
 				}
 			} else if rules.GSM_SC_Airtime_Award_Type == "Amount" {
 				if rules.GSM_SC_Airtime_Amount > 0 && award_request.EventAmount > 0 {
@@ -6122,7 +6126,12 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 			if CheckMMEventDetailType(award_request.EventDetail) == "AFRICELL DATA" {
 				if rules.MM_RC_Bundle_Award_Type == "Transaction" {
 					if rules.MM_RC_Bundle_Points > 0 {
-						return rules.MM_RC_Bundle_Points, current_outstanding_points
+						// return rules.MM_RC_Bundle_Points, current_outstanding_points
+						fmt.Println("here")
+						flt_points := rules.MM_RC_Bundle_Points + current_outstanding_points
+						int_points := int(flt_points)
+						outstanding_points = flt_points - float64(int_points)
+						return float64(int_points), outstanding_points
 					}
 				} else if rules.MM_RC_Bundle_Award_Type == "Amount" {
 					if rules.MM_RC_Bundle_Amount > 0 && award_request.EventAmount > 0 {
