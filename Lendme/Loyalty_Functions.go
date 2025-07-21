@@ -4797,8 +4797,6 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			if bonus_seconds > 0 {
 				Bonus_Minutes = bonus_seconds / 60
 			}
-			fmt.Println("Minutes", Minutes)
-			fmt.Println("Bonus_Minutes", Bonus_Minutes)
 			// MBs from Alepo and Protei
 			var DO_bytes float64 = 0
 			var bonus_DO_bytes float64 = 0
@@ -4837,8 +4835,6 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			if bonus_DO_bytes > 0 {
 				Bonus_MBs = int(bonus_DO_bytes / 1024 / 1024)
 			}
-			fmt.Println("MBs", MBs)
-			fmt.Println("Bonus_MBs", Bonus_MBs)
 
 			// Expiry Date from bundle Validity
 			switch bundle.Validity_Type {
@@ -4873,8 +4869,6 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 					Validity_type = "years"
 				}
 			}
-			fmt.Println("Validity_type", Validity_type)
-			fmt.Println("Validity_value", Validity_value)
 			sizeParts := []string{}
 
 			totalMBs := MBs + Bonus_MBs
@@ -4895,7 +4889,6 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			}
 
 			Size := strings.Join(sizeParts, " + ")
-			fmt.Println("Size:", Size)
 
 			Validity := fmt.Sprintf("%d %s", Validity_value, Validity_type)
 			if Bundle_Noti_Text != "" {
@@ -6159,7 +6152,6 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 				if rules.MM_RC_Bundle_Award_Type == "Transaction" {
 					if rules.MM_RC_Bundle_Points > 0 {
 						// return rules.MM_RC_Bundle_Points, current_outstanding_points
-						fmt.Println("here")
 						flt_points := rules.MM_RC_Bundle_Points + current_outstanding_points
 						int_points := int(flt_points)
 						outstanding_points = flt_points - float64(int_points)
@@ -6269,7 +6261,6 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 }
 
 func CheckMMEventDetailType(EventDetail string) (response string) {
-	fmt.Println("EventDetail", EventDetail)
 	indexOf := strings.Index(EventDetail, " - ")
 	if indexOf > 0 {
 		return EventDetail[0:indexOf]
