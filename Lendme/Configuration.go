@@ -198,17 +198,18 @@ type ConfigType struct {
 }
 
 func GetDefaultConfiguration() (err error) {
-	Configuration = setDefaultConfiguration_DRC_Live()
+	// Configuration = setDefaultConfiguration_DRC_Live()
 	//	Configuration = setDefaultConfiguration_GM_Live()
+
 	// Configuration = setDefaultConfiguration_SL_Live()
-	//Configuration = setDefaultConfiguration_GM_Loyalty()
 	//Configuration = setDefaultConfiguration_SL_Loyalty()
 	// Configuration = setDefaultConfiguration_SL_Loyalty_UAT()
+	
 	// Configuration = setDefaultConfiguration_AO_Loyalty()
 	//Configuration = setDefaultConfiguration_AO_Loyalty_UAT()
 
-	//Configuration = setDefaultConfiguration_GM_Loyalty_Live()
-	//Configuration = setDefaultConfiguration_GM_Loyalty_UAT()
+	Configuration = setDefaultConfiguration_GM_Loyalty_Live()
+	// Configuration = setDefaultConfiguration_GM_Loyalty_UAT()
 	return nil
 }
 
@@ -265,7 +266,7 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 
 	Configuration.OKAPI_AUC.Description = "OKAPI AUC service"
 	Configuration.OKAPI_AUC.Protocol = "http"
-	Configuration.OKAPI_AUC.Hostname = "10.95.64.166"
+	Configuration.OKAPI_AUC.Hostname = "10.95.72.166"
 	Configuration.OKAPI_AUC.Port = "9001"
 	Configuration.OKAPI_AUC.Module = "AUC"
 	Configuration.OKAPI_AUC.Version = "V1"
@@ -286,8 +287,8 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 	// Configuration.MongoDB.HostIP_4 = ""
 	// Configuration.MongoDB.HostPort_4 = ""
 	Configuration.MongoDB.ReplicaSet = "reps1"
-	Configuration.MongoDB.UserName = "mongo-root"
-	Configuration.MongoDB.Password = "Speci@LM0nG0P@ssw0rd_F0r_@ng0l@"
+	Configuration.MongoDB.UserName = "db_root"
+	Configuration.MongoDB.Password = "B3202T@soSo0612w6"
 	Configuration.MongoDB.HostIP_1 = "10.95.72.177" //==> Primary
 	Configuration.MongoDB.HostPort_1 = "9001"
 	Configuration.MongoDB.HostIP_2 = "10.95.72.176" //==>secondary
@@ -311,8 +312,9 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 	Configuration.LoyaltyMongoDB.HostIP_4 = Configuration.MongoDB.HostIP_4
 	Configuration.LoyaltyMongoDB.HostPort_4 = Configuration.MongoDB.HostPort_4
 
-	Configuration.IN.IP = "10.70.1.38"
-	Configuration.IN.Port = "8080"
+	Configuration.IN.IP = "10.95.73.12" //"10.70.1.59"
+	Configuration.IN.Port = "8444"
+
 	Configuration.IN.WS_SOAP_Endpoint = "/axis2/services/WebService.WebServiceHttpSoap12Endpoint/"
 	Configuration.IN.WS_XMLNS_SOAP_Env = "http://schemas.xmlsoap.org/soap/envelope/"
 	Configuration.IN.WS_XMLNS_Web = "http://webservice.CSI.omvia.convergys.com"
@@ -322,8 +324,8 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 	Configuration.IN.WS_EVC_XMLNS_Web = "http://webservice.CSI.omvia.convergys.com"
 
 	Configuration.IN.Default_OpId = "lendme"
-	Configuration.IN.Default_OpPwd = ""
-	Configuration.IN.Is_OpPwd_Required = false
+	Configuration.IN.Default_OpPwd = "P@ssw0rd"
+	Configuration.IN.Is_OpPwd_Required = true
 	Configuration.IN.Timeout = 5
 	Configuration.IN.PrintLogs = false
 
@@ -337,7 +339,7 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 
 	Configuration.CGW_AUC.Description = "UCGW AUC service"
 	Configuration.CGW_AUC.Protocol = "http"
-	Configuration.CGW_AUC.Hostname = "10.95.64.95"
+	Configuration.CGW_AUC.Hostname = "10.95.72.95"
 	Configuration.CGW_AUC.Port = "9994"
 	Configuration.CGW_AUC.Module = "AUC"
 	Configuration.CGW_AUC.Version = "V1"
@@ -346,7 +348,7 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 	Configuration.CGW_AUC.Timeout_After = 5 * time.Second
 
 	Configuration.CGW.Protocol = "http"
-	Configuration.CGW.Hostname = "10.95.64.95"
+	Configuration.CGW.Hostname = "10.95.72.95"
 	Configuration.CGW.Port = "9991"
 	Configuration.CGW.Module = "UCGW"
 	Configuration.CGW.Version = "V1"
@@ -355,7 +357,7 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 	Configuration.Propylaea.Description = "Product Design Center - Propylaea"
 	Configuration.Propylaea.Protocol = "http"
 	Configuration.Propylaea.Port = "9900"
-	Configuration.Propylaea.Hostname = "10.95.64.95"
+	Configuration.Propylaea.Hostname = "10.95.72.95"
 	Configuration.Propylaea.Module = "Propylaea"
 	Configuration.Propylaea.Version = "V1"
 	Configuration.Propylaea.S2S_Username = "Propylaea_Admin"
@@ -711,7 +713,7 @@ func setDefaultConfiguration_GM_Loyalty_Live() (Configuration ConfigType) {
 	Configuration.CountryCode = "220"
 
 	Configuration.IsProduction = true
-	Configuration.IsLoyaltyProduction = false
+	Configuration.IsLoyaltyProduction = true
 	Configuration.Min_Allowed_Amnt = 5
 	Configuration.Service_FeePerc = 0.04
 	Configuration.Min_Allowed_AON = 3
