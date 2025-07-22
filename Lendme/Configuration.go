@@ -1368,7 +1368,7 @@ func setDefaultConfiguration_SL_Loyalty() (Configuration ConfigType) {
 }
 
 func setDefaultConfiguration_SL_Loyalty_UAT() (Configuration ConfigType) {
-	Configuration.HttpOKAPIServicePort = "9291"
+	// Configuration.HttpOKAPIServicePort = "9291"
 	Configuration.HttpAppServicePort = "9290"           //lendme services
 	Configuration.HttpAppLoyaltyServicePort = "9280"    //for USSD and Mobile App
 	Configuration.HttpAppLoyaltyManagementPort = "9281" //for OKAPI
