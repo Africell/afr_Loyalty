@@ -1366,7 +1366,7 @@ func setDefaultConfiguration_SL_Loyalty() (Configuration ConfigType) {
 }
 
 func setDefaultConfiguration_SL_Loyalty_UAT() (Configuration ConfigType) {
-	//Configuration.HttpOKAPIServicePort = "9291"
+	Configuration.HttpOKAPIServicePort = "9291"
 	Configuration.HttpAppServicePort = "9290"           //lendme services
 	Configuration.HttpAppLoyaltyServicePort = "9280"    //for USSD and Mobile App
 	Configuration.HttpAppLoyaltyManagementPort = "9281" //for OKAPI
@@ -1418,7 +1418,7 @@ func setDefaultConfiguration_SL_Loyalty_UAT() (Configuration ConfigType) {
 
 	Configuration.OKAPI_AUC.Description = "OKAPI AUC service"
 	Configuration.OKAPI_AUC.Protocol = "http"
-	Configuration.OKAPI_AUC.Hostname = "10.10.234.55"
+	Configuration.OKAPI_AUC.Hostname = "auc"
 	Configuration.OKAPI_AUC.Port = "9001"
 	Configuration.OKAPI_AUC.Module = "AUC"
 	Configuration.OKAPI_AUC.Version = "V1"
@@ -1454,7 +1454,7 @@ func setDefaultConfiguration_SL_Loyalty_UAT() (Configuration ConfigType) {
 	//mongoDB
 	Configuration.MongoDB.UserName = "db_root"
 	Configuration.MongoDB.Password = "P@s54D0Brdara_r@75S"
-	Configuration.MongoDB.HostIP_1 = "LendMe_db" //"host.docker.internal"
+	Configuration.MongoDB.HostIP_1 = "mongodb_lendme" //"host.docker.internal"
 	Configuration.MongoDB.HostPort_1 = "27017"   //"27017"
 	/////////////////////////////////////MONGO DOCKER ///////////////////////////
 
@@ -1505,7 +1505,7 @@ func setDefaultConfiguration_SL_Loyalty_UAT() (Configuration ConfigType) {
 	Configuration.SMPP.Encoding = 0
 	//CGW
 	Configuration.CGW.Protocol = "http"
-	Configuration.CGW.Hostname = "10.10.234.55"
+	Configuration.CGW.Hostname = "UCGW"
 	Configuration.CGW.Port = "9991"
 	Configuration.CGW.Module = "UCGW"
 	Configuration.CGW.Version = "V1"
@@ -1514,7 +1514,7 @@ func setDefaultConfiguration_SL_Loyalty_UAT() (Configuration ConfigType) {
 
 	Configuration.CGW_AUC.Description = "UCGW AUC service"
 	Configuration.CGW_AUC.Protocol = "http"
-	Configuration.CGW_AUC.Hostname = "10.10.234.55"
+	Configuration.CGW_AUC.Hostname = "UCGW_AUC"
 	Configuration.CGW_AUC.Port = "9994"
 	Configuration.CGW_AUC.Module = "AUC"
 	Configuration.CGW_AUC.Version = "V1"
@@ -1525,7 +1525,7 @@ func setDefaultConfiguration_SL_Loyalty_UAT() (Configuration ConfigType) {
 	Configuration.Propylaea.Description = "Product Design Center - Propylaea"
 	Configuration.Propylaea.Protocol = "http"
 	Configuration.Propylaea.Port = "9900"
-	Configuration.Propylaea.Hostname = "10.10.234.55"
+	Configuration.Propylaea.Hostname = "Propylaea_Prod"
 	Configuration.Propylaea.Module = "Propylaea"
 	Configuration.Propylaea.Version = "V1"
 	Configuration.Propylaea.S2S_Username = "Propylaea_Admin"
