@@ -24,6 +24,7 @@ require (
 	afr_sb_mm v0.0.0-00010101000000-000000000000
 	afr_unified_charging_gateway v0.0.0-00010101000000-000000000000
 	daoc v0.0.0-00010101000000-000000000000
+	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
 	github.com/jinzhu/copier v0.4.0
 	github.com/kardianos/service v1.2.2
@@ -47,7 +48,6 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/klauspost/compress v1.17.9 // indirect
 	github.com/kr/fs v0.1.0 // indirect
