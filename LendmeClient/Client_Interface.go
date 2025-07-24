@@ -405,3 +405,56 @@ func (GWClient *Lendme_Client) Loyalty_Products_Catalogue(MSISDN string) (respon
 	}
 	return response, nil
 }
+
+func (GWClient *Lendme_Client) Loyalty_RedeemRequest(request lendme.Loyalty_Redemption_Request) (response lendme.Loyalty_Redemption_log, err error) {
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	request_byte, err := json.Marshal(request)
+	if err != nil {
+		return response, err
+	}
+	http_req := Generic_http_call_Request{
+		Url:    GWClient.Protocol + "://" + GWClient.Hostname + ":" + GWClient.LoyaltyPort + "/" + GWClient.LoyaltyModule + "/" + GWClient.LoyaltyVersion + "/HTTP_Customer_Loyalty_RedeemRequest/",
+		Method: "PUT",
+		Token:  GWClient.S2S_AccessToken,
+		Load:   request_byte,
+	}
+	response_generic, err := GWClient.generic_http_call(http_req)
+	if err != nil {
+		log.Println("generic_http_call failed : ", err)
+		return response, err
+	} else {
+		if response_generic.Statuscode == http.StatusOK {
+			err = json.Unmarshal(response_generic.Body, &response)
+			if err != nil {
+				log.Println("generic_http_call boby unmarshal error : ", err)
+				return
+			}
+		}
+		if response_generic.Statuscode == http.StatusUnauthorized {
+			srl, errl := GWClient.AUC_client.Login(GWClient.AUC_client.S2S_Username, GWClient.AUC_client.S2S_Password) // try to get a new token using login if token is unauthenticated
+			if errl != nil {
+				log.Println("AUC init - FAILED :: ", errl)
+				return response, errl
+			}
+			rt, errl := GWClient.AUC_client.RefreshToken(srl.Token)
+			if errl != nil {
+				log.Println("AUC init - FAILED :: ", errl)
+				return response, err
+			} else {
+				GWClient.AUC_client.S2S_AccessToken = rt.Token // save token global variable to re-use
+				GWClient.S2S_AccessToken = rt.Token            // save token global variable to re-use
+				response_generic, err = GWClient.generic_http_call(http_req)
+				if err != nil {
+					log.Println("generic_http_call error : ", err)
+					return response, err
+				}
+				err = json.Unmarshal(response_generic.Body, &response)
+				if err != nil {
+					log.Println("generic_http_call boby unmarshal error : ", err)
+					return response, err
+				}
+			}
+		}
+	}
+	return response, nil
+}
