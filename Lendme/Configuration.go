@@ -1209,7 +1209,7 @@ func setDefaultConfiguration_SL_Loyalty() (Configuration ConfigType) {
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:4173")
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:4414")
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "https://okpaihr.africell.sl")
-	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "https://okpaihruat.africell.sl")
+	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "https://okapihruat.africell.sl")
 
 	Configuration.Operation = "SierraLeone"
 	Configuration.HostId = "Lendme-01"
