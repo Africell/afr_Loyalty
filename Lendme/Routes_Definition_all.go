@@ -226,8 +226,8 @@ func (UC *UserControl) Add_LendmeRoutes(R *Routes) {
 	r = Route{
 		"HTTP_Lendme_Customer_Exclusion",
 		"GET",
-		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Lendme_Customer_Exclusion/",
-		Use(UC.HTTP_Lendme_Customer_Exclusion, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
+		"/" + Configuration.Module + "/" + Configuration.Version + "/HTTP_Lendme_Customer_Exclusion/",
+		UC.HTTP_Lendme_Customer_Exclusion,
 		true,
 		"Customer Exclusion - Read", // DisplayName
 		1,                           // DisplayOrder
@@ -247,8 +247,8 @@ func (UC *UserControl) Add_LendmeRoutes(R *Routes) {
 	r = Route{
 		"HTTP_Lendme_Customer_Exclusion",
 		"POST",
-		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Lendme_Customer_Exclusion/",
-		Use(UC.HTTP_Lendme_Customer_Exclusion, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
+		"/" + Configuration.Module + "/" + Configuration.Version + "/HTTP_Lendme_Customer_Exclusion/",
+		UC.HTTP_Lendme_Customer_Exclusion,
 		true,
 		"Customer Exclusion - Add", // DisplayName
 		2,                          // DisplayOrder
@@ -268,8 +268,8 @@ func (UC *UserControl) Add_LendmeRoutes(R *Routes) {
 	r = Route{
 		"HTTP_Lendme_Customer_Exclusion",
 		"PUT",
-		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Lendme_Customer_Exclusion/",
-		Use(UC.HTTP_Lendme_Customer_Exclusion, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
+		"/" + Configuration.Module + "/" + Configuration.Version + "/HTTP_Lendme_Customer_Exclusion/",
+		UC.HTTP_Lendme_Customer_Exclusion,
 		true,
 		"Customer Exclusion - Edit", // DisplayName
 		3,                           // DisplayOrder
@@ -289,8 +289,8 @@ func (UC *UserControl) Add_LendmeRoutes(R *Routes) {
 	r = Route{
 		"HTTP_Lendme_Customer_Exclusion",
 		"DELETE",
-		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Lendme_Customer_Exclusion/{KeyDelete}/",
-		Use(UC.HTTP_Lendme_Customer_Exclusion, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
+		"/" + Configuration.Module + "/" + Configuration.Version + "/HTTP_Lendme_Customer_Exclusion/{KeyDelete}/",
+		UC.HTTP_Lendme_Customer_Exclusion,
 		true,
 		"Customer Exclusion - Delete", // DisplayName
 		4,                             // DisplayOrder
@@ -315,8 +315,8 @@ func (UC *UserControl) Add_LendmeRoutes(R *Routes) {
 	r = Route{
 		"HTTP_Lendme_Customer_COS_Exclusion",
 		"GET",
-		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Lendme_Customer_COS_Exclusion/",
-		Use(UC.HTTP_Lendme_Customer_COS_Exclusion, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
+		"/" + Configuration.Module + "/" + Configuration.Version + "/HTTP_Lendme_Customer_COS_Exclusion/",
+		UC.HTTP_Lendme_Customer_COS_Exclusion,
 		true,
 		"Customer COS Exclusion - Read", // DisplayName
 		1,                               // DisplayOrder
@@ -337,8 +337,8 @@ func (UC *UserControl) Add_LendmeRoutes(R *Routes) {
 	r = Route{
 		"HTTP_Lendme_Customer_COS_Exclusion",
 		"POST",
-		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Lendme_Customer_COS_Exclusion/",
-		Use(UC.HTTP_Lendme_Customer_COS_Exclusion, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
+		"/" + Configuration.Module + "/" + Configuration.Version + "/HTTP_Lendme_Customer_COS_Exclusion/",
+		UC.HTTP_Lendme_Customer_COS_Exclusion,
 		true,
 		"Customer COS Exclusion - Add", // DisplayName
 		2,                              // DisplayOrder
@@ -359,8 +359,8 @@ func (UC *UserControl) Add_LendmeRoutes(R *Routes) {
 	r = Route{
 		"HTTP_Lendme_Customer_COS_Exclusion",
 		"PUT",
-		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Lendme_Customer_COS_Exclusion/",
-		Use(UC.HTTP_Lendme_Customer_COS_Exclusion, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
+		"/" + Configuration.Module + "/" + Configuration.Version + "/HTTP_Lendme_Customer_COS_Exclusion/",
+		UC.HTTP_Lendme_Customer_COS_Exclusion,
 		true,
 		"Customer COS Exclusion - Edit", // DisplayName
 		3,                               // DisplayOrder
@@ -381,8 +381,8 @@ func (UC *UserControl) Add_LendmeRoutes(R *Routes) {
 	r = Route{
 		"HTTP_Lendme_Customer_COS_Exclusion",
 		"DELETE",
-		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Lendme_Customer_COS_Exclusion/{KeyDelete}/",
-		Use(UC.HTTP_Lendme_Customer_COS_Exclusion, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
+		"/" + Configuration.Module + "/" + Configuration.Version + "/HTTP_Lendme_Customer_COS_Exclusion/{KeyDelete}/",
+		UC.HTTP_Lendme_Customer_COS_Exclusion,
 		true,
 		"Customer COS Exclusion - Delete", // DisplayName
 		4,                                 // DisplayOrder
