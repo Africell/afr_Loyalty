@@ -209,6 +209,14 @@ func (Uc *UserControl) Subscriber_Update(request Sub_Update_Request) {
 	} else {
 		subscriber.IsLendmeEligible = false
 	}
+	_, exits = Map_Lendme_Customer_COS_Exclusion.CheckThenGet(subscriber.COS)
+	if exits {
+		subscriber.IsLendmeEligible = false
+	}
+	_, exits = Map_Lendme_Customer_Exclusion.CheckThenGet(subscriber.Key)
+	if exits {
+		subscriber.IsLendmeEligible = false
+	}
 	//add to cache and DB
 	Map_Subscribers.Put(subscriber.Key, subscriber)
 	//*******************************

@@ -166,6 +166,16 @@ func (Uc *UserControl) AddToAppRouter(router *mux.Router, UC *UserControl) {
 			{AccessKey: "HTTP_Subscriber", AccessMethod: "PUT", Allowed: true},
 			{AccessKey: "HTTP_Subscriber", AccessMethod: "DELETE", Allowed: true},
 			{AccessKey: "HTTP_Lendme_Logs", AccessMethod: "GET", Allowed: true},
+			{AccessKey: "Lendme Customer Exclusion", AccessMethod: "Module Sub Menu L1", Allowed: true},
+			{AccessKey: "HTTP_Lendme_Customer_Exclusion", AccessMethod: "GET", Allowed: true},
+			{AccessKey: "HTTP_Lendme_Customer_Exclusion", AccessMethod: "POST", Allowed: true},
+			{AccessKey: "HTTP_Lendme_Customer_Exclusion", AccessMethod: "PUT", Allowed: true},
+			{AccessKey: "HTTP_Lendme_Customer_Exclusion", AccessMethod: "DELETE", Allowed: true},
+			{AccessKey: "Lendme Customer COS Exclusion", AccessMethod: "Module Sub Menu L1", Allowed: true},
+			{AccessKey: "HTTP_Lendme_Customer_COS_Exclusion", AccessMethod: "GET", Allowed: true},
+			{AccessKey: "HTTP_Lendme_Customer_COS_Exclusion", AccessMethod: "POST", Allowed: true},
+			{AccessKey: "HTTP_Lendme_Customer_COS_Exclusion", AccessMethod: "PUT", Allowed: true},
+			{AccessKey: "HTTP_Lendme_Customer_COS_Exclusion", AccessMethod: "DELETE", Allowed: true},
 		}
 		_, err = Uc.OKAPIAUC.AUCClient.GroupAccessEntriesForGroup_Comprehensive("VAS - Lendme", AccessEntries_to_add)
 
@@ -831,6 +841,40 @@ func (Uc *UserControl) Add_Lendme_ToAccessEntry(existing map[string]AuthCenter.A
 		Level3:               "",
 		Level3DisplayOrder:   0,
 		Routes:               []string{"HTTP_Lendme_Logs|GET"},
+	}
+	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
+
+	sd_ae = AuthCenter.AccessEntry{
+		AccessKey:            "Lendme Customer Exclusion",
+		AccessMethod:         "Module Sub Menu L1",
+		AccessKeyDescription: "Lendme Customer Exclusion",
+		DisplayName:          "Lendme Customer Exclusion",
+		DisplayOrder:         13,
+		Module:               Module,
+		ModuleDisplayOrder:   ModuleDisplayOrder,
+		Level1:               Level1,
+		Level1DisplayOrder:   Level1DisplayOrder,
+		Level2:               "Lendme Customer Exclusion",
+		Level2DisplayOrder:   3,
+		Level3:               "",
+		Level3DisplayOrder:   0,
+	}
+	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
+
+	sd_ae = AuthCenter.AccessEntry{
+		AccessKey:            "Lendme Customer COS Exclusion",
+		AccessMethod:         "Module Sub Menu L1",
+		AccessKeyDescription: "Lendme Customer COS Exclusion",
+		DisplayName:          "Lendme Customer COS Exclusion",
+		DisplayOrder:         13,
+		Module:               Module,
+		ModuleDisplayOrder:   ModuleDisplayOrder,
+		Level1:               Level1,
+		Level1DisplayOrder:   Level1DisplayOrder,
+		Level2:               "Lendme Customer COS Exclusion",
+		Level2DisplayOrder:   4,
+		Level3:               "",
+		Level3DisplayOrder:   0,
 	}
 	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
 }

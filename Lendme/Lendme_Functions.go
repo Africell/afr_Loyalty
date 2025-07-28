@@ -45,6 +45,12 @@ var DAO_Credit_Limit_Scheme daoc.DAO
 
 var DAO_Lendme_log daoc.DAO
 
+var Map_Lendme_Customer_Exclusion daoc.Cache_Synch
+var DAO_Lendme_Customer_Exclusion daoc.DAO
+
+var Map_Lendme_Customer_COS_Exclusion daoc.Cache_Synch
+var DAO_Lendme_Customer_COS_Exclusion daoc.DAO
+
 func (uc *UserControl) InitializeCache() {
 	var access_entry AuthCenter.AccessEntry
 	MapAccessEntry.Initialize("AccessEntry", "AccessEntry", reflect.TypeOf(AuthCenter.AccessEntry{}), access_entry, true, &DAO_AccessEntry, uc.CacheDir.List)
@@ -56,6 +62,10 @@ func (uc *UserControl) InitializeCache() {
 	Map_Subscribers.Initialize("Subscriber", "Subscriber", reflect.TypeOf(Subscriber{}), subscriber, true, &DAO_Subscribers, uc.CacheDir.List)
 	var credit_Limit_Scheme Credit_Limit_Scheme
 	Map_Credit_Limit_Scheme.Initialize("Credit_Limit_Scheme", "Credit_Limit_Scheme", reflect.TypeOf(Credit_Limit_Scheme{}), credit_Limit_Scheme, true, &DAO_Credit_Limit_Scheme, uc.CacheDir.List)
+	var customer_Exclusion Customer_Exclusion
+	Map_Lendme_Customer_Exclusion.Initialize("Customer_Exclusion", "Customer_Exclusion", reflect.TypeOf(Customer_Exclusion{}), customer_Exclusion, true, &DAO_Lendme_Customer_Exclusion, uc.CacheDir.List)
+	var customer_COS_Exclusion Customer_COS_Exclusion
+	Map_Lendme_Customer_COS_Exclusion.Initialize("Customer_COS_Exclusion", "Customer_COS_Exclusion", reflect.TypeOf(Customer_COS_Exclusion{}), customer_COS_Exclusion, true, &DAO_Lendme_Customer_COS_Exclusion, uc.CacheDir.List)
 }
 
 func (uc *UserControl) InitializeDAO() {
@@ -2985,6 +2995,398 @@ func (Uc *UserControl) SubscriberUSSD_Get(Key string) (response Subscriber_USSD,
 		}
 		return response, nil
 	}
+}
+
+// ***********************************************************************
+// Customer Exclusion functions
+// ***********************************************************************
+func (Uc *UserControl) Lendme_Customer_Exclusion_Add(Login string, request Customer_Exclusion_AddRequest) (Id int64, err error) {
+	request.Key = Normalize_International_MSISDN(request.Key)
+	//check key if filled and if already used
+	if request.Key == "" {
+		err = errors.New("key cannot be empty")
+		return Id, err
+	}
+	//check if key already used
+	exits := Map_Lendme_Customer_Exclusion.Check(request.Key)
+	if exits {
+		err = errors.New("key already exist")
+		return Id, err
+	}
+	//Prepare new entry
+	var NewEntry Customer_Exclusion
+	NewEntry.Id = Map_Loyalty_AutoIncrement.GetNextAI("Customer_Exclusion-Id")
+	Id = NewEntry.Id
+
+	NewEntry.Key = request.Key
+	NewEntry.AddTime = time.Now()
+	NewEntry.AddReason = request.AddReason
+	subscriber_na, exits := Map_Subscribers.CheckThenGet(NewEntry.Key)
+	if !exits {
+		err = errors.New("msisdn is not created")
+		return Id, err
+	}
+	subscriber, ok := subscriber_na.(Subscriber)
+	if !ok {
+		return Id, errors.New("error in subscriber type assertion")
+	}
+	//add to cache and DB
+	Map_Lendme_Customer_Exclusion.Put(NewEntry.Key, NewEntry)
+	subscriber.IsLendmeEligible = false
+	Map_Subscribers.Put(subscriber.Key, subscriber)
+	return Id, nil
+}
+
+func (Uc *UserControl) Lendme_Customer_Exclusion_Edit(Login string, request Customer_Exclusion_EditRequest) (Id int64, err error) {
+	//check and validate
+	if request.Key == "" {
+		err = errors.New("key cannot be empty")
+		return Id, err
+	}
+	entry_na, exits := Map_Lendme_Customer_Exclusion.CheckThenGet(request.Key)
+	if !exits {
+		err = errors.New("key is not created")
+		return Id, err
+	}
+	entry, ok := entry_na.(Customer_Exclusion)
+	if !ok {
+		return Id, errors.New("error in type assertion")
+	}
+	if entry.Id != request.Id {
+		return Id, errors.New("id is not matching")
+	}
+
+	//Prepare new entry
+	entry.Key = request.Key
+	entry.AddReason = request.AddReason
+
+	if request.NewKey != "" {
+		if request.NewKey != request.Key {
+			//delete old
+			Map_Lendme_Customer_Exclusion.Delete(request.Key)
+			//update key
+			entry.Key = request.NewKey
+		}
+	}
+	//add to cache and DB
+	subscriber_na, exits := Map_Subscribers.CheckThenGet(entry.Key)
+	if !exits {
+		err = errors.New("msisdn is not created")
+		return Id, err
+	}
+	subscriber, ok := subscriber_na.(Subscriber)
+	if !ok {
+		return Id, errors.New("error in subscriber type assertion")
+	}
+	Map_Lendme_Customer_Exclusion.Put(entry.Key, entry)
+	subscriber.IsLendmeEligible = false
+	Map_Subscribers.Put(subscriber.Key, subscriber)
+	return Id, nil
+}
+
+func (Uc *UserControl) Lendme_Customer_Exclusion_Get(Key string) (entries []Customer_Exclusion, err error) {
+	if Key == "" {
+		entries_na := Map_Lendme_Customer_Exclusion.ConvertToArray()
+		if len(entries_na) > 0 {
+			for _, entry_na := range entries_na {
+				entry, ok := entry_na.(Customer_Exclusion)
+				if !ok {
+					err = errors.New("error in type assertion")
+					return entries, err
+				} else {
+					entries = append(entries, entry)
+				}
+			}
+		}
+		return entries, nil
+	} else {
+		entry_na, exits := Map_Lendme_Customer_Exclusion.CheckThenGet(Key)
+		if !exits {
+			err = errors.New("key does not exist")
+			return entries, err
+		}
+		entry, ok := entry_na.(Customer_Exclusion)
+		if !ok {
+			err = errors.New("error in type assertion")
+			return entries, err
+		}
+		entries = append(entries, entry)
+		return entries, nil
+	}
+}
+
+func (Uc *UserControl) Lendme_Customer_Exclusion_GetPaginated(Page, Limit int64) (entries []Customer_Exclusion, err error) {
+	if Page < 1 {
+		return entries, errors.New("invalid page")
+	}
+	if Limit < 1 || Limit > 50000 {
+		return entries, errors.New("invalid limit (accept value between 1 and 50000)")
+	}
+
+	var findparams daoc.DAOFindParams
+	//var array []daoc.DAOFindCriteria
+	// if Outlet_Key != "" {
+	// 	//restrict access for records that belong to this user
+	// 	var criteria daoc.DAOFindCriteria = daoc.DAOFindCriteria{
+	// 		Field:    "Outlet_Key",
+	// 		Value:    Outlet_Key,
+	// 		Operator: "EQUAL",
+	// 	}
+	// 	array = append(array, criteria)
+	// }
+	// if Agent_Key != "" {
+	// 	//restrict access for records that belong to this user
+	// 	var criteria daoc.DAOFindCriteria = daoc.DAOFindCriteria{
+	// 		Field:    "Agent_Key",
+	// 		Value:    Agent_Key,
+	// 		Operator: "EQUAL",
+	// 	}
+	// 	array = append(array, criteria)
+	// }
+	// if len(array) > 0 {
+	// 	findparams.FindCriteria = array
+	// }
+	var paginationparams daoc.DAOPaginate
+	paginationparams.Limit = Limit
+	paginationparams.Page = Page
+	findResult, err := DAO_Lendme_Customer_Exclusion.FindPaginate(findparams, paginationparams)
+	if err != nil {
+		return entries, err
+	}
+	if len(findResult) > 0 {
+		for _, findres := range findResult {
+			InterfaceValue := reflect.ValueOf(findres).Elem().Interface().(Customer_Exclusion)
+			entries = append(entries, InterfaceValue)
+		}
+	}
+	return entries, nil
+
+}
+
+func (Uc *UserControl) Lendme_Customer_Exclusion_Delete(Login, Key string) (err error) {
+	if Key == "" {
+		err = errors.New("key cannot be empty")
+		return err
+	}
+	_, exits := Map_Lendme_Customer_Exclusion.CheckThenGet(Key)
+	if !exits {
+		err = errors.New("entry does not exist")
+		return err
+	}
+	Map_Lendme_Customer_Exclusion.Delete(Key)
+
+	return nil
+}
+
+// ***********************************************************************
+// Customer Exclusion functions
+// ***********************************************************************
+func (Uc *UserControl) Lendme_Customer_COS_Exclusion_Add(Login string, request Customer_COS_Exclusion_AddRequest) (Id int64, err error) {
+	//check key if filled and if already used
+	if request.Key == "" {
+		err = errors.New("key cannot be empty")
+		return Id, err
+	}
+	//check if key already used
+	exits := Map_Lendme_Customer_COS_Exclusion.Check(request.Key)
+	if exits {
+		err = errors.New("key already exist")
+		return Id, err
+	}
+	//Prepare new entry
+	var NewEntry Customer_COS_Exclusion
+	NewEntry.Id = Map_Loyalty_AutoIncrement.GetNextAI("Customer_COS_Exclusion-Id")
+	Id = NewEntry.Id
+	NewEntry.Key = request.Key
+	NewEntry.AddTime = time.Now()
+	NewEntry.AddReason = request.AddReason
+	//add to cache and DB
+	Map_Lendme_Customer_COS_Exclusion.Put(NewEntry.Key, NewEntry)
+	var findparams daoc.DAOFindParams
+	var array []daoc.DAOFindCriteria
+	//restrict access for records that belong to this user
+	var criteria daoc.DAOFindCriteria = daoc.DAOFindCriteria{
+		Field:    "COS",
+		Value:    NewEntry.Key,
+		Operator: "EQUAL",
+	}
+	array = append(array, criteria)
+
+	findparams.FindCriteria = array
+	//
+	findResult, err := DAO_Subscribers.Find(findparams)
+	if err != nil {
+		return Id, err
+	}
+
+	if len(findResult) > 0 {
+		for _, entry_na := range findResult {
+			subscriber, ok := entry_na.(Subscriber)
+			if !ok {
+				fmt.Println("error in subscriber type assertion")
+			}
+			subscriber.IsLendmeEligible = false
+			Map_Subscribers.Put(subscriber.Key, subscriber)
+		}
+	}
+	return Id, nil
+}
+
+func (Uc *UserControl) Lendme_Customer_COS_Exclusion_Edit(Login string, request Customer_COS_Exclusion_EditRequest) (Id int64, err error) {
+	//check and validate
+	if request.Key == "" {
+		err = errors.New("key cannot be empty")
+		return Id, err
+	}
+	entry_na, exits := Map_Lendme_Customer_COS_Exclusion.CheckThenGet(request.Key)
+	if !exits {
+		err = errors.New("key is not created")
+		return Id, err
+	}
+	entry, ok := entry_na.(Customer_COS_Exclusion)
+	if !ok {
+		return Id, errors.New("error in type assertion")
+	}
+	if entry.Id != request.Id {
+		return Id, errors.New("id is not matching")
+	}
+
+	//Prepare new entry
+	entry.Key = request.Key
+	entry.AddReason = request.AddReason
+
+	if request.NewKey != "" {
+		if request.NewKey != request.Key {
+			//delete old
+			Map_Lendme_Customer_COS_Exclusion.Delete(request.Key)
+			//update key
+			entry.Key = request.NewKey
+		}
+	}
+	//add to cache and DB
+	Map_Lendme_Customer_COS_Exclusion.Put(entry.Key, entry)
+	var findparams daoc.DAOFindParams
+	var array []daoc.DAOFindCriteria
+	//restrict access for records that belong to this user
+	var criteria daoc.DAOFindCriteria = daoc.DAOFindCriteria{
+		Field:    "COS",
+		Value:    entry.Key,
+		Operator: "EQUAL",
+	}
+	array = append(array, criteria)
+
+	findparams.FindCriteria = array
+	//
+	findResult, err := DAO_Subscribers.Find(findparams)
+	if err != nil {
+		return Id, err
+	}
+
+	if len(findResult) > 0 {
+		for _, entry_na := range findResult {
+			subscriber, ok := entry_na.(Subscriber)
+			if !ok {
+				fmt.Println("error in subscriber type assertion")
+			}
+			subscriber.IsLendmeEligible = false
+			Map_Subscribers.Put(subscriber.Key, subscriber)
+		}
+	}
+	return Id, nil
+}
+
+func (Uc *UserControl) Lendme_Customer_COS_Exclusion_Get(Key string) (entries []Customer_COS_Exclusion, err error) {
+	if Key == "" {
+		entries_na := Map_Lendme_Customer_COS_Exclusion.ConvertToArray()
+		if len(entries_na) > 0 {
+			for _, entry_na := range entries_na {
+				entry, ok := entry_na.(Customer_COS_Exclusion)
+				if !ok {
+					err = errors.New("error in type assertion")
+					return entries, err
+				} else {
+					entries = append(entries, entry)
+				}
+			}
+		}
+		return entries, nil
+	} else {
+		entry_na, exits := Map_Lendme_Customer_COS_Exclusion.CheckThenGet(Key)
+		if !exits {
+			err = errors.New("key does not exist")
+			return entries, err
+		}
+		entry, ok := entry_na.(Customer_COS_Exclusion)
+		if !ok {
+			err = errors.New("error in type assertion")
+			return entries, err
+		}
+		entries = append(entries, entry)
+		return entries, nil
+	}
+}
+
+func (Uc *UserControl) Lendme_Customer_COS_Exclusion_GetPaginated(Page, Limit int64) (entries []Customer_COS_Exclusion, err error) {
+	if Page < 1 {
+		return entries, errors.New("invalid page")
+	}
+	if Limit < 1 || Limit > 50000 {
+		return entries, errors.New("invalid limit (accept value between 1 and 50000)")
+	}
+
+	var findparams daoc.DAOFindParams
+	//var array []daoc.DAOFindCriteria
+	// if Outlet_Key != "" {
+	// 	//restrict access for records that belong to this user
+	// 	var criteria daoc.DAOFindCriteria = daoc.DAOFindCriteria{
+	// 		Field:    "Outlet_Key",
+	// 		Value:    Outlet_Key,
+	// 		Operator: "EQUAL",
+	// 	}
+	// 	array = append(array, criteria)
+	// }
+	// if Agent_Key != "" {
+	// 	//restrict access for records that belong to this user
+	// 	var criteria daoc.DAOFindCriteria = daoc.DAOFindCriteria{
+	// 		Field:    "Agent_Key",
+	// 		Value:    Agent_Key,
+	// 		Operator: "EQUAL",
+	// 	}
+	// 	array = append(array, criteria)
+	// }
+	// if len(array) > 0 {
+	// 	findparams.FindCriteria = array
+	// }
+	var paginationparams daoc.DAOPaginate
+	paginationparams.Limit = Limit
+	paginationparams.Page = Page
+	findResult, err := DAO_Lendme_Customer_COS_Exclusion.FindPaginate(findparams, paginationparams)
+	if err != nil {
+		return entries, err
+	}
+	if len(findResult) > 0 {
+		for _, findres := range findResult {
+			InterfaceValue := reflect.ValueOf(findres).Elem().Interface().(Customer_COS_Exclusion)
+			entries = append(entries, InterfaceValue)
+		}
+	}
+	return entries, nil
+
+}
+
+func (Uc *UserControl) Lendme_Customer_COS_Exclusion_Delete(Login, Key string) (err error) {
+	if Key == "" {
+		err = errors.New("key cannot be empty")
+		return err
+	}
+	_, exits := Map_Lendme_Customer_COS_Exclusion.CheckThenGet(Key)
+	if !exits {
+		err = errors.New("entry does not exist")
+		return err
+	}
+
+	Map_Lendme_Customer_COS_Exclusion.Delete(Key)
+	return nil
 }
 
 func (Uc *UserControl) GetOutstandingSummary() (err error) {
