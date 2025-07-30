@@ -1,6 +1,7 @@
 package LendmeClient
 
 import (
+	lendme "afr_lendme/Lendme"
 	"bytes"
 	"crypto/tls"
 	"encoding/json"
@@ -128,6 +129,112 @@ func (GWClient *Lendme_Client) Lendme_Subscriber_Get(MSISDN string) (response Le
 	return
 }
 
+func (GWClient *Lendme_Client) Lendme_Request(request lendme.LendMe_Request) (response lendme.API_Standard_response, err error) {
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	request_byte, err := json.Marshal(request)
+	if err != nil {
+		return response, err
+	}
+	http_req := Generic_http_call_Request{
+		Url:    GWClient.Protocol + "://" + GWClient.Hostname + ":" + GWClient.LendmePort + "/" + GWClient.LendMeModule + "/" + GWClient.LendMeVersion + "/HTTP_Lendme_Request/",
+		Method: "POST",
+		Token:  GWClient.S2S_AccessToken,
+		Load:   request_byte,
+	}
+	response_generic, err := GWClient.generic_http_call(http_req)
+	if err != nil {
+		log.Println("generic_http_call failed : ", err)
+		return response, err
+	} else {
+		if response_generic.Statuscode == http.StatusOK {
+			err = json.Unmarshal(response_generic.Body, &response)
+			if err != nil {
+				log.Println("generic_http_call boby unmarshal error : ", err)
+				return
+			}
+		}
+		if response_generic.Statuscode == http.StatusUnauthorized {
+			srl, errl := GWClient.AUC_client.Login(GWClient.AUC_client.S2S_Username, GWClient.AUC_client.S2S_Password) // try to get a new token using login if token is unauthenticated
+			if errl != nil {
+				log.Println("AUC init - FAILED :: ", errl)
+				return response, errl
+			}
+			rt, errl := GWClient.AUC_client.RefreshToken(srl.Token)
+			if errl != nil {
+				log.Println("AUC init - FAILED :: ", errl)
+				return response, err
+			} else {
+				GWClient.AUC_client.S2S_AccessToken = rt.Token // save token global variable to re-use
+				GWClient.S2S_AccessToken = rt.Token            // save token global variable to re-use
+				response_generic, err = GWClient.generic_http_call(http_req)
+				if err != nil {
+					log.Println("generic_http_call error : ", err)
+					return response, err
+				}
+				err = json.Unmarshal(response_generic.Body, &response)
+				if err != nil {
+					log.Println("generic_http_call boby unmarshal error : ", err)
+					return response, err
+				}
+			}
+		}
+	}
+	return response, nil
+}
+
+func (GWClient *Lendme_Client) AO_Lendme_Request(request lendme.LendMe_Request) (response lendme.API_Standard_response, err error) {
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	request_byte, err := json.Marshal(request)
+	if err != nil {
+		return response, err
+	}
+	http_req := Generic_http_call_Request{
+		Url:    GWClient.Protocol + "://" + GWClient.Hostname + ":" + GWClient.LendmePort + "/" + GWClient.LendMeModule + "/" + GWClient.LendMeVersion + "/HTTP_AO_Lendme_Request/",
+		Method: "POST",
+		Token:  GWClient.S2S_AccessToken,
+		Load:   request_byte,
+	}
+	response_generic, err := GWClient.generic_http_call(http_req)
+	if err != nil {
+		log.Println("generic_http_call failed : ", err)
+		return response, err
+	} else {
+		if response_generic.Statuscode == http.StatusOK {
+			err = json.Unmarshal(response_generic.Body, &response)
+			if err != nil {
+				log.Println("generic_http_call boby unmarshal error : ", err)
+				return
+			}
+		}
+		if response_generic.Statuscode == http.StatusUnauthorized {
+			srl, errl := GWClient.AUC_client.Login(GWClient.AUC_client.S2S_Username, GWClient.AUC_client.S2S_Password) // try to get a new token using login if token is unauthenticated
+			if errl != nil {
+				log.Println("AUC init - FAILED :: ", errl)
+				return response, errl
+			}
+			rt, errl := GWClient.AUC_client.RefreshToken(srl.Token)
+			if errl != nil {
+				log.Println("AUC init - FAILED :: ", errl)
+				return response, err
+			} else {
+				GWClient.AUC_client.S2S_AccessToken = rt.Token // save token global variable to re-use
+				GWClient.S2S_AccessToken = rt.Token            // save token global variable to re-use
+				response_generic, err = GWClient.generic_http_call(http_req)
+				if err != nil {
+					log.Println("generic_http_call error : ", err)
+					return response, err
+				}
+				err = json.Unmarshal(response_generic.Body, &response)
+				if err != nil {
+					log.Println("generic_http_call boby unmarshal error : ", err)
+					return response, err
+				}
+			}
+		}
+	}
+	return response, nil
+}
+
 // **********************************************************************************************
 // Loyalty functions
 // **********************************************************************************************
@@ -248,4 +355,106 @@ func (GWClient *Lendme_Client) Loyalty_Account_DebitPoints(request Loyalty_Accou
 		}
 	}
 	return
+}
+
+func (GWClient *Lendme_Client) Loyalty_Products_Catalogue(MSISDN string) (response lendme.API_Standard_response, err error) {
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	http_req := Generic_http_call_Request{
+		Url:             GWClient.Protocol + "://" + GWClient.Hostname + ":" + GWClient.LoyaltyPort + "/" + GWClient.LoyaltyModule + "/" + GWClient.LoyaltyVersion + "/HTTP_Loyalty_Products_Catalogue/",
+		Method:          "GET",
+		Token:           GWClient.S2S_AccessToken,
+		QueryParameters: map[string]string{"Key": MSISDN},
+	}
+	response_generic, err := GWClient.generic_http_call(http_req)
+	if err != nil {
+		log.Println("generic_http_call failed : ", err)
+		return response, err
+	} else {
+		if response_generic.Statuscode == http.StatusOK {
+			err = json.Unmarshal(response_generic.Body, &response)
+			if err != nil {
+				log.Println("generic_http_call boby unmarshal error : ", err)
+				return
+			}
+		}
+		if response_generic.Statuscode == http.StatusUnauthorized {
+			srl, errl := GWClient.AUC_client.Login(GWClient.AUC_client.S2S_Username, GWClient.AUC_client.S2S_Password) // try to get a new token using login if token is unauthenticated
+			if errl != nil {
+				log.Println("AUC init - FAILED :: ", errl)
+				return response, errl
+			}
+			rt, errl := GWClient.AUC_client.RefreshToken(srl.Token)
+			if errl != nil {
+				log.Println("AUC init - FAILED :: ", errl)
+				return response, errl
+			} else {
+				GWClient.AUC_client.S2S_AccessToken = rt.Token // save token global variable to re-use
+				GWClient.S2S_AccessToken = rt.Token            // save token global variable to re-use
+				response_generic, err = GWClient.generic_http_call(http_req)
+				if err != nil {
+					log.Println("generic_http_call error : ", err)
+					return response, err
+				}
+				err = json.Unmarshal(response_generic.Body, &response)
+				if err != nil {
+					log.Println("generic_http_call boby unmarshal error : ", err)
+					return response, err
+				}
+			}
+		}
+	}
+	return response, nil
+}
+
+func (GWClient *Lendme_Client) Loyalty_RedeemRequest(request lendme.Loyalty_Redemption_Request) (response lendme.Loyalty_Redemption_log, err error) {
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	request_byte, err := json.Marshal(request)
+	if err != nil {
+		return response, err
+	}
+	http_req := Generic_http_call_Request{
+		Url:    GWClient.Protocol + "://" + GWClient.Hostname + ":" + GWClient.LoyaltyPort + "/" + GWClient.LoyaltyModule + "/" + GWClient.LoyaltyVersion + "/HTTP_Customer_Loyalty_RedeemRequest/",
+		Method: "PUT",
+		Token:  GWClient.S2S_AccessToken,
+		Load:   request_byte,
+	}
+	response_generic, err := GWClient.generic_http_call(http_req)
+	if err != nil {
+		log.Println("generic_http_call failed : ", err)
+		return response, err
+	} else {
+		if response_generic.Statuscode == http.StatusOK {
+			err = json.Unmarshal(response_generic.Body, &response)
+			if err != nil {
+				log.Println("generic_http_call boby unmarshal error : ", err)
+				return
+			}
+		}
+		if response_generic.Statuscode == http.StatusUnauthorized {
+			srl, errl := GWClient.AUC_client.Login(GWClient.AUC_client.S2S_Username, GWClient.AUC_client.S2S_Password) // try to get a new token using login if token is unauthenticated
+			if errl != nil {
+				log.Println("AUC init - FAILED :: ", errl)
+				return response, errl
+			}
+			rt, errl := GWClient.AUC_client.RefreshToken(srl.Token)
+			if errl != nil {
+				log.Println("AUC init - FAILED :: ", errl)
+				return response, err
+			} else {
+				GWClient.AUC_client.S2S_AccessToken = rt.Token // save token global variable to re-use
+				GWClient.S2S_AccessToken = rt.Token            // save token global variable to re-use
+				response_generic, err = GWClient.generic_http_call(http_req)
+				if err != nil {
+					log.Println("generic_http_call error : ", err)
+					return response, err
+				}
+				err = json.Unmarshal(response_generic.Body, &response)
+				if err != nil {
+					log.Println("generic_http_call boby unmarshal error : ", err)
+					return response, err
+				}
+			}
+		}
+	}
+	return response, nil
 }

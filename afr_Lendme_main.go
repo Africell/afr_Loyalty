@@ -78,7 +78,7 @@ func (p *program) run() {
 		UserControl.InitializeLoyaltyDAO()
 		UserControl.InitializeLoyaltyCache()
 		UserControl.LoyaltyIndexesMaintenanceProcess()
-		//UserControl.InitializeLoyaltyDefaultUAT()
+		UserControl.InitializeLoyaltyDefaultUAT()
 
 		//Loyalty service
 		log.Println("Add Loyalty service routers to the web service")

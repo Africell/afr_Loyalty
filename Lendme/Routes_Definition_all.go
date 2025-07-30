@@ -218,6 +218,187 @@ func (UC *UserControl) Add_LendmeRoutes(R *Routes) {
 	*R = append(*R, r)
 	DisplayOrder = DisplayOrder + 1
 
+	//*****************************
+	// Customer_Exclusion
+	//*****************************
+	Level1 = "Lendme Customer Exclusion"
+	Level1DisplayOrder = Level1DisplayOrder + 1
+	r = Route{
+		"HTTP_Lendme_Customer_Exclusion",
+		"GET",
+		"/" + Configuration.Module + "/" + Configuration.Version + "/HTTP_Lendme_Customer_Exclusion/",
+		UC.HTTP_Lendme_Customer_Exclusion,
+		true,
+		"Customer Exclusion - Read", // DisplayName
+		1,                           // DisplayOrder
+		Module,                      // Module
+		ModuleDisplayOrder,          //ModuleDisplayOrder
+		Level1,                      // Level1
+		Level1DisplayOrder,          // Level1DisplayOrder
+		"",                          // Level2
+		0,                           // Level2DisplayOrder
+		"",                          // Level3
+		0,                           // Level3DisplayOrder
+		true,                        //AllowedFor_OKAPI
+		true,                        //AllowedFor_App
+	}
+	*R = append(*R, r)
+
+	r = Route{
+		"HTTP_Lendme_Customer_Exclusion",
+		"POST",
+		"/" + Configuration.Module + "/" + Configuration.Version + "/HTTP_Lendme_Customer_Exclusion/",
+		UC.HTTP_Lendme_Customer_Exclusion,
+		true,
+		"Customer Exclusion - Add", // DisplayName
+		2,                          // DisplayOrder
+		Module,                     // Module
+		ModuleDisplayOrder,         //ModuleDisplayOrder
+		Level1,                     // Level1
+		Level1DisplayOrder,         // Level1DisplayOrder
+		"",                         // Level2
+		0,                          // Level2DisplayOrder
+		"",                         // Level3
+		0,                          // Level3DisplayOrder
+		true,                       //AllowedFor_OKAPI
+		true,                       //AllowedFor_App
+	}
+	*R = append(*R, r)
+
+	r = Route{
+		"HTTP_Lendme_Customer_Exclusion",
+		"PUT",
+		"/" + Configuration.Module + "/" + Configuration.Version + "/HTTP_Lendme_Customer_Exclusion/",
+		UC.HTTP_Lendme_Customer_Exclusion,
+		true,
+		"Customer Exclusion - Edit", // DisplayName
+		3,                           // DisplayOrder
+		Module,                      // Module
+		ModuleDisplayOrder,          //ModuleDisplayOrder
+		Level1,                      // Level1
+		Level1DisplayOrder,          // Level1DisplayOrder
+		"",                          // Level2
+		0,                           // Level2DisplayOrder
+		"",                          // Level3
+		0,                           // Level3DisplayOrder
+		true,                        //AllowedFor_OKAPI
+		true,                        //AllowedFor_App
+	}
+	*R = append(*R, r)
+
+	r = Route{
+		"HTTP_Lendme_Customer_Exclusion",
+		"DELETE",
+		"/" + Configuration.Module + "/" + Configuration.Version + "/HTTP_Lendme_Customer_Exclusion/{KeyDelete}/",
+		UC.HTTP_Lendme_Customer_Exclusion,
+		true,
+		"Customer Exclusion - Delete", // DisplayName
+		4,                             // DisplayOrder
+		Module,                        // Module
+		ModuleDisplayOrder,            //ModuleDisplayOrder
+		Level1,                        // Level1
+		Level1DisplayOrder,            // Level1DisplayOrder
+		"",                            // Level2
+		0,                             // Level2DisplayOrder
+		"",                            // Level3
+		0,                             // Level3DisplayOrder
+		true,                          //AllowedFor_OKAPI
+		true,                          //AllowedFor_App
+	}
+	*R = append(*R, r)
+
+	//*****************************
+	// Customer_COS_Exclusion
+	//*****************************
+	Level1 = "Lendme Customer COS Exclusion"
+	Level1DisplayOrder = Level1DisplayOrder + 1
+	r = Route{
+		"HTTP_Lendme_Customer_COS_Exclusion",
+		"GET",
+		"/" + Configuration.Module + "/" + Configuration.Version + "/HTTP_Lendme_Customer_COS_Exclusion/",
+		UC.HTTP_Lendme_Customer_COS_Exclusion,
+		true,
+		"Customer COS Exclusion - Read", // DisplayName
+		1,                               // DisplayOrder
+		Module,                          // Module
+		ModuleDisplayOrder,              //ModuleDisplayOrder
+		Level1,                          // Level1
+		Level1DisplayOrder,              // Level1DisplayOrder
+		"",                              // Level2
+		0,                               // Level2DisplayOrder
+		"",                              // Level3
+		0,                               // Level3DisplayOrder
+		true,                            //AllowedFor_OKAPI
+		true,                            //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+	r = Route{
+		"HTTP_Lendme_Customer_COS_Exclusion",
+		"POST",
+		"/" + Configuration.Module + "/" + Configuration.Version + "/HTTP_Lendme_Customer_COS_Exclusion/",
+		UC.HTTP_Lendme_Customer_COS_Exclusion,
+		true,
+		"Customer COS Exclusion - Add", // DisplayName
+		2,                              // DisplayOrder
+		Module,                         // Module
+		ModuleDisplayOrder,             //ModuleDisplayOrder
+		Level1,                         // Level1
+		Level1DisplayOrder,             // Level1DisplayOrder
+		"",                             // Level2
+		0,                              // Level2DisplayOrder
+		"",                             // Level3
+		0,                              // Level3DisplayOrder
+		true,                           //AllowedFor_OKAPI
+		true,                           //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+	r = Route{
+		"HTTP_Lendme_Customer_COS_Exclusion",
+		"PUT",
+		"/" + Configuration.Module + "/" + Configuration.Version + "/HTTP_Lendme_Customer_COS_Exclusion/",
+		UC.HTTP_Lendme_Customer_COS_Exclusion,
+		true,
+		"Customer COS Exclusion - Edit", // DisplayName
+		3,                               // DisplayOrder
+		Module,                          // Module
+		ModuleDisplayOrder,              //ModuleDisplayOrder
+		Level1,                          // Level1
+		Level1DisplayOrder,              // Level1DisplayOrder
+		"",                              // Level2
+		0,                               // Level2DisplayOrder
+		"",                              // Level3
+		0,                               // Level3DisplayOrder
+		true,                            //AllowedFor_OKAPI
+		true,                            //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+	r = Route{
+		"HTTP_Lendme_Customer_COS_Exclusion",
+		"DELETE",
+		"/" + Configuration.Module + "/" + Configuration.Version + "/HTTP_Lendme_Customer_COS_Exclusion/{KeyDelete}/",
+		UC.HTTP_Lendme_Customer_COS_Exclusion,
+		true,
+		"Customer COS Exclusion - Delete", // DisplayName
+		4,                                 // DisplayOrder
+		Module,                            // Module
+		ModuleDisplayOrder,                //ModuleDisplayOrder
+		Level1,                            // Level1
+		Level1DisplayOrder,                // Level1DisplayOrder
+		"",                                // Level2
+		0,                                 // Level2DisplayOrder
+		"",                                // Level3
+		0,                                 // Level3DisplayOrder
+		true,                              //AllowedFor_OKAPI
+		true,                              //AllowedFor_App
+	}
+	*R = append(*R, r)
+
 	//*********************************
 	// Subscribers ARPU Import Launch
 	//*********************************
