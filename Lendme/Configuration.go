@@ -524,6 +524,23 @@ func setDefaultConfiguration_DRC_Loyalty_UAT() (Configuration ConfigType) {
 	Configuration.Propylaea.S2S_Password = "uC@g$W$iRiS6$2@333dd"
 	Configuration.Propylaea.Timeout_After = 5 * time.Second
 
+	Configuration.SpinAndWin_AUC.Description = "SAW AUC"
+	Configuration.SpinAndWin_AUC.Protocol = "http"
+	Configuration.SpinAndWin_AUC.Hostname = "10.95.64.166"
+	Configuration.SpinAndWin_AUC.Port = "9001"
+	Configuration.SpinAndWin_AUC.Module = "AUC"
+	Configuration.SpinAndWin_AUC.Version = "V1"
+	Configuration.SpinAndWin_AUC.S2S_Username = "SAW_Admin"
+	Configuration.SpinAndWin_AUC.S2S_Password = "LQaDUp388UNKhz0Ap"
+	Configuration.SpinAndWin_AUC.Timeout_After = 30 * time.Second
+	Configuration.SpinAndWin.Protocol = "http"
+	Configuration.SpinAndWin.Hostname = "10.95.64.166"
+	Configuration.SpinAndWin.Port = "9111"
+	Configuration.SpinAndWin.Module = "SpinAndWin"
+	Configuration.SpinAndWin.Version = "V1"
+ 	Configuration.SpinAndWin.Timeout = 30 * time.Second
+ 
+
 	return
 }
 
