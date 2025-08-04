@@ -497,7 +497,7 @@ func setDefaultConfiguration_DRC_Loyalty_UAT() (Configuration ConfigType) {
 	Configuration.SMPP.Encoding = 0
 	//CGW
 	Configuration.CGW.Protocol = "http"
-	Configuration.CGW.Hostname = "10.95.72.177"
+	Configuration.CGW.Hostname = "UCGW"
 	Configuration.CGW.Port = "9991"
 	Configuration.CGW.Module = "UCGW"
 	Configuration.CGW.Version = "V1"
@@ -506,8 +506,8 @@ func setDefaultConfiguration_DRC_Loyalty_UAT() (Configuration ConfigType) {
 
 	Configuration.CGW_AUC.Description = "UCGW AUC service"
 	Configuration.CGW_AUC.Protocol = "http"
-	Configuration.CGW_AUC.Hostname = "10.95.72.177"
-	Configuration.CGW_AUC.Port = "9994"
+	Configuration.CGW_AUC.Hostname = "UCGW_AUC"
+	Configuration.CGW_AUC.Port = "9001"
 	Configuration.CGW_AUC.Module = "AUC"
 	Configuration.CGW_AUC.Version = "V1"
 	Configuration.CGW_AUC.S2S_Username = "UCGW_Admin"
