@@ -5911,7 +5911,7 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 	response.Closure_Redeemed_Points = loyalty_Account.Redeemed_Points
 	response.Closure_Available_Points = loyalty_Account.Available_Points
 	//update goveranance
-	Uc.Loyalty_Governance_Redeem_Points_Debit(request.Redemption_Amount)
+	Uc.Loyalty_Governance_Redeem_Points_Debit(request.Debit_Amount)
 	//successful reply
 	response.Status = "successful"
 	response.StatusCode = http.StatusOK

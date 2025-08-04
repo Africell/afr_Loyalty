@@ -5,7 +5,6 @@ import (
 	"context"
 	"daoc"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -76,6 +75,8 @@ func (uc *UserControl) InitializeDAO() {
 	DAO_Subscribers_Chrun.Initialize("Subscriber_Churn", uc.MongoDB.MongoDBClient, reflect.TypeOf(Subscriber{}), Configuration.DB_Name, "Col_Subscriber_Churn", "")
 	DAO_Credit_Limit_Scheme.Initialize("Credit_Limit_Scheme", uc.MongoDB.MongoDBClient, reflect.TypeOf(Credit_Limit_Scheme{}), Configuration.DB_Name, "Col_Credit_Limit_Scheme", "")
 	DAO_Lendme_log.Initialize("Lendme_log", uc.MongoDB.MongoDBClient, reflect.TypeOf(Lendme_log{}), Configuration.DB_Name, "Col_Lendme_log", "")
+	DAO_Lendme_Customer_Exclusion.Initialize("Customer_Exclusion", uc.MongoDB.MongoDBClient, reflect.TypeOf(Customer_Exclusion{}), Configuration.DB_Name, "Col_Customer_Exclusion", "")
+	DAO_Lendme_Customer_COS_Exclusion.Initialize("Customer_COS_Exclusion", uc.MongoDB.MongoDBClient, reflect.TypeOf(Customer_COS_Exclusion{}), Configuration.DB_Name, "Col_Customer_COS_Exclusion", "")
 }
 
 func (uc *UserControl) IndexesMaintenanceProcess() {
@@ -113,6 +114,24 @@ func (uc *UserControl) IndexesMaintenanceProcess() {
 	} else {
 		if !exists {
 			log.Println("Index Idx_Credit_Limit_Scheme_Key created")
+		}
+	}
+
+	exists, err = DAO_Lendme_Customer_Exclusion.CheckAndCreateIndex("Idx_Customer_Exclusion_Key", []string{"Key"}, true)
+	if err != nil {
+		log.Println("Error creating index Idx_Customer_Exclusion_Key: ", err)
+	} else {
+		if !exists {
+			log.Println("Index Idx_Customer_Exclusion_Key created")
+		}
+	}
+
+	exists, err = DAO_Lendme_Customer_COS_Exclusion.CheckAndCreateIndex("Idx_Customer_COS_Exclusion_Key", []string{"Key"}, true)
+	if err != nil {
+		log.Println("Error creating index Idx_Customer_COS_Exclusion_Key: ", err)
+	} else {
+		if !exists {
+			log.Println("Index Idx_Customer_COS_Exclusion_Key created")
 		}
 	}
 
@@ -3221,10 +3240,7 @@ func (Uc *UserControl) Lendme_Customer_COS_Exclusion_Add(Login string, request C
 
 	if len(findResult) > 0 {
 		for _, entry_na := range findResult {
-			subscriber, ok := entry_na.(Subscriber)
-			if !ok {
-				fmt.Println("error in subscriber type assertion")
-			}
+			subscriber := reflect.ValueOf(entry_na).Elem().Interface().(Subscriber)
 			subscriber.IsLendmeEligible = false
 			Map_Subscribers.Put(subscriber.Key, subscriber)
 		}
@@ -3284,10 +3300,7 @@ func (Uc *UserControl) Lendme_Customer_COS_Exclusion_Edit(Login string, request 
 
 	if len(findResult) > 0 {
 		for _, entry_na := range findResult {
-			subscriber, ok := entry_na.(Subscriber)
-			if !ok {
-				fmt.Println("error in subscriber type assertion")
-			}
+			subscriber := reflect.ValueOf(entry_na).Elem().Interface().(Subscriber)
 			subscriber.IsLendmeEligible = false
 			Map_Subscribers.Put(subscriber.Key, subscriber)
 		}
