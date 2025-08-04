@@ -447,7 +447,7 @@ func setDefaultConfiguration_DRC_Loyalty_UAT() (Configuration ConfigType) {
 	// Configuration.MongoDB.HostPort_4 = ""
 	Configuration.MongoDB.UserName = "db_root"
 	Configuration.MongoDB.Password = "P@s54D0Brdara_r@75S"
-	Configuration.MongoDB.HostIP_1 = "mongodb_lendme" //"host.docker.internal"
+	Configuration.MongoDB.HostIP_1 = "mongodb" //"host.docker.internal"
 	Configuration.MongoDB.HostPort_1 = "27017"   //"27017"
 
 	Configuration.DB_Name_Loyalty = "Loyalty_DB"
@@ -1630,7 +1630,7 @@ func setDefaultConfiguration_SL_Loyalty_UAT() (Configuration ConfigType) {
 	//mongoDB
 	Configuration.MongoDB.UserName = "db_root"
 	Configuration.MongoDB.Password = "P@s54D0Brdara_r@75S"
-	Configuration.MongoDB.HostIP_1 = "mongodb_lendme" //"host.docker.internal"
+	Configuration.MongoDB.HostIP_1 = "mongodb" //"host.docker.internal"
 	Configuration.MongoDB.HostPort_1 = "27017"   //"27017"
 	/////////////////////////////////////MONGO DOCKER ///////////////////////////
 
