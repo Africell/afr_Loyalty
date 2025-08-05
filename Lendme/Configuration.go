@@ -1691,7 +1691,7 @@ func setDefaultConfiguration_SL_Loyalty_UAT() (Configuration ConfigType) {
 	Configuration.CGW_AUC.Description = "UCGW AUC service"
 	Configuration.CGW_AUC.Protocol = "http"
 	Configuration.CGW_AUC.Hostname = "UCGW_AUC"
-	Configuration.CGW_AUC.Port = "9994"
+	Configuration.CGW_AUC.Port = "9001"
 	Configuration.CGW_AUC.Module = "AUC"
 	Configuration.CGW_AUC.Version = "V1"
 	Configuration.CGW_AUC.S2S_Username = "UCGW_Admin"
