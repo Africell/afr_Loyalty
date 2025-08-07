@@ -68,7 +68,6 @@ func (Uc *UserControl) AddToAppRouter(router *mux.Router, UC *UserControl) {
 	if err != nil {
 		log.Fatalln("Error Reading Existing Access Entries from AUC !!!")
 	}
-
 	log.Println("Read existing routes: #", len(accessEntries.Data))
 	MapAccessEntry.Clear()
 	for _, acc := range accessEntries.Data {
@@ -121,15 +120,82 @@ func (Uc *UserControl) AddToAppRouter(router *mux.Router, UC *UserControl) {
 						log.Println("Error creating AccessEntry in AUC !!!")
 						json.NewEncoder(os.Stdout).Encode(accessEntry)
 					}
+
 				}
 			}
 		}
 
 	}
+
+	accessEntries_okapi, err := Uc.OKAPIAUC.AUCClient.ReadAccessEntries("")
+	if err != nil {
+		log.Fatalln("Error Reading Existing Access Entries from AUC !!!")
+	}
+
+	log.Println("Read existing routes: #", len(accessEntries.Data))
+	MapAccessEntry.Clear()
+	for _, acc := range accessEntries_okapi.Data {
+		MapAccessEntry.Put(acc.Key, acc)
+	}
+	var existingEntriesokapi = make(map[string]AuthCenter.AccessEntry)
+
+	for _, route := range routes {
+		if route.AllowedFor_App {
+			//var handler http.Handler
+			handler := route.HandlerFunc
+			//handler = Logger(handler, route.Name)
+			router.
+				Methods(route.Method).
+				Path(route.Pattern).
+				Name(route.Name).
+				Handler(handler)
+
+			//add to OKAPI AUC
+			if route.AddToAccessEntry {
+				ok := MapAccessEntry.Check(route.Name + "|" + route.Method)
+				if !ok {
+					var accessEntry AuthCenter.AccessEntry
+					accessEntry.AddUser = "Auto Add"
+					accessEntry.AddDate = time.Now().UTC()
+					accessEntry.LastModifyUser = "Auto Add"
+					accessEntry.LastModifyDate = time.Now().UTC()
+					accessEntry.Key = route.Name + "|" + route.Method
+					accessEntry.AccessKey = route.Name
+					accessEntry.AccessMethod = route.Method
+					accessEntry.DisplayName = route.DisplayName
+					accessEntry.DisplayOrder = route.DisplayOrder
+					accessEntry.Module = route.Module
+					accessEntry.ModuleDisplayOrder = route.ModuleDisplayOrder
+					accessEntry.Level1 = route.Level1
+					accessEntry.Level1DisplayOrder = route.Level1DisplayOrder
+					accessEntry.Level2 = route.Level2
+					accessEntry.Level2DisplayOrder = route.Level2DisplayOrder
+					accessEntry.Level3 = route.Level3
+					accessEntry.Level3DisplayOrder = route.Level3DisplayOrder
+
+					AccessKeyDescription := strings.Replace(route.Name, "HTTP_", "", -1)
+					AccessKeyDescription = strings.Replace(AccessKeyDescription, "_", " ", -1)
+					accessEntry.AccessKeyDescription = AccessKeyDescription
+					//Insert into Cache
+					_, err := Uc.OKAPIAUC.AUCClient.CreateAccessEntries(accessEntry)
+					if err == nil {
+						log.Println("Created Access Entry: ", accessEntry.Key)
+					} else {
+						log.Println("Error creating AccessEntry in AUC !!!")
+						json.NewEncoder(os.Stdout).Encode(accessEntry)
+					}
+
+				}
+			}
+		}
+
+	}
+
 	router.Path("/metrics").Handler(CustomPrometheusHandler())
 	// router.Path("/metrics_latency").Handler(CustomPrometheusLatencyHandler())
 
 	Uc.Add_Lendme_ToAccessEntry(existingEntries)
+	Uc.Add_Lendme_ToAccessEntry(existingEntriesokapi)
 
 	var Lendme_Group = AuthCenter.UserAccessGroup{
 		GroupName:        "VAS - Lendme",
