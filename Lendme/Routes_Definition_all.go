@@ -398,6 +398,31 @@ func (UC *UserControl) Add_LendmeRoutes(R *Routes) {
 		true,                              //AllowedFor_App
 	}
 	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+	//*****************************
+	// Lendme Logs
+	//*****************************
+	r = Route{
+		"HTTP_Lendme_Logs",
+		"GET",
+		"/" + Configuration.Module + "/" + Configuration.Version + "/HTTP_Lendme_Logs/",
+		UC.HTTP_Lendme_Logs,
+		true,
+		"Lendme Logs",      // DisplayName
+		DisplayOrder,       // DisplayOrder
+		Module,             // Module
+		ModuleDisplayOrder, //ModuleDisplayOrder
+		Level1,             // Level1
+		Level1DisplayOrder, // Level1DisplayOrder
+		Level2,             // Level2
+		Level2DisplayOrder, // Level2DisplayOrder
+		"",                 // Level3
+		0,                  // Level3DisplayOrder
+		true,               //AllowedFor_OKAPI
+		true,               //AllowedFor_App
+	}
+	*R = append(*R, r)
 
 	//*********************************
 	// Subscribers ARPU Import Launch
@@ -594,29 +619,6 @@ func (UC *UserControl) Add_LendmeRoutes(R *Routes) {
 	*R = append(*R, r)
 	DisplayOrder = DisplayOrder + 1
 
-	//*****************************
-	// Lendme Logs
-	//*****************************
-	r = Route{
-		"HTTP_Lendme_Logs",
-		"Get",
-		"/" + Configuration.Module + "/" + Configuration.Version + "/HTTP_Lendme_Logs/",
-		UC.HTTP_Lendme_Logs,
-		true,
-		"Lendme Logs",      // DisplayName
-		DisplayOrder,       // DisplayOrder
-		Module,             // Module
-		ModuleDisplayOrder, //ModuleDisplayOrder
-		Level1,             // Level1
-		Level1DisplayOrder, // Level1DisplayOrder
-		Level2,             // Level2
-		Level2DisplayOrder, // Level2DisplayOrder
-		"",                 // Level3
-		0,                  // Level3DisplayOrder
-		true,               //AllowedFor_OKAPI
-		true,               //AllowedFor_App
-	}
-	*R = append(*R, r)
 }
 
 func (UC *UserControl) Add_LoyaltyServiceRoutes(R *Routes) {
