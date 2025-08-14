@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+
 	"net/http"
 	"strconv"
 	"time"
@@ -12,6 +13,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 )
+
+var uploadedFiles = make(map[string]struct{}) // keep track of file names
 
 func (Uc *UserControl) Validate_Headers(r *http.Request) (response Request_Header) {
 	SourceIp, _ := GetRequestIP(r)
@@ -2424,6 +2427,92 @@ func (Uc *UserControl) HTTP_Loyalty_Products_Catalogue(w http.ResponseWriter, r 
 		sr.Data = productCatalogue
 	}
 	//successful response
+	sr.Status = "successful"
+	sr.StatusCode = http.StatusOK
+	sr.StatusDescription = ""
+	sr.ErrorDescription = ""
+	Uc.HTTP_API_Standard_response(w, r, sr, true)
+}
+
+func (Uc *UserControl) HTTP_Bulk_Loyalty_Points_Crediting(w http.ResponseWriter, r *http.Request) {
+	var sr API_Standard_response
+	//**fill response source detail
+	SourceIp, _ := GetRequestIP(r)
+	sr.SourceIP = SourceIp
+	sr.Login = r.Header.Get("Login")
+	sr.SourceApp = r.Header.Get("SourceApp")
+	sr.AccessKey = r.URL.Path
+	sr.AccessMethod = r.Method
+	sr.HostId = Configuration.HostId
+	sr.ReceiveDate = time.Now()
+	sr.TransactionType = "Bulk Loyalty Points Crediting"
+
+	method := r.Method
+	switch method {
+	case "POST":
+		sr.TransactionType = sr.TransactionType + ""
+		var transaction Loyalty_Redemption_log
+		transaction.ReceiveDate = time.Now()
+		validated_Headers := Uc.Validate_Headers(r)
+		transaction.SourceIP = validated_Headers.SourceIP
+		transaction.SourceApp = validated_Headers.SourceApp
+		transaction.AppLogin = validated_Headers.AppLogin
+		transaction.AppVersion = validated_Headers.AppVersion
+		transaction.GPSLocation = validated_Headers.GPSLocation
+		transaction.GSMLocation = validated_Headers.GSMLocation
+		if !validated_Headers.IsValid {
+			transaction.Status = "failed"
+			transaction.StatusDescription = validated_Headers.ValidationDescription
+			Uc.HTTP_Customer_Loyalty_RedeemRequest_Response(w, r, &transaction, true)
+			return
+		}
+		err := r.ParseMultipartForm(10 << 20)
+		if err != nil {
+			http.Error(w, "Unable to parse form", http.StatusBadRequest)
+			return
+		}
+
+		file, fileHeader, err := r.FormFile("fileUpload")
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		defer file.Close()
+
+		fileName := fileHeader.Filename
+		if _, exists := uploadedFiles[fileName]; exists {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = "Duplicate file upload"
+			sr.ErrorDescription = "File " + fileName + " has already been uploaded"
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		if uploadedFiles == nil {
+			uploadedFiles = make(map[string]struct{})
+		}
+		uploadedFiles[fileName] = struct{}{} // mark as uploaded
+
+		err = Uc.LoyaltyBulkPointsCrediting(&validated_Headers, file)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+	}
+	//successful response
+	sr.Data = map[string]interface{}{
+		"result": mapErrorByName,
+	}
+	mapErrorByName = nil
+	processed = nil
 	sr.Status = "successful"
 	sr.StatusCode = http.StatusOK
 	sr.StatusDescription = ""

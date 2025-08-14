@@ -1009,6 +1009,14 @@ type Loyalty_Subs_Summary struct {
 	Total_Redeemed_Points  float64 `bson:"Total_Redeemed_Points"`
 	Total_Available_Points float64 `bson:"Total_Available_Points"`
 }
+type CustomersUploadList struct {
+	MSISDN string  `csv:"MSISDN"`
+	Points float64 `csv:"POINTS"`
+}
+type CSVMSISDN struct {
+	MSISDN string
+	Exists bool
+}
 
 // type Loyalty_Point_Redemption_Rules struct {
 // 	Key                               string  `bson:"Key" json:"Key"`

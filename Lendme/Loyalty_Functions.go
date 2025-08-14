@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"mime/multipart"
 	"net/http"
 	"reflect"
 	"sort"
@@ -20,6 +21,7 @@ import (
 
 	MM "afr_sb_mm"
 
+	"github.com/gocarina/gocsv"
 	"github.com/jinzhu/copier"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.mongodb.org/mongo-driver/bson"
@@ -93,6 +95,9 @@ var chan_LoyaltyGovernance_Controler = make(chan int, 1)
 var chan_PointsExpiry_Controler = make(chan int, 50)
 
 var LOYALTY_GOVERNANCE_KEY string = "Loyalty_Governance"
+
+var mapErrorByName = make(map[string][]string)
+var processed = make(map[string]struct{})
 
 func (uc *UserControl) InitializeLoyaltyCache() {
 	var AutoIncr daoc.AutoIncrement
@@ -7071,6 +7076,71 @@ func (Uc *UserControl) EvaluateAndUpdate_CustomerLoyaltyLevel(Login string, Acco
 		})
 	}
 	return New_Loyalty_Level_Key, nil
+}
+
+func (Uc *UserControl) LoyaltyBulkPointsCrediting(request *Request_Header, file multipart.File) (err error) {
+	entries := []*CustomersUploadList{}
+	if err = gocsv.UnmarshalMultipartFile(&file, &entries); err != nil {
+		return errors.New("error: parsing CSV file " + err.Error())
+	}
+	for i := range entries {
+		msisdn := entries[i].MSISDN
+		if _, exists := processed[msisdn]; exists {
+			if mapErrorByName == nil {
+				mapErrorByName = make(map[string][]string)
+			}
+			mapErrorByName["Failed"] = append(
+				mapErrorByName["Failed"],
+				msisdn+" already credited",
+			)
+			continue
+		}
+
+		var loyalty_AccountCreditPoints_log Loyalty_AccountCreditPoints_log
+		var credit_Request Loyalty_AccountCreditPoints_Request
+		credit_Request.MSISDN = entries[i].MSISDN
+		credit_Request.EventAmount = 0
+		credit_Request.EventDescription = "Bulk Points Crediting"
+		credit_Request.PointsToCredit = entries[i].Points
+		credit_Request.EventSource = "Bulk Points Crediting"
+		Uc.Loyalty_AccountCreditPoints(request, credit_Request, &loyalty_AccountCreditPoints_log)
+		if mapErrorByName == nil {
+			mapErrorByName = make(map[string][]string)
+		}
+		if loyalty_AccountCreditPoints_log.Status == "failed" {
+			mapErrorByName["Failed"] = append(mapErrorByName["Failed"], loyalty_AccountCreditPoints_log.MSISDN+" "+loyalty_AccountCreditPoints_log.StatusDescription)
+			continue
+		} else {
+			if processed == nil {
+				processed = make(map[string]struct{})
+			}
+			processed[msisdn] = struct{}{}
+			mapErrorByName["Successful"] = append(mapErrorByName["Successful"], loyalty_AccountCreditPoints_log.MSISDN+" "+loyalty_AccountCreditPoints_log.StatusDescription)
+			var successfulVal float64
+
+			if slice, ok := mapErrorByName["Points Credited"]; ok && len(slice) > 0 && slice[0] != "" {
+				successfulVal, _ = strconv.ParseFloat(slice[0], 64)
+			} else {
+				successfulVal = 0
+			}
+
+			pointsCredited := successfulVal + loyalty_AccountCreditPoints_log.AwardedPoints
+			mapErrorByName["Points Credited"] = []string{fmt.Sprintf("%.2f", pointsCredited)}
+
+			continue
+		}
+	}
+
+	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
+		Event_User:         request.AppLogin,
+		Event_Time:         time.Now(),
+		Event_AffectedType: "Bulk Points Crediting",
+		Event_ActionType:   "Add",
+		Event_Description:  "",
+		Event_Entry_Before: nil,
+		Event_Entry_After:  mapErrorByName,
+	})
+	return
 }
 
 func (Uc *UserControl) PointsExpiry_Process() {
