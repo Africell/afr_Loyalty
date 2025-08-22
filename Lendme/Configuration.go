@@ -1764,7 +1764,7 @@ func setDefaultConfiguration_AO_Loyalty() (Configuration ConfigType) {
 
 	Configuration.OKAPI_AUC.Description = "OKAPI AUC service"
 	Configuration.OKAPI_AUC.Protocol = "http"
-	Configuration.OKAPI_AUC.Hostname = "10.250.3.149"
+	Configuration.OKAPI_AUC.Hostname = "10.250.3.148"
 	Configuration.OKAPI_AUC.Port = "9001"
 	Configuration.OKAPI_AUC.Module = "AUC"
 	Configuration.OKAPI_AUC.Version = "V1"
