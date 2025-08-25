@@ -2493,7 +2493,7 @@ func (Uc *UserControl) LendmeAO_exec_Request(Source, MSISDN string, Amount float
 
 	//credit the amount
 	DBT_Response, credit_err := CS_DealerBalanceTransfer("customer", Configuration.Lendme_EVC_Dealer_MSISDN, Configuration.Lendme_EVC_Dealer_PIN, MSISDN, strconv.Itoa(int(Amount)))
-	if err != nil {
+	if credit_err != nil {
 		lendLog.Status = "failed"
 		lendLog.StatusDescription = credit_err.Error()
 		go Uc.Write_Lendme_log(lendLog)
