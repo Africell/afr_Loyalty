@@ -16,8 +16,13 @@ replace afr_propylaea => ../afr_propylaea/
 
 replace afr_sb_mm => ../afr_sb_mm/
 
+replace afr_ao_apgw_v2 => ../afr_ao_apgw_v2/
+
+replace afr_sb_mm_jigsaw => ../afr_sb_mm_jigsaw/
+
 require (
 	afr_SpinAndWin_be v0.0.0-00010101000000-000000000000
+	afr_ao_apgw_v2 v0.0.0-00010101000000-000000000000
 	afr_auth_center v0.0.0-00010101000000-000000000000
 	afr_propylaea v0.0.0-00010101000000-000000000000
 	afr_sb_in v0.0.0-00010101000000-000000000000
@@ -35,6 +40,7 @@ require (
 )
 
 require (
+	afr_sb_mm_jigsaw v0.0.0-00010101000000-000000000000 // indirect
 	github.com/360EntSecGroup-Skylar/excelize v1.4.1 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.16.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.8.0 // indirect
@@ -87,7 +93,9 @@ require (
 	golang.org/x/sys v0.25.0 // indirect
 	golang.org/x/text v0.18.0 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
+	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/ezzarghili/recaptcha-go.v4 v4.3.0 // indirect
+	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df // indirect
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
