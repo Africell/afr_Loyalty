@@ -131,6 +131,14 @@ func Init_DestinationHosts() {
 		}
 		destinationHots = append(destinationHots, host)
 	}
+	if Configuration.APGW.Hostname != "" {
+		host := destinationHost{
+			HostName: Configuration.APGW.Description,
+			HostIP:   Configuration.APGW.Hostname,
+			HostPort: Configuration.APGW.Port,
+		}
+		destinationHots = append(destinationHots, host)
+	}
 
 }
 

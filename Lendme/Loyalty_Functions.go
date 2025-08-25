@@ -906,33 +906,33 @@ func (Uc *UserControl) Loyalty_Governance_DailyLog_Process() {
 	}
 }
 
-func (Uc *UserControl) Loyalty_Customer_Account_Daily_Snapshot() {
-	exec := 0
-	LOG_ID := "<<Loyalty Customer Account Daily Snapshot>>"
-	for range time.Tick(time.Second * 1) {
-		_CurrentDateTime := time.Now()
-		_hr, _mi, _se := _CurrentDateTime.Clock()
-		if _hr == 00 {
-			if _mi == 00 {
-				if _se < 60 {
-					if exec == 0 {
-						exec = 1
-						log.Println(LOG_ID + " triggered")
-						err := DAO_Customer_Loyalty_Account.CollectionSnapshot("Customer_Loyalty_Account" + time.Now().Format("_02_01_2006"))
-						if err != nil {
-							log.Println("error while taking a snapshot from customer account collection", err)
-						}
-						log.Println(LOG_ID + " finished")
-					}
-				}
-			} else {
-				if exec == 1 {
-					exec = 0
-				}
-			}
-		}
-	}
-}
+// func (Uc *UserControl) Loyalty_Customer_Account_Daily_Snapshot() {
+// 	exec := 0
+// 	LOG_ID := "<<Loyalty Customer Account Daily Snapshot>>"
+// 	for range time.Tick(time.Second * 1) {
+// 		_CurrentDateTime := time.Now()
+// 		_hr, _mi, _se := _CurrentDateTime.Clock()
+// 		if _hr == 00 {
+// 			if _mi == 00 {
+// 				if _se < 60 {
+// 					if exec == 0 {
+// 						exec = 1
+// 						log.Println(LOG_ID + " triggered")
+// 						err := DAO_Customer_Loyalty_Account.CollectionSnapshot("Customer_Loyalty_Account" + time.Now().Format("_02_01_2006"))
+// 						if err != nil {
+// 							log.Println("error while taking a snapshot from customer account collection", err)
+// 						}
+// 						log.Println(LOG_ID + " finished")
+// 					}
+// 				}
+// 			} else {
+// 				if exec == 1 {
+// 					exec = 0
+// 				}
+// 			}
+// 		}
+// 	}
+// }
 
 // ***********************************************************************
 // Loyalty Level functions

@@ -340,6 +340,39 @@ type Loyalty_Point_Earning_Rules_EditRequest struct {
 	MM_Bundle_Points     float64 `bson:"MM_Bundle_Points" json:"MM_Bundle_Points"`
 }
 
+type Loyalty_Point_Earning_Rules_Overwrite struct {
+	Key                        string  `bson:"Key" json:"Key"` //MSISDN + "|" + MM_Transaction_Type
+	Earning_Rules_Overwrite_Id int64   `bson:"Earning_Rules_Overwrite_Id" json:"Earning_Rules_Overwrite_Id"`
+	MSISDN                     string  `bson:"MSISDN" json:"MSISDN"`
+	MM_Transaction_Type        string  `bson:"MM_Transaction_Type" json:"MM_Transaction_Type"`
+	Description                string  `bson:"Description" json:"Description"`
+	Award_Type                 string  `bson:"Award_Type" json:"Award_Type"` //"Transaction" or "Amount"
+	Amount                     float64 `bson:"Amount" json:"Amount"`
+	Points                     float64 `bson:"Points" json:"Points"`
+}
+
+type Loyalty_Point_Earning_Rules_Overwrite_AddRequest struct {
+	Key                        string  `bson:"Key" json:"Key"` //MSISDN + "|" + MM_Transaction_Type
+	Earning_Rules_Overwrite_Id int64   `bson:"Earning_Rules_Overwrite_Id" json:"Earning_Rules_Overwrite_Id"`
+	MSISDN                     string  `bson:"MSISDN" json:"MSISDN"`
+	MM_Transaction_Type        string  `bson:"MM_Transaction_Type" json:"MM_Transaction_Type"`
+	Description                string  `bson:"Description" json:"Description"`
+	Award_Type                 string  `bson:"Award_Type" json:"Award_Type"` //"Transaction" or "Amount"
+	Amount                     float64 `bson:"Amount" json:"Amount"`
+	Points                     float64 `bson:"Points" json:"Points"`
+}
+
+type Loyalty_Point_Earning_Rules_Overwrite_EditRequest struct {
+	Key                        string  `bson:"Key" json:"Key"` //MSISDN + "|" + MM_Transaction_Type
+	Earning_Rules_Overwrite_Id int64   `bson:"Earning_Rules_Overwrite_Id" json:"Earning_Rules_Overwrite_Id"`
+	MSISDN                     string  `bson:"MSISDN" json:"MSISDN"`
+	MM_Transaction_Type        string  `bson:"MM_Transaction_Type" json:"MM_Transaction_Type"`
+	Description                string  `bson:"Description" json:"Description"`
+	Award_Type                 string  `bson:"Award_Type" json:"Award_Type"` //"Transaction" or "Amount"
+	Amount                     float64 `bson:"Amount" json:"Amount"`
+	Points                     float64 `bson:"Points" json:"Points"`
+}
+
 type Loyalty_Point_Expiry_Rules struct {
 	Key                     string    `bson:"Key" json:"Key"`
 	Expiry_Rules_Id         int64     `bson:"Expiry_Rules_Id" json:"Expiry_Rules_Id"`

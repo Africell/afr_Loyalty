@@ -2,12 +2,14 @@ package Lendme
 
 import (
 	SpinAndWin_client "afr_SpinAndWin_be/SpinAndWinClient"
+	APGW "afr_ao_apgw_v2/APGWClientV2"
 	AuthCenterClient "afr_auth_center/AuthCenterClient"
 	Prop "afr_propylaea/PropylaeaClient"
 	INClient "afr_sb_in"
 	UCGW_client "afr_unified_charging_gateway/Unified_charging_gateway_Client"
 	"daoc"
 	"log"
+	"time"
 )
 
 var CGWHostConfig UCGW_client.UC_GW_Client
@@ -23,6 +25,7 @@ type UserControl struct {
 	CGW            *UCGW_client.UC_GW
 	Propylaea      *Prop.Propylaea
 	SpinAndWin     *SpinAndWin_client.SpinAndWin
+	APGW           *APGW.APGW
 }
 
 func NewUserControl() *UserControl {
@@ -51,7 +54,7 @@ func NewUserControl() *UserControl {
 		Configuration.LoyaltyMongoDB.HostIP_4,
 		Configuration.LoyaltyMongoDB.HostPort_4,
 	)
-		log.Println(LoyaltyMongoHostConfig)
+	log.Println(LoyaltyMongoHostConfig)
 	App_AUCHostConfig := AuthCenterClient.InitHostConfig(Configuration.App_AUC.Protocol,
 		Configuration.App_AUC.Hostname,
 		Configuration.App_AUC.Port,
@@ -61,7 +64,7 @@ func NewUserControl() *UserControl {
 		Configuration.App_AUC.S2S_Username,
 		Configuration.App_AUC.S2S_Password,
 		Configuration.App_AUC.Timeout_After)
-			log.Println(App_AUCHostConfig)
+	log.Println(App_AUCHostConfig)
 	OKAPI_AUCHostConfig := AuthCenterClient.InitHostConfig(Configuration.OKAPI_AUC.Protocol,
 		Configuration.OKAPI_AUC.Hostname,
 		Configuration.OKAPI_AUC.Port,
@@ -71,7 +74,7 @@ func NewUserControl() *UserControl {
 		Configuration.OKAPI_AUC.S2S_Username,
 		Configuration.OKAPI_AUC.S2S_Password,
 		Configuration.OKAPI_AUC.Timeout_After)
-		log.Println(OKAPI_AUCHostConfig)
+	log.Println(OKAPI_AUCHostConfig)
 	INHostConfig := INClient.InitHostConfig(Configuration.IN.IP,
 		Configuration.IN.Port,
 		Configuration.IN.WS_SOAP_Endpoint,
@@ -97,7 +100,7 @@ func NewUserControl() *UserControl {
 		Configuration.CGW_AUC.S2S_Username,
 		Configuration.CGW_AUC.S2S_Password,
 		Configuration.CGW_AUC.Timeout_After)
-log.Println(CGWAUC)
+	log.Println(CGWAUC)
 	CGWHostConfig = UCGW_client.UC_GW_Client{
 		Protocol:   Configuration.CGW.Protocol,
 		Hostname:   Configuration.CGW.Hostname,
@@ -107,7 +110,7 @@ log.Println(CGWAUC)
 		Timeout:    10 * Configuration.CGW.Timeout,
 		AUC_client: AuthCenterClient.NewAUCClient(CGWAUC).AUCClient,
 	}
-log.Println(CGWHostConfig)
+	log.Println(CGWHostConfig)
 	propylaea_config := Prop.Propylaea_Client{
 		Protocol:        Configuration.Propylaea.Protocol, // or https
 		Hostname:        Configuration.Propylaea.Hostname,
@@ -118,7 +121,7 @@ log.Println(CGWHostConfig)
 		Timeout:         10 * Configuration.Propylaea.Timeout_After, //timeout if no reply after X seconds
 		AUC_client:      AuthCenterClient.NewAUCClient(OKAPI_AUCHostConfig).AUCClient,
 	}
-log.Println(propylaea_config)
+	log.Println(propylaea_config)
 	SpinAndWinAUC := AuthCenterClient.InitHostConfig(Configuration.SpinAndWin_AUC.Protocol,
 		Configuration.SpinAndWin_AUC.Hostname,
 		Configuration.SpinAndWin_AUC.Port,
@@ -128,7 +131,7 @@ log.Println(propylaea_config)
 		Configuration.SpinAndWin_AUC.S2S_Username,
 		Configuration.SpinAndWin_AUC.S2S_Password,
 		Configuration.SpinAndWin_AUC.Timeout_After)
-log.Println(SpinAndWinAUC)
+	log.Println(SpinAndWinAUC)
 	SpinAndWinHostConfig = SpinAndWin_client.SpinAndWin_Client{
 		Protocol:   Configuration.SpinAndWin.Protocol,
 		Hostname:   Configuration.SpinAndWin.Hostname,
@@ -138,7 +141,17 @@ log.Println(SpinAndWinAUC)
 		Timeout:    10 * Configuration.SpinAndWin.Timeout,
 		AUC_client: AuthCenterClient.NewAUCClient(SpinAndWinAUC).AUCClient,
 	}
-log.Println(SpinAndWinHostConfig)
+	log.Println(SpinAndWinHostConfig)
+	APGW_config := APGW.APGW_Client{
+		Protocol:        Configuration.APGW.Protocol, // or https
+		Hostname:        Configuration.APGW.Hostname,
+		Port:            Configuration.APGW.Port,
+		S2S_Username:    Configuration.APGW.S2S_Username,
+		S2S_Password:    Configuration.APGW.S2S_Password,
+		S2S_AccessToken: "",
+		Timeout:         10 * time.Second, //timeout if no reply after X seconds
+	}
+	log.Println(APGW_config)
 	UC := &UserControl{
 		MongoDB:        daoc.NewMongoDBClient(MongoHostConfig),
 		LoyaltyMongoDB: daoc.NewMongoDBClient(LoyaltyMongoHostConfig),
@@ -149,6 +162,7 @@ log.Println(SpinAndWinHostConfig)
 		CGW:            UCGW_client.NewUC_GWClient(CGWHostConfig),
 		Propylaea:      Prop.NewPropylaeaClient(propylaea_config),
 		SpinAndWin:     SpinAndWin_client.NewSpinAndWinClient(SpinAndWinHostConfig),
+		APGW:           APGW.NewAPGWClient(APGW_config),
 	}
 	return UC
 }
