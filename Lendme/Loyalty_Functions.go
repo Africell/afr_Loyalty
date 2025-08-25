@@ -5070,6 +5070,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			ReceiverMSISDN: request.MSISDN,
 			Amount:         fmt.Sprintf("%f", response.Redemption_Amount),
 			Remark:         "Loyalty Redemption",
+			// Currency:       "102",
 		})
 		response.MobileMoney_PurchaseResult = mm_CashIn_Reply
 		if err != nil {
@@ -7142,6 +7143,69 @@ func (Uc *UserControl) LoyaltyBulkPointsCrediting(request *Request_Header, file 
 	})
 	return
 }
+
+// func (Uc *UserControl) LoyaltyBulkPointsDeduction(request *Request_Header, file multipart.File) (err error) {
+// 	entries := []*CustomersUploadList{}
+// 	if err = gocsv.UnmarshalMultipartFile(&file, &entries); err != nil {
+// 		return errors.New("error: parsing CSV file " + err.Error())
+// 	}
+// 	for i := range entries {
+// 		msisdn := entries[i].MSISDN
+// 		if _, exists := processed[msisdn]; exists {
+// 			if mapErrorByName == nil {
+// 				mapErrorByName = make(map[string][]string)
+// 			}
+// 			mapErrorByName["Failed"] = append(
+// 				mapErrorByName["Failed"],
+// 				msisdn+" already credited",
+// 			)
+// 			continue
+// 		}
+
+// 		var loyalty_AccountDebitPoints_log Loyalty_AccountDebitPoints_log
+// 		var debit_Request Loyalty_AccountDebitPoints_Request
+// 		debit_Request.MSISDN = entries[i].MSISDN
+// 		debit_Request.Debit_Amount = entries[i].Points
+// 		debit_Request.Debit_Reason = "Bulk Points Deduction"
+// 		Uc.Loyalty_AccountDebitPoints(request, debit_Request, &loyalty_AccountDebitPoints_log)
+// 		if mapErrorByName == nil {
+// 			mapErrorByName = make(map[string][]string)
+// 		}
+// 		if loyalty_AccountDebitPoints_log.Status == "failed" {
+// 			mapErrorByName["Failed"] = append(mapErrorByName["Failed"], loyalty_AccountDebitPoints_log.MSISDN+" "+loyalty_AccountDebitPoints_log.StatusDescription)
+// 			continue
+// 		} else {
+// 			if processed == nil {
+// 				processed = make(map[string]struct{})
+// 			}
+// 			processed[msisdn] = struct{}{}
+// 			mapErrorByName["Successful"] = append(mapErrorByName["Successful"], loyalty_AccountDebitPoints_log.MSISDN+" "+loyalty_AccountDebitPoints_log.StatusDescription)
+// 			var successfulVal float64
+
+// 			if slice, ok := mapErrorByName["Points Credited"]; ok && len(slice) > 0 && slice[0] != "" {
+// 				successfulVal, _ = strconv.ParseFloat(slice[0], 64)
+// 			} else {
+// 				successfulVal = 0
+// 			}
+
+// 			pointsCredited := successfulVal + loyalty_AccountDebitPoints_log.AwardedPoints
+// 			mapErrorByName["Points Credited"] = []string{fmt.Sprintf("%.2f", pointsCredited)}
+
+// 			continue
+// 		}
+// 	}
+
+// 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
+// 		Event_User:         request.AppLogin,
+// 		Event_Time:         time.Now(),
+// 		Event_AffectedType: "Bulk Points Deduction",
+// 		Event_ActionType:   "Add",
+// 		Event_Description:  "",
+// 		Event_Entry_Before: nil,
+// 		Event_Entry_After:  mapErrorByName,
+// 	})
+// 	return
+// }
 
 func (Uc *UserControl) PointsExpiry_Process() {
 	exec := 0
