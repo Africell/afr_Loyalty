@@ -1747,6 +1747,9 @@ func setDefaultConfiguration_AO_Loyalty() (Configuration ConfigType) {
 	Configuration.MSISDN_Short_len = 8
 	Configuration.CountryCode = "244"
 
+	Configuration.Lendme_EVC_Dealer_MSISDN = "244950400353"
+	Configuration.Lendme_EVC_Dealer_PIN = "2402"
+
 	Configuration.IsProduction = false
 	Configuration.IsLoyaltyProduction = false
 	Configuration.Min_Allowed_Amnt = 50
@@ -1905,6 +1908,9 @@ func setDefaultConfiguration_AO_Loyalty_UAT() (Configuration ConfigType) {
 	Configuration.MSISDN_Prefix = ""
 	Configuration.MSISDN_Short_len = 8
 	Configuration.CountryCode = "244"
+	
+	Configuration.Lendme_EVC_Dealer_MSISDN = "244950400353"
+	Configuration.Lendme_EVC_Dealer_PIN = "2402"
 
 	Configuration.IsProduction = false
 	Configuration.IsLoyaltyProduction = false
