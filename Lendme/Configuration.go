@@ -195,6 +195,15 @@ type ConfigType struct {
 		S2S_AccessToken string        //system to system access token
 		Timeout         time.Duration //timeout if no reply after X seconds
 	}
+	APGW struct {
+		Description   string
+		Protocol      string
+		Hostname      string
+		Port          string
+		S2S_Username  string
+		S2S_Password  string
+		Timeout_After time.Duration
+	}
 }
 
 func GetDefaultConfiguration() (err error) {
@@ -205,7 +214,7 @@ func GetDefaultConfiguration() (err error) {
 	// Configuration = setDefaultConfiguration_SL_Live()
 	//Configuration = setDefaultConfiguration_SL_Loyalty()
 	// Configuration = setDefaultConfiguration_SL_Loyalty_UAT()
-	
+
 	// Configuration = setDefaultConfiguration_AO_Loyalty()
 	//Configuration = setDefaultConfiguration_AO_Loyalty_UAT()
 
@@ -371,7 +380,6 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 	return
 }
 
-
 func setDefaultConfiguration_DRC_Loyalty_UAT() (Configuration ConfigType) {
 	//Configuration.HttpOKAPIServicePort = "9291"
 	Configuration.HttpAppServicePort = "9290"           //lendme services
@@ -448,7 +456,7 @@ func setDefaultConfiguration_DRC_Loyalty_UAT() (Configuration ConfigType) {
 	Configuration.MongoDB.UserName = "db_root"
 	Configuration.MongoDB.Password = "P@s54D0Brdara_r@75S"
 	Configuration.MongoDB.HostIP_1 = "mongodb" //"host.docker.internal"
-	Configuration.MongoDB.HostPort_1 = "27017"   //"27017"
+	Configuration.MongoDB.HostPort_1 = "27017" //"27017"
 
 	Configuration.DB_Name_Loyalty = "Loyalty_DB"
 	Configuration.LoyaltyMongoDB.ReplicaSet = Configuration.MongoDB.ReplicaSet
@@ -538,8 +546,7 @@ func setDefaultConfiguration_DRC_Loyalty_UAT() (Configuration ConfigType) {
 	Configuration.SpinAndWin.Port = "9111"
 	Configuration.SpinAndWin.Module = "SpinAndWin"
 	Configuration.SpinAndWin.Version = "V1"
- 	Configuration.SpinAndWin.Timeout = 30 * time.Second
- 
+	Configuration.SpinAndWin.Timeout = 30 * time.Second
 
 	return
 }
@@ -1631,7 +1638,7 @@ func setDefaultConfiguration_SL_Loyalty_UAT() (Configuration ConfigType) {
 	Configuration.MongoDB.UserName = "db_root"
 	Configuration.MongoDB.Password = "P@s54D0Brdara_r@75S"
 	Configuration.MongoDB.HostIP_1 = "mongodb" //"host.docker.internal"
-	Configuration.MongoDB.HostPort_1 = "27017"   //"27017"
+	Configuration.MongoDB.HostPort_1 = "27017" //"27017"
 	/////////////////////////////////////MONGO DOCKER ///////////////////////////
 
 	Configuration.DB_Name_Loyalty = "Loyalty_DB"
@@ -1860,6 +1867,13 @@ func setDefaultConfiguration_AO_Loyalty() (Configuration ConfigType) {
 	Configuration.Propylaea.S2S_Password = "uC@g$W$iRiS6$2@333dd"
 	Configuration.Propylaea.Timeout_After = 5 * time.Second
 
+	Configuration.APGW.Description = "APGW service"
+	Configuration.APGW.Protocol = "http"
+	Configuration.APGW.Hostname = "10.250.1.228"
+	Configuration.APGW.Port = "9904"
+	Configuration.APGW.S2S_Username = "MyAfricellClient"
+	Configuration.APGW.S2S_Password = "20#25(My!friC0ll)sdfj&^M@y"
+	Configuration.APGW.Timeout_After = 5 * time.Second
 	return
 }
 
@@ -2012,6 +2026,13 @@ func setDefaultConfiguration_AO_Loyalty_UAT() (Configuration ConfigType) {
 	Configuration.Propylaea.S2S_Password = "uC@g$W$iRiS6$2@333dd"
 	Configuration.Propylaea.Timeout_After = 5 * time.Second
 
+	Configuration.APGW.Description = "APGW service"
+	Configuration.APGW.Protocol = "http"
+	Configuration.APGW.Hostname = "10.250.1.228"
+	Configuration.APGW.Port = "9904"
+	Configuration.APGW.S2S_Username = "MyAfricellClient"
+	Configuration.APGW.S2S_Password = "20#25(My!friC0ll)sdfj&^M@y"
+	Configuration.APGW.Timeout_After = 5 * time.Second
 	return
 }
 
