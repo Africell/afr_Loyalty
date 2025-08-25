@@ -1870,9 +1870,9 @@ func setDefaultConfiguration_AO_Loyalty() (Configuration ConfigType) {
 	Configuration.APGW.Description = "APGW service"
 	Configuration.APGW.Protocol = "http"
 	Configuration.APGW.Hostname = "10.250.1.228"
-	Configuration.APGW.Port = "9904"
-	Configuration.APGW.S2S_Username = "MyAfricellClient"
-	Configuration.APGW.S2S_Password = "20#25(My!friC0ll)sdfj&^M@y"
+	Configuration.APGW.Port = "9903"
+	Configuration.APGW.S2S_Username = "LendmeClient"
+	Configuration.APGW.S2S_Password = "L3ndM320#25)sdfj&^M@y"
 	Configuration.APGW.Timeout_After = 5 * time.Second
 	return
 }
@@ -2030,8 +2030,8 @@ func setDefaultConfiguration_AO_Loyalty_UAT() (Configuration ConfigType) {
 	Configuration.APGW.Protocol = "http"
 	Configuration.APGW.Hostname = "10.250.1.228"
 	Configuration.APGW.Port = "9904"
-	Configuration.APGW.S2S_Username = "MyAfricellClient"
-	Configuration.APGW.S2S_Password = "20#25(My!friC0ll)sdfj&^M@y"
+	Configuration.APGW.S2S_Username = "LendmeClient"
+	Configuration.APGW.S2S_Password = "L3ndM320#25)sdfj&^M@y"
 	Configuration.APGW.Timeout_After = 5 * time.Second
 	return
 }

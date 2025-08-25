@@ -16,6 +16,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+
+	apgw "afr_ao_apgw_v2/afr_apgw"
 )
 
 const (
@@ -2821,7 +2823,6 @@ func (Uc *UserControl) LendmeAO_PayBack(Source, MSISDN string, RechargeAmount fl
 		return nil
 	}
 	//check if exists on IN and get details
-
 	OpeningBalance_RBB, OpeningBalance_EVC, balOpenErr := Uc.GetCustomerMainBalance(MSISDN)
 	if balOpenErr != nil {
 		lendLog.Status = "failed"
@@ -2863,28 +2864,22 @@ func (Uc *UserControl) LendmeAO_PayBack(Source, MSISDN string, RechargeAmount fl
 	lendLog.Lendme_PayBack_Fee = DebitfeeAmount
 	//debit the fee amount
 	if DebitfeeAmount > 0 {
-		IN_MSISDN := MSISDN
-		if Configuration.Operation == "Gambia" {
-			if len(MSISDN) > 7 {
-				IN_MSISDN = IN_MSISDN[len(MSISDN)-7 : len(MSISDN)]
-			}
-		} else if Configuration.Operation == "SierraLeone" { //077928014
-			if len(MSISDN) > 8 {
-				IN_MSISDN = "0" + IN_MSISDN[len(MSISDN)-8:len(MSISDN)]
-			}
-		}
-		credit_response, credit_err := Uc.IN.INClient.SetAccountBalances("", "", IN_MSISDN, -1*DebitfeeAmount, "N", 0, 0, 0, 0, "LendmeFee")
-		if credit_err != nil {
-			error_msg := credit_err.Error()
+		var debitfee_request apgw.DebitSubscriber_V3_request
+		debitfee_request.Program_Name = "LendmeFee"
+		debitfee_request.MSISDN = MSISDN
+		debitfee_request.Amount = DebitfeeAmount
+		debitfee_response, err := Uc.APGW.APGWClient.DebitSubscriber(debitfee_request)
+		if err != nil {
+			error_msg := err.Error()
 			lendLog.Status = "failed"
 			lendLog.StatusDescription = error_msg
 			go Uc.Write_Lendme_log(lendLog)
 			LendMePayBackCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Description": "LendmeFee"}).Inc()
 			LendMePayBackAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Description": "LendmeFee"}).Add(DebitfeeAmount)
-			return credit_err
+			return err
 		}
-		if credit_response.ResultCode != "0" {
-			error_msg := "result code is not 0"
+		if debitfee_response.StatusCode != http.StatusOK {
+			error_msg := debitfee_response.ErrorDescription
 			err = errors.New(error_msg)
 			lendLog.Status = "failed"
 			lendLog.StatusDescription = error_msg
@@ -2901,30 +2896,24 @@ func (Uc *UserControl) LendmeAO_PayBack(Source, MSISDN string, RechargeAmount fl
 		LendMePayBackCount.With(prometheus.Labels{"Status": "successful", "Reason": "", "Description": "LendmeFee"}).Inc()
 		LendMePayBackAmount.With(prometheus.Labels{"Status": "successful", "Reason": "", "Description": "LendmeFee"}).Add(DebitfeeAmount)
 	}
-	//debit the fee amount
+	//debit the amount
 	if DebitAmount > 0 {
-		IN_MSISDN := MSISDN
-		if Configuration.Operation == "Gambia" {
-			if len(MSISDN) > 7 {
-				IN_MSISDN = IN_MSISDN[len(MSISDN)-7 : len(MSISDN)]
-			}
-		} else if Configuration.Operation == "SierraLeone" { //077928014
-			if len(MSISDN) > 8 {
-				IN_MSISDN = "0" + IN_MSISDN[len(MSISDN)-8:len(MSISDN)]
-			}
-		}
-		credit_response, credit_err := Uc.IN.INClient.SetAccountBalances("", "", IN_MSISDN, -1*DebitAmount, "N", 0, 0, 0, 0, "LendmePayBack")
-		if credit_err != nil {
-			error_msg := credit_err.Error()
+		var debitAmount_request apgw.DebitSubscriber_V3_request
+		debitAmount_request.Program_Name = "LendmePayBack"
+		debitAmount_request.MSISDN = MSISDN
+		debitAmount_request.Amount = DebitAmount
+		debitAmount_response, err := Uc.APGW.APGWClient.DebitSubscriber(debitAmount_request)
+		if err != nil {
+			error_msg := err.Error()
 			lendLog.Status = "failed"
 			lendLog.StatusDescription = error_msg
 			go Uc.Write_Lendme_log(lendLog)
 			LendMePayBackCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Description": "LendmePayBack"}).Inc()
 			LendMePayBackAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Description": "LendmePayBack"}).Add(DebitAmount)
-			return credit_err
+			return err
 		}
-		if credit_response.ResultCode != "0" {
-			error_msg := "result code is not 0"
+		if debitAmount_response.StatusCode != http.StatusOK {
+			error_msg := debitAmount_response.ErrorDescription
 			err = errors.New(error_msg)
 			lendLog.Status = "failed"
 			lendLog.StatusDescription = error_msg
@@ -2944,7 +2933,7 @@ func (Uc *UserControl) LendmeAO_PayBack(Source, MSISDN string, RechargeAmount fl
 	PaidAmount_round := Round((DebitAmount + DebitfeeAmount), 1, 2)
 	PaidAmount_str := strconv.FormatFloat(PaidAmount_round, 'f', -1, 64)
 
-	SMSText := "Dear subscriber, thank you for paying outstanding Lebal Ma amount " + PaidAmount_str + " Kz"
+	SMSText := "Dear subscriber, thank you for paying outstanding SERVICE_NAME amount " + PaidAmount_str + " Kz"
 	go SendSMS("Africell", subscriber.Key, SMSText)
 
 	//save log into DB
