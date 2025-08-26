@@ -1892,8 +1892,8 @@ func setDefaultConfiguration_AO_Loyalty_UAT() (Configuration ConfigType) {
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:5173")
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:4173")
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:4414")
-	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "https://okpaihruat.africell.ao")
-	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "https://okpaihruat.africell.ao")
+	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "https://okapihruat.africell.ao")
+	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "https://okapihruat.africell.ao")
 
 	Configuration.Operation = "Angola"
 	Configuration.HostId = "Lendme-01"
