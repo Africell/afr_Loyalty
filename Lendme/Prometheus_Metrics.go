@@ -84,6 +84,14 @@ var (
 		},
 		[]string{"Field"},
 	)
+
+	HTTPPostToKafka = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "HTTPPostToKafka",
+			Help: "HTTPPostToKafka",
+		},
+		[]string{"Description", "Status", "Error"},
+	)
 	// TransactionsTotalAmount = prometheus.NewGaugeVec(
 	// 	prometheus.GaugeOpts{
 	// 		Name: "TransactionsTotalAmount",
@@ -228,6 +236,7 @@ func Init_Prometheus_Metrics() {
 	PrometheusRegistry.Register(SubsDumpFile)
 	PrometheusRegistry.Register(SubsDumpFileImportTime)
 	PrometheusRegistry.Register(LendMeOutstandingSummary)
+	PrometheusRegistry.Register(HTTPPostToKafka)
 	//*************************
 	//Loaylty Metrics
 	//*************************
@@ -268,6 +277,7 @@ func Reset_Prometheus_Metrics() {
 						LendMeRequestsAmount.Reset()
 						LendMePayBackCount.Reset()
 						LendMePayBackAmount.Reset()
+						HTTPPostToKafka.Reset()
 						//LendMeOutstandingSummary.Reset()
 						//SubsDumpFile.Reset()
 						//TransactionsTotalAmount.Reset()

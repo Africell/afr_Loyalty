@@ -677,6 +677,9 @@ func (Uc *UserControl) HTTP_AO_Lendme_PayBack(w http.ResponseWriter, r *http.Req
 			Uc.HTTP_API_Standard_response(w, r, sr, false)
 			return
 		}
+		if request.MSISDN == "244959560801" {
+			fmt.Println("Payback Received ", request.Source, request.MSISDN, request.RechargeAmount, request.Opid)
+		}
 		err = Uc.LendmeAO_PayBack(request.Source, request.MSISDN, request.RechargeAmount, request.Opid)
 		if err != nil {
 			sr.Status = "failed"

@@ -5,11 +5,13 @@ import (
 	"context"
 	"daoc"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -2499,6 +2501,19 @@ func (Uc *UserControl) LendmeAO_exec_Request(Source, MSISDN string, Amount float
 		go Uc.Write_Lendme_log(lendLog)
 		LendMeRequestsCount.With(prometheus.Labels{"Status": "failed", "Reason": credit_err.Error(), "Scheme": ""}).Inc()
 		LendMeRequestsAmount.With(prometheus.Labels{"Status": "failed", "Reason": credit_err.Error(), "Scheme": ""}).Add(Amount)
+
+		// Post to Kafka
+		var evc_Recharge_request EVC_Recharge_request
+		evc_Recharge_request.TransID = ""
+		evc_Recharge_request.TransStatus = "failed"
+		evc_Recharge_request.TransStatusDescription = err.Error()
+		evc_Recharge_request.DealerMSISDN = Configuration.Lendme_EVC_Dealer_MSISDN
+		evc_Recharge_request.DealerName = "Lendme"
+		evc_Recharge_request.TargetMSISDN = MSISDN
+		evc_Recharge_request.Amount = Amount
+		evc_Recharge_request.GSMLocation = ""
+		go Post_EVC_Recharge_ToKafka(evc_Recharge_request)
+
 		return credit_err
 	} else if DBT_Response.Response.Success != "true" {
 		err_ret := errors.New("CS success flag is not true")
@@ -2507,6 +2522,18 @@ func (Uc *UserControl) LendmeAO_exec_Request(Source, MSISDN string, Amount float
 		go Uc.Write_Lendme_log(lendLog)
 		LendMeRequestsCount.With(prometheus.Labels{"Status": "failed", "Reason": "CS success flag is not true", "Scheme": ""}).Inc()
 		LendMeRequestsAmount.With(prometheus.Labels{"Status": "failed", "Reason": "CS success flag is not true", "Scheme": ""}).Add(Amount)
+
+		var evc_Recharge_request EVC_Recharge_request
+		evc_Recharge_request.TransID = ""
+		evc_Recharge_request.TransStatus = "failed"
+		evc_Recharge_request.TransStatusDescription = "CDS response Success flag is not true"
+		evc_Recharge_request.DealerMSISDN = Configuration.Lendme_EVC_Dealer_MSISDN
+		evc_Recharge_request.DealerName = "Lendme"
+		evc_Recharge_request.TargetMSISDN = MSISDN
+		evc_Recharge_request.Amount = Amount
+		evc_Recharge_request.GSMLocation = ""
+		go Post_EVC_Recharge_ToKafka(evc_Recharge_request)
+		
 		return err_ret
 	}
 	// update subscription
@@ -2523,6 +2550,33 @@ func (Uc *UserControl) LendmeAO_exec_Request(Source, MSISDN string, Amount float
 	go Uc.Write_Lendme_log(lendLog)
 	LendMeRequestsCount.With(prometheus.Labels{"Status": "successful", "Reason": "", "Scheme": subscriber.Credit_Limit_Scheme}).Inc()
 	LendMeRequestsAmount.With(prometheus.Labels{"Status": "successful", "Reason": "", "Scheme": subscriber.Credit_Limit_Scheme}).Add(Amount)
+
+	var evc_Recharge_request EVC_Recharge_request
+	evc_Recharge_request.TransID = DBT_Response.Response.Result.Arguments.TransID
+	evc_Recharge_request.TransStatus = "success"
+	evc_Recharge_request.TransStatusDescription = ""
+	evc_Recharge_request.DealerMSISDN = Configuration.Lendme_EVC_Dealer_MSISDN
+	evc_Recharge_request.DealerName = "Lendme"
+	evc_Recharge_request.TargetMSISDN = MSISDN
+	evc_Recharge_request.Amount = Amount
+	evc_Recharge_request.GSMLocation = ""
+	if len(DBT_Response.Response.Result.Arguments.AfricellFldSourceAccount.BalanceGroups) > 0 {
+		if len(DBT_Response.Response.Result.Arguments.AfricellFldSourceAccount.BalanceGroups[0].Balances) > 0 {
+			for _, value := range DBT_Response.Response.Result.Arguments.AfricellFldSourceAccount.BalanceGroups[0].Balances {
+				if value.Elem == "6010000" {
+					bal_float, err := strconv.ParseFloat(strings.TrimSpace(value.CurrentBal), 64)
+					if err != nil {
+						fmt.Println("Failed to parse dealer endbal on recharge ", err.Error())
+						break
+					}
+					evc_Recharge_request.DealerClosingBalance = bal_float * -1
+				}
+			}
+		}
+	}
+
+	go Post_EVC_Recharge_ToKafka(evc_Recharge_request)
+
 	return nil
 }
 
