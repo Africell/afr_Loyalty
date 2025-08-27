@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -678,7 +679,8 @@ func (Uc *UserControl) HTTP_AO_Lendme_PayBack(w http.ResponseWriter, r *http.Req
 			return
 		}
 		if request.MSISDN == "244959560801" {
-			fmt.Println("Payback Received ", request.Source, request.MSISDN, request.RechargeAmount, request.Opid)
+			log.Println("Payback Received BODY ", string(body))
+			log.Println("Payback Received ", request.Source, request.MSISDN, request.RechargeAmount, request.Opid)
 		}
 		err = Uc.LendmeAO_PayBack(request.Source, request.MSISDN, request.RechargeAmount, request.Opid)
 		if err != nil {

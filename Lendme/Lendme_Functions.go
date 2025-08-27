@@ -2506,7 +2506,7 @@ func (Uc *UserControl) LendmeAO_exec_Request(Source, MSISDN string, Amount float
 		var evc_Recharge_request EVC_Recharge_request
 		evc_Recharge_request.TransID = ""
 		evc_Recharge_request.TransStatus = "failed"
-		evc_Recharge_request.TransStatusDescription = err.Error()
+		evc_Recharge_request.TransStatusDescription = credit_err.Error()
 		evc_Recharge_request.DealerMSISDN = Configuration.Lendme_EVC_Dealer_MSISDN
 		evc_Recharge_request.DealerName = "Lendme"
 		evc_Recharge_request.TargetMSISDN = MSISDN
@@ -2533,7 +2533,7 @@ func (Uc *UserControl) LendmeAO_exec_Request(Source, MSISDN string, Amount float
 		evc_Recharge_request.Amount = Amount
 		evc_Recharge_request.GSMLocation = ""
 		go Post_EVC_Recharge_ToKafka(evc_Recharge_request)
-		
+
 		return err_ret
 	}
 	// update subscription
