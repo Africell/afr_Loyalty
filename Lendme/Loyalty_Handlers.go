@@ -5,16 +5,22 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime/multipart"
+	"regexp"
+	"sync"
 
 	"net/http"
 	"strconv"
 	"time"
 
+	"github.com/gocarina/gocsv"
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
 var uploadedFiles = make(map[string]struct{}) // keep track of file names
+var uploadedFilesMu sync.Mutex
 
 func (Uc *UserControl) Validate_Headers(r *http.Request) (response Request_Header) {
 	SourceIp, _ := GetRequestIP(r)
@@ -2433,7 +2439,6 @@ func (Uc *UserControl) HTTP_Loyalty_Products_Catalogue(w http.ResponseWriter, r 
 	sr.ErrorDescription = ""
 	Uc.HTTP_API_Standard_response(w, r, sr, true)
 }
-
 func (Uc *UserControl) HTTP_Bulk_Loyalty_Points_Crediting(w http.ResponseWriter, r *http.Request) {
 	var sr API_Standard_response
 	//**fill response source detail
@@ -2445,7 +2450,7 @@ func (Uc *UserControl) HTTP_Bulk_Loyalty_Points_Crediting(w http.ResponseWriter,
 	sr.AccessMethod = r.Method
 	sr.HostId = Configuration.HostId
 	sr.ReceiveDate = time.Now()
-	sr.TransactionType = "Bulk Loyalty Points Crediting"
+	sr.TransactionType = "Bulk Loyalty Points Deduction"
 
 	method := r.Method
 	switch method {
@@ -2481,8 +2486,214 @@ func (Uc *UserControl) HTTP_Bulk_Loyalty_Points_Crediting(w http.ResponseWriter,
 			Uc.HTTP_API_Standard_response(w, r, sr, false)
 			return
 		}
-		defer file.Close()
 
+		uploadedFilesMu.Lock()
+		if uploadedFiles == nil {
+			uploadedFiles = make(map[string]struct{})
+		}
+		fileName := fileHeader.Filename
+		if _, exists := uploadedFiles[fileName]; exists {
+			uploadedFilesMu.Unlock()
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = "Duplicate file upload"
+			sr.ErrorDescription = "File " + fileName + " has already been uploaded"
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		uploadedFiles[fileName] = struct{}{} // mark as uploaded
+		uploadedFilesMu.Unlock()
+
+		jobID := uuid.New().String()
+
+		// Save job status
+		jobsMu.Lock()
+		jobs[jobID] = &JobStatus{Status: "running", Result: make(map[string][]string)}
+		jobsMu.Unlock()
+		// Run in background
+		go func(jobID string, file multipart.File) {
+			defer file.Close()
+
+			var entries []*CustomersUploadList
+			if err := gocsv.UnmarshalMultipartFile(&file, &entries); err != nil {
+				jobsMu.Lock()
+				jobs[jobID].Status = "failed"
+				jobs[jobID].Errors = append(jobs[jobID].Errors, err.Error())
+				jobsMu.Unlock()
+				return
+			}
+
+			jobsMu.Lock()
+			jobs[jobID].TotalRows = len(entries)
+			jobsMu.Unlock()
+
+			for i := range entries {
+				msisdn := entries[i].MSISDN
+
+				if entries[i].Points <= 0 {
+					jobsMu.Lock()
+					jobs[jobID].Result["Failed"] = append(jobs[jobID].Result["Failed"], msisdn+" points can not be negative or zero")
+					jobsMu.Unlock()
+					continue
+				}
+
+				processedMu.Lock()
+				if processed == nil {
+					processed = make(map[string]struct{})
+				}
+				if _, exists := processed[msisdn]; exists {
+					processedMu.Unlock()
+					jobsMu.Lock()
+					jobs[jobID].Result["Failed"] = append(
+						jobs[jobID].Result["Failed"],
+						msisdn+" already debited",
+					)
+					jobsMu.Unlock()
+					continue
+				}
+				processedMu.Unlock()
+				var loyalty_AccountCreditPoints_log Loyalty_AccountCreditPoints_log
+				var credit_Request Loyalty_AccountCreditPoints_Request
+				credit_Request.MSISDN = entries[i].MSISDN
+				credit_Request.EventAmount = 0
+				credit_Request.EventDescription = "Bulk Points Crediting"
+				credit_Request.PointsToCredit = entries[i].Points
+				credit_Request.EventSource = "Bulk Points Crediting"
+				Uc.Loyalty_AccountCreditPoints(&validated_Headers, credit_Request, &loyalty_AccountCreditPoints_log)
+				if loyalty_AccountCreditPoints_log.Status == "failed" {
+					jobsMu.Lock()
+					jobs[jobID].Result["Failed"] = append(jobs[jobID].Result["Failed"], loyalty_AccountCreditPoints_log.MSISDN+" "+loyalty_AccountCreditPoints_log.StatusDescription)
+					jobsMu.Unlock()
+				} else {
+					processedMu.Lock()
+					processed[msisdn] = struct{}{}
+					processedMu.Unlock()
+					jobsMu.Lock()
+					jobs[jobID].Result["Successful"] = append(jobs[jobID].Result["Successful"], loyalty_AccountCreditPoints_log.MSISDN+" "+loyalty_AccountCreditPoints_log.StatusDescription)
+					slice := jobs[jobID].Result["Points Credited"]
+					jobsMu.Unlock()
+					var successfulVal float64
+					if len(slice) > 0 && slice[0] != "" {
+						successfulVal, _ = strconv.ParseFloat(slice[0], 64)
+					}
+					pointsCredited := successfulVal + loyalty_AccountCreditPoints_log.AwardedPoints
+					jobsMu.Lock()
+					jobs[jobID].Result["Points Credited"] = []string{fmt.Sprintf("%.2f", pointsCredited)}
+					jobsMu.Unlock()
+				}
+				jobsMu.Lock()
+				jobs[jobID].ProcessedRows = i + 1
+				jobsMu.Unlock()
+			}
+			Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
+				Event_User:         validated_Headers.AppLogin,
+				Event_Time:         time.Now(),
+				Event_AffectedType: "Bulk Points Crediting",
+				Event_ActionType:   "Add",
+				Event_Description:  "",
+				Event_Entry_Before: nil,
+				Event_Entry_After:  jobs[jobID].Result,
+			})
+			jobsMu.Lock()
+			jobs[jobID].Status = "completed"
+			jobsMu.Unlock()
+		}(jobID, file)
+
+		sr.Data = map[string]interface{}{
+			"jobID": jobID,
+		}
+	}
+	//successful response
+	processedMu.Lock()
+	processed = nil
+	processedMu.Unlock()
+	sr.Status = "successful"
+	sr.StatusCode = http.StatusOK
+	sr.StatusDescription = ""
+	sr.ErrorDescription = ""
+	Uc.HTTP_API_Standard_response(w, r, sr, true)
+}
+func (Uc *UserControl) HTTP_Bulk_Loyalty_Points_Crediting_Progress(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	jobID := vars["jobID"]
+	if jobID == "" {
+		http.Error(w, "missing jobID", http.StatusBadRequest)
+		return
+	}
+	jobsMu.Lock()
+	job, ok := jobs[jobID]
+	jobsMu.Unlock()
+
+	if !ok {
+		http.Error(w, "job not found", http.StatusNotFound)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(job)
+}
+
+func (Uc *UserControl) HTTP_Bulk_Loyalty_Points_Deduction(w http.ResponseWriter, r *http.Request) {
+	var sr API_Standard_response
+	//**fill response source detail
+	SourceIp, _ := GetRequestIP(r)
+	sr.SourceIP = SourceIp
+	sr.Login = r.Header.Get("Login")
+	sr.SourceApp = r.Header.Get("SourceApp")
+	sr.AccessKey = r.URL.Path
+	sr.AccessMethod = r.Method
+	sr.HostId = Configuration.HostId
+	sr.ReceiveDate = time.Now()
+	sr.TransactionType = "Bulk Loyalty Points Deduction"
+
+	method := r.Method
+	switch method {
+	case "POST":
+		sr.TransactionType = sr.TransactionType + ""
+		var transaction Loyalty_Redemption_log
+		transaction.ReceiveDate = time.Now()
+		validated_Headers := Uc.Validate_Headers(r)
+		transaction.SourceIP = validated_Headers.SourceIP
+		transaction.SourceApp = validated_Headers.SourceApp
+		transaction.AppLogin = validated_Headers.AppLogin
+		transaction.AppVersion = validated_Headers.AppVersion
+		transaction.GPSLocation = validated_Headers.GPSLocation
+		transaction.GSMLocation = validated_Headers.GSMLocation
+		if !validated_Headers.IsValid {
+			transaction.Status = "failed"
+			transaction.StatusDescription = validated_Headers.ValidationDescription
+			Uc.HTTP_Customer_Loyalty_RedeemRequest_Response(w, r, &transaction, true)
+			return
+		}
+		err := r.ParseMultipartForm(10 << 20)
+		if err != nil {
+			http.Error(w, "Unable to parse form", http.StatusBadRequest)
+			return
+		}
+
+		file, fileHeader, err := r.FormFile("fileUpload")
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		re := regexp.MustCompile(`^loyalty_deduction_\d{6}_\d{2}\.csv$`)
+		if !re.MatchString(fileHeader.Filename) {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = "Wrong File name format"
+			sr.ErrorDescription = "File " + fileHeader.Filename + " does not match the desired format"
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+
+		uploadedFilesMu.Lock()
+		defer uploadedFilesMu.Unlock()
+		if uploadedFiles == nil {
+			uploadedFiles = make(map[string]struct{})
+		}
 		fileName := fileHeader.Filename
 		if _, exists := uploadedFiles[fileName]; exists {
 			sr.Status = "failed"
@@ -2492,32 +2703,193 @@ func (Uc *UserControl) HTTP_Bulk_Loyalty_Points_Crediting(w http.ResponseWriter,
 			Uc.HTTP_API_Standard_response(w, r, sr, false)
 			return
 		}
-		if uploadedFiles == nil {
-			uploadedFiles = make(map[string]struct{})
-		}
 		uploadedFiles[fileName] = struct{}{} // mark as uploaded
 
-		err = Uc.LoyaltyBulkPointsCrediting(&validated_Headers, file)
-		if err != nil {
-			sr.Status = "failed"
-			sr.StatusCode = http.StatusBadRequest
-			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
-			sr.ErrorDescription = err.Error()
-			Uc.HTTP_API_Standard_response(w, r, sr, false)
-			return
+		jobID := uuid.New().String()
+
+		// Save job status
+		jobsMu.Lock()
+		jobs[jobID] = &JobStatus{Status: "running", Result: make(map[string][]string)}
+		jobsMu.Unlock()
+		// Run in background
+		go func(jobID string, file multipart.File) {
+			defer file.Close()
+
+			var entries []*CustomersUploadList
+			if err := gocsv.UnmarshalMultipartFile(&file, &entries); err != nil {
+				jobsMu.Lock()
+				jobs[jobID].Status = "failed"
+				jobs[jobID].Errors = append(jobs[jobID].Errors, err.Error())
+				jobsMu.Unlock()
+				return
+			}
+
+			jobsMu.Lock()
+			jobs[jobID].TotalRows = len(entries)
+			jobsMu.Unlock()
+
+			for i, _ := range entries {
+				// process each row
+				msisdn := entries[i].MSISDN
+
+				if entries[i].Points <= 0 {
+					jobsMu.Lock()
+					jobs[jobID].Result["Failed"] = append(jobs[jobID].Result["Failed"], msisdn+" points can not be negative or zero")
+					jobsMu.Unlock()
+					continue
+				}
+				processedMu.Lock()
+				if processed == nil {
+					processed = make(map[string]struct{})
+				}
+				if _, exists := processed[msisdn]; exists {
+					processedMu.Unlock()
+					jobsMu.Lock()
+					jobs[jobID].Result["Failed"] = append(
+						jobs[jobID].Result["Failed"],
+						msisdn+" already debited",
+					)
+					jobsMu.Unlock()
+					continue
+				}
+				processedMu.Unlock()
+
+				var loyalty_AccountDebitPoints_log Loyalty_AccountDebitPoints_log
+				var debit_Request Loyalty_AccountDebitPoints_Request
+				debit_Request.MSISDN = entries[i].MSISDN
+				debit_Request.Debit_Amount = entries[i].Points
+				debit_Request.Debit_Reason = "Bulk Points Deduction"
+				Uc.Loyalty_AccountDebitPoints(&validated_Headers, debit_Request, &loyalty_AccountDebitPoints_log, true)
+
+				if loyalty_AccountDebitPoints_log.Status == "failed" {
+					if loyalty_AccountDebitPoints_log.StatusDescription == "no enough points" {
+						entry_na, exits := Map_Customer_Loyalty_Account.CheckThenGet(loyalty_AccountDebitPoints_log.MSISDN)
+						if !exits {
+							jobsMu.Lock()
+							jobs[jobID].Result["Failed"] = append(jobs[jobID].Result["Failed"], loyalty_AccountDebitPoints_log.MSISDN+" key does not exist")
+							jobsMu.Unlock()
+							continue
+						}
+						entry, ok := entry_na.(Customer_Loyalty_Account)
+						if !ok {
+							jobsMu.Lock()
+							jobs[jobID].Result["Failed"] = append(jobs[jobID].Result["Failed"], loyalty_AccountDebitPoints_log.MSISDN+" error in type assertion")
+							jobsMu.Unlock()
+							continue
+						}
+						if entry.Available_Points > 0 {
+							debit_Request.Debit_Amount = entry.Available_Points
+							Uc.Loyalty_AccountDebitPoints(&validated_Headers, debit_Request, &loyalty_AccountDebitPoints_log, true)
+							if loyalty_AccountDebitPoints_log.Status == "failed" {
+								jobsMu.Lock()
+								jobs[jobID].Result["Failed"] = append(jobs[jobID].Result["Failed"], loyalty_AccountDebitPoints_log.MSISDN+" "+loyalty_AccountDebitPoints_log.StatusDescription)
+								jobsMu.Unlock()
+							} else {
+								processedMu.Lock()
+								if processed == nil {
+									processed = make(map[string]struct{})
+								}
+								processed[msisdn] = struct{}{}
+								processedMu.Unlock()
+								jobsMu.Lock()
+								jobs[jobID].Result["Partially Successful"] = append(
+									jobs[jobID].Result["Partially Successful"],
+									loyalty_AccountDebitPoints_log.MSISDN+
+										" had insufficient points. Deducted "+strconv.FormatFloat(debit_Request.Debit_Amount, 'f', -1, 64)+
+										" and balance is now 0 (requested "+strconv.FormatFloat(entries[i].Points, 'f', -1, 64)+").",
+								)
+								slice := jobs[jobID].Result["Points Deducted"]
+								jobsMu.Unlock()
+
+								var successfulVal float64
+								if len(slice) > 0 && slice[0] != "" {
+									successfulVal, _ = strconv.ParseFloat(slice[0], 64)
+								}
+								pointsDeducted := successfulVal + loyalty_AccountDebitPoints_log.Debit_Amount
+
+								jobsMu.Lock()
+								jobs[jobID].Result["Points Deducted"] = []string{fmt.Sprintf("%.2f", pointsDeducted)}
+								jobsMu.Unlock()
+							}
+							jobsMu.Lock()
+							jobs[jobID].ProcessedRows = i + 1
+							jobsMu.Unlock()
+							continue
+						}
+					}
+					jobsMu.Lock()
+					jobs[jobID].Result["Failed"] = append(jobs[jobID].Result["Failed"], loyalty_AccountDebitPoints_log.MSISDN+" "+loyalty_AccountDebitPoints_log.StatusDescription)
+					jobsMu.Unlock()
+
+				} else {
+					processedMu.Lock()
+					processed[msisdn] = struct{}{}
+					processedMu.Unlock()
+					jobsMu.Lock()
+					jobs[jobID].Result["Successful"] = append(jobs[jobID].Result["Successful"], loyalty_AccountDebitPoints_log.MSISDN+" "+loyalty_AccountDebitPoints_log.StatusDescription)
+					slice := jobs[jobID].Result["Points Deducted"]
+					jobsMu.Unlock()
+
+					var successfulVal float64
+					if len(slice) > 0 && slice[0] != "" {
+						successfulVal, _ = strconv.ParseFloat(slice[0], 64)
+					}
+					pointsDeducted := successfulVal + loyalty_AccountDebitPoints_log.Debit_Amount
+					jobsMu.Lock()
+					jobs[jobID].Result["Points Deducted"] = []string{fmt.Sprintf("%.2f", pointsDeducted)}
+					jobsMu.Unlock()
+				}
+
+				jobsMu.Lock()
+				jobs[jobID].ProcessedRows = i + 1
+				jobsMu.Unlock()
+			}
+
+			Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
+				Event_User:         validated_Headers.AppLogin,
+				Event_Time:         time.Now(),
+				Event_AffectedType: "Bulk Points Deduction",
+				Event_ActionType:   "Add",
+				Event_Description:  "",
+				Event_Entry_Before: nil,
+				Event_Entry_After:  jobs[jobID].Result,
+			})
+			jobsMu.Lock()
+			jobs[jobID].Status = "completed"
+			jobsMu.Unlock()
+		}(jobID, file)
+
+		sr.Data = map[string]interface{}{
+			"jobID": jobID,
 		}
 	}
 	//successful response
-	sr.Data = map[string]interface{}{
-		"result": mapErrorByName,
-	}
-	mapErrorByName = nil
+	processedMu.Lock()
 	processed = nil
+	processedMu.Unlock()
 	sr.Status = "successful"
 	sr.StatusCode = http.StatusOK
 	sr.StatusDescription = ""
 	sr.ErrorDescription = ""
 	Uc.HTTP_API_Standard_response(w, r, sr, true)
+}
+func (Uc *UserControl) HTTP_Bulk_Loyalty_Points_Deduction_Progress(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	jobID := vars["jobID"]
+	if jobID == "" {
+		http.Error(w, "missing jobID", http.StatusBadRequest)
+		return
+	}
+	jobsMu.Lock()
+	job, ok := jobs[jobID]
+	jobsMu.Unlock()
+
+	if !ok {
+		http.Error(w, "job not found", http.StatusNotFound)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(job)
 }
 
 // func (Uc *UserControl) HTTP_Loyalty_Redemption_log(w http.ResponseWriter, r *http.Request) {

@@ -1346,3 +1346,10 @@ type NotificationLog struct {
 	AddUser       string      `bson:"AddUser" json:"AddUser"`
 	AddDate       time.Time   `bson:"AddDate" json:"AddDate"`
 }
+type JobStatus struct {
+	TotalRows     int
+	ProcessedRows int
+	Status        string // "running", "completed", "failed"
+	Errors        []string
+	Result        map[string][]string
+}
