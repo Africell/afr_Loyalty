@@ -1908,19 +1908,19 @@ func setDefaultConfiguration_AO_Loyalty_UAT() (Configuration ConfigType) {
 	Configuration.MSISDN_Prefix = ""
 	Configuration.MSISDN_Short_len = 8
 	Configuration.CountryCode = "244"
-	
+
 	Configuration.Lendme_EVC_Dealer_MSISDN = "244950400353"
 	Configuration.Lendme_EVC_Dealer_PIN = "2402"
 
 	Configuration.IsProduction = false
 	Configuration.IsLoyaltyProduction = false
 	Configuration.Min_Allowed_Amnt = 50
-	Configuration.Service_FeePerc = 0.15
+	Configuration.Service_FeePerc = 0.12
 	Configuration.Min_Allowed_AON = 3
 	Configuration.Min_Avg3MRecharge = 200
 	Configuration.Min_LastRechargePeriod = 60
 	Configuration.Min_Allowed_Balance = 0
-	Configuration.Max_Allowed_Balance = 100
+	Configuration.Max_Allowed_Balance = 50
 	Configuration.ARPU_File_Path = "/home/Subs_ARPU/"
 	Configuration.ARPU_File_Prefix = "lendme_"
 	Configuration.ARPU_File_Column_Separator = ";"
