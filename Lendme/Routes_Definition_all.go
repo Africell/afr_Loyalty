@@ -2169,6 +2169,72 @@ func (UC *UserControl) Add_LoyaltyManagementRoutes(R *Routes) {
 		true,                           //AllowedFor_App
 	}
 	*R = append(*R, r)
+	Level1DisplayOrder = Level1DisplayOrder + 1
+	r = Route{
+		"HTTP_Bulk_Loyalty_Points_Crediting_Progress",
+		"GET",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Bulk_Loyalty_Points_Crediting_Progress/{jobID}",
+		Use(UC.HTTP_Bulk_Loyalty_Points_Crediting_Progress, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
+		true,
+		"Bulk Points Crediting - Post", // DisplayName
+		DisplayOrder,                   // DisplayOrder
+		Module,                         // Module
+		ModuleDisplayOrder,             //ModuleDisplayOrder
+		Level1,                         // Level1
+		Level1DisplayOrder,             // Level1DisplayOrder
+		"",                             // Level2
+		0,                              // Level2DisplayOrder
+		"",                             // Level3
+		0,                              // Level3DisplayOrder
+		true,                           //AllowedFor_OKAPI
+		true,                           //AllowedFor_App
+	}
+	*R = append(*R, r)
+
+	Level1 = "Bulk Points Deduction"
+	Level1DisplayOrder = Level1DisplayOrder + 1
+	r = Route{
+		"HTTP_Bulk_Loyalty_Points_Deduction",
+		"POST",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Bulk_Loyalty_Points_Deduction/",
+		Use(UC.HTTP_Bulk_Loyalty_Points_Deduction, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
+		true,
+		"Bulk Points Deduction - Post", // DisplayName
+		DisplayOrder,                   // DisplayOrder
+		Module,                         // Module
+		ModuleDisplayOrder,             //ModuleDisplayOrder
+		Level1,                         // Level1
+		Level1DisplayOrder,             // Level1DisplayOrder
+		"",                             // Level2
+		0,                              // Level2DisplayOrder
+		"",                             // Level3
+		0,                              // Level3DisplayOrder
+		true,                           //AllowedFor_OKAPI
+		true,                           //AllowedFor_App
+	}
+	*R = append(*R, r)
+
+	Level1DisplayOrder = Level1DisplayOrder + 1
+	r = Route{
+		"HTTP_Bulk_Loyalty_Points_Deduction_Progress",
+		"GET",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Bulk_Loyalty_Points_Deduction_Progress/{jobID}",
+		Use(UC.HTTP_Bulk_Loyalty_Points_Deduction_Progress, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
+		true,
+		"Bulk Points Deduction - Post", // DisplayName
+		DisplayOrder,                   // DisplayOrder
+		Module,                         // Module
+		ModuleDisplayOrder,             //ModuleDisplayOrder
+		Level1,                         // Level1
+		Level1DisplayOrder,             // Level1DisplayOrder
+		"",                             // Level2
+		0,                              // Level2DisplayOrder
+		"",                             // Level3
+		0,                              // Level3DisplayOrder
+		true,                           //AllowedFor_OKAPI
+		true,                           //AllowedFor_App
+	}
+	*R = append(*R, r)
 
 }
 
