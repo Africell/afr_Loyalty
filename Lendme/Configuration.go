@@ -1747,8 +1747,8 @@ func setDefaultConfiguration_AO_Loyalty() (Configuration ConfigType) {
 	Configuration.MSISDN_Short_len = 8
 	Configuration.CountryCode = "244"
 
-	Configuration.Lendme_EVC_Dealer_MSISDN = "244950400353"
-	Configuration.Lendme_EVC_Dealer_PIN = "2402"
+	Configuration.Lendme_EVC_Dealer_MSISDN = "244951010532"
+	Configuration.Lendme_EVC_Dealer_PIN = "8236"
 
 	Configuration.IsProduction = false
 	Configuration.IsLoyaltyProduction = false
@@ -1834,8 +1834,8 @@ func setDefaultConfiguration_AO_Loyalty() (Configuration ConfigType) {
 
 	//Configuration.SMPP.Login = "lendme"
 	//Configuration.SMPP.Password = "lendmeP@ssw0rd"
-	Configuration.SMPP.Login = "Loyalty"
-	Configuration.SMPP.Password = "Loyalty123"
+	Configuration.SMPP.Login = "lendme"
+	Configuration.SMPP.Password = "Lm*!op25"
 	Configuration.SMPP.TimeOut = 5 //in seconds
 	Configuration.SMPP.PrintLogs = true
 	Configuration.SMPP.MSISDN_Short_len = 8
@@ -1909,8 +1909,8 @@ func setDefaultConfiguration_AO_Loyalty_UAT() (Configuration ConfigType) {
 	Configuration.MSISDN_Short_len = 8
 	Configuration.CountryCode = "244"
 
-	Configuration.Lendme_EVC_Dealer_MSISDN = "244950400353"
-	Configuration.Lendme_EVC_Dealer_PIN = "2402"
+	Configuration.Lendme_EVC_Dealer_MSISDN = "244951010534"
+	Configuration.Lendme_EVC_Dealer_PIN = "8236"
 
 	Configuration.IsProduction = false
 	Configuration.IsLoyaltyProduction = false
@@ -1996,8 +1996,8 @@ func setDefaultConfiguration_AO_Loyalty_UAT() (Configuration ConfigType) {
 
 	//Configuration.SMPP.Login = "lendme"
 	//Configuration.SMPP.Password = "lendmeP@ssw0rd"
-	Configuration.SMPP.Login = "Loyalty"
-	Configuration.SMPP.Password = "Loyalty123"
+	Configuration.SMPP.Login = "lendme"
+	Configuration.SMPP.Password = "Lm*!op25"
 	Configuration.SMPP.TimeOut = 5 //in seconds
 	Configuration.SMPP.PrintLogs = true
 	Configuration.SMPP.MSISDN_Short_len = 8

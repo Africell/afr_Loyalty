@@ -36,7 +36,7 @@ func Send_SMS(sender string, target string, text string) (_rErr error) {
 	if Configuration.SMPP.PrintLogs {
 		log.Println("Sending SMS: Sender (" + sender + "), Target (" + target + "), text (" + text + ") ")
 	}
-	url := "http://" + Configuration.SMPP.IP + ":" + Configuration.SMPP.Port + "/?systemid=" + Configuration.SMPP.Login + "&password=" + Configuration.SMPP.Password + "&Originator=" + sender + "&dest_addr=" + target + "&msg_text=" + url.QueryEscape(text) + "&encoding=" + fmt.Sprint(Configuration.SMPP.Encoding) + "&ston=5&snpi=0&dton=1&registered_delivery=0"
+	url := "http://" + Configuration.SMPP.IP + ":" + Configuration.SMPP.Port + "/?systemid=" + Configuration.SMPP.Login + "&password=" + url.QueryEscape(Configuration.SMPP.Password) + "&Originator=" + sender + "&dest_addr=" + target + "&msg_text=" + url.QueryEscape(text) + "&encoding=" + fmt.Sprint(Configuration.SMPP.Encoding) + "&ston=5&snpi=0&dton=1&registered_delivery=0"
 	method := "GET"
 	req, err := http.NewRequest(method, url, nil)
 	if err != nil {
