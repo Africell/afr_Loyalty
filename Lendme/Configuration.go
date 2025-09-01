@@ -209,11 +209,11 @@ type ConfigType struct {
 func GetDefaultConfiguration() (err error) {
 	// Configuration = setDefaultConfiguration_Dev()
 	// Configuration = setDefaultConfiguration_DRC_Live()
-	Configuration = setDefaultConfiguration_DRC_Loyalty_UAT()
+	// Configuration = setDefaultConfiguration_DRC_Loyalty_UAT()
 	//	Configuration = setDefaultConfiguration_GM_Live()
 
 	// Configuration = setDefaultConfiguration_SL_Live()
-	//Configuration = setDefaultConfiguration_SL_Loyalty()
+	Configuration = setDefaultConfiguration_SL_Loyalty()
 	// Configuration = setDefaultConfiguration_SL_Loyalty_UAT()
 
 	// Configuration = setDefaultConfiguration_AO_Loyalty()
@@ -1225,8 +1225,8 @@ func setDefaultConfiguration_SL_Live() (Configuration ConfigType) {
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:5173")
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:4173")
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:4414")
-	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "https://okpaihr.africell.sl")
-	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "https://okpaihruat.africell.sl")
+	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "https://okapihr.africell.sl")
+	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "https://okapihruat.africell.sl")
 
 	Configuration.Operation = "SierraLeone"
 	Configuration.HostId = "Lendme-01"
@@ -1390,7 +1390,7 @@ func setDefaultConfiguration_SL_Loyalty() (Configuration ConfigType) {
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:5173")
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:4173")
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:4414")
-	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "https://okpaihr.africell.sl")
+	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "https://okapihr.africell.sl")
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "https://okapihruat.africell.sl")
 
 	Configuration.Operation = "SierraLeone"
