@@ -45,6 +45,9 @@ var DAO_Loyalty_Account_Segment daoc.DAO
 var Map_Loyalty_Point_Earning_Rules daoc.Cache_Synch
 var DAO_Loyalty_Point_Earning_Rules daoc.DAO
 
+var Map_Loyalty_Point_Earning_Rules_Overwrite daoc.Cache_Synch
+var DAO_Loyalty_Point_Earning_Rules_Overwrite daoc.DAO
+
 var Map_Loyalty_Point_Expiry_Rules daoc.Cache_Synch
 var DAO_Loyalty_Point_Expiry_Rules daoc.DAO
 
@@ -112,6 +115,8 @@ func (uc *UserControl) InitializeLoyaltyCache() {
 	Map_Loyalty_Account_Segment.Initialize("Loyalty_Account_Segment", "Loyalty_Account_Segment", reflect.TypeOf(Loyalty_Account_Segment{}), loyalty_Account_Segment, true, &DAO_Loyalty_Account_Segment, uc.CacheDir.List)
 	var loyalty_Point_Earning_Rules Loyalty_Point_Earning_Rules
 	Map_Loyalty_Point_Earning_Rules.Initialize("Loyalty_Point_Earning_Rules", "Loyalty_Point_Earning_Rules", reflect.TypeOf(Loyalty_Point_Earning_Rules{}), loyalty_Point_Earning_Rules, true, &DAO_Loyalty_Point_Earning_Rules, uc.CacheDir.List)
+	var loyalty_Point_Earning_Rules_Overwrite Loyalty_Point_Earning_Rules_Overwrite
+	Map_Loyalty_Point_Earning_Rules_Overwrite.Initialize("Loyalty_Point_Earning_Rules_Overwrite", "Loyalty_Point_Earning_Rules_Overwrite", reflect.TypeOf(Loyalty_Point_Earning_Rules_Overwrite{}), loyalty_Point_Earning_Rules_Overwrite, true, &DAO_Loyalty_Point_Earning_Rules_Overwrite, uc.CacheDir.List)
 	var loyalty_Point_Expiry_Rules Loyalty_Point_Expiry_Rules
 	Map_Loyalty_Point_Expiry_Rules.Initialize("Loyalty_Point_Expiry_Rules", "Loyalty_Point_Expiry_Rules", reflect.TypeOf(Loyalty_Point_Expiry_Rules{}), loyalty_Point_Expiry_Rules, true, &DAO_Loyalty_Point_Expiry_Rules, uc.CacheDir.List)
 	var loyalty_Point_Redemption_Rules Loyalty_Point_Redemption_Rules
@@ -147,6 +152,7 @@ func (uc *UserControl) InitializeLoyaltyDAO() {
 	DAO_Loyalty_Level_Change_log.Initialize("Loyalty_Level_Change_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Level_Change_log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Level_Change_log", "")
 	DAO_Loyalty_Account_Segment.Initialize("Loyalty_Account_Segment", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Account_Segment{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Account_Segment", "")
 	DAO_Loyalty_Point_Earning_Rules.Initialize("Loyalty_Point_Earning_Rules", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Point_Earning_Rules{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Point_Earning_Rules", "")
+	DAO_Loyalty_Point_Earning_Rules_Overwrite.Initialize("Loyalty_Point_Earning_Rules_Overwrite", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Point_Earning_Rules_Overwrite{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Point_Earning_Rules_Overwrite", "")
 	DAO_Loyalty_Point_Expiry_Rules.Initialize("Loyalty_Point_Expiry_Rules", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Point_Expiry_Rules{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Point_Expiry_Rules", "")
 	DAO_Loyalty_Point_Redemption_Rules.Initialize("Loyalty_Point_Redemption_Rules", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Point_Redemption_Rules{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Point_Redemption_Rules", "")
 	DAO_Loyalty_Plan.Initialize("Loyalty_Plan", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Plan{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Plan", "")
@@ -2045,6 +2051,350 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Delete(Login, Key string) (er
 		Event_User:         Login,
 		Event_Time:         time.Now(),
 		Event_AffectedType: "Loyalty_Point_Earning_Rules",
+		Event_ActionType:   "Delete",
+		Event_Description:  "",
+		Event_Entry_Before: nil,
+		Event_Entry_After:  entry,
+	})
+	return nil
+}
+
+//Earning rules overwrite
+
+func (Uc *UserControl) Loyalty_Point_Earning_Rules_Overwrite_Add(Login string, request Loyalty_Point_Earning_Rules_Overwrite_AddRequest) (Id int64, err error) {
+	//check key if filled and if already used
+	request.MSISDN = Normalize_International_MSISDN(request.MSISDN)
+	if request.MSISDN == "" {
+		err = errors.New("MSISDN cannot be empty")
+		return Id, err
+	}
+	if request.MM_Transaction_Type == "" {
+		err = errors.New("transaction type can not be empty")
+		return Id, err
+	}
+	if request.Earning_Rule_Key == "" {
+		err = errors.New("earning rule key can not be empty")
+		return Id, err
+	}
+	//check if key already used
+	exits := Map_Loyalty_Point_Earning_Rules_Overwrite.Check(request.Earning_Rule_Key + "|" + request.MM_Transaction_Type + "|" + request.MSISDN)
+	if exits {
+		err = errors.New("key already exist")
+		return Id, err
+	}
+	//check values
+	if request.Award_Type == "Amount" {
+		if request.Amount > 0 && request.Amount < 1 {
+			err = errors.New("invalid amount value")
+			return Id, err
+		}
+	} else if request.Award_Type != "Transaction" {
+		err = errors.New("invalid Award Type")
+		return Id, err
+	} else {
+		request.Amount = 0
+	}
+
+	var entries []Loyalty_Governance
+	entries_na := Map_Loyalty_Governance.ConvertToArray()
+	if len(entries_na) > 0 {
+		for _, entry_na := range entries_na {
+			entry, ok := entry_na.(Loyalty_Governance)
+			if !ok {
+				err = errors.New("error in type assertion")
+				return Id, err
+			} else {
+				entries = append(entries, entry)
+			}
+		}
+	}
+	if len(entries) > 0 {
+		if entries[0].MaxAllowedPoints_PerTransaction < request.Points {
+			err = errors.New("points can not exceed the maximum allowed points per transaction")
+			return Id, err
+		}
+	}
+	//Prepare new entry
+	var NewEntry Loyalty_Point_Earning_Rules_Overwrite
+	NewEntry.Earning_Rules_Overwrite_Id = Map_Loyalty_AutoIncrement.GetNextAI("Loyalty_Point_Earning_Rules_Overwrite-Id")
+	Id = NewEntry.Earning_Rules_Overwrite_Id
+	NewEntry.Key = request.Earning_Rule_Key + "|" + request.MM_Transaction_Type + "|" + request.MSISDN
+	NewEntry.Description = request.Description
+	NewEntry.Earning_Rule_Key = request.Earning_Rule_Key
+	NewEntry.Amount = request.Amount
+	NewEntry.Award_Type = request.Award_Type
+	NewEntry.Description = request.Description
+	NewEntry.MM_Transaction_Type = request.MM_Transaction_Type
+	NewEntry.MSISDN = request.MSISDN
+	NewEntry.Points = request.Points
+
+	//update earning rules
+	entry_na, exits := Map_Loyalty_Point_Earning_Rules.CheckThenGet(request.Earning_Rule_Key)
+	if !exits {
+		err = errors.New("earning rule does not exist")
+		return Id, err
+	}
+	entry, ok := entry_na.(Loyalty_Point_Earning_Rules)
+	if !ok {
+		err = errors.New("error in type assertion")
+		return Id, err
+	}
+	if request.MM_Transaction_Type == "MERCHPAY" {
+		entry.Earning_Rules_Overwrite_MM_MERCHPAY_Keys = append(entry.Earning_Rules_Overwrite_MM_MERCHPAY_Keys, NewEntry.Key)
+	} else if request.MM_Transaction_Type == "BILLPAY" {
+		entry.Earning_Rules_Overwrite_MM_BILLPAY_Keys = append(entry.Earning_Rules_Overwrite_MM_BILLPAY_Keys, NewEntry.Key)
+	}
+	//add to cache and DB
+	Map_Loyalty_Point_Earning_Rules.Put(entry.Key, entry)
+	Map_Loyalty_Point_Earning_Rules_Overwrite.Put(NewEntry.Key, NewEntry)
+
+	//add logs
+	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
+		Event_User:         Login,
+		Event_Time:         time.Now(),
+		Event_AffectedType: "Loyalty_Point_Earning_Rules_Overwrite",
+		Event_ActionType:   "Add",
+		Event_Description:  "",
+		Event_Entry_Before: nil,
+		Event_Entry_After:  NewEntry,
+	})
+	return Id, nil
+}
+
+func (Uc *UserControl) Loyalty_Point_Earning_Rules_Overwrite_Edit(Login string, request Loyalty_Point_Earning_Rules_Overwrite_EditRequest) (Id int64, err error) {
+	//check and validate
+	if request.Key == "" {
+		err = errors.New("key cannot be empty")
+		return Id, err
+	}
+	request.MSISDN = Normalize_International_MSISDN(request.MSISDN)
+	if request.MSISDN == "" {
+		err = errors.New("MSISDN cannot be empty")
+		return Id, err
+	}
+	if request.MM_Transaction_Type == "" {
+		err = errors.New("transaction type can not be empty")
+		return Id, err
+	}
+	if request.Earning_Rule_Key == "" {
+		err = errors.New("earning rule key can not be empty")
+		return Id, err
+	}
+	//check values
+	if request.Award_Type == "Amount" {
+		if request.Amount > 0 && request.Amount < 1 {
+			err = errors.New("invalid value")
+			return Id, err
+		}
+	} else if request.Award_Type != "Transaction" {
+		err = errors.New("invalid Award Type")
+		return Id, err
+	} else {
+		request.Amount = 0
+	}
+
+	entry_na, exits := Map_Loyalty_Point_Earning_Rules_Overwrite.CheckThenGet(request.Key)
+	if !exits {
+		err = errors.New("key is not created")
+		return Id, err
+	}
+	entry, ok := entry_na.(Loyalty_Point_Earning_Rules_Overwrite)
+	if !ok {
+		return Id, errors.New("error in type assertion")
+	}
+	if entry.Earning_Rules_Overwrite_Id != request.Earning_Rules_Overwrite_Id {
+		return Id, errors.New("id is not matching")
+	}
+	var entries []Loyalty_Governance
+	entries_na := Map_Loyalty_Governance.ConvertToArray()
+	if len(entries_na) > 0 {
+		for _, entry_gov_na := range entries_na {
+			entry_gov, ok := entry_gov_na.(Loyalty_Governance)
+			if !ok {
+				err = errors.New("error in type assertion")
+				return Id, err
+			} else {
+				entries = append(entries, entry_gov)
+			}
+		}
+	}
+	if len(entries) > 0 {
+		if entries[0].MaxAllowedPoints_PerTransaction < request.Points {
+			err = errors.New("points can not exceed the maximum allowed points per transaction")
+			return Id, err
+		}
+	}
+	Current_Entry := entry
+	//Prepare new entry
+
+	//add to cache and DB
+	if request.MSISDN != entry.MSISDN {
+		//delete old
+		Map_Loyalty_Point_Earning_Rules_Overwrite.Delete(request.Key)
+		//update key
+		entry.Key = request.Earning_Rule_Key + "|" + request.MM_Transaction_Type + "|" + request.MSISDN
+
+		//update earning rules
+		earning_na, exits := Map_Loyalty_Point_Earning_Rules.CheckThenGet(request.Earning_Rule_Key)
+		if !exits {
+			err = errors.New("earning rule does not exist")
+			return Id, err
+		}
+		earning, ok := earning_na.(Loyalty_Point_Earning_Rules)
+		if !ok {
+			err = errors.New("error in type assertion")
+			return Id, err
+		}
+		var newKeys []string
+
+		for _, i := range earning.Earning_Rules_Overwrite_MM_MERCHPAY_Keys {
+			if i != request.Key {
+				newKeys = append(newKeys, i)
+			}
+		}
+		newKeys = append(newKeys, entry.Key)
+		if request.MM_Transaction_Type == "MERCHPAY" {
+			earning.Earning_Rules_Overwrite_MM_MERCHPAY_Keys = newKeys
+		} else if request.MM_Transaction_Type == "BILLPAY" {
+			earning.Earning_Rules_Overwrite_MM_BILLPAY_Keys = newKeys
+		}
+		Map_Loyalty_Point_Earning_Rules.Put(entry.Earning_Rule_Key, earning)
+	}
+	entry.Description = request.Description
+	entry.Amount = request.Amount
+	entry.Award_Type = request.Award_Type
+	entry.Earning_Rule_Key = request.Earning_Rule_Key
+	entry.Earning_Rules_Overwrite_Id = request.Earning_Rules_Overwrite_Id
+	entry.MM_Transaction_Type = request.MM_Transaction_Type
+	entry.MSISDN = request.MSISDN
+	entry.Points = request.Points
+
+	//add to cache and DB
+	Map_Loyalty_Point_Earning_Rules_Overwrite.Put(entry.Key, entry)
+	//add logs
+	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
+		Event_User:         Login,
+		Event_Time:         time.Now(),
+		Event_AffectedType: "Loyalty_Point_Earning_Rules_Overwrite",
+		Event_ActionType:   "Edit",
+		Event_Description:  "",
+		Event_Entry_Before: Current_Entry,
+		Event_Entry_After:  entry,
+	})
+	return Id, nil
+}
+
+func (Uc *UserControl) Loyalty_Point_Earning_Rules_Overwrite_Get(Key string) (entries []Loyalty_Point_Earning_Rules_Overwrite, err error) {
+	if Key == "" {
+		entries_na := Map_Loyalty_Point_Earning_Rules_Overwrite.ConvertToArray()
+		if len(entries_na) > 0 {
+			for _, entry_na := range entries_na {
+				entry, ok := entry_na.(Loyalty_Point_Earning_Rules_Overwrite)
+				if !ok {
+					err = errors.New("error in type assertion")
+					return entries, err
+				} else {
+					entries = append(entries, entry)
+				}
+			}
+		}
+		return entries, nil
+	} else {
+		entry_na, exits := Map_Loyalty_Point_Earning_Rules_Overwrite.CheckThenGet(Key)
+		if !exits {
+			err = errors.New("key does not exist")
+			return entries, err
+		}
+		entry, ok := entry_na.(Loyalty_Point_Earning_Rules_Overwrite)
+		if !ok {
+			err = errors.New("error in type assertion")
+			return entries, err
+		}
+		entries = append(entries, entry)
+		return entries, nil
+	}
+}
+
+func (Uc *UserControl) Loyalty_Point_Earning_Rules_Overwrite_GetPaginated(Page, Limit int64) (entries []Loyalty_Point_Earning_Rules_Overwrite, err error) {
+	if Page < 1 {
+		return entries, errors.New("invalid page")
+	}
+	if Limit < 1 || Limit > 50000 {
+		return entries, errors.New("invalid limit (accept value between 1 and 50000)")
+	}
+
+	var findparams daoc.DAOFindParams
+
+	var paginationparams daoc.DAOPaginate
+	paginationparams.Limit = Limit
+	paginationparams.Page = Page
+	findResult, err := DAO_Loyalty_Point_Earning_Rules.FindPaginate(findparams, paginationparams)
+	if err != nil {
+		return entries, err
+	}
+	if len(findResult) > 0 {
+		for _, findres := range findResult {
+			InterfaceValue := reflect.ValueOf(findres).Elem().Interface().(Loyalty_Point_Earning_Rules_Overwrite)
+			entries = append(entries, InterfaceValue)
+		}
+	}
+	return entries, nil
+
+}
+
+func (Uc *UserControl) Loyalty_Point_Earning_Rules_Overwrite_Delete(Login, Key string) (err error) {
+	if Key == "" {
+		err = errors.New("key cannot be empty")
+		return err
+	}
+	parts := strings.Split(Key, "|")
+	if len(parts) != 3 {
+		err = errors.New("valid key format")
+		return err
+	}
+	earningRuleKey := parts[0]
+	mmTransactionType := parts[1]
+
+	entry_na, exits := Map_Loyalty_Point_Earning_Rules_Overwrite.CheckThenGet(Key)
+	if !exits {
+		err = errors.New("entry does not exist")
+		return err
+	}
+	entry, ok := entry_na.(Loyalty_Point_Earning_Rules_Overwrite)
+	if !ok {
+		err = errors.New("error in type assertion")
+		return err
+	}
+
+	earning_na, exits := Map_Loyalty_Point_Earning_Rules.CheckThenGet(earningRuleKey)
+	if !exits {
+		err = errors.New("earning rule does not exist")
+		return err
+	}
+	earning, ok := earning_na.(Loyalty_Point_Earning_Rules)
+	if !ok {
+		err = errors.New("error in type assertion")
+		return err
+	}
+	var newKeys []string
+
+	for _, i := range earning.Earning_Rules_Overwrite_MM_MERCHPAY_Keys {
+		if i != Key {
+			newKeys = append(newKeys, i)
+		}
+	}
+	if mmTransactionType == "MERCHPAY" {
+		earning.Earning_Rules_Overwrite_MM_MERCHPAY_Keys = newKeys
+	} else if mmTransactionType == "BILLPAY" {
+		earning.Earning_Rules_Overwrite_MM_BILLPAY_Keys = newKeys
+	}
+	Map_Loyalty_Point_Earning_Rules.Put(earningRuleKey, earning)
+	Map_Loyalty_Point_Earning_Rules_Overwrite.Delete(Key)
+	//add logs
+	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
+		Event_User:         Login,
+		Event_Time:         time.Now(),
+		Event_AffectedType: "Loyalty_Point_Earning_Rules_Overwrite",
 		Event_ActionType:   "Delete",
 		Event_Description:  "",
 		Event_Entry_Before: nil,
@@ -6159,40 +6509,125 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 			}
 			return 0, current_outstanding_points
 		case "MERCHPAY":
-			if rules.MM_MERCHPAY_Award_Type == "Transaction" {
-				if rules.MM_MERCHPAY_Points > 0 {
-					// return rules.MM_MERCHPAY_Points, current_outstanding_points
-					flt_points := rules.MM_MERCHPAY_Points + current_outstanding_points
-					int_points := int(flt_points)
-					outstanding_points = flt_points - float64(int_points)
-					return float64(int_points), outstanding_points
+			entry_na, exits := Map_Loyalty_Point_Earning_Rules_Overwrite.CheckThenGet(rules.Key + "|MERCHPAY|" + award_request.EventDetail)
+			if exits {
+				entry, ok := entry_na.(Loyalty_Point_Earning_Rules_Overwrite)
+				if ok {
+					if entry.Award_Type == "Transaction" {
+						if entry.Points > 0 {
+							// return entry.MM_MERCHPAY_Points, current_outstanding_points
+							flt_points := entry.Points + current_outstanding_points
+							int_points := int(flt_points)
+							outstanding_points = flt_points - float64(int_points)
+							return float64(int_points), outstanding_points
+						}
+					} else if entry.Award_Type == "Amount" {
+						if entry.Amount > 0 && award_request.EventAmount > 0 {
+							flt_fractions := award_request.EventAmount / entry.Amount
+							flt_points := (flt_fractions * entry.Points) + current_outstanding_points
+							int_points := int(flt_points)
+							outstanding_points = flt_points - float64(int_points)
+							return float64(int_points), outstanding_points
+						}
+					}
+				} else {
+					if rules.MM_MERCHPAY_Award_Type == "Transaction" {
+						if rules.MM_MERCHPAY_Points > 0 {
+							// return rules.MM_MERCHPAY_Points, current_outstanding_points
+							flt_points := rules.MM_MERCHPAY_Points + current_outstanding_points
+							int_points := int(flt_points)
+							outstanding_points = flt_points - float64(int_points)
+							return float64(int_points), outstanding_points
+						}
+					} else if rules.MM_MERCHPAY_Award_Type == "Amount" {
+						if rules.MM_MERCHPAY_Amount > 0 && award_request.EventAmount > 0 {
+							flt_fractions := award_request.EventAmount / rules.MM_MERCHPAY_Amount
+							flt_points := (flt_fractions * rules.MM_MERCHPAY_Points) + current_outstanding_points
+							int_points := int(flt_points)
+							outstanding_points = flt_points - float64(int_points)
+							return float64(int_points), outstanding_points
+						}
+					}
 				}
-			} else if rules.MM_MERCHPAY_Award_Type == "Amount" {
-				if rules.MM_MERCHPAY_Amount > 0 && award_request.EventAmount > 0 {
-					flt_fractions := award_request.EventAmount / rules.MM_MERCHPAY_Amount
-					flt_points := (flt_fractions * rules.MM_MERCHPAY_Points) + current_outstanding_points
-					int_points := int(flt_points)
-					outstanding_points = flt_points - float64(int_points)
-					return float64(int_points), outstanding_points
+			} else {
+				if rules.MM_MERCHPAY_Award_Type == "Transaction" {
+					if rules.MM_MERCHPAY_Points > 0 {
+						// return rules.MM_MERCHPAY_Points, current_outstanding_points
+						flt_points := rules.MM_MERCHPAY_Points + current_outstanding_points
+						int_points := int(flt_points)
+						outstanding_points = flt_points - float64(int_points)
+						return float64(int_points), outstanding_points
+					}
+				} else if rules.MM_MERCHPAY_Award_Type == "Amount" {
+					if rules.MM_MERCHPAY_Amount > 0 && award_request.EventAmount > 0 {
+						flt_fractions := award_request.EventAmount / rules.MM_MERCHPAY_Amount
+						flt_points := (flt_fractions * rules.MM_MERCHPAY_Points) + current_outstanding_points
+						int_points := int(flt_points)
+						outstanding_points = flt_points - float64(int_points)
+						return float64(int_points), outstanding_points
+					}
 				}
 			}
+
 			return 0, current_outstanding_points
 		case "BILLPAY":
-			if rules.MM_BILLPAY_Award_Type == "Transaction" {
-				if rules.MM_BILLPAY_Points > 0 {
-					// return rules.MM_BILLPAY_Points, current_outstanding_points
-					flt_points := rules.MM_BILLPAY_Points + current_outstanding_points
-					int_points := int(flt_points)
-					outstanding_points = flt_points - float64(int_points)
-					return float64(int_points), outstanding_points
+			entry_na, exits := Map_Loyalty_Point_Earning_Rules_Overwrite.CheckThenGet(rules.Key + "|BILLPAY|" + award_request.EventDetail)
+			if exits {
+				entry, ok := entry_na.(Loyalty_Point_Earning_Rules_Overwrite)
+				if ok {
+					if entry.Award_Type == "Transaction" {
+						if entry.Points > 0 {
+							// return entry.MM_BILLPAY_Points, current_outstanding_points
+							flt_points := entry.Points + current_outstanding_points
+							int_points := int(flt_points)
+							outstanding_points = flt_points - float64(int_points)
+							return float64(int_points), outstanding_points
+						}
+					} else if entry.Award_Type == "Amount" {
+						if entry.Amount > 0 && award_request.EventAmount > 0 {
+							flt_fractions := award_request.EventAmount / rules.MM_BILLPAY_Amount
+							flt_points := (flt_fractions * entry.Points) + current_outstanding_points
+							int_points := int(flt_points)
+							outstanding_points = flt_points - float64(int_points)
+							return float64(int_points), outstanding_points
+						}
+					}
+				} else {
+					if rules.MM_BILLPAY_Award_Type == "Transaction" {
+						if rules.MM_BILLPAY_Points > 0 {
+							// return rules.MM_BILLPAY_Points, current_outstanding_points
+							flt_points := rules.MM_BILLPAY_Points + current_outstanding_points
+							int_points := int(flt_points)
+							outstanding_points = flt_points - float64(int_points)
+							return float64(int_points), outstanding_points
+						}
+					} else if rules.MM_BILLPAY_Award_Type == "Amount" {
+						if rules.MM_BILLPAY_Amount > 0 && award_request.EventAmount > 0 {
+							flt_fractions := award_request.EventAmount / rules.MM_BILLPAY_Amount
+							flt_points := (flt_fractions * rules.MM_BILLPAY_Points) + current_outstanding_points
+							int_points := int(flt_points)
+							outstanding_points = flt_points - float64(int_points)
+							return float64(int_points), outstanding_points
+						}
+					}
 				}
-			} else if rules.MM_BILLPAY_Award_Type == "Amount" {
-				if rules.MM_BILLPAY_Amount > 0 && award_request.EventAmount > 0 {
-					flt_fractions := award_request.EventAmount / rules.MM_BILLPAY_Amount
-					flt_points := (flt_fractions * rules.MM_BILLPAY_Points) + current_outstanding_points
-					int_points := int(flt_points)
-					outstanding_points = flt_points - float64(int_points)
-					return float64(int_points), outstanding_points
+			} else {
+				if rules.MM_BILLPAY_Award_Type == "Transaction" {
+					if rules.MM_BILLPAY_Points > 0 {
+						// return rules.MM_BILLPAY_Points, current_outstanding_points
+						flt_points := rules.MM_BILLPAY_Points + current_outstanding_points
+						int_points := int(flt_points)
+						outstanding_points = flt_points - float64(int_points)
+						return float64(int_points), outstanding_points
+					}
+				} else if rules.MM_BILLPAY_Award_Type == "Amount" {
+					if rules.MM_BILLPAY_Amount > 0 && award_request.EventAmount > 0 {
+						flt_fractions := award_request.EventAmount / rules.MM_BILLPAY_Amount
+						flt_points := (flt_fractions * rules.MM_BILLPAY_Points) + current_outstanding_points
+						int_points := int(flt_points)
+						outstanding_points = flt_points - float64(int_points)
+						return float64(int_points), outstanding_points
+					}
 				}
 			}
 			return 0, current_outstanding_points

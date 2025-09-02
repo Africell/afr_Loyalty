@@ -1116,6 +1116,90 @@ func (UC *UserControl) Add_LoyaltyManagementRoutes(R *Routes) {
 	}
 	*R = append(*R, r)
 
+	r = Route{
+		"HTTP_Loyalty_Point_Earning_Rules_Overwrite",
+		"GET",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Point_Earning_Rules_Overwrite/",
+		Use(UC.HTTP_Loyalty_Point_Earning_Rules_Overwrite, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
+		true,
+		"Earning Rules Overwrite - Read", // DisplayName
+		5,                                // DisplayOrder
+		Module,                           // Module
+		ModuleDisplayOrder,               //ModuleDisplayOrder
+		Level1,                           // Level1
+		Level1DisplayOrder,               // Level1DisplayOrder
+		"",                               // Level2
+		0,                                // Level2DisplayOrder
+		"",                               // Level3
+		0,                                // Level3DisplayOrder
+		true,                             //AllowedFor_OKAPI
+		true,                             //AllowedFor_App
+	}
+	*R = append(*R, r)
+
+	r = Route{
+		"HTTP_Loyalty_Point_Earning_Rules_Overwrite",
+		"POST",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Point_Earning_Rules_Overwrite/",
+		Use(UC.HTTP_Loyalty_Point_Earning_Rules_Overwrite, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
+		true,
+		"Earning Rules Overwrite - Add", // DisplayName
+		6,                               // DisplayOrder
+		Module,                          // Module
+		ModuleDisplayOrder,              //ModuleDisplayOrder
+		Level1,                          // Level1
+		Level1DisplayOrder,              // Level1DisplayOrder
+		"",                              // Level2
+		0,                               // Level2DisplayOrder
+		"",                              // Level3
+		0,                               // Level3DisplayOrder
+		true,                            //AllowedFor_OKAPI
+		true,                            //AllowedFor_App
+	}
+	*R = append(*R, r)
+
+	r = Route{
+		"HTTP_Loyalty_Point_Earning_Rules_Overwrite",
+		"PUT",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Point_Earning_Rules_Overwrite/",
+		Use(UC.HTTP_Loyalty_Point_Earning_Rules_Overwrite, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
+		true,
+		"Earning Rules Overwrite - Edit", // DisplayName
+		7,                                // DisplayOrder
+		Module,                           // Module
+		ModuleDisplayOrder,               //ModuleDisplayOrder
+		Level1,                           // Level1
+		Level1DisplayOrder,               // Level1DisplayOrder
+		"",                               // Level2
+		0,                                // Level2DisplayOrder
+		"",                               // Level3
+		0,                                // Level3DisplayOrder
+		true,                             //AllowedFor_OKAPI
+		true,                             //AllowedFor_App
+	}
+	*R = append(*R, r)
+
+	r = Route{
+		"HTTP_Loyalty_Point_Earning_Rules_Overwrite",
+		"DELETE",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Point_Earning_Rules_Overwrite/",
+		Use(UC.HTTP_Loyalty_Point_Earning_Rules_Overwrite, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
+		true,
+		"Earning Rules Overwrite - Delete", // DisplayName
+		8,                                  // DisplayOrder
+		Module,                             // Module
+		ModuleDisplayOrder,                 //ModuleDisplayOrder
+		Level1,                             // Level1
+		Level1DisplayOrder,                 // Level1DisplayOrder
+		"",                                 // Level2
+		0,                                  // Level2DisplayOrder
+		"",                                 // Level3
+		0,                                  // Level3DisplayOrder
+		true,                               //AllowedFor_OKAPI
+		true,                               //AllowedFor_App
+	}
+	*R = append(*R, r)
+
 	//*****************************
 	// Loyalty_Point_Expiry_Rules
 	//*****************************

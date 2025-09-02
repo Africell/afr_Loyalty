@@ -457,6 +457,10 @@ func (Uc *UserControl) AddToLoyaltyManagementRouter(router *mux.Router, UC *User
 			{AccessKey: "HTTP_Loyalty_Point_Earning_Rules", AccessMethod: "POST", Allowed: true},
 			{AccessKey: "HTTP_Loyalty_Point_Earning_Rules", AccessMethod: "PUT", Allowed: true},
 			{AccessKey: "HTTP_Loyalty_Point_Earning_Rules", AccessMethod: "DELETE", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Point_Earning_Rules_Overwrite", AccessMethod: "GET", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Point_Earning_Rules_Overwrite", AccessMethod: "POST", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Point_Earning_Rules_Overwrite", AccessMethod: "PUT", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Point_Earning_Rules_Overwrite", AccessMethod: "DELETE", Allowed: true},
 			{AccessKey: "Loyalty Point Expiry Rules", AccessMethod: "Module Sub Menu L1", Allowed: true},
 			{AccessKey: "HTTP_Loyalty_Point_Expiry_Rules", AccessMethod: "GET", Allowed: true},
 			{AccessKey: "HTTP_Loyalty_Point_Expiry_Rules", AccessMethod: "POST", Allowed: true},
@@ -678,6 +682,7 @@ func (Uc *UserControl) Add_Loyalty_ToAccessEntry(existing map[string]AuthCenter.
 		Level2DisplayOrder:   4,
 		Level3:               "",
 		Level3DisplayOrder:   0,
+		Routes:               []string{"HTTP_Loyalty_Point_Earning_Rules_Overwrite|GET", "HTTP_Loyalty_Point_Earning_Rules_Overwrite|PUT", "HTTP_Loyalty_Point_Earning_Rules_Overwrite|POST", "HTTP_Loyalty_Point_Earning_Rules_Overwrite|DELETE"},
 	}
 	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
 
