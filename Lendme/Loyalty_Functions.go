@@ -718,6 +718,20 @@ func (Uc *UserControl) Loyalty_Governance_Get(Key string) (entries []Loyalty_Gov
 					err = errors.New("error in type assertion")
 					return entries, err
 				} else {
+					// redemption_na := Map_Loyalty_Point_Redemption_Rules.ConvertToArray()
+					// if len(redemption_na) > 0 {
+					// 	for _, redemptionRules := range redemption_na {
+					// 		redemption, ok := redemptionRules.(Loyalty_Point_Redemption_Rules)
+					// 		if !ok {
+					// 			err = errors.New("error in type assertion")
+					// 			return entries, err
+					// 		} else {
+					// 			res, error := Uc.CGW.UC_GWClient.GetERDealerBalance(redemption.Airtime_EVC_Account, redemption.Airtime_EVC_PIN)
+					// 			fmt.Println("res", res)
+					// 			fmt.Println("error", error)
+					// 		}
+					// 	}
+					// }
 					entries = append(entries, entry)
 				}
 			}
@@ -734,6 +748,22 @@ func (Uc *UserControl) Loyalty_Governance_Get(Key string) (entries []Loyalty_Gov
 			err = errors.New("error in type assertion")
 			return entries, err
 		}
+
+		// redemption_na := Map_Loyalty_Point_Redemption_Rules.ConvertToArray()
+		// if len(redemption_na) > 0 {
+		// 	for _, redemptionRules := range redemption_na {
+		// 		redemption, ok := redemptionRules.(Loyalty_Point_Redemption_Rule)
+		// 		if !ok {
+		// 			err = errors.New("error in type assertion")
+		// 			return entries, err
+		// 		} else {
+		// 			res, error := Uc.CGW.UC_GWClient.ListAllPackages(redemption.Airtime_EVC_Account, redemption.Airtime_EVC_PIN)
+		// 			fmt.Println("res", res)
+		// 			fmt.Println("error", error)
+		// 		}
+		// 	}
+		// }
+
 		entries = append(entries, entry)
 		return entries, nil
 	}
@@ -851,11 +881,11 @@ func (Uc *UserControl) Loyalty_Governance_Redeem_Points_Debit(points float64, no
 		<-chan_LoyaltyGovernance_Controler
 		return errors.New("loyalty governance type assertion issue")
 	}
-	redemption := false
+	notRedemptionValue := false
 	if len(notRedemption) > 0 {
-		redemption = notRedemption[0]
+		notRedemptionValue = notRedemption[0]
 	}
-	if !redemption {
+	if !notRedemptionValue {
 		loyalty_governance.Redeemed_Points_Pool = loyalty_governance.Redeemed_Points_Pool + points
 	}
 	loyalty_governance.Distributed_Points_Pool = loyalty_governance.Distributed_Points_Pool - points
@@ -6246,10 +6276,18 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 		Uc.Write_Loyalty_AccountDebitPoints_log(*response)
 		return
 	}
+	notRedemptionValue := false
+	if len(notRedemption) > 0 {
+		notRedemptionValue = notRedemption[0]
+	}
 	//debit the account
-	loyalty_Account.Redeemed_Points = loyalty_Account.Redeemed_Points + request.Debit_Amount
+	if notRedemptionValue {
+		loyalty_Account.Awarded_Points = loyalty_Account.Awarded_Points - request.Debit_Amount
+	} else {
+		loyalty_Account.Redeemed_Points = loyalty_Account.Redeemed_Points + request.Debit_Amount
+		loyalty_Account.Last_Redeem_Date = time.Now()
+	}
 	loyalty_Account.Available_Points = (loyalty_Account.Awarded_Points + loyalty_Account.Expired_Points) - loyalty_Account.Redeemed_Points //(Awarded_Points + Expired_Points) - Redeemed_Points
-	loyalty_Account.Last_Redeem_Date = time.Now()
 	//update Monthly points
 	start_date := time.Date(2025, 04, 01, 00, 00, 59, 0, time.UTC)
 	end_date := start_date.AddDate(50, 0, 0)
@@ -6277,16 +6315,24 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 				if PointsDetail.Available_Points > 0 {
 					if PointsDetail.Available_Points >= Amount_to_debit {
 						//full amount available
-						PointsDetail.Redeemed_Points = PointsDetail.Redeemed_Points + Amount_to_debit
+						if notRedemptionValue {
+							PointsDetail.Awarded_Points = PointsDetail.Awarded_Points - Amount_to_debit
+						} else {
+							PointsDetail.Redeemed_Points = PointsDetail.Redeemed_Points + Amount_to_debit
+							PointsDetail.Last_Redeem_Date = time.Now()
+						}
 						PointsDetail.Available_Points = (PointsDetail.Awarded_Points + PointsDetail.Expired_Points) - PointsDetail.Redeemed_Points //(Awarded_Points + Expired_Points) - Redeemed_Points
-						PointsDetail.Last_Redeem_Date = time.Now()
 						Amount_to_debit = 0
 					} else {
 						//partial amount available
 						partial_debit_amount := PointsDetail.Available_Points
-						PointsDetail.Redeemed_Points = PointsDetail.Redeemed_Points + partial_debit_amount
+						if notRedemptionValue {
+							PointsDetail.Awarded_Points = PointsDetail.Awarded_Points - partial_debit_amount
+						} else {
+							PointsDetail.Redeemed_Points = PointsDetail.Redeemed_Points + partial_debit_amount
+							PointsDetail.Last_Redeem_Date = time.Now()
+						}
 						PointsDetail.Available_Points = 0
-						PointsDetail.Last_Redeem_Date = time.Now()
 						Amount_to_debit = Amount_to_debit - partial_debit_amount
 					}
 					Map_Customer_Loyalty_Account_Points_Detail.Put(PointsDetail.Key, PointsDetail)
@@ -6306,11 +6352,7 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 	response.Closure_Redeemed_Points = loyalty_Account.Redeemed_Points
 	response.Closure_Available_Points = loyalty_Account.Available_Points
 	//update goveranance
-	redemption := false
-	if len(notRedemption) > 0 {
-		redemption = notRedemption[0]
-	}
-	Uc.Loyalty_Governance_Redeem_Points_Debit(request.Debit_Amount, redemption)
+	Uc.Loyalty_Governance_Redeem_Points_Debit(request.Debit_Amount, notRedemptionValue)
 	//successful reply
 	response.Status = "successful"
 	response.StatusCode = http.StatusOK
