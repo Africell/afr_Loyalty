@@ -2927,6 +2927,10 @@ func (Uc *UserControl) HTTP_Bulk_Loyalty_Points_Deduction(w http.ResponseWriter,
 							continue
 						}
 						if entry.Available_Points > 0 {
+							if entry.Outstanding_fraction_points > 0 {
+								entry.Outstanding_fraction_points = 0
+								Map_Customer_Loyalty_Account.Put(entry.Key, entry)
+							}
 							debit_Request.Debit_Amount = entry.Available_Points
 							Uc.Loyalty_AccountDebitPoints(&validated_Headers, debit_Request, &loyalty_AccountDebitPoints_log, true)
 							if loyalty_AccountDebitPoints_log.Status == "failed" {
@@ -2941,6 +2945,7 @@ func (Uc *UserControl) HTTP_Bulk_Loyalty_Points_Deduction(w http.ResponseWriter,
 								processed[msisdn] = struct{}{}
 								processedMu.Unlock()
 								jobsMu.Lock()
+								//amal here
 								jobs[jobID].Result["Partially Successful"] = append(
 									jobs[jobID].Result["Partially Successful"],
 									loyalty_AccountDebitPoints_log.MSISDN+
