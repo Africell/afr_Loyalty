@@ -2709,7 +2709,7 @@ func (Uc *UserControl) HTTP_Bulk_Loyalty_Points_Crediting(w http.ResponseWriter,
 				credit_Request.MSISDN = entries[i].MSISDN
 				credit_Request.EventAmount = 0
 				credit_Request.EventDescription = "Bulk Points Crediting"
-				credit_Request.PointsToCredit = entries[i].Points
+				credit_Request.PointsToCredit = float64(int(entries[i].Points))
 				credit_Request.EventSource = "Bulk Points Crediting"
 				Uc.Loyalty_AccountCreditPoints(&validated_Headers, credit_Request, &loyalty_AccountCreditPoints_log)
 				if loyalty_AccountCreditPoints_log.Status == "failed" {
@@ -2910,7 +2910,7 @@ func (Uc *UserControl) HTTP_Bulk_Loyalty_Points_Deduction(w http.ResponseWriter,
 				var loyalty_AccountDebitPoints_log Loyalty_AccountDebitPoints_log
 				var debit_Request Loyalty_AccountDebitPoints_Request
 				debit_Request.MSISDN = entries[i].MSISDN
-				debit_Request.Debit_Amount = entries[i].Points
+				debit_Request.Debit_Amount = float64(int(entries[i].Points))
 				debit_Request.Debit_Reason = "Bulk Points Deduction"
 				Uc.Loyalty_AccountDebitPoints(&validated_Headers, debit_Request, &loyalty_AccountDebitPoints_log, true)
 
@@ -2935,7 +2935,7 @@ func (Uc *UserControl) HTTP_Bulk_Loyalty_Points_Deduction(w http.ResponseWriter,
 								entry.Outstanding_fraction_points = 0
 								Map_Customer_Loyalty_Account.Put(entry.Key, entry)
 							}
-							debit_Request.Debit_Amount = entry.Available_Points
+							debit_Request.Debit_Amount = float64(int(entry.Available_Points))
 							Uc.Loyalty_AccountDebitPoints(&validated_Headers, debit_Request, &loyalty_AccountDebitPoints_log, true)
 							if loyalty_AccountDebitPoints_log.Status == "failed" {
 								jobsMu.Lock()
