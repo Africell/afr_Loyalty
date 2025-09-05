@@ -2677,6 +2677,9 @@ func (Uc *UserControl) HTTP_Bulk_Loyalty_Points_Crediting(w http.ResponseWriter,
 			jobsMu.Unlock()
 
 			for i := range entries {
+				jobsMu.Lock()
+				jobs[jobID].ProcessedRows = i + 1
+				jobsMu.Unlock()
 				msisdn := entries[i].MSISDN
 
 				if entries[i].Points <= 0 {
@@ -2695,7 +2698,7 @@ func (Uc *UserControl) HTTP_Bulk_Loyalty_Points_Crediting(w http.ResponseWriter,
 					jobsMu.Lock()
 					jobs[jobID].Result["Failed"] = append(
 						jobs[jobID].Result["Failed"],
-						msisdn+" already debited",
+						msisdn+" already credited",
 					)
 					jobsMu.Unlock()
 					continue
@@ -2730,9 +2733,7 @@ func (Uc *UserControl) HTTP_Bulk_Loyalty_Points_Crediting(w http.ResponseWriter,
 					jobs[jobID].Result["Points Credited"] = []string{fmt.Sprintf("%.2f", pointsCredited)}
 					jobsMu.Unlock()
 				}
-				jobsMu.Lock()
-				jobs[jobID].ProcessedRows = i + 1
-				jobsMu.Unlock()
+
 			}
 			Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 				Event_User:         validated_Headers.AppLogin,
@@ -2878,6 +2879,9 @@ func (Uc *UserControl) HTTP_Bulk_Loyalty_Points_Deduction(w http.ResponseWriter,
 			jobsMu.Unlock()
 
 			for i, _ := range entries {
+				jobsMu.Lock()
+				jobs[jobID].ProcessedRows = i + 1
+				jobsMu.Unlock()
 				// process each row
 				msisdn := entries[i].MSISDN
 
@@ -2965,9 +2969,6 @@ func (Uc *UserControl) HTTP_Bulk_Loyalty_Points_Deduction(w http.ResponseWriter,
 								jobs[jobID].Result["Points Deducted"] = []string{fmt.Sprintf("%.2f", pointsDeducted)}
 								jobsMu.Unlock()
 							}
-							jobsMu.Lock()
-							jobs[jobID].ProcessedRows = i + 1
-							jobsMu.Unlock()
 							continue
 						}
 					}
@@ -2994,9 +2995,6 @@ func (Uc *UserControl) HTTP_Bulk_Loyalty_Points_Deduction(w http.ResponseWriter,
 					jobsMu.Unlock()
 				}
 
-				jobsMu.Lock()
-				jobs[jobID].ProcessedRows = i + 1
-				jobsMu.Unlock()
 			}
 
 			Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
