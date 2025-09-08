@@ -3525,6 +3525,37 @@ func (Uc *UserControl) Auto_GetOutstandingSummary() {
 	}
 }
 
+func (Uc *UserControl) Lendme_Subscriber_Daily_Snapshot() {
+	exec := 0
+	LOG_ID := "<<Lendme Subscriber Daily Snapshot>>"
+	for range time.Tick(time.Second * 1) {
+		_CurrentDateTime := time.Now()
+		_hr, _mi, _se := _CurrentDateTime.Clock()
+		if _hr == 00 {
+			if _mi == 00 {
+				if _se < 60 {
+					if exec == 0 {
+						exec = 1
+						log.Println(LOG_ID + " triggered")
+						YYYY, MM, _, DD, _, _, _ := GetTimeParts(time.Now())
+						Db := DAO_Lendme_log.DB + "_" + YYYY + MM
+						Col := DAO_Subscribers.Collection + "_" + DD
+						err := DAO_Subscribers.CollectionSnapshot(Db, Col)
+						if err != nil {
+							log.Println("error while taking a snapshot from subscriber collection", err)
+						}
+						log.Println(LOG_ID + " finished")
+					}
+				}
+			} else {
+				if exec == 1 {
+					exec = 0
+				}
+			}
+		}
+	}
+}
+
 // /////////////////////////////////////////////////////////////////////////////////////////////////////
 // /////SEND SMS////////////////////////////////////////////////////////////////////////////////////////
 // /////////////////////////////////////////////////////////////////////////////////////////////////////

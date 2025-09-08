@@ -115,6 +115,7 @@ func (p *program) run() {
 	go UserControl.SubQueueExecution()
 	go UserControl.Auto_Import_Subscribers_Dump()
 	go UserControl.Auto_GetOutstandingSummary()
+	go UserControl.Lendme_Subscriber_Daily_Snapshot()
 
 	//**Lendme web services
 	log.Println("Add App routers to the web service")
