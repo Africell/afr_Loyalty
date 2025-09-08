@@ -4480,6 +4480,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_Points_Details_Get(Key string) (
 	}
 }
 
+// // hiii
 func (Uc *UserControl) Customer_Loyalty_Account_Points_Details_GetPaginated(Page, Limit int64) (entries []Customer_Loyalty_Account_Points_Detail, err error) {
 	if Page < 1 {
 		return entries, errors.New("invalid page")
