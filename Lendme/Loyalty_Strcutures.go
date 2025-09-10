@@ -38,6 +38,8 @@ type Loyalty_Governance struct {
 	MaxAllowedPoints_PerTransaction float64 `bson:"MaxAllowedPoints_PerTransaction" json:"MaxAllowedPoints_PerTransaction"`
 	MaxSubsAwardedPoints_PerMonth   float64 `bson:"MaxSubsAwardedPoints_PerMonth" json:"MaxSubsAwardedPoints_PerMonth"`
 	MaxSubsAwardedPoints            float64 `bson:"MaxSubsAwardedPoints" json:"MaxSubsAwardedPoints"`
+	EVC_Account_Balance             float64 `bson:"EVC_Account_Balance" json:"EVC_Account_Balance"`
+	Merchant_Account_Balance        float64 `bson:"Merchant_Account_Balance" json:"Merchant_Account_Balance"`
 }
 
 type Loyalty_Governance_AddRequest struct {
@@ -66,11 +68,13 @@ type Loyalty_Governance_EditRequest struct {
 }
 
 type Loyalty_Governance_log struct {
-	Log_Date                time.Time `bson:"Log_Date" json:"Log_Date"`
-	Available_Points_Pool   float64   `bson:"Available_Points_Pool" json:"Available_Points_Pool"`
-	Distributed_Points_Pool float64   `bson:"Distributed_Points_Pool" json:"Distributed_Points_Pool"`
-	Redeemed_Points_Pool    float64   `bson:"Redeemed_Points_Pool" json:"Redeemed_Points_Pool"`
-	Expired_Points_Pool     float64   `bson:"Expired_Points_Pool" json:"Expired_Points_Pool"`
+	Log_Date                 time.Time `bson:"Log_Date" json:"Log_Date"`
+	Available_Points_Pool    float64   `bson:"Available_Points_Pool" json:"Available_Points_Pool"`
+	Distributed_Points_Pool  float64   `bson:"Distributed_Points_Pool" json:"Distributed_Points_Pool"`
+	Redeemed_Points_Pool     float64   `bson:"Redeemed_Points_Pool" json:"Redeemed_Points_Pool"`
+	Expired_Points_Pool      float64   `bson:"Expired_Points_Pool" json:"Expired_Points_Pool"`
+	EVC_Account_Balance      float64   `bson:"EVC_Account_Balance" json:"EVC_Account_Balance"`
+	Merchant_Account_Balance float64   `bson:"Merchant_Account_Balance" json:"Merchant_Account_Balance"`
 }
 
 type Loyalty_Level struct {

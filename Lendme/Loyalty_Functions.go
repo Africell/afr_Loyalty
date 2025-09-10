@@ -718,20 +718,27 @@ func (Uc *UserControl) Loyalty_Governance_Get(Key string) (entries []Loyalty_Gov
 					err = errors.New("error in type assertion")
 					return entries, err
 				} else {
-					// redemption_na := Map_Loyalty_Point_Redemption_Rules.ConvertToArray()
-					// if len(redemption_na) > 0 {
-					// 	for _, redemptionRules := range redemption_na {
-					// 		redemption, ok := redemptionRules.(Loyalty_Point_Redemption_Rules)
-					// 		if !ok {
-					// 			err = errors.New("error in type assertion")
-					// 			return entries, err
-					// 		} else {
-					// 			res, error := Uc.CGW.UC_GWClient.GetERDealerBalance(redemption.Airtime_EVC_Account, redemption.Airtime_EVC_PIN)
-					// 			fmt.Println("res", res)
-					// 			fmt.Println("error", error)
-					// 		}
-					// 	}
-					// }
+					redemption_na := Map_Loyalty_Point_Redemption_Rules.ConvertToArray()
+					if len(redemption_na) > 0 {
+						for _, redemptionRules := range redemption_na {
+							redemption, ok := redemptionRules.(Loyalty_Point_Redemption_Rules)
+							if !ok {
+								err = errors.New("error in type assertion")
+								return entries, err
+							} else {
+								var Airtime_EVC_PIN = ""
+								if redemption.Airtime_EVC_PIN != "" {
+									Airtime_EVC_PIN, err = DecryptHexString(redemption.Airtime_EVC_PIN)
+									if err != nil {
+										fmt.Println("error in decrypting artime evc pin", err.Error())
+									}
+								}
+								res, error := Uc.CGW.UC_GWClient.GetERDealerBalance(redemption.Airtime_EVC_Account, Airtime_EVC_PIN)
+								fmt.Println("res", res)
+								fmt.Println("error", error)
+							}
+						}
+					}
 					entries = append(entries, entry)
 				}
 			}
@@ -749,20 +756,27 @@ func (Uc *UserControl) Loyalty_Governance_Get(Key string) (entries []Loyalty_Gov
 			return entries, err
 		}
 
-		// redemption_na := Map_Loyalty_Point_Redemption_Rules.ConvertToArray()
-		// if len(redemption_na) > 0 {
-		// 	for _, redemptionRules := range redemption_na {
-		// 		redemption, ok := redemptionRules.(Loyalty_Point_Redemption_Rule)
-		// 		if !ok {
-		// 			err = errors.New("error in type assertion")
-		// 			return entries, err
-		// 		} else {
-		// 			res, error := Uc.CGW.UC_GWClient.ListAllPackages(redemption.Airtime_EVC_Account, redemption.Airtime_EVC_PIN)
-		// 			fmt.Println("res", res)
-		// 			fmt.Println("error", error)
-		// 		}
-		// 	}
-		// }
+		redemption_na := Map_Loyalty_Point_Redemption_Rules.ConvertToArray()
+		if len(redemption_na) > 0 {
+			for _, redemptionRules := range redemption_na {
+				redemption, ok := redemptionRules.(Loyalty_Point_Redemption_Rule)
+				if !ok {
+					err = errors.New("error in type assertion")
+					return entries, err
+				} else {
+					var Airtime_EVC_PIN = ""
+					if redemption.Airtime_EVC_PIN != "" {
+						Airtime_EVC_PIN, err = DecryptHexString(redemption.Airtime_EVC_PIN)
+						if err != nil {
+							fmt.Println("error in decrypting artime evc pin", err.Error())
+						}
+					}
+					res, error := Uc.CGW.UC_GWClient.GetERDealerBalance(redemption.Airtime_EVC_Account, Airtime_EVC_PIN)
+					fmt.Println("res", res)
+					fmt.Println("error", error)
+				}
+			}
+		}
 
 		entries = append(entries, entry)
 		return entries, nil
@@ -935,6 +949,29 @@ func (Uc *UserControl) Loyalty_Governance_DailyLog_Process() {
 								log_entry.Distributed_Points_Pool = loyalty_governance.Distributed_Points_Pool
 								log_entry.Redeemed_Points_Pool = loyalty_governance.Redeemed_Points_Pool
 								log_entry.Expired_Points_Pool = loyalty_governance.Expired_Points_Pool
+								redemption_na := Map_Loyalty_Point_Redemption_Rules.ConvertToArray()
+								if len(redemption_na) > 0 {
+									for _, redemptionRules := range redemption_na {
+										redemption, ok := redemptionRules.(Loyalty_Point_Redemption_Rules)
+										if !ok {
+											fmt.Println("error in type assertion")
+										} else {
+											var Airtime_EVC_PIN = ""
+											var err error
+											if redemption.Airtime_EVC_PIN != "" {
+												Airtime_EVC_PIN, err = DecryptHexString(redemption.Airtime_EVC_PIN)
+												if err != nil {
+													fmt.Println("error in decrypting artime evc pin", err.Error())
+												}
+											}
+											res, err := Uc.CGW.UC_GWClient.GetERDealerBalance(redemption.Airtime_EVC_Account, Airtime_EVC_PIN)
+											if err == nil {
+												// log_entry.EVC_Account_Balance = float64(res.Balance)
+												fmt.Println("res", res)
+											}
+										}
+									}
+								}
 								Uc.Write_Loyalty_Governance_log(log_entry)
 							}
 						}
@@ -4480,7 +4517,6 @@ func (Uc *UserControl) Customer_Loyalty_Account_Points_Details_Get(Key string) (
 	}
 }
 
-// // hiii
 func (Uc *UserControl) Customer_Loyalty_Account_Points_Details_GetPaginated(Page, Limit int64) (entries []Customer_Loyalty_Account_Points_Detail, err error) {
 	if Page < 1 {
 		return entries, errors.New("invalid page")
