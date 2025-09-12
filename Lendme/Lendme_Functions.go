@@ -1804,14 +1804,14 @@ func (Uc *UserControl) Credit_Limit_Scheme_Selection(Amount float64, FirstUse_da
 		return
 	}
 
-	LastRecharge_Hours := time.Now().Sub(LastRecharge_date).Hours()
-	LastRecharge_Months := (LastRecharge_Hours / 24) / 30
+	LastRecharge_Hours := time.Since(LastRecharge_date).Hours()
+	LastRecharge_Days := (LastRecharge_Hours / 24)
 	if LastRecharge_date.IsZero() {
 		NotElligibleReason = "Min Last Recharge Period"
 		DailyImportSubsStats.With(prometheus.Labels{"IsElligble": "false", "Reason": NotElligibleReason, "Scheme": ""}).Inc()
 		return
 	}
-	if LastRecharge_Months > Configuration.Min_LastRechargePeriod {
+	if LastRecharge_Days > Configuration.Min_LastRechargePeriod {
 		NotElligibleReason = "Min Last Recharge Period"
 		DailyImportSubsStats.With(prometheus.Labels{"IsElligble": "false", "Reason": NotElligibleReason, "Scheme": ""}).Inc()
 		return
