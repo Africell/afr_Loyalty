@@ -6588,7 +6588,7 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 			}
 			return 0, current_outstanding_points
 		case "MERCHPAY":
-			entry_na, exits := Map_Loyalty_Point_Earning_Rules_Overwrite.CheckThenGet(rules.Key + "|MERCHPAY|" + award_request.EventDetail)
+			entry_na, exits := Map_Loyalty_Point_Earning_Rules_Overwrite.CheckThenGet(rules.Key + "|MERCHPAY|" + award_request.EventDetailCode)
 			if exits {
 				entry, ok := entry_na.(Loyalty_Point_Earning_Rules_Overwrite)
 				if ok {
@@ -6650,7 +6650,7 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 
 			return 0, current_outstanding_points
 		case "BILLPAY":
-			entry_na, exits := Map_Loyalty_Point_Earning_Rules_Overwrite.CheckThenGet(rules.Key + "|BILLPAY|" + award_request.EventDetail)
+			entry_na, exits := Map_Loyalty_Point_Earning_Rules_Overwrite.CheckThenGet(rules.Key + "|BILLPAY|" + award_request.EventDetailCode)
 			if exits {
 				entry, ok := entry_na.(Loyalty_Point_Earning_Rules_Overwrite)
 				if ok {
