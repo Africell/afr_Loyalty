@@ -3537,7 +3537,8 @@ func (Uc *UserControl) Lendme_Subscriber_Daily_Snapshot() {
 					if exec == 0 {
 						exec = 1
 						log.Println(LOG_ID + " triggered")
-						YYYY, MM, _, DD, _, _, _ := GetTimeParts(time.Now())
+						yesterday := time.Now().AddDate(0, 0, -1)
+						YYYY, MM, _, DD, _, _, _ := GetTimeParts(yesterday)
 						Db := DAO_Lendme_log.DB + "_" + YYYY + MM
 						Col := DAO_Subscribers.Collection + "_" + DD
 						err := DAO_Subscribers.CollectionSnapshot(Db, Col)

@@ -999,7 +999,8 @@ func (Uc *UserControl) Loyalty_Customer_Account_Daily_Snapshot() {
 					if exec == 0 {
 						exec = 1
 						log.Println(LOG_ID + " triggered")
-						YYYY, MM, _, DD, _, _, _ := GetTimeParts(time.Now())
+						yesterday := time.Now().AddDate(0, 0, -1)
+						YYYY, MM, _, DD, _, _, _ := GetTimeParts(yesterday)
 						Db := DAO_Loyalty_AccountCreditPoints_log.DB + "_" + YYYY + MM
 						Col := DAO_Customer_Loyalty_Account.Collection + "_" + DD
 						err := DAO_Customer_Loyalty_Account.CollectionSnapshot(Db, Col)
@@ -2130,9 +2131,8 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Delete(Login, Key string) (er
 
 func (Uc *UserControl) Loyalty_Point_Earning_Rules_Overwrite_Add(Login string, request Loyalty_Point_Earning_Rules_Overwrite_AddRequest) (Id int64, err error) {
 	//check key if filled and if already used
-	request.MSISDN = Normalize_International_MSISDN(request.MSISDN)
-	if request.MSISDN == "" {
-		err = errors.New("MSISDN cannot be empty")
+	if request.AgentCode == "" {
+		err = errors.New("Agent Code cannot be empty")
 		return Id, err
 	}
 	if request.MM_Transaction_Type == "" {
@@ -2144,7 +2144,7 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Overwrite_Add(Login string, r
 		return Id, err
 	}
 	//check if key already used
-	exits := Map_Loyalty_Point_Earning_Rules_Overwrite.Check(request.Earning_Rule_Key + "|" + request.MM_Transaction_Type + "|" + request.MSISDN)
+	exits := Map_Loyalty_Point_Earning_Rules_Overwrite.Check(request.Earning_Rule_Key + "|" + request.MM_Transaction_Type + "|" + request.AgentCode)
 	if exits {
 		err = errors.New("key already exist")
 		return Id, err
@@ -2185,14 +2185,14 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Overwrite_Add(Login string, r
 	var NewEntry Loyalty_Point_Earning_Rules_Overwrite
 	NewEntry.Earning_Rules_Overwrite_Id = Map_Loyalty_AutoIncrement.GetNextAI("Loyalty_Point_Earning_Rules_Overwrite-Id")
 	Id = NewEntry.Earning_Rules_Overwrite_Id
-	NewEntry.Key = request.Earning_Rule_Key + "|" + request.MM_Transaction_Type + "|" + request.MSISDN
+	NewEntry.Key = request.Earning_Rule_Key + "|" + request.MM_Transaction_Type + "|" + request.AgentCode
 	NewEntry.Description = request.Description
 	NewEntry.Earning_Rule_Key = request.Earning_Rule_Key
 	NewEntry.Amount = request.Amount
 	NewEntry.Award_Type = request.Award_Type
 	NewEntry.Description = request.Description
 	NewEntry.MM_Transaction_Type = request.MM_Transaction_Type
-	NewEntry.MSISDN = request.MSISDN
+	NewEntry.AgentCode = request.AgentCode
 	NewEntry.Points = request.Points
 
 	//update earning rules
@@ -2234,9 +2234,8 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Overwrite_Edit(Login string, 
 		err = errors.New("key cannot be empty")
 		return Id, err
 	}
-	request.MSISDN = Normalize_International_MSISDN(request.MSISDN)
-	if request.MSISDN == "" {
-		err = errors.New("MSISDN cannot be empty")
+	if request.AgentCode == "" {
+		err = errors.New("Agent Code cannot be empty")
 		return Id, err
 	}
 	if request.MM_Transaction_Type == "" {
@@ -2295,11 +2294,11 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Overwrite_Edit(Login string, 
 	//Prepare new entry
 
 	//add to cache and DB
-	if request.MSISDN != entry.MSISDN {
+	if request.AgentCode != entry.AgentCode {
 		//delete old
 		Map_Loyalty_Point_Earning_Rules_Overwrite.Delete(request.Key)
 		//update key
-		entry.Key = request.Earning_Rule_Key + "|" + request.MM_Transaction_Type + "|" + request.MSISDN
+		entry.Key = request.Earning_Rule_Key + "|" + request.MM_Transaction_Type + "|" + request.AgentCode
 
 		//update earning rules
 		earning_na, exits := Map_Loyalty_Point_Earning_Rules.CheckThenGet(request.Earning_Rule_Key)
@@ -2333,7 +2332,7 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Overwrite_Edit(Login string, 
 	entry.Earning_Rule_Key = request.Earning_Rule_Key
 	entry.Earning_Rules_Overwrite_Id = request.Earning_Rules_Overwrite_Id
 	entry.MM_Transaction_Type = request.MM_Transaction_Type
-	entry.MSISDN = request.MSISDN
+	entry.AgentCode = request.AgentCode
 	entry.Points = request.Points
 
 	//add to cache and DB

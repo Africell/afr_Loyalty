@@ -355,7 +355,7 @@ type Loyalty_Point_Earning_Rules_Overwrite struct {
 	Earning_Rules_Overwrite_Id int64   `bson:"Earning_Rules_Overwrite_Id" json:"Earning_Rules_Overwrite_Id"`
 	Earning_Rule_Key           string  `bson:"Earning_Rule_Key" json:"Earning_Rule_Key"`
 	MM_Transaction_Type        string  `bson:"MM_Transaction_Type" json:"MM_Transaction_Type"`
-	MSISDN                     string  `bson:"MSISDN" json:"MSISDN"`
+	AgentCode                  string  `bson:"AgentCode" json:"AgentCode"`
 	Description                string  `bson:"Description" json:"Description"`
 	Award_Type                 string  `bson:"Award_Type" json:"Award_Type"` //"Transaction" or "Amount"
 	Amount                     float64 `bson:"Amount" json:"Amount"`
@@ -367,7 +367,7 @@ type Loyalty_Point_Earning_Rules_Overwrite_AddRequest struct {
 	Earning_Rules_Overwrite_Id int64   `bson:"Earning_Rules_Overwrite_Id" json:"Earning_Rules_Overwrite_Id"`
 	Earning_Rule_Key           string  `bson:"Earning_Rule_Key" json:"Earning_Rule_Key"`
 	MM_Transaction_Type        string  `bson:"MM_Transaction_Type" json:"MM_Transaction_Type"`
-	MSISDN                     string  `bson:"MSISDN" json:"MSISDN"`
+	AgentCode                  string  `bson:"AgentCode" json:"AgentCode"`
 	Description                string  `bson:"Description" json:"Description"`
 	Award_Type                 string  `bson:"Award_Type" json:"Award_Type"` //"Transaction" or "Amount"
 	Amount                     float64 `bson:"Amount" json:"Amount"`
@@ -379,7 +379,7 @@ type Loyalty_Point_Earning_Rules_Overwrite_EditRequest struct {
 	Earning_Rules_Overwrite_Id int64   `bson:"Earning_Rules_Overwrite_Id" json:"Earning_Rules_Overwrite_Id"`
 	Earning_Rule_Key           string  `bson:"Earning_Rule_Key" json:"Earning_Rule_Key"`
 	MM_Transaction_Type        string  `bson:"MM_Transaction_Type" json:"MM_Transaction_Type"`
-	MSISDN                     string  `bson:"MSISDN" json:"MSISDN"`
+	AgentCode                  string  `bson:"AgentCode" json:"AgentCode"`
 	Description                string  `bson:"Description" json:"Description"`
 	Award_Type                 string  `bson:"Award_Type" json:"Award_Type"` //"Transaction" or "Amount"
 	Amount                     float64 `bson:"Amount" json:"Amount"`
