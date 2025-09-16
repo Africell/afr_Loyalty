@@ -3775,6 +3775,7 @@ func (Uc *UserControl) HTTP_INLiveFeed_Consuption(w http.ResponseWriter, r *http
 			Uc.HTTP_API_Standard_response(w, r, sr, false)
 			return
 		}
+		fmt.Println("request.EventDetailCode", request.EventDetailCode)
 		validated_Headers := Uc.Validate_Headers(r)
 		var loyalty_AccountCreditPoints_log Loyalty_AccountCreditPoints_log
 		Uc.Loyalty_AccountCreditPoints(&validated_Headers, request, &loyalty_AccountCreditPoints_log)
