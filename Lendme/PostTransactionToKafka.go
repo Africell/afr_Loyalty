@@ -47,11 +47,11 @@ func Post_EVC_Recharge_ToKafka(load EVC_Recharge_request) {
 	req.Header.Add("Longitude", "0")
 	// now POST it
 	resp, err := client.Do(req)
-	defer req.Body.Close()
 	if err != nil {
 		HTTPPostToKafka.With(prometheus.Labels{"Description": "EVC_Recharge", "Status": "Failed", "Error": err.Error()}).Inc()
 		return
 	}
+	defer resp.Body.Close()
 	if resp.StatusCode == http.StatusOK {
 		HTTPPostToKafka.With(prometheus.Labels{"Description": "EVC_Recharge", "Status": "Successful", "Error": ""}).Inc()
 	} else {
@@ -100,11 +100,11 @@ func Post_EVC_BundlePurchase_ToKafka(load EVC_BundlePurchase_request) {
 	req.Header.Add("Longitude", "0")
 	// now POST it
 	resp, err := client.Do(req)
-	defer req.Body.Close()
 	if err != nil {
 		HTTPPostToKafka.With(prometheus.Labels{"Description": "EVC_BundlePurchase", "Status": "Failed", "Error": err.Error()}).Inc()
 		return
 	}
+	defer resp.Body.Close()
 	if resp.StatusCode == http.StatusOK {
 		HTTPPostToKafka.With(prometheus.Labels{"Description": "EVC_BundlePurchase", "Status": "Successful", "Error": ""}).Inc()
 	} else {
