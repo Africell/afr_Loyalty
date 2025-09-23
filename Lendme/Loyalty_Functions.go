@@ -79,6 +79,8 @@ var DAO_Loyalty_Event_Log daoc.DAO
 
 var DAO_Loyalty_Expiry_log daoc.DAO
 var DAO_Loyalty_Redemption_log daoc.DAO
+var DAO_Loyalty_Status_log daoc.DAO
+var DAO_Loyalty_Status_Expiry_log daoc.DAO
 
 var DAO_Loyalty_AccountCreditPoints_log daoc.DAO
 var DAO_Loyalty_AccountDebitPoints_log daoc.DAO
@@ -165,6 +167,8 @@ func (uc *UserControl) InitializeLoyaltyDAO() {
 	DAO_Customer_UAT.Initialize("Customer_UAT", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Customer_UAT{}), Configuration.DB_Name_Loyalty, "Col_Customer_UAT", "")
 	DAO_Loyalty_Expiry_log.Initialize("Loyalty_Expiry_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Expiry_log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Expiry_log", "")
 	DAO_Loyalty_Redemption_log.Initialize("Loyalty_Redemption_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Redemption_log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Redemption_log", "")
+	DAO_Loyalty_Status_log.Initialize("Loyalty_Status_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Status_log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Status_log", "")
+	DAO_Loyalty_Status_Expiry_log.Initialize("Loyalty_Status_Expiry_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Status_Expiry_Log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Status_Expiry_log", "")
 	DAO_Loyalty_AccountCreditPoints_log.Initialize("Loyalty_AccountCreditPoints_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_AccountCreditPoints_log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_AccountCreditPoints_log", "")
 	DAO_Loyalty_AccountDebitPoints_log.Initialize("Loyalty_AccountDebitPoints_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_AccountDebitPoints_log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_AccountDebitPoints_log", "")
 	DAO_NotificationLog.Initialize("NotificationLog", uc.MongoDB.MongoDBClient, reflect.TypeOf(NotificationLog{}), Configuration.DB_Name, "Col_NotificationLog", "")
@@ -337,6 +341,32 @@ func (uc *UserControl) LoyaltyIndexesMaintenanceProcess() {
 		}
 	}
 
+	exists, err = DAO_Loyalty_AccountDebitPoints_log.CheckAndCreateIndex("Idx_LoyaltyAutoIncrement_MSISDN", []string{"MSISDN"}, true)
+	if err != nil {
+		log.Println("Error checking and creating index Idx_LoyaltyAutoIncrement_MSISDN: ", err)
+	} else {
+		if !exists {
+			log.Println("Index Idx_LoyaltyAutoIncrement_MSISDN created")
+		}
+	}
+
+	exists, err = DAO_Loyalty_Point_Redemption_Rules.CheckAndCreateIndex("Idx_LoyaltyAutoIncrement_MSISDN", []string{"MSISDN"}, true)
+	if err != nil {
+		log.Println("Error checking and creating index Idx_LoyaltyAutoIncrement_MSISDN: ", err)
+	} else {
+		if !exists {
+			log.Println("Index Idx_LoyaltyAutoIncrement_MSISDN created")
+		}
+	}
+
+	exists, err = DAO_Loyalty_Status_log.CheckAndCreateIndex("Idx_LoyaltyAutoIncrement_MSISDN", []string{"MSISDN"}, true)
+	if err != nil {
+		log.Println("Error checking and creating index Idx_LoyaltyAutoIncrement_MSISDN: ", err)
+	} else {
+		if !exists {
+			log.Println("Index Idx_LoyaltyAutoIncrement_MSISDN created")
+		}
+	}
 }
 
 func (Uc *UserControl) Write_Loyalty_Event_Log(record Loyalty_Event_Log) {
@@ -435,6 +465,42 @@ func (Uc *UserControl) Write_Loyalty_Redemption_log(record Loyalty_Redemption_lo
 	_, err := DAO_Loyalty_Redemption_log.PutOneLogs(record, Db, Col)
 	if err != nil {
 		log.Println("Error in Write_Loyalty_Redemption_log:", err, " (", record, ")")
+		return
+	}
+}
+
+func (Uc *UserControl) Write_Loyalty_Status_log(record Loyalty_Status_log) {
+	YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.StatusDate)
+	Db := DAO_Loyalty_Status_log.DB + "_" + YYYY + MM
+	Col := DAO_Loyalty_Status_log.Collection + "_" + DD
+	_, err := DAO_Loyalty_Status_log.PutOneLogs(record, Db, Col)
+	if err != nil {
+		log.Println("Error in Write_Loyalty_Status_log:", err, " (", record, ")")
+		return
+	}
+	loyalty_account_na, subexist := Map_Customer_Loyalty_Account.CheckThenGet(record.MSISDN)
+	if !subexist {
+		log.Println("loyalty account does not exist:", err, " (", record, ")")
+		return
+
+	}
+	loyalty_account, ok := loyalty_account_na.(Customer_Loyalty_Account)
+	if !ok {
+		log.Println("type assertion issue with Customer_Loyalty_Account:", err, " (", record, ")")
+		return
+	}
+	loyalty_account.Opt_Status_log = append(loyalty_account.Opt_Status_log, record)
+	Map_Customer_Loyalty_Account.Put(loyalty_account.Key, loyalty_account)
+
+}
+
+func (Uc *UserControl) Write_Loyalty_Status_Expiry_log(record Loyalty_Status_Expiry_Log) {
+	YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.ExpiryTime)
+	Db := DAO_Loyalty_Status_Expiry_log.DB + "_" + YYYY + MM
+	Col := DAO_Loyalty_Status_Expiry_log.Collection + "_" + DD
+	_, err := DAO_Loyalty_Status_Expiry_log.PutOneLogs(record, Db, Col)
+	if err != nil {
+		log.Println("Error in Write_Loyalty_Status_Expiry_log:", err, " (", record, ")")
 		return
 	}
 }
@@ -717,7 +783,7 @@ func (Uc *UserControl) Loyalty_Governance_Get(Key string) (entries []Loyalty_Gov
 				if !ok {
 					err = errors.New("error in type assertion")
 					return entries, err
-				} else {
+				} else if Configuration.Operation != "Angola" {
 					redemption_na := Map_Loyalty_Point_Redemption_Rules.ConvertToArray()
 					if len(redemption_na) > 0 {
 						for _, redemptionRules := range redemption_na {
@@ -733,9 +799,10 @@ func (Uc *UserControl) Loyalty_Governance_Get(Key string) (entries []Loyalty_Gov
 										fmt.Println("error in decrypting artime evc pin", err.Error())
 									}
 								}
-								res, error := Uc.CGW.UC_GWClient.GetERDealerBalance(redemption.Airtime_EVC_Account, Airtime_EVC_PIN)
-								fmt.Println("res", res)
-								fmt.Println("error", error)
+								res, err := Uc.CGW.UC_GWClient.GetERDealerBalance(redemption.Airtime_EVC_Account, Airtime_EVC_PIN)
+								if err == nil {
+									entry.EVC_Account_Balance = float64(res.Balance)
+								}
 							}
 						}
 					}
@@ -927,6 +994,24 @@ func (Uc *UserControl) Loyalty_Governance_Expiry_Points_Credit(points float64) (
 	return
 }
 
+func (Uc *UserControl) Loyalty_Governance_Status_Expiry_Points_Credit(points float64) (err error) {
+	chan_LoyaltyGovernance_Controler <- 1
+	loyalty_governance_na, exist := Map_Loyalty_Governance.CheckThenGet(LOYALTY_GOVERNANCE_KEY)
+	if !exist {
+		<-chan_LoyaltyGovernance_Controler
+		return errors.New("loyalty governance entry not found")
+	}
+	loyalty_governance, ok := loyalty_governance_na.(Loyalty_Governance)
+	if !ok {
+		<-chan_LoyaltyGovernance_Controler
+		return errors.New("loyalty governance type assertion issue")
+	}
+	loyalty_governance.Distributed_Points_Pool = loyalty_governance.Distributed_Points_Pool - points
+	Map_Loyalty_Governance.Put(loyalty_governance.Key, loyalty_governance)
+	<-chan_LoyaltyGovernance_Controler
+	return
+}
+
 func (Uc *UserControl) Loyalty_Governance_DailyLog_Process() {
 	exec := 0
 	LOG_ID := "<<Loyalty Governance Daily Log Process>>"
@@ -949,25 +1034,26 @@ func (Uc *UserControl) Loyalty_Governance_DailyLog_Process() {
 								log_entry.Distributed_Points_Pool = loyalty_governance.Distributed_Points_Pool
 								log_entry.Redeemed_Points_Pool = loyalty_governance.Redeemed_Points_Pool
 								log_entry.Expired_Points_Pool = loyalty_governance.Expired_Points_Pool
-								redemption_na := Map_Loyalty_Point_Redemption_Rules.ConvertToArray()
-								if len(redemption_na) > 0 {
-									for _, redemptionRules := range redemption_na {
-										redemption, ok := redemptionRules.(Loyalty_Point_Redemption_Rules)
-										if !ok {
-											fmt.Println("error in type assertion")
-										} else {
-											var Airtime_EVC_PIN = ""
-											var err error
-											if redemption.Airtime_EVC_PIN != "" {
-												Airtime_EVC_PIN, err = DecryptHexString(redemption.Airtime_EVC_PIN)
-												if err != nil {
-													fmt.Println("error in decrypting artime evc pin", err.Error())
+								if Configuration.Operation != "Angola" {
+									redemption_na := Map_Loyalty_Point_Redemption_Rules.ConvertToArray()
+									if len(redemption_na) > 0 {
+										for _, redemptionRules := range redemption_na {
+											redemption, ok := redemptionRules.(Loyalty_Point_Redemption_Rules)
+											if !ok {
+												fmt.Println("error in type assertion")
+											} else {
+												var Airtime_EVC_PIN = ""
+												var err error
+												if redemption.Airtime_EVC_PIN != "" {
+													Airtime_EVC_PIN, err = DecryptHexString(redemption.Airtime_EVC_PIN)
+													if err != nil {
+														fmt.Println("error in decrypting artime evc pin", err.Error())
+													}
 												}
-											}
-											res, err := Uc.CGW.UC_GWClient.GetERDealerBalance(redemption.Airtime_EVC_Account, Airtime_EVC_PIN)
-											if err == nil {
-												// log_entry.EVC_Account_Balance = float64(res.Balance)
-												fmt.Println("res", res)
+												res, err := Uc.CGW.UC_GWClient.GetERDealerBalance(redemption.Airtime_EVC_Account, Airtime_EVC_PIN)
+												if err == nil {
+													log_entry.EVC_Account_Balance = float64(res.Balance)
+												}
 											}
 										}
 									}
@@ -1007,6 +1093,181 @@ func (Uc *UserControl) Loyalty_Customer_Account_Daily_Snapshot() {
 						if err != nil {
 							log.Println("error while taking a snapshot from customer account collection", err)
 						}
+						log.Println(LOG_ID + " finished")
+					}
+				}
+			} else {
+				if exec == 1 {
+					exec = 0
+				}
+			}
+		}
+	}
+}
+
+func (Uc *UserControl) Loyalty_Status_Expiry_Daily_Process() {
+	exec := 0
+	LOG_ID := "<<Loyalty Status Expiry Daily check>>"
+	for range time.Tick(time.Second * 1) {
+		_CurrentDateTime := time.Now()
+		_hr, _mi, _se := _CurrentDateTime.Clock()
+		if _hr == 12 {
+			if _mi == 00 {
+				if _se < 60 {
+					if exec == 0 {
+						exec = 1
+						log.Println(LOG_ID + " triggered")
+						graceDays := Configuration.ISLoyaltyOptOutGracePeriodDays
+						cutoffDate := time.Now().AddDate(0, 0, -graceDays)
+						pipeline := mongo.Pipeline{
+							{{Key: "$match", Value: bson.D{
+								{Key: "Opt_Status", Value: bson.D{{Key: "$eq", Value: "OptedOut"}}},
+								{Key: "Opt_Status_Date", Value: bson.D{{Key: "$lte", Value: cutoffDate}}},
+							}}},
+						}
+						MongoDB_DB_Name := "Loyalty_DB"
+						collName := "Col_Customer_Loyalty_Account"
+						// Fetch the collection
+						collection := Uc.LoyaltyMongoDB.MongoDBClient.Database(MongoDB_DB_Name).Collection(collName)
+
+						cursor, err := collection.Aggregate(context.Background(), pipeline)
+						if err != nil {
+							log.Printf("Aggregation failed for %s: %v", collName, err)
+							continue
+						}
+
+						for cursor.Next(context.Background()) {
+							var doc Customer_Loyalty_Account
+							if err := cursor.Decode(&doc); err != nil {
+								log.Printf("Failed decoding result for %s: %v", collName, err)
+								continue
+							}
+							var expiry_log Loyalty_Status_Expiry_Log
+							expiry_log.ExpiryTime = time.Now()
+							expiry_log.MSISDN = doc.Key
+							expiry_log.Opening_Awarded_Points = doc.Awarded_Points
+							expiry_log.Opening_Redeemed_Points = doc.Redeemed_Points
+							expiry_log.Opening_Available_Points = doc.Available_Points
+							expiry_log.Opening_OutStanding_Points = doc.Outstanding_fraction_points
+							expiry_log.Opening_Expired_Points = doc.Expired_Points
+							expiry_log.OpeningLoyaltyLevel = doc.Loyalty_Level_Key
+							expiry_log.EndLoyaltyLevel = doc.Loyalty_Level_Key
+							expiry_log.Last_OptOut = doc.Opt_Status_Date
+							expiry_log.Grace_Period_Given_Days = graceDays
+							expiry_log.ExpiryReason = "Opt out grace period reached"
+							expiry_log.ExpiryAmount = doc.Available_Points
+							var monthly_expiry_log Loyalty_Expiry_log
+							monthly_expiry_log.OpeningLoyaltyLevel = doc.Loyalty_Level_Key
+							monthly_expiry_log.EndLoyaltyLevel = doc.Loyalty_Level_Key
+							monthly_expiry_log.Expiry_Rules_Key = "Opt Out Expiry"
+							monthly_expiry_log.MSISDN = doc.Key
+							monthly_expiry_log.ExpiryTime = time.Now()
+							for _, pointKey := range doc.Points_Detail_Keys {
+								pointsDetail, err := Uc.Customer_Loyalty_Account_Points_Details_Get(pointKey)
+								if err != nil {
+									expiry_log.ExpiryStatus = "failed"
+									expiry_log.ExpiryStatusDescription = "points expiry rules not found"
+									Uc.Write_Loyalty_Status_Expiry_log(expiry_log)
+									// <-chan_PointsExpiry_Controler
+									return
+								}
+								monthly_expiry_log.Year_Month = pointsDetail[0].Year_Month
+								monthly_expiry_log.Opening_Awarded_Points = pointsDetail[0].Awarded_Points
+								monthly_expiry_log.Opening_Redeemed_Points = pointsDetail[0].Redeemed_Points
+								monthly_expiry_log.Opening_Available_Points = pointsDetail[0].Available_Points
+								monthly_expiry_log.Opening_Expired_Points = pointsDetail[0].Expired_Points
+
+								pointsDetail[0].Expired_Points = pointsDetail[0].Available_Points
+								pointsDetail[0].Available_Points = 0
+								pointsDetail[0].Expiry_Date = time.Now()
+								Map_Customer_Loyalty_Account_Points_Detail.Put(pointsDetail[0].Key, pointsDetail[0])
+
+								monthly_expiry_log.End_Expired_Points = pointsDetail[0].Expired_Points
+								monthly_expiry_log.ExpiryTime = time.Now()
+								monthly_expiry_log.End_Available_Points = 0
+								monthly_expiry_log.End_Awarded_Points = pointsDetail[0].Awarded_Points
+								monthly_expiry_log.End_Redeemed_Points = pointsDetail[0].Redeemed_Points
+								//check level downgrade
+
+								monthly_expiry_log.ExpiryStatus = "successful"
+								monthly_expiry_log.ExpiryStatusDescription = ""
+								Uc.Write_Loyalty_Expiry_log(monthly_expiry_log)
+
+								// }
+								// <-chan_PointsExpiry_Controler
+							}
+							expired_Points := doc.Available_Points
+							expiry_log.End_Expired_Points = doc.Expired_Points + doc.Available_Points
+							doc.Expired_Points = doc.Expired_Points + expired_Points
+							doc.Expiry_Date = time.Now()
+							// account.Awarded_Points = account.Awarded_Points - pointsDetail[0].Available_Points
+							doc.Available_Points = 0
+							doc.Awarded_Points = 0
+							doc.Redeemed_Points = 0
+							doc.Outstanding_fraction_points = 0
+							doc.Opt_Status = "OptedOutExpired"
+							//update governance expiry
+							Uc.Loyalty_Governance_Status_Expiry_Points_Credit(expired_Points)
+							//update logs
+							expiry_log.End_Awarded_Points = 0
+							expiry_log.End_Redeemed_Points = 0
+							expiry_log.End_Available_Points = 0
+							expiry_log.End_Outstanding_Points = 0
+							Map_Customer_Loyalty_Account.Put(doc.Key, doc)
+							var New_Loyalty_Level Loyalty_Level
+							loyalty_Level_na := Map_Loyalty_Level.ConvertToArray()
+							if len(loyalty_Level_na) > 0 {
+								for _, loyalty_Level_na := range loyalty_Level_na {
+									loyalty_Level, ok := loyalty_Level_na.(Loyalty_Level)
+									if !ok {
+										fmt.Println("error in type assertion")
+									} else {
+										//evaluate
+										if doc.Awarded_Points >= loyalty_Level.Min_Accumulated_Points && doc.Awarded_Points < loyalty_Level.Max_Accumulated_Points {
+											New_Loyalty_Level = loyalty_Level
+											if New_Loyalty_Level.Key == doc.Loyalty_Level_Key {
+												//===>> no level change
+												break
+											} else {
+												current_level_na, lvlexist := Map_Loyalty_Level.CheckThenGet(doc.Loyalty_Level_Key)
+												if !lvlexist {
+													fmt.Println("current level is invalid")
+												}
+												current_level, ok := current_level_na.(Loyalty_Level)
+												if !ok {
+													fmt.Println("error in type assertion")
+												}
+												if New_Loyalty_Level.Min_Accumulated_Points < current_level.Min_Accumulated_Points &&
+													New_Loyalty_Level.Max_Accumulated_Points < current_level.Max_Accumulated_Points {
+													//Downgrade level
+													expiry_log.EndLoyaltyLevel = New_Loyalty_Level.Key
+													doc.Previous_Loyalty_Level_Key = doc.Loyalty_Level_Key
+													doc.Previous_Loyalty_Level_Date = doc.Loyalty_Level_Date
+													doc.Loyalty_Level_Key = New_Loyalty_Level.Key
+													doc.Loyalty_Level_Date = time.Now()
+													doc.Loyalty_Level_Direction = "Downgrade"
+													doc.Loyalty_Level_SetBy = "Opt Expiry Process"
+													Map_Customer_Loyalty_Account.Put(doc.Key, doc)
+
+												}
+											}
+										}
+									}
+								}
+							}
+							expiry_log.ExpiryStatus = "successful"
+							expiry_log.ExpiryStatusDescription = ""
+							Uc.Write_Loyalty_Status_Expiry_log(expiry_log)
+						}
+
+						// yesterday := time.Now().AddDate(0, 0, -1)
+						// YYYY, MM, _, DD, _, _, _ := GetTimeParts(yesterday)
+						// Db := DAO_Loyalty_AccountCreditPoints_log.DB + "_" + YYYY + MM
+						// Col := DAO_Customer_Loyalty_Account.Collection + "_" + DD
+						// err := DAO_Customer_Loyalty_Account.CollectionSnapshot(Db, Col)
+						// if err != nil {
+						// 	log.Println("error while taking a snapshot from customer account collection", err)
+						// }
 						log.Println(LOG_ID + " finished")
 					}
 				}
@@ -4038,6 +4299,12 @@ func (Uc *UserControl) Customer_Loyalty_Account_Add(Login string, request Custom
 	NewEntry.Loyalty_Level_Date = time.Now()
 	NewEntry.Loyalty_Level_Direction = ""
 	NewEntry.Loyalty_Level_SetBy = Login //program or admin, if admin program cannot change anymore
+	if Configuration.ISLoyaltyOptIn {
+		NewEntry.Opt_Status = "OptedOut"
+	} else {
+		NewEntry.Opt_Status = "OptedIn"
+	}
+	NewEntry.Opt_Status_Date = time.Now()
 
 	if Login != "DWH_Import" {
 		NewEntry.Loyalty_Account_Segment_Key = Loyalty_Account_Segment_Selection(request.ARPU, request.Joining_Date)
@@ -4161,6 +4428,11 @@ func (Uc *UserControl) Customer_Loyalty_Account_Edit(Login string, request Custo
 		return Id, errors.New("id is not matching")
 	}
 	Current_Entry := entry
+	//check opt status
+	if entry.Opt_Status != "OptedIn" {
+		err = errors.New("customer is opted out")
+		return Id, err
+	}
 	//check exclusion list
 	exists_exclusion := Map_Customer_Exclusion.Check(request.Key)
 	if exists_exclusion {
@@ -5867,6 +6139,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 	response.EventAmount = request.EventAmount
 	response.PointsToCredit = request.PointsToCredit
 	response.EventDescription = request.EventDescription
+	response.EventDetailCode = request.EventDetailCode
 
 	//validate loyalty account
 	loyalty_account_na, subexist := Map_Customer_Loyalty_Account.CheckThenGet(request.MSISDN)
@@ -5899,6 +6172,17 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 	response.Opening_Available_Points = loyalty_account.Available_Points
 	response.Opening_Outstanding_fraction_points = loyalty_account.Outstanding_fraction_points
 
+	//check opt status
+	if loyalty_account.Opt_Status != "OptedIn" {
+		response.Status = "failed"
+		response.StatusCode = http.StatusBadRequest
+		response.StatusDescription = "customer is opted out"
+		response.ErrorDescription = "customer is opted out"
+		response.StatusDate = time.Now()
+		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+		Uc.Write_Loyalty_AccountCreditPoints_log(*response)
+		return
+	}
 	//check exclusion list
 	exists_exclusion := Map_Customer_Exclusion.Check(loyalty_account.Key)
 	if exists_exclusion {
@@ -6278,6 +6562,16 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 	response.Opening_Redeemed_Points = loyalty_Account.Redeemed_Points
 	response.Opening_Available_Points = loyalty_Account.Available_Points
 	//check exclusion list
+	if loyalty_Account.Opt_Status != "OptedIn" {
+		response.Status = "failed"
+		response.StatusCode = http.StatusBadRequest
+		response.StatusDescription = "customer is opted out"
+		response.ErrorDescription = "customer is opted out"
+		response.StatusDate = time.Now()
+		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+		Uc.Write_Loyalty_AccountDebitPoints_log(*response)
+		return
+	}
 	exists_exclusion := Map_Customer_Exclusion.Check(loyalty_Account.Key)
 	if exists_exclusion {
 		response.Status = "failed"
@@ -6400,6 +6694,175 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 	PointsDebitedCount.With(prometheus.Labels{"EventSource": response.SourceApp, "DebitType": response.Redemption_Type, "Level": loyalty_Account.Loyalty_Level_Key}).Inc()
 	PointsDebited.With(prometheus.Labels{"EventSource": response.SourceApp, "DebitType": response.Redemption_Type, "Level": loyalty_Account.Loyalty_Level_Key}).Add(request.Debit_Amount)
 
+}
+
+func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Header, request Loyalty_Opt_Request, response *Loyalty_Status_log) {
+	response.StatusDate = time.Now()
+	//fill the request header info
+	response.SourceIP = request_header.SourceIP
+	response.SourceApp = request.EventSource
+	response.AppLogin = request_header.AppLogin
+	response.AppVersion = request_header.AppVersion
+	response.MSISDN = request.MSISDN
+	// request.MSISDN = Normalize_International_MSISDN(request.MSISDN)
+	if request.MSISDN == "" {
+		response.Request_Status = "failed"
+		response.Request_StatusCode = http.StatusBadRequest
+		response.StatusDescription = "invalid msisdn"
+		response.ErrorDescription = "invalid msisdn"
+		response.StatusDate = time.Now()
+		response.E2E_Elapsedtime = (time.Since(response.StatusDate).Nanoseconds()) / 1000000
+		return
+	}
+	//fill the request info
+	response.MSISDN = request.MSISDN
+	response.Opt_Status = request.Opt_Status
+
+	//validate loyalty account
+	loyalty_account_na, subexist := Map_Customer_Loyalty_Account.CheckThenGet(request.MSISDN)
+	if !subexist {
+		response.Request_Status = "failed"
+		response.Request_StatusCode = http.StatusBadRequest
+		response.StatusDescription = "failed to get loyalty account"
+		response.ErrorDescription = "loyalty account does not exist"
+		response.StatusDate = time.Now()
+		response.E2E_Elapsedtime = (time.Since(response.StatusDate).Nanoseconds()) / 1000000
+		Uc.Write_Loyalty_Status_log(*response)
+		return
+
+	}
+	loyalty_account, ok := loyalty_account_na.(Customer_Loyalty_Account)
+	if !ok {
+		response.Request_Status = "failed"
+		response.Request_StatusCode = http.StatusBadRequest
+		response.StatusDescription = "failed to get loyalty account"
+		response.ErrorDescription = "type assertion issue with Customer_Loyalty_Account"
+		response.StatusDate = time.Now()
+		response.E2E_Elapsedtime = (time.Since(response.StatusDate).Nanoseconds()) / 1000000
+		Uc.Write_Loyalty_Status_log(*response)
+		return
+	}
+
+	if loyalty_account.Opt_Status == request.Opt_Status || (loyalty_account.Opt_Status == "OptedOutExpired" && request.Opt_Status == "OptedOut") {
+		response.Request_Status = "failed"
+		response.Request_StatusCode = http.StatusBadRequest
+		status := "opted out"
+		if request.Opt_Status == "OptedIn" {
+			status = "opted in"
+		}
+		response.StatusDescription = fmt.Sprint("customer is already ", status)
+		response.ErrorDescription = fmt.Sprint("customer is already ", status)
+		response.StatusDate = time.Now()
+		response.E2E_Elapsedtime = (time.Since(response.StatusDate).Nanoseconds()) / 1000000
+		Uc.Write_Loyalty_Status_log(*response)
+		return
+	}
+	//check exclusion list
+	exists_exclusion := Map_Customer_Exclusion.Check(loyalty_account.Key)
+	if exists_exclusion {
+		response.Request_Status = "failed"
+		response.Request_StatusCode = http.StatusBadRequest
+		response.StatusDescription = "customer is included in the exclusion list"
+		response.ErrorDescription = "customer is included in the exclusion list"
+		response.StatusDate = time.Now()
+		response.E2E_Elapsedtime = (time.Since(response.StatusDate).Nanoseconds()) / 1000000
+		Uc.Write_Loyalty_Status_log(*response)
+		return
+	}
+	//check COS exclusion list
+	exists_exclusion_cos := Map_Customer_COS_Exclusion.Check(loyalty_account.COS)
+	if exists_exclusion_cos {
+		response.Request_Status = "failed"
+		response.Request_StatusCode = http.StatusBadRequest
+		response.StatusDescription = "customer is included in the cos exclusion list"
+		response.ErrorDescription = "customer is included in the cos exclusion list"
+		response.StatusDate = time.Now()
+		response.E2E_Elapsedtime = (time.Since(response.StatusDate).Nanoseconds()) / 1000000
+		Uc.Write_Loyalty_Status_log(*response)
+		return
+	}
+
+	if loyalty_account.Loyalty_Account_Segment_Key == "" {
+		response.Request_Status = "failed"
+		response.Request_StatusCode = http.StatusBadRequest
+		response.StatusDescription = "loyalty account segment is not assigned"
+		response.ErrorDescription = "loyalty account segment is not assigned"
+		response.StatusDate = time.Now()
+		response.E2E_Elapsedtime = (time.Since(response.StatusDate).Nanoseconds()) / 1000000
+		Uc.Write_Loyalty_Status_log(*response)
+		return
+	}
+	if loyalty_account.Loyalty_Level_Key == "" {
+		response.Request_Status = "failed"
+		response.Request_StatusCode = http.StatusBadRequest
+		response.StatusDescription = "loyalty account level is not assigned"
+		response.ErrorDescription = "loyalty account level is not assigned"
+		response.StatusDate = time.Now()
+		response.E2E_Elapsedtime = (time.Since(response.StatusDate).Nanoseconds()) / 1000000
+		Uc.Write_Loyalty_Status_log(*response)
+		return
+	}
+	//validate loyalty level
+	_, exits := Map_Loyalty_Level.CheckThenGet(loyalty_account.Loyalty_Level_Key)
+	if !exits {
+		response.Request_Status = "failed"
+		response.Request_StatusCode = http.StatusBadRequest
+		response.StatusDescription = "failed to get loyalty account level"
+		response.ErrorDescription = "loyalty account level is not defined"
+		response.StatusDate = time.Now()
+		response.E2E_Elapsedtime = (time.Since(response.StatusDate).Nanoseconds()) / 1000000
+		Uc.Write_Loyalty_Status_log(*response)
+		return
+	}
+
+	//validate the loyalty plan
+	plan_na, planexist := Map_Loyalty_Plan.CheckThenGet(loyalty_account.Loyalty_Level_Key + "|" + loyalty_account.Loyalty_Account_Segment_Key)
+	if !planexist {
+		response.Request_Status = "failed"
+		response.Request_StatusCode = http.StatusBadRequest
+		response.StatusDescription = "failed to get loyalty plan"
+		response.ErrorDescription = "loyalty plan does not exist"
+		response.StatusDate = time.Now()
+		response.E2E_Elapsedtime = (time.Since(response.StatusDate).Nanoseconds()) / 1000000
+		Uc.Write_Loyalty_Status_log(*response)
+		return
+	}
+	plan, ok := plan_na.(Loyalty_Plan)
+	if !ok {
+		response.Request_Status = "failed"
+		response.Request_StatusCode = http.StatusBadRequest
+		response.StatusDescription = "failed to get loyalty plan"
+		response.ErrorDescription = "type assertion issue with Loyalty_Plan"
+		response.StatusDate = time.Now()
+		response.E2E_Elapsedtime = (time.Since(response.StatusDate).Nanoseconds()) / 1000000
+		Uc.Write_Loyalty_Status_log(*response)
+		return
+	}
+	//validate earning rules
+	if plan.Earning_Rules_Key == "" {
+		response.Request_Status = "failed"
+		response.Request_StatusCode = http.StatusBadRequest
+		response.StatusDescription = "failed to get earning rules"
+		response.ErrorDescription = "earning rules are not defined"
+		response.StatusDate = time.Now()
+		response.E2E_Elapsedtime = (time.Since(response.StatusDate).Nanoseconds()) / 1000000
+		Uc.Write_Loyalty_Status_log(*response)
+		return
+	}
+
+	//response.ClosureAvailablePoints = (loyalty_account.Awarded_Points + loyalty_account.Expired_Points) - loyalty_account.Redeemed_Points
+	loyalty_account.Opt_Status = request.Opt_Status
+	loyalty_account.Opt_Status_Date = time.Now()
+	Map_Customer_Loyalty_Account.Put(loyalty_account.Key, loyalty_account)
+
+	//successful reply
+	response.Request_Status = "successful"
+	response.Request_StatusCode = http.StatusOK
+	response.StatusDescription = ""
+	response.ErrorDescription = ""
+	response.StatusDate = time.Now()
+	response.E2E_Elapsedtime = (time.Since(response.StatusDate).Nanoseconds()) / 1000000
+	Uc.Write_Loyalty_Status_log(*response)
 }
 
 func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request Loyalty_AccountCreditPoints_Request, current_outstanding_points float64) (points, outstanding_points float64) {
@@ -6587,13 +7050,10 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 			}
 			return 0, current_outstanding_points
 		case "MERCHPAY":
-			fmt.Println("rules.Key + |MERCHPAY| + award_request.EventDetailCode", rules.Key+"|MERCHPAY|"+award_request.EventDetailCode)
 			entry_na, exits := Map_Loyalty_Point_Earning_Rules_Overwrite.CheckThenGet(rules.Key + "|MERCHPAY|" + award_request.EventDetailCode)
 			if exits {
-				fmt.Println("entered exists", entry_na)
 				entry, ok := entry_na.(Loyalty_Point_Earning_Rules_Overwrite)
 				if ok {
-					fmt.Println("ok entered", entry)
 					if entry.Award_Type == "Transaction" {
 						if entry.Points > 0 {
 							// return entry.MM_MERCHPAY_Points, current_outstanding_points
@@ -7271,6 +7731,154 @@ func (Uc *UserControl) ReadAccountEventsDetailsFromMongoDB(startDate, endDate ti
 	return response, err
 }
 
+func (Uc *UserControl) Customer_Loyalty_Account_GetStatus_log(startDate, endDate time.Time, MSISDN string, Filter string) (response []Loyalty_Status_log, err error) {
+
+	findResult, err := Uc.ReadAccountStatusDetailsFromMongoDB(startDate, endDate, MSISDN, 1, 0)
+	if err != nil {
+		return response, err
+	}
+
+	response = append(response, findResult...)
+
+	return response, nil
+}
+
+func (Uc *UserControl) ReadAccountStatusDetailsFromMongoDB(startDate, endDate time.Time, MSISDN string, page, limit int64) (response []Loyalty_Status_log, err error) {
+	// Ensure startDate is before or equal to endDate
+
+	if startDate.After(endDate) {
+		return response, fmt.Errorf("start date cannot be after end date")
+	}
+
+	if page < 1 {
+		page = 1 // Default to first page if invalid page number
+	}
+
+	// Iterate over the range of dates
+	for currentDate := startDate; !currentDate.After(endDate); currentDate = currentDate.AddDate(0, 0, 1) {
+		monthStr := strconv.Itoa(int(currentDate.Month()))
+		if len(monthStr) < 2 {
+			monthStr = "0" + monthStr
+		}
+		MongoDB_DB_Name := "Loyalty_DB_" + strconv.Itoa(currentDate.Year()) + monthStr
+
+		var dayStr = strconv.Itoa(currentDate.Day())
+		if len(dayStr) < 2 {
+			dayStr = "0" + dayStr
+		}
+
+		collName := "Col_Loyalty_Status_log_" + dayStr
+
+		// Fetch the collection
+		collection := Uc.LoyaltyMongoDB.MongoDBClient.Database(MongoDB_DB_Name).Collection(collName)
+		// Build the filter for the date range
+		filter := bson.D{
+			{Key: "MSISDN", Value: MSISDN},
+		}
+		skip := (page - 1) * limit
+
+		// Fetch a paginated list of documents using limit and skip
+		cursor, err := collection.Find(
+			context.Background(),
+			filter,
+			options.Find().SetSkip(int64(skip)).SetLimit(int64(limit)),
+		)
+		if err != nil {
+			return response, err
+		}
+		defer cursor.Close(context.Background())
+
+		for cursor.Next(context.Background()) {
+			var result Loyalty_Status_log
+
+			if err := cursor.Decode(&result); err != nil {
+				return nil, fmt.Errorf("failed to decode result: %w", err)
+			}
+			response = append(response, result)
+		}
+
+		if err := cursor.Err(); err != nil {
+			return nil, fmt.Errorf("cursor error: %w", err)
+		}
+	}
+
+	return response, err
+}
+
+func (Uc *UserControl) Customer_Loyalty_Account_GetStatusExpiry_log(startDate, endDate time.Time, MSISDN string, Filter string) (response []Loyalty_Status_Expiry_Log, err error) {
+
+	findResult, err := Uc.ReadAccountStatusExpiryDetailsFromMongoDB(startDate, endDate, MSISDN, 1, 0)
+	if err != nil {
+		return response, err
+	}
+
+	response = append(response, findResult...)
+
+	return response, nil
+}
+
+func (Uc *UserControl) ReadAccountStatusExpiryDetailsFromMongoDB(startDate, endDate time.Time, MSISDN string, page, limit int64) (response []Loyalty_Status_Expiry_Log, err error) {
+	// Ensure startDate is before or equal to endDate
+
+	if startDate.After(endDate) {
+		return response, fmt.Errorf("start date cannot be after end date")
+	}
+
+	if page < 1 {
+		page = 1 // Default to first page if invalid page number
+	}
+
+	// Iterate over the range of dates
+	for currentDate := startDate; !currentDate.After(endDate); currentDate = currentDate.AddDate(0, 0, 1) {
+		monthStr := strconv.Itoa(int(currentDate.Month()))
+		if len(monthStr) < 2 {
+			monthStr = "0" + monthStr
+		}
+		MongoDB_DB_Name := "Loyalty_DB_" + strconv.Itoa(currentDate.Year()) + monthStr
+
+		var dayStr = strconv.Itoa(currentDate.Day())
+		if len(dayStr) < 2 {
+			dayStr = "0" + dayStr
+		}
+
+		collName := "Col_Loyalty_Status_Expiry_log_" + dayStr
+
+		// Fetch the collection
+		collection := Uc.LoyaltyMongoDB.MongoDBClient.Database(MongoDB_DB_Name).Collection(collName)
+		// Build the filter for the date range
+		filter := bson.D{
+			{Key: "MSISDN", Value: MSISDN},
+		}
+		skip := (page - 1) * limit
+
+		// Fetch a paginated list of documents using limit and skip
+		cursor, err := collection.Find(
+			context.Background(),
+			filter,
+			options.Find().SetSkip(int64(skip)).SetLimit(int64(limit)),
+		)
+		if err != nil {
+			return response, err
+		}
+		defer cursor.Close(context.Background())
+
+		for cursor.Next(context.Background()) {
+			var result Loyalty_Status_Expiry_Log
+
+			if err := cursor.Decode(&result); err != nil {
+				return nil, fmt.Errorf("failed to decode result: %w", err)
+			}
+			response = append(response, result)
+		}
+
+		if err := cursor.Err(); err != nil {
+			return nil, fmt.Errorf("cursor error: %w", err)
+		}
+	}
+
+	return response, err
+}
+
 type LoyaltySummary struct {
 	MSISDN             string  `bson:"_id"`
 	TotalPoints        float64 `bson:"totalPoints"`
@@ -7410,7 +8018,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_Getlogs(Type string, startDate, 
 		}
 		for _, log := range findResult {
 			var newLog = Loyalty_Logs{}
-			newLog.Logs_Type = "Expiry"
+			newLog.Logs_Type = "Expiry " + log.Year_Month
 			newLog.Expiry_Logs = log
 			newLog.Status = log.ExpiryStatus
 			newLog.Date = log.ExpiryTime
@@ -7432,6 +8040,40 @@ func (Uc *UserControl) Customer_Loyalty_Account_Getlogs(Type string, startDate, 
 			newLog.Closure_Available_Points = log.Available_Points
 			newLog.Level_Change_Logs = log
 			newLog.Date = log.Level_Change_Date
+			allLogs = append(allLogs, newLog)
+		}
+	}
+	if Type == "All Logs" || Type == "Status Logs" {
+		findResult, err := Uc.Customer_Loyalty_Account_GetStatus_log(startDate, endDate, MSISDN, Filter)
+		if err != nil {
+			return response, err
+		}
+		for _, log := range findResult {
+			var newLog = Loyalty_Logs{}
+			newLog.Logs_Type = "Status"
+			newLog.Status_Logs = log
+			newLog.Status = log.Request_Status
+			newLog.Date = log.StatusDate
+			newLog.PointsToCredit = 0
+			newLog.Opening_Available_Points = 0
+			newLog.Closure_Available_Points = 0
+			allLogs = append(allLogs, newLog)
+		}
+	}
+	if Type == "All Logs" || Type == "Status Expiry Logs" {
+		findResult, err := Uc.Customer_Loyalty_Account_GetStatusExpiry_log(startDate, endDate, MSISDN, Filter)
+		if err != nil {
+			return response, err
+		}
+		for _, log := range findResult {
+			var newLog = Loyalty_Logs{}
+			newLog.Logs_Type = "Status Expiry"
+			newLog.Status_Expiry_Logs = log
+			newLog.Status = log.ExpiryStatus
+			newLog.Date = log.ExpiryTime
+			newLog.PointsToCredit = log.ExpiryAmount
+			newLog.Opening_Available_Points = log.Opening_Available_Points
+			newLog.Closure_Available_Points = log.End_Available_Points
 			allLogs = append(allLogs, newLog)
 		}
 	}
@@ -7733,10 +8375,10 @@ func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account
 			Map_Customer_Loyalty_Account_Points_Detail.Put(pointsDetail[0].Key, pointsDetail[0])
 
 			expiry_log.Year_Month = pointsDetail[0].Year_Month
-			expiry_log.Month_Awarded_Points = pointsDetail[0].Awarded_Points
-			expiry_log.Month_Redeemed_Points = pointsDetail[0].Redeemed_Points
-			expiry_log.Month_Available_Points = pointsDetail[0].Available_Points
-			expiry_log.Month_Expired_Points = pointsDetail[0].Available_Points
+			expiry_log.Opening_Awarded_Points = pointsDetail[0].Awarded_Points
+			expiry_log.Opening_Redeemed_Points = pointsDetail[0].Redeemed_Points
+			expiry_log.Opening_Available_Points = pointsDetail[0].Available_Points
+			expiry_log.Opening_Expired_Points = pointsDetail[0].Available_Points
 			// Map_Customer_Loyalty_Account_Points_Detail.Delete(account.Key + "|" + YYYY + MM)
 			//remove detail key from account
 			// account.Points_Detail_Keys = removeStringFromArray(account.Points_Detail_Keys, pointsDetail[0].Key)
@@ -7754,6 +8396,9 @@ func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account
 			expiry_log.End_Expired_Points = account.Expired_Points
 			//check level downgrade
 			new_Loyalty_level_key, errNL := Uc.EvaluateAndUpdate_CustomerLoyaltyLevel("Points_Expiry", account.Key)
+			if errNL == nil {
+				fmt.Println("error", errNL)
+			}
 			if errNL != nil {
 				expiry_log.EndLoyaltyLevel = new_Loyalty_level_key
 			}

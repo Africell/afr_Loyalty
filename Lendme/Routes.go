@@ -510,6 +510,7 @@ func (Uc *UserControl) AddToLoyaltyManagementRouter(router *mux.Router, UC *User
 			{AccessKey: "HTTP_Customer_Loyalty_Account_CreditPoints", AccessMethod: "PUT", Allowed: true},
 			{AccessKey: "HTTP_Customer_Loyalty_Account_DebitPoints", AccessMethod: "PUT", Allowed: true},
 			{AccessKey: "HTTP_Loyalty_Products_Catalogue", AccessMethod: "GET", Allowed: true},
+			{AccessKey: "HTTP_Customer_Loyalty_Account_OptRequest", AccessMethod: "POST", Allowed: true},
 			{AccessKey: "Customer Awarded Points", AccessMethod: "Module Sub Menu L1", Allowed: true},
 			{AccessKey: "HTTP_Customer_Loyalty_Account_Get_Awarded_Points", AccessMethod: "GET", Allowed: true},
 			{AccessKey: "Bulk Points Crediting", AccessMethod: "Module Sub Menu L1", Allowed: true},
@@ -751,7 +752,7 @@ func (Uc *UserControl) Add_Loyalty_ToAccessEntry(existing map[string]AuthCenter.
 		Level2DisplayOrder:   8,
 		Level3:               "",
 		Level3DisplayOrder:   0,
-		Routes:               []string{"HTTP_Customer_Loyalty_Account_GetRedemption_Rules|GET", "HTTP_Customer_Loyalty_RedeemRequest|PUT", "HTTP_Loyalty_AccountDebitPoints_log|GET", "HTTP_Customer_Loyalty_Account_Points_Details|GET", "HTTP_Loyalty_AccountCreditPoints_log|GET", "HTTP_Loyalty_logs|GET", "HTTP_Customer_Loyalty_Account_DebitPoints|PUT", "HTTP_Customer_Loyalty_Account_CreditPoints|PUT", "HTTP_Loyalty_Products_Catalogue|GET"},
+		Routes:               []string{"HTTP_Customer_Loyalty_Account_GetRedemption_Rules|GET", "HTTP_Customer_Loyalty_RedeemRequest|PUT", "HTTP_Loyalty_AccountDebitPoints_log|GET", "HTTP_Customer_Loyalty_Account_Points_Details|GET", "HTTP_Loyalty_AccountCreditPoints_log|GET", "HTTP_Loyalty_logs|GET", "HTTP_Customer_Loyalty_Account_DebitPoints|PUT", "HTTP_Customer_Loyalty_Account_CreditPoints|PUT", "HTTP_Loyalty_Products_Catalogue|GET", "HTTP_Customer_Loyalty_Account_OptRequest|POST"},
 	}
 	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
 

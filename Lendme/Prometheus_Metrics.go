@@ -152,7 +152,6 @@ var (
 		},
 		[]string{"EventSource", "DebitType", "Level"},
 	)
-
 	BundleRedemptionCount = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "BundleRedemptionCount",

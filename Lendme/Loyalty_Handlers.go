@@ -2424,6 +2424,44 @@ func (Uc *UserControl) HTTP_Customer_Loyalty_RedeemRequest(w http.ResponseWriter
 	Uc.HTTP_Customer_Loyalty_RedeemRequest_Response(w, r, &transaction, false)
 }
 
+func (Uc *UserControl) HTTP_Customer_Loyalty_Account_OptRequest(w http.ResponseWriter, r *http.Request) {
+	var transaction Loyalty_Status_log
+	transaction.StatusDate = time.Now()
+	validated_Headers := Uc.Validate_Headers(r)
+	transaction.SourceIP = validated_Headers.SourceIP
+	transaction.SourceApp = validated_Headers.SourceApp
+	transaction.AppLogin = validated_Headers.AppLogin
+	transaction.AppVersion = validated_Headers.AppVersion
+
+	if !validated_Headers.IsValid {
+		transaction.Request_Status = "failed"
+		transaction.StatusDescription = validated_Headers.ValidationDescription
+		Uc.HTTP_Customer_Loyalty_OptRequest_Response(w, r, &transaction, true)
+		return
+	}
+	//parse body
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		transaction.Request_Status = "failed"
+		transaction.StatusDescription = "failed to read request body"
+		transaction.ErrorDescription = err.Error()
+		Uc.HTTP_Customer_Loyalty_OptRequest_Response(w, r, &transaction, true)
+		return
+	}
+	var Request Loyalty_Opt_Request
+	err = json.Unmarshal(body, &Request)
+	if err != nil {
+		transaction.Request_Status = "failed"
+		transaction.StatusDescription = "failed to parse request body"
+		transaction.ErrorDescription = err.Error()
+		Uc.HTTP_Customer_Loyalty_OptRequest_Response(w, r, &transaction, true)
+		return
+	}
+	//execute the request
+	Uc.Customer_Loyalty_OptRequest(&validated_Headers, Request, &transaction)
+	Uc.HTTP_Customer_Loyalty_OptRequest_Response(w, r, &transaction, false)
+}
+
 func (Uc *UserControl) HTTP_Customer_Loyalty_RedeemRequest_Response(w http.ResponseWriter, r *http.Request, transaction *Loyalty_Redemption_log, DB_Write bool) {
 	switch transaction.Status {
 	case "successful":
@@ -2441,6 +2479,21 @@ func (Uc *UserControl) HTTP_Customer_Loyalty_RedeemRequest_Response(w http.Respo
 	json.NewEncoder(w).Encode(transaction)
 }
 
+func (Uc *UserControl) HTTP_Customer_Loyalty_OptRequest_Response(w http.ResponseWriter, r *http.Request, transaction *Loyalty_Status_log, DB_Write bool) {
+	switch transaction.Request_Status {
+	case "successful":
+		transaction.Request_StatusCode = http.StatusOK
+	case "failed":
+		transaction.Request_StatusCode = http.StatusBadRequest
+	}
+	transaction.E2E_Elapsedtime = (time.Since(transaction.StatusDate).Nanoseconds()) / 1000000
+	if DB_Write {
+		Uc.Write_Loyalty_Status_log(*transaction)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(transaction.Request_StatusCode)
+	json.NewEncoder(w).Encode(transaction)
+}
 func (Uc *UserControl) HTTP_Customer_Loyalty_Account_CreditPoints(w http.ResponseWriter, r *http.Request) {
 	var transaction Loyalty_AccountCreditPoints_log
 	transaction.ReceiveDate = time.Now()

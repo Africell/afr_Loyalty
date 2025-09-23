@@ -29,11 +29,13 @@ type ConfigType struct {
 	Version         string
 	Module          string
 
-	IsProduction        bool
-	IsLoyaltyProduction bool
-	LoyaltyProgramName  string
-	LoyaltyVersion      string
-	LoyaltyModule       string
+	IsProduction                   bool
+	IsLoyaltyProduction            bool
+	ISLoyaltyOptIn                 bool // if true customer has to opt in
+	ISLoyaltyOptOutGracePeriodDays int  // if true customer has to opt in
+	LoyaltyProgramName             string
+	LoyaltyVersion                 string
+	LoyaltyModule                  string
 
 	MSISDN_Prefix    string
 	MSISDN_Short_len int
@@ -2120,7 +2122,7 @@ func setDefaultConfiguration_Dev() (Configuration ConfigType) {
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "https://okpaihr.africell.sl")
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "https://okpaihruat.africell.sl")
 
-	Configuration.Operation = "SierraLeone"
+	Configuration.Operation = "GM"
 	Configuration.HostId = "Lendme-01"
 	Configuration.DB_Name = "Lendme_DB"
 
@@ -2132,7 +2134,7 @@ func setDefaultConfiguration_Dev() (Configuration ConfigType) {
 
 	Configuration.MSISDN_Prefix = "0"
 	Configuration.MSISDN_Short_len = 8
-	Configuration.CountryCode = "232"
+	Configuration.CountryCode = "220"
 
 	Configuration.IsProduction = false
 	Configuration.IsLoyaltyProduction = false
@@ -2210,8 +2212,9 @@ func setDefaultConfiguration_Dev() (Configuration ConfigType) {
 	Configuration.LoyaltyMongoDB.HostIP_4 = Configuration.MongoDB.HostIP_4
 	Configuration.LoyaltyMongoDB.HostPort_4 = Configuration.MongoDB.HostPort_4
 
-	Configuration.IN.IP = "10.10.51.51"
-	Configuration.IN.Port = "8080"
+	Configuration.IN.IP = "10.95.73.12" //"10.70.1.59"
+	Configuration.IN.Port = "8444"
+
 	Configuration.IN.WS_SOAP_Endpoint = "/axis2/services/WebService.WebServiceHttpSoap12Endpoint/"
 	Configuration.IN.WS_XMLNS_SOAP_Env = "http://schemas.xmlsoap.org/soap/envelope/"
 	Configuration.IN.WS_XMLNS_Web = "http://webservice.CSI.omvia.convergys.com"
@@ -2221,7 +2224,7 @@ func setDefaultConfiguration_Dev() (Configuration ConfigType) {
 	Configuration.IN.WS_EVC_XMLNS_Web = "http://webservice.CSI.omvia.convergys.com"
 
 	Configuration.IN.Default_OpId = "lendme"
-	Configuration.IN.Default_OpPwd = "gu1vY6Q$"
+	Configuration.IN.Default_OpPwd = "P@ssw0rd"
 	Configuration.IN.Is_OpPwd_Required = true
 	Configuration.IN.Timeout = 5
 	Configuration.IN.PrintLogs = true
@@ -2237,22 +2240,24 @@ func setDefaultConfiguration_Dev() (Configuration ConfigType) {
 	Configuration.SMPP.Login = "LendME2"
 	Configuration.SMPP.Password = "LendMEP@ssw0rd"
 
-	Configuration.CGW_AUC.Description = "UCGW AUC"
-	Configuration.CGW_AUC.Protocol = "http"
-	Configuration.CGW_AUC.Hostname = "?.?.?.?"
-	Configuration.CGW_AUC.Port = "9994"
-	Configuration.CGW_AUC.Module = "AUC"
-	Configuration.CGW_AUC.Version = "V1"
-	Configuration.CGW_AUC.S2S_Username = "SAW_UCGW"
-	Configuration.CGW_AUC.S2S_Password = "uC@g$ASDKJH66&&&RiS6$2"
-	Configuration.CGW_AUC.Timeout_After = 5 * time.Second
-
+	//CGW
 	Configuration.CGW.Protocol = "http"
-	Configuration.CGW.Hostname = "?.?.?.?"
+	Configuration.CGW.Hostname = "UCGW"
 	Configuration.CGW.Port = "9991"
 	Configuration.CGW.Module = "UCGW"
 	Configuration.CGW.Version = "V1"
 	Configuration.CGW.Timeout = 15 * time.Second
+	Configuration.CGW.S2S_AccessToken = ""
+
+	Configuration.CGW_AUC.Description = "UCGW AUC service"
+	Configuration.CGW_AUC.Protocol = "http"
+	Configuration.CGW_AUC.Hostname = "UCGW_AUC"
+	Configuration.CGW_AUC.Port = "9001"
+	Configuration.CGW_AUC.Module = "AUC"
+	Configuration.CGW_AUC.Version = "V1"
+	Configuration.CGW_AUC.S2S_Username = "UCGW_Admin"
+	Configuration.CGW_AUC.S2S_Password = "uC@g$W$iRiS6$2"
+	Configuration.CGW_AUC.Timeout_After = 5 * time.Second
 
 	Configuration.Propylaea.Description = "Product Design Center - Propylaea"
 	Configuration.Propylaea.Protocol = "https"
@@ -2277,6 +2282,8 @@ func setDefaultConfiguration_Dev() (Configuration ConfigType) {
 	Configuration.SMPP.CountryCodePrefix = "243"
 	Configuration.SMPP.DefaultSender = "Africell" //"Africell"
 	Configuration.SMPP.Encoding = 1
+
+	Configuration.ISLoyaltyOptOutGracePeriodDays = 30
 	// Configuration.KafkaBrokerUrls = "kafka1:9092,kafka2:9092,kafka3:9092"
 	// Configuration.KafkaBrokerUrls = "kafka3:9092,kafka2:9092,kafka1:9092"
 	// Configuration.KafkaClientId = "LoyaltyLiveFeed"

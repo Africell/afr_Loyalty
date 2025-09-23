@@ -749,6 +749,28 @@ func (UC *UserControl) Add_LoyaltyServiceRoutes(R *Routes) {
 	}
 	*R = append(*R, r)
 	DisplayOrder = DisplayOrder + 1
+	Level1 = "Customer Loyalty - Opt Request"
+	Level1DisplayOrder = Level1DisplayOrder + 1
+	r = Route{
+		"HTTP_Customer_Loyalty_Account_OptRequest",
+		"POST",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Customer_Loyalty_Account_OptRequest/",
+		Use(UC.HTTP_Customer_Loyalty_Account_OptRequest, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
+		true,
+		Level1 + "",        // DisplayName
+		DisplayOrder,       // DisplayOrder
+		Module,             // Module
+		ModuleDisplayOrder, //ModuleDisplayOrder
+		Level1,             // Level1
+		Level1DisplayOrder, // Level1DisplayOrder
+		"",                 // Level2
+		0,                  // Level2DisplayOrder
+		"",                 // Level3
+		0,                  // Level3DisplayOrder
+		true,               //AllowedFor_OKAPI
+		true,               //AllowedFor_App
+	}
+	*R = append(*R, r)
 
 }
 
@@ -1661,6 +1683,30 @@ func (UC *UserControl) Add_LoyaltyManagementRoutes(R *Routes) {
 		0,                                  // Level3DisplayOrder
 		true,                               //AllowedFor_OKAPI
 		true,                               //AllowedFor_App
+	}
+	*R = append(*R, r)
+
+	DisplayOrder = DisplayOrder + 1
+	Level1 = "Customer Loyalty - Opt Request"
+	Level1DisplayOrder = Level1DisplayOrder + 1
+	r = Route{
+		"HTTP_Customer_Loyalty_Account_OptRequest",
+		"POST",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Customer_Loyalty_Account_OptRequest/",
+		Use(UC.HTTP_Customer_Loyalty_Account_OptRequest, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
+		true,
+		Level1 + "",        // DisplayName
+		DisplayOrder,       // DisplayOrder
+		Module,             // Module
+		ModuleDisplayOrder, //ModuleDisplayOrder
+		Level1,             // Level1
+		Level1DisplayOrder, // Level1DisplayOrder
+		"",                 // Level2
+		0,                  // Level2DisplayOrder
+		"",                 // Level3
+		0,                  // Level3DisplayOrder
+		true,               //AllowedFor_OKAPI
+		true,               //AllowedFor_App
 	}
 	*R = append(*R, r)
 	DisplayOrder = DisplayOrder + 1
