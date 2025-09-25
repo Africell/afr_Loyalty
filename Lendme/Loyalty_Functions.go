@@ -783,7 +783,8 @@ func (Uc *UserControl) Loyalty_Governance_Get(Key string) (entries []Loyalty_Gov
 				if !ok {
 					err = errors.New("error in type assertion")
 					return entries, err
-				} else if Configuration.Operation != "Angola" {
+				}
+				if Configuration.Operation != "Angola" {
 					redemption_na := Map_Loyalty_Point_Redemption_Rules.ConvertToArray()
 					if len(redemption_na) > 0 {
 						for _, redemptionRules := range redemption_na {
@@ -822,25 +823,27 @@ func (Uc *UserControl) Loyalty_Governance_Get(Key string) (entries []Loyalty_Gov
 			err = errors.New("error in type assertion")
 			return entries, err
 		}
-
-		redemption_na := Map_Loyalty_Point_Redemption_Rules.ConvertToArray()
-		if len(redemption_na) > 0 {
-			for _, redemptionRules := range redemption_na {
-				redemption, ok := redemptionRules.(Loyalty_Point_Redemption_Rule)
-				if !ok {
-					err = errors.New("error in type assertion")
-					return entries, err
-				} else {
-					var Airtime_EVC_PIN = ""
-					if redemption.Airtime_EVC_PIN != "" {
-						Airtime_EVC_PIN, err = DecryptHexString(redemption.Airtime_EVC_PIN)
-						if err != nil {
-							fmt.Println("error in decrypting artime evc pin", err.Error())
+		if Configuration.Operation != "Angola" {
+			redemption_na := Map_Loyalty_Point_Redemption_Rules.ConvertToArray()
+			if len(redemption_na) > 0 {
+				for _, redemptionRules := range redemption_na {
+					redemption, ok := redemptionRules.(Loyalty_Point_Redemption_Rule)
+					if !ok {
+						err = errors.New("error in type assertion")
+						return entries, err
+					} else {
+						var Airtime_EVC_PIN = ""
+						if redemption.Airtime_EVC_PIN != "" {
+							Airtime_EVC_PIN, err = DecryptHexString(redemption.Airtime_EVC_PIN)
+							if err != nil {
+								fmt.Println("error in decrypting artime evc pin", err.Error())
+							}
+						}
+						res, err := Uc.CGW.UC_GWClient.GetERDealerBalance(redemption.Airtime_EVC_Account, Airtime_EVC_PIN)
+						if err == nil {
+							entry.EVC_Account_Balance = float64(res.Balance)
 						}
 					}
-					res, error := Uc.CGW.UC_GWClient.GetERDealerBalance(redemption.Airtime_EVC_Account, Airtime_EVC_PIN)
-					fmt.Println("res", res)
-					fmt.Println("error", error)
 				}
 			}
 		}
