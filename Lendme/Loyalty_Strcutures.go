@@ -76,36 +76,43 @@ type Loyalty_Governance_log struct {
 	EVC_Account_Balance      float64   `bson:"EVC_Account_Balance" json:"EVC_Account_Balance"`
 	Merchant_Account_Balance float64   `bson:"Merchant_Account_Balance" json:"Merchant_Account_Balance"`
 }
-
+type Seniority_Level struct {
+	Key                     string  `bson:"Key" json:"Key"`
+	Loyalty_Account_Segment string  `bson:"Loyalty_Account_Segment" json:"Loyalty_Account_Segment"`
+	Multiplier_Percentage   float64 `bson:"Multiplier_Percentage" json:"Multiplier_Percentage"`
+}
 type Loyalty_Level struct {
-	Key                    string  `bson:"Key" json:"Key"`
-	Level_Id               int64   `bson:"Level_Id" json:"Level_Id"`
-	Description            string  `bson:"Description" json:"Description"`
-	Min_Accumulated_Points float64 `bson:"Min_Accumulated_Points" json:"Min_Accumulated_Points"` //will be used for upgrade
-	Max_Accumulated_Points float64 `bson:"Max_Accumulated_Points" json:"Max_Accumulated_Points"` //will be used for downgrade
-	EnableRedeem           bool    `bson:"EnableRedeem" json:"EnableRedeem"`
-	DowngradeToLevel_Key   string  `bson:"DowngradeToLevel_Key" json:"DowngradeToLevel_Key"`
+	Key                    string            `bson:"Key" json:"Key"`
+	Level_Id               int64             `bson:"Level_Id" json:"Level_Id"`
+	Description            string            `bson:"Description" json:"Description"`
+	Min_Accumulated_Points float64           `bson:"Min_Accumulated_Points" json:"Min_Accumulated_Points"` //will be used for upgrade
+	Max_Accumulated_Points float64           `bson:"Max_Accumulated_Points" json:"Max_Accumulated_Points"` //will be used for downgrade
+	EnableRedeem           bool              `bson:"EnableRedeem" json:"EnableRedeem"`
+	DowngradeToLevel_Key   string            `bson:"DowngradeToLevel_Key" json:"DowngradeToLevel_Key"`
+	Seniority_Levels       []Seniority_Level `bson:"Seniority_Levels" json:"Seniority_Levels"`
 }
 
 type Loyalty_Level_AddRequest struct {
-	Key                    string  `bson:"Key" json:"Key"`
-	Level_Id               int64   `bson:"Level_Id" json:"Level_Id"`
-	Description            string  `bson:"Description" json:"Description"`
-	Min_Accumulated_Points float64 `bson:"Min_Accumulated_Points" json:"Min_Accumulated_Points"` //will be used for upgrade
-	Max_Accumulated_Points float64 `bson:"Max_Accumulated_Points" json:"Max_Accumulated_Points"` //will be used for downgrade
-	EnableRedeem           bool    `bson:"EnableRedeem" json:"EnableRedeem"`
-	DowngradeToLevel_Key   string  `bson:"DowngradeToLevel_Key" json:"DowngradeToLevel_Key"`
+	Key                    string            `bson:"Key" json:"Key"`
+	Level_Id               int64             `bson:"Level_Id" json:"Level_Id"`
+	Description            string            `bson:"Description" json:"Description"`
+	Min_Accumulated_Points float64           `bson:"Min_Accumulated_Points" json:"Min_Accumulated_Points"` //will be used for upgrade
+	Max_Accumulated_Points float64           `bson:"Max_Accumulated_Points" json:"Max_Accumulated_Points"` //will be used for downgrade
+	EnableRedeem           bool              `bson:"EnableRedeem" json:"EnableRedeem"`
+	DowngradeToLevel_Key   string            `bson:"DowngradeToLevel_Key" json:"DowngradeToLevel_Key"`
+	Seniority_Levels       []Seniority_Level `bson:"Seniority_Levels" json:"Seniority_Levels"`
 }
 
 type Loyalty_Level_EditRequest struct {
-	Key                    string  `bson:"Key" json:"Key"`
-	NewKey                 string  `bson:"NewKey" json:"NewKey"`
-	Level_Id               int64   `bson:"Level_Id" json:"Level_Id"`
-	Description            string  `bson:"Description" json:"Description"`
-	Min_Accumulated_Points float64 `bson:"Min_Accumulated_Points" json:"Min_Accumulated_Points"` //will be used for upgrade
-	Max_Accumulated_Points float64 `bson:"Max_Accumulated_Points" json:"Max_Accumulated_Points"` //will be used for downgrade
-	EnableRedeem           bool    `bson:"EnableRedeem" json:"EnableRedeem"`
-	DowngradeToLevel_Key   string  `bson:"DowngradeToLevel_Key" json:"DowngradeToLevel_Key"`
+	Key                    string            `bson:"Key" json:"Key"`
+	NewKey                 string            `bson:"NewKey" json:"NewKey"`
+	Level_Id               int64             `bson:"Level_Id" json:"Level_Id"`
+	Description            string            `bson:"Description" json:"Description"`
+	Min_Accumulated_Points float64           `bson:"Min_Accumulated_Points" json:"Min_Accumulated_Points"` //will be used for upgrade
+	Max_Accumulated_Points float64           `bson:"Max_Accumulated_Points" json:"Max_Accumulated_Points"` //will be used for downgrade
+	EnableRedeem           bool              `bson:"EnableRedeem" json:"EnableRedeem"`
+	DowngradeToLevel_Key   string            `bson:"DowngradeToLevel_Key" json:"DowngradeToLevel_Key"`
+	Seniority_Levels       []Seniority_Level `bson:"Seniority_Levels" json:"Seniority_Levels"`
 }
 
 type Loyalty_Account_Segment struct {

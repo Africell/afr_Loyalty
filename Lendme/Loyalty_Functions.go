@@ -1324,6 +1324,7 @@ func (Uc *UserControl) Loyalty_Level_Add(Login string, request Loyalty_Level_Add
 	NewEntry.Max_Accumulated_Points = request.Max_Accumulated_Points
 	NewEntry.EnableRedeem = request.EnableRedeem
 	NewEntry.DowngradeToLevel_Key = request.DowngradeToLevel_Key
+	NewEntry.Seniority_Levels = request.Seniority_Levels
 	//add to cache and DB
 	Map_Loyalty_Level.Put(NewEntry.Key, NewEntry)
 	//add logs
@@ -1381,6 +1382,7 @@ func (Uc *UserControl) Loyalty_Level_Edit(Login string, request Loyalty_Level_Ed
 	entry.Max_Accumulated_Points = request.Max_Accumulated_Points
 	entry.EnableRedeem = request.EnableRedeem
 	entry.DowngradeToLevel_Key = request.DowngradeToLevel_Key
+	entry.Seniority_Levels = request.Seniority_Levels
 	if request.NewKey != "" {
 		if request.NewKey != request.Key {
 			//delete old
@@ -8292,7 +8294,7 @@ func (Uc *UserControl) PointsExpiry_Process() {
 											if err != nil || len(finalAccount) == 0 {
 												break
 											}
-											if finalAccount[0].Coming_Expiry_Date.Year() == time.Now().Year() && finalAccount[0].Coming_Expiry_Date.Month() == time.Now().Month() && finalAccount[0].Coming_Expiry_Date.Day() == time.Now().Day() {
+											if finalAccount[0].Coming_Expiry_Date.Before(time.Now()) {
 												go Uc.PointsExpiry_ProcessExec(finalAccount[0])
 											}
 										}
