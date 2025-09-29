@@ -4329,6 +4329,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_Get(Key string) (entries []Custo
 		}
 		return entries, nil
 	} else {
+		fmt.Println("Key", Key)
 		entry_na, exits := Map_Customer_Loyalty_Account.CheckThenGet(Key)
 		if !exits {
 			err = errors.New("key does not exist")
