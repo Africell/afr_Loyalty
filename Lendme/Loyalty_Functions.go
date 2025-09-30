@@ -4335,17 +4335,12 @@ func (Uc *UserControl) Customer_Loyalty_Account_Get(Key string) (entries []Custo
 			err = errors.New("key cannot be empty")
 			return entries, err
 		}
-		fmt.Println("Key after", Key)
-		exits := Map_Customer_Loyalty_Account.Check(Key)
-		if exits {
-			// err = errors.New("key already exist")
-			// return entries, err
-		}
-		fmt.Println("exits one", exits)
-
 		entry_na, exits := Map_Customer_Loyalty_Account.CheckThenGet(Key)
-		fmt.Println("exits two", exits)
+		fmt.Println("exits", exits)
+		fmt.Println("!exits one", !exits)
+
 		if !exits {
+			fmt.Println("!exits two", !exits)
 			err = errors.New("key does not exist")
 			return entries, err
 		}
