@@ -4601,6 +4601,11 @@ func (Uc *UserControl) Customer_Loyalty_Account_Get(Key string) (entries []Custo
 		}
 		return entries, nil
 	} else {
+		Key = Normalize_International_MSISDN(Key)
+		if Key == "" {
+			err = errors.New("key cannot be empty")
+			return entries, err
+		}
 		entry_na, exits := Map_Customer_Loyalty_Account.CheckThenGet(Key)
 		if !exits {
 			err = errors.New("key does not exist")
