@@ -2829,7 +2829,7 @@ func (Uc *UserControl) HTTP_Bulk_Loyalty_Points_Deduction(w http.ResponseWriter,
 			Uc.HTTP_API_Standard_response(w, r, sr, false)
 			return
 		}
-		re := regexp.MustCompile(`^loyalty_deduction_\d{6}_\d{2}\.csv$`)
+		re := regexp.MustCompile(`^Loyalty_deduction_\d{6}_\d{2}\.csv$`)
 		if !re.MatchString(fileHeader.Filename) {
 			sr.Status = "failed"
 			sr.StatusCode = http.StatusBadRequest
