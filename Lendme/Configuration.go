@@ -208,12 +208,12 @@ type ConfigType struct {
 
 func GetDefaultConfiguration() (err error) {
 	// Configuration = setDefaultConfiguration_Dev()
-	// Configuration = setDefaultConfiguration_DRC_Live()
+	Configuration = setDefaultConfiguration_DRC_Live()
 	// Configuration = setDefaultConfiguration_DRC_Loyalty_UAT()
 	//	Configuration = setDefaultConfiguration_GM_Live()
 
 	// Configuration = setDefaultConfiguration_SL_Live()
-	Configuration = setDefaultConfiguration_SL_Loyalty()
+	// Configuration = setDefaultConfiguration_SL_Loyalty()
 	// Configuration = setDefaultConfiguration_SL_Loyalty_UAT()
 
 	// Configuration = setDefaultConfiguration_AO_Loyalty()
@@ -343,7 +343,7 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 	//http://10.95.64.6:15403/?systemid=lendme&password=lendmeP@ssw0rd&Originator=setest&dest_addr=243900100606&msg_text=test&registered_delivery=0&ston=5&snpi=0&dton=1&dnpi=1&encoding=1
 
 	//SMPP
-	Configuration.SMPP.IP = "10.95.64.6" //// floating IS IP: "10.250.8.53", test IP VPN: "10.250.0.52" (or .50, .51)
+	Configuration.SMPP.IP = "10.95.72.6" //// floating IS IP: "10.250.8.53", test IP VPN: "10.250.0.52" (or .50, .51)
 	Configuration.SMPP.Port = "15403"
 	Configuration.SMPP.Login = "lendme"
 	Configuration.SMPP.Password = "lendmeP@ssw0rd"
