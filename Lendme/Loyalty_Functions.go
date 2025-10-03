@@ -39,6 +39,9 @@ var Map_Loyalty_Level daoc.Cache_Synch
 var DAO_Loyalty_Level daoc.DAO
 var DAO_Loyalty_Level_Change_log daoc.DAO
 
+var Map_Loyalty_Seniority_Level daoc.Cache_Synch
+var DAO_Loyalty_Seniority_Level daoc.DAO
+
 var Map_Loyalty_Account_Segment daoc.Cache_Synch
 var DAO_Loyalty_Account_Segment daoc.DAO
 
@@ -113,6 +116,8 @@ func (uc *UserControl) InitializeLoyaltyCache() {
 	Map_Loyalty_Governance.Initialize("Loyalty_Governance", "Loyalty_Governance", reflect.TypeOf(Loyalty_Governance{}), loyalty_Governance, true, &DAO_Loyalty_Governance, uc.CacheDir.List)
 	var loyalty_Level Loyalty_Level
 	Map_Loyalty_Level.Initialize("Loyalty_Level", "Loyalty_Level", reflect.TypeOf(Loyalty_Level{}), loyalty_Level, true, &DAO_Loyalty_Level, uc.CacheDir.List)
+	var loyalty_Seniority_Level Loyalty_Seniority_Level
+	Map_Loyalty_Seniority_Level.Initialize("Loyalty_Seniority_Level", "Loyalty_Seniority_Level", reflect.TypeOf(Loyalty_Seniority_Level{}), loyalty_Seniority_Level, true, &DAO_Loyalty_Seniority_Level, uc.CacheDir.List)
 	var loyalty_Account_Segment Loyalty_Account_Segment
 	Map_Loyalty_Account_Segment.Initialize("Loyalty_Account_Segment", "Loyalty_Account_Segment", reflect.TypeOf(Loyalty_Account_Segment{}), loyalty_Account_Segment, true, &DAO_Loyalty_Account_Segment, uc.CacheDir.List)
 	var loyalty_Point_Earning_Rules Loyalty_Point_Earning_Rules
@@ -152,6 +157,7 @@ func (uc *UserControl) InitializeLoyaltyDAO() {
 	DAO_Loyalty_Governance_log.Initialize("Loyalty_Governance_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Governance_log{}), Configuration.DB_Name_Loyalty, "Loyalty_Governance_log", "")
 	DAO_Loyalty_Level.Initialize("Loyalty_Level", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Level{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Level", "")
 	DAO_Loyalty_Level_Change_log.Initialize("Loyalty_Level_Change_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Level_Change_log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Level_Change_log", "")
+	DAO_Loyalty_Seniority_Level.Initialize("Loyalty_Seniority_Level", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Seniority_Level{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Seniority_Level", "")
 	DAO_Loyalty_Account_Segment.Initialize("Loyalty_Account_Segment", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Account_Segment{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Account_Segment", "")
 	DAO_Loyalty_Point_Earning_Rules.Initialize("Loyalty_Point_Earning_Rules", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Point_Earning_Rules{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Point_Earning_Rules", "")
 	DAO_Loyalty_Point_Earning_Rules_Overwrite.Initialize("Loyalty_Point_Earning_Rules_Overwrite", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Point_Earning_Rules_Overwrite{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Point_Earning_Rules_Overwrite", "")
@@ -1200,10 +1206,8 @@ func (Uc *UserControl) Loyalty_Status_Expiry_Daily_Process() {
 								// <-chan_PointsExpiry_Controler
 							}
 							expired_Points := doc.Available_Points
-							expiry_log.End_Expired_Points = doc.Expired_Points + doc.Available_Points
-							doc.Expired_Points = doc.Expired_Points + expired_Points
-							doc.Expiry_Date = time.Now()
-							// account.Awarded_Points = account.Awarded_Points - pointsDetail[0].Available_Points
+							expiry_log.End_Expired_Points = 0
+							doc.Expired_Points = 0
 							doc.Available_Points = 0
 							doc.Awarded_Points = 0
 							doc.Redeemed_Points = 0
@@ -1506,6 +1510,179 @@ func (Uc *UserControl) Loyalty_Level_Delete(Login, Key string) (err error) {
 		Event_User:         Login,
 		Event_Time:         time.Now(),
 		Event_AffectedType: "Loyalty_Level",
+		Event_ActionType:   "Delete",
+		Event_Description:  "",
+		Event_Entry_Before: nil,
+		Event_Entry_After:  entry,
+	})
+	return nil
+}
+
+// ***********************************************************************
+// Loyalty Seniiority Level functions
+// ***********************************************************************
+func (Uc *UserControl) Loyalty_Seniority_Level_Add(Login string, request Loyalty_Seniority_Level_AddRequest) (Id int64, err error) {
+	//check key if filled and if already used
+	if request.Key == "" {
+		err = errors.New("key cannot be empty")
+		return Id, err
+	}
+	//check if key already used
+	exits := Map_Loyalty_Seniority_Level.Check(request.Key)
+	if exits {
+		err = errors.New("key already exist")
+		return Id, err
+	}
+
+	//Prepare new entry
+	var NewEntry Loyalty_Seniority_Level
+	NewEntry.Seniority_Id = Map_Loyalty_AutoIncrement.GetNextAI("Loyalty_Seniority_Level-Id")
+	Id = NewEntry.Seniority_Id
+	NewEntry.Key = request.Key
+	NewEntry.Description = request.Description
+	NewEntry.AON_From = request.AON_From
+	NewEntry.AON_Till = request.AON_Till
+
+	//add to cache and DB
+	Map_Loyalty_Seniority_Level.Put(NewEntry.Key, NewEntry)
+	//add logs
+	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
+		Event_User:         Login,
+		Event_Time:         time.Now(),
+		Event_AffectedType: "Loyalty_Seniority_Level",
+		Event_ActionType:   "Add",
+		Event_Description:  "",
+		Event_Entry_Before: nil,
+		Event_Entry_After:  NewEntry,
+	})
+	return Id, nil
+}
+
+func (Uc *UserControl) Loyalty_Seniority_Level_Edit(Login string, request Loyalty_Seniority_Level_EditRequest) (Id int64, err error) {
+	//check and validate
+	if request.Key == "" {
+		err = errors.New("key cannot be empty")
+		return Id, err
+	}
+	entry_na, exits := Map_Loyalty_Seniority_Level.CheckThenGet(request.Key)
+	if !exits {
+		err = errors.New("key is not created")
+		return Id, err
+	}
+	entry, ok := entry_na.(Loyalty_Seniority_Level)
+	if !ok {
+		return Id, errors.New("error in type assertion")
+	}
+	if entry.Seniority_Id != request.Seniority_Id {
+		return Id, errors.New("id is not matching")
+	}
+	Current_Entry := entry
+	//Prepare new entry
+	entry.Key = request.Key
+	entry.Description = request.Description
+	entry.AON_From = request.AON_From
+	entry.AON_Till = request.AON_Till
+	if request.NewKey != "" {
+		if request.NewKey != request.Key {
+			//delete old
+			Map_Loyalty_Seniority_Level.Delete(request.Key)
+			//update key
+			entry.Key = request.NewKey
+		}
+	}
+	//add to cache and DB
+	Map_Loyalty_Seniority_Level.Put(entry.Key, entry)
+	//add logs
+	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
+		Event_User:         Login,
+		Event_Time:         time.Now(),
+		Event_AffectedType: "Loyalty_Seniority_Level",
+		Event_ActionType:   "Edit",
+		Event_Description:  "",
+		Event_Entry_Before: Current_Entry,
+		Event_Entry_After:  entry,
+	})
+	return Id, nil
+}
+
+func (Uc *UserControl) Loyalty_Seniority_Level_Get(Key string) (entries []Loyalty_Seniority_Level, err error) {
+	if Key == "" {
+		entries_na := Map_Loyalty_Seniority_Level.ConvertToArray()
+		if len(entries_na) > 0 {
+			for _, entry_na := range entries_na {
+				entry, ok := entry_na.(Loyalty_Seniority_Level)
+				if !ok {
+					err = errors.New("error in type assertion")
+					return entries, err
+				} else {
+					entries = append(entries, entry)
+				}
+			}
+		}
+		return entries, nil
+	} else {
+		entry_na, exits := Map_Loyalty_Seniority_Level.CheckThenGet(Key)
+		if !exits {
+			err = errors.New("key does not exist")
+			return entries, err
+		}
+		entry, ok := entry_na.(Loyalty_Seniority_Level)
+		if !ok {
+			err = errors.New("error in type assertion")
+			return entries, err
+		}
+		entries = append(entries, entry)
+		return entries, nil
+	}
+}
+
+func (Uc *UserControl) Loyalty_Seniority_Level_GetPaginated(Page, Limit int64) (entries []Loyalty_Seniority_Level, err error) {
+	if Page < 1 {
+		return entries, errors.New("invalid page")
+	}
+	if Limit < 1 || Limit > 50000 {
+		return entries, errors.New("invalid limit (accept value between 1 and 50000)")
+	}
+
+	var findparams daoc.DAOFindParams
+	var paginationparams daoc.DAOPaginate
+	paginationparams.Limit = Limit
+	paginationparams.Page = Page
+	findResult, err := DAO_Loyalty_Seniority_Level.FindPaginate(findparams, paginationparams)
+	if err != nil {
+		return entries, err
+	}
+	if len(findResult) > 0 {
+		for _, findres := range findResult {
+			InterfaceValue := reflect.ValueOf(findres).Elem().Interface().(Loyalty_Seniority_Level)
+			entries = append(entries, InterfaceValue)
+		}
+	}
+	return entries, nil
+
+}
+
+func (Uc *UserControl) Loyalty_Seniority_Level_Delete(Login, Key string) (err error) {
+	if Key == "" {
+		err = errors.New("key cannot be empty")
+		return err
+	}
+	entry_na, exits := Map_Loyalty_Seniority_Level.CheckThenGet(Key)
+	if !exits {
+		err = errors.New("entry does not exist")
+		return err
+	}
+	entry, ok := entry_na.(Loyalty_Seniority_Level)
+	if !ok {
+		err = errors.New("error in type assertion")
+		return err
+	}
+	Map_Loyalty_Seniority_Level.Delete(Key)
+	//add logs
+	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
+		Event_User:         Login,
+		Event_Time:         time.Now(),
+		Event_AffectedType: "Loyalty_Seniority_Level",
 		Event_ActionType:   "Delete",
 		Event_Description:  "",
 		Event_Entry_Before: nil,
@@ -6364,6 +6541,52 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 	var points, Outstanding_fraction_points float64
 	if response.PointsToCredit == 0 {
 		points, Outstanding_fraction_points = Calculate_Loyalty_Points(point_earning_rules, request, loyalty_account.Outstanding_fraction_points)
+		if !loyalty_account.Joining_Date.IsZero() && loyalty_account.Joining_Date.Year() != 1 {
+			now := time.Now()
+
+			years := now.Year() - loyalty_account.Joining_Date.Year()
+			months := int(now.Month()) - int(loyalty_account.Joining_Date.Month())
+
+			totalMonths := years*12 + months
+
+			// Adjust if current day is before the joining day in the month
+			if now.Day() < loyalty_account.Joining_Date.Day() {
+				totalMonths--
+			}
+			if totalMonths > 0 {
+				for _, lvl := range loyalty_Level.Seniority_Levels {
+					seniorityLevel_na, seniorityexist := Map_Loyalty_Seniority_Level.CheckThenGet(lvl.Loyalty_Seniority_Level_Key)
+					if seniorityexist {
+						seniority, ok := seniorityLevel_na.(Loyalty_Seniority_Level)
+						if ok {
+							if months >= int(seniority.AON_From) && months <= int(seniority.AON_Till) {
+								fmt.Println("points", points)
+								fmt.Println("Outstanding_fraction_points", Outstanding_fraction_points)
+								initialPointsflt := float64(points + Outstanding_fraction_points)
+								fmt.Println("initialPointsflt", initialPointsflt)
+
+								addedValueflt := float64(initialPointsflt*lvl.Multiplier_Percentage) / 100
+								fmt.Println("addedValueflt", addedValueflt)
+
+								flt_points := addedValueflt + initialPointsflt
+								fmt.Println("flt_points", flt_points)
+
+								points = float64(int(flt_points))
+								fmt.Println("points", points)
+
+								Outstanding_fraction_points = flt_points - points
+								fmt.Println("Outstanding_fraction_points", Outstanding_fraction_points)
+
+							}
+						}
+
+					}
+
+				}
+			}
+
+		}
+
 	} else {
 		points = response.PointsToCredit
 		Outstanding_fraction_points = loyalty_account.Outstanding_fraction_points
@@ -6416,7 +6639,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 		}
 		//credit loyalty account
 		loyalty_account.Awarded_Points = loyalty_account.Awarded_Points + points
-		loyalty_account.Available_Points = (loyalty_account.Awarded_Points + loyalty_account.Expired_Points) - loyalty_account.Redeemed_Points
+		loyalty_account.Available_Points = loyalty_account.Awarded_Points - loyalty_account.Redeemed_Points
 		loyalty_account.Last_Award_Date = time.Now()
 		loyalty_account.Outstanding_fraction_points = Outstanding_fraction_points
 		YYYY, MM, _, _, _, _, _ := GetTimeParts(time.Now())
@@ -6722,6 +6945,17 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 		response.ErrorDescription = "invalid msisdn"
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.StatusDate).Nanoseconds()) / 1000000
+		Uc.Write_Loyalty_Status_log(*response)
+		return
+	}
+	if request.Opt_Status == "" {
+		response.Request_Status = "failed"
+		response.Request_StatusCode = http.StatusBadRequest
+		response.StatusDescription = "invalid opt status"
+		response.ErrorDescription = "invalid opt status"
+		response.StatusDate = time.Now()
+		response.E2E_Elapsedtime = (time.Since(response.StatusDate).Nanoseconds()) / 1000000
+		Uc.Write_Loyalty_Status_log(*response)
 		return
 	}
 	//fill the request info

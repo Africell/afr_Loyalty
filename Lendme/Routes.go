@@ -447,6 +447,11 @@ func (Uc *UserControl) AddToLoyaltyManagementRouter(router *mux.Router, UC *User
 			{AccessKey: "HTTP_Loyalty_Level", AccessMethod: "POST", Allowed: true},
 			{AccessKey: "HTTP_Loyalty_Level", AccessMethod: "PUT", Allowed: true},
 			{AccessKey: "HTTP_Loyalty_Level", AccessMethod: "DELETE", Allowed: true},
+			{AccessKey: "Loyalty Seniority Level", AccessMethod: "Module Sub Menu L1", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Seniority_Level", AccessMethod: "GET", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Seniority_Level", AccessMethod: "POST", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Seniority_Level", AccessMethod: "PUT", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Seniority_Level", AccessMethod: "DELETE", Allowed: true},
 			{AccessKey: "Loyalty Account Segment", AccessMethod: "Module Sub Menu L1", Allowed: true},
 			{AccessKey: "HTTP_Loyalty_Account_Segment", AccessMethod: "GET", Allowed: true},
 			{AccessKey: "HTTP_Loyalty_Account_Segment", AccessMethod: "POST", Allowed: true},
@@ -653,6 +658,23 @@ func (Uc *UserControl) Add_Loyalty_ToAccessEntry(existing map[string]AuthCenter.
 	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
 
 	sd_ae = AuthCenter.AccessEntry{
+		AccessKey:            "Loyalty Seniority Level",
+		AccessMethod:         "Module Sub Menu L1",
+		AccessKeyDescription: "Loyalty Seniority Level",
+		DisplayName:          "Loyalty Seniority Level",
+		DisplayOrder:         13,
+		Module:               Module,
+		ModuleDisplayOrder:   ModuleDisplayOrder,
+		Level1:               Level1,
+		Level1DisplayOrder:   Level1DisplayOrder,
+		Level2:               "Loyalty Seniority Level",
+		Level2DisplayOrder:   3,
+		Level3:               "",
+		Level3DisplayOrder:   0,
+	}
+	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
+
+	sd_ae = AuthCenter.AccessEntry{
 		AccessKey:            "Loyalty Account Segment",
 		AccessMethod:         "Module Sub Menu L1",
 		AccessKeyDescription: "Loyalty Account Segment",
@@ -663,7 +685,7 @@ func (Uc *UserControl) Add_Loyalty_ToAccessEntry(existing map[string]AuthCenter.
 		Level1:               Level1,
 		Level1DisplayOrder:   Level1DisplayOrder,
 		Level2:               "Loyalty Account Segment",
-		Level2DisplayOrder:   3,
+		Level2DisplayOrder:   4,
 		Level3:               "",
 		Level3DisplayOrder:   0,
 	}
@@ -680,7 +702,7 @@ func (Uc *UserControl) Add_Loyalty_ToAccessEntry(existing map[string]AuthCenter.
 		Level1:               Level1,
 		Level1DisplayOrder:   Level1DisplayOrder,
 		Level2:               "Loyalty Point Earning Rules",
-		Level2DisplayOrder:   4,
+		Level2DisplayOrder:   5,
 		Level3:               "",
 		Level3DisplayOrder:   0,
 		Routes:               []string{"HTTP_Loyalty_Point_Earning_Rules_Overwrite|GET", "HTTP_Loyalty_Point_Earning_Rules_Overwrite|PUT", "HTTP_Loyalty_Point_Earning_Rules_Overwrite|POST", "HTTP_Loyalty_Point_Earning_Rules_Overwrite|DELETE"},
@@ -698,7 +720,7 @@ func (Uc *UserControl) Add_Loyalty_ToAccessEntry(existing map[string]AuthCenter.
 		Level1:               Level1,
 		Level1DisplayOrder:   Level1DisplayOrder,
 		Level2:               "Loyalty Point Expiry Rules",
-		Level2DisplayOrder:   5,
+		Level2DisplayOrder:   6,
 		Level3:               "",
 		Level3DisplayOrder:   0,
 	}
@@ -715,7 +737,7 @@ func (Uc *UserControl) Add_Loyalty_ToAccessEntry(existing map[string]AuthCenter.
 		Level1:               Level1,
 		Level1DisplayOrder:   Level1DisplayOrder,
 		Level2:               "Loyalty Point Redemption Rules",
-		Level2DisplayOrder:   6,
+		Level2DisplayOrder:   7,
 		Level3:               "",
 		Level3DisplayOrder:   0,
 	}
@@ -732,7 +754,7 @@ func (Uc *UserControl) Add_Loyalty_ToAccessEntry(existing map[string]AuthCenter.
 		Level1:               Level1,
 		Level1DisplayOrder:   Level1DisplayOrder,
 		Level2:               "Loyalty Plan",
-		Level2DisplayOrder:   7,
+		Level2DisplayOrder:   8,
 		Level3:               "",
 		Level3DisplayOrder:   0,
 	}
@@ -749,7 +771,7 @@ func (Uc *UserControl) Add_Loyalty_ToAccessEntry(existing map[string]AuthCenter.
 		Level1:               Level1,
 		Level1DisplayOrder:   Level1DisplayOrder,
 		Level2:               "Customer Loyalty Account",
-		Level2DisplayOrder:   8,
+		Level2DisplayOrder:   9,
 		Level3:               "",
 		Level3DisplayOrder:   0,
 		Routes:               []string{"HTTP_Customer_Loyalty_Account_GetRedemption_Rules|GET", "HTTP_Customer_Loyalty_RedeemRequest|PUT", "HTTP_Loyalty_AccountDebitPoints_log|GET", "HTTP_Customer_Loyalty_Account_Points_Details|GET", "HTTP_Loyalty_AccountCreditPoints_log|GET", "HTTP_Loyalty_logs|GET", "HTTP_Customer_Loyalty_Account_DebitPoints|PUT", "HTTP_Customer_Loyalty_Account_CreditPoints|PUT", "HTTP_Loyalty_Products_Catalogue|GET", "HTTP_Customer_Loyalty_Account_OptRequest|POST"},
@@ -767,7 +789,7 @@ func (Uc *UserControl) Add_Loyalty_ToAccessEntry(existing map[string]AuthCenter.
 		Level1:               Level1,
 		Level1DisplayOrder:   Level1DisplayOrder,
 		Level2:               "Customer UAT",
-		Level2DisplayOrder:   9,
+		Level2DisplayOrder:   10,
 		Level3:               "",
 		Level3DisplayOrder:   0,
 	}
@@ -784,7 +806,7 @@ func (Uc *UserControl) Add_Loyalty_ToAccessEntry(existing map[string]AuthCenter.
 		Level1:               Level1,
 		Level1DisplayOrder:   Level1DisplayOrder,
 		Level2:               "Customer DND",
-		Level2DisplayOrder:   10,
+		Level2DisplayOrder:   11,
 		Level3:               "",
 		Level3DisplayOrder:   0,
 	}
@@ -801,7 +823,7 @@ func (Uc *UserControl) Add_Loyalty_ToAccessEntry(existing map[string]AuthCenter.
 		Level1:               Level1,
 		Level1DisplayOrder:   Level1DisplayOrder,
 		Level2:               "Customer Exclusion",
-		Level2DisplayOrder:   11,
+		Level2DisplayOrder:   12,
 		Level3:               "",
 		Level3DisplayOrder:   0,
 	}
@@ -818,7 +840,7 @@ func (Uc *UserControl) Add_Loyalty_ToAccessEntry(existing map[string]AuthCenter.
 		Level1:               Level1,
 		Level1DisplayOrder:   Level1DisplayOrder,
 		Level2:               "Customer COS Exclusion",
-		Level2DisplayOrder:   12,
+		Level2DisplayOrder:   13,
 		Level3:               "",
 		Level3DisplayOrder:   0,
 	}
@@ -835,7 +857,7 @@ func (Uc *UserControl) Add_Loyalty_ToAccessEntry(existing map[string]AuthCenter.
 		Level1:               Level1,
 		Level1DisplayOrder:   Level1DisplayOrder,
 		Level2:               "Customer Awarded Points",
-		Level2DisplayOrder:   13,
+		Level2DisplayOrder:   14,
 		Level3:               "",
 		Level3DisplayOrder:   0,
 	}
@@ -852,7 +874,7 @@ func (Uc *UserControl) Add_Loyalty_ToAccessEntry(existing map[string]AuthCenter.
 		Level1:               Level1,
 		Level1DisplayOrder:   Level1DisplayOrder,
 		Level2:               "Bulk Points Crediting",
-		Level2DisplayOrder:   14,
+		Level2DisplayOrder:   15,
 		Level3:               "",
 		Level3DisplayOrder:   0,
 	}
@@ -869,7 +891,7 @@ func (Uc *UserControl) Add_Loyalty_ToAccessEntry(existing map[string]AuthCenter.
 		Level1:               Level1,
 		Level1DisplayOrder:   Level1DisplayOrder,
 		Level2:               "Bulk Points Deduction",
-		Level2DisplayOrder:   15,
+		Level2DisplayOrder:   16,
 		Level3:               "",
 		Level3DisplayOrder:   0,
 	}

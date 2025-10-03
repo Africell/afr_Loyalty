@@ -870,6 +870,7 @@ func (UC *UserControl) Add_LoyaltyManagementRoutes(R *Routes) {
 		true,                          //AllowedFor_App
 	}
 	*R = append(*R, r)
+
 	//*****************************
 	// Loyalty_Level
 	//*****************************
@@ -960,10 +961,100 @@ func (UC *UserControl) Add_LoyaltyManagementRoutes(R *Routes) {
 	*R = append(*R, r)
 
 	//*****************************
+	// Loyalty Seniority Level
+	//*****************************
+	Level2 = "Loyalty Seniority Level"
+	Level2DisplayOrder = 3
+
+	r = Route{
+		"HTTP_Loyalty_Seniority_Level",
+		"GET",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Seniority_Level/",
+		Use(UC.HTTP_Loyalty_Seniority_Level, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
+		true,
+		"Loyalty Seniority Level - Read", // DisplayName
+		1,                                // DisplayOrder
+		Module,                           // Module
+		ModuleDisplayOrder,               //ModuleDisplayOrder
+		Level1,                           // Level1
+		Level1DisplayOrder,               // Level1DisplayOrder
+		Level2,                           // Level2
+		Level2DisplayOrder,               // Level2DisplayOrder
+		"",                               // Level3
+		0,                                // Level3DisplayOrder
+		true,                             //AllowedFor_OKAPI
+		true,                             //AllowedFor_App
+	}
+	*R = append(*R, r)
+
+	r = Route{
+		"HTTP_Loyalty_Seniority_Level",
+		"POST",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Seniority_Level/",
+		Use(UC.HTTP_Loyalty_Seniority_Level, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
+		true,
+		"Loyalty Seniority Level - Add", // DisplayName
+		2,                               // DisplayOrder
+		Module,                          // Module
+		ModuleDisplayOrder,              //ModuleDisplayOrder
+		Level1,                          // Level1
+		Level1DisplayOrder,              // Level1DisplayOrder
+		Level2,                          // Level2
+		Level2DisplayOrder,              // Level2DisplayOrder
+		"",                              // Level3
+		0,                               // Level3DisplayOrder
+		true,                            //AllowedFor_OKAPI
+		true,                            //AllowedFor_App
+	}
+	*R = append(*R, r)
+
+	r = Route{
+		"HTTP_Loyalty_Seniority_Level",
+		"PUT",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Seniority_Level/",
+		Use(UC.HTTP_Loyalty_Seniority_Level, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
+		true,
+		"Loyalty Seniority Level - Edit", // DisplayName
+		3,                                // DisplayOrder
+		Module,                           // Module
+		ModuleDisplayOrder,               //ModuleDisplayOrder
+		Level1,                           // Level1
+		Level1DisplayOrder,               // Level1DisplayOrder
+		Level2,                           // Level2
+		Level2DisplayOrder,               // Level2DisplayOrder
+		"",                               // Level3
+		0,                                // Level3DisplayOrder
+		true,                             //AllowedFor_OKAPI
+		true,                             //AllowedFor_App
+	}
+	*R = append(*R, r)
+
+	r = Route{
+		"HTTP_Loyalty_Seniority_Level",
+		"DELETE",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_Loyalty_Seniority_Level/{KeyDelete}/",
+		Use(UC.HTTP_Loyalty_Seniority_Level, UC.ValidateAccess_AUC, UC.ValidateJWEToken),
+		true,
+		"Loyalty Seniority Level - Delete", // DisplayName
+		4,                                  // DisplayOrder
+		Module,                             // Module
+		ModuleDisplayOrder,                 //ModuleDisplayOrder
+		Level1,                             // Level1
+		Level1DisplayOrder,                 // Level1DisplayOrder
+		Level2,                             // Level2
+		Level2DisplayOrder,                 // Level2DisplayOrder
+		"",                                 // Level3
+		0,                                  // Level3DisplayOrder
+		true,                               //AllowedFor_OKAPI
+		true,                               //AllowedFor_App
+	}
+	*R = append(*R, r)
+
+	//*****************************
 	// Loyalty_Account_Segment
 	//*****************************
 	Level2 = "Loyalty Account Segment"
-	Level2DisplayOrder = 3
+	Level2DisplayOrder = 4
 
 	r = Route{
 		"HTTP_Loyalty_Account_Segment",
@@ -1053,7 +1144,7 @@ func (UC *UserControl) Add_LoyaltyManagementRoutes(R *Routes) {
 	// Loyalty_Point_Earning_Rules
 	//*****************************
 	Level2 = "Loyalty Point Earning Rules"
-	Level2DisplayOrder = 4
+	Level2DisplayOrder = 5
 	r = Route{
 		"HTTP_Loyalty_Point_Earning_Rules",
 		"GET",
@@ -1226,7 +1317,7 @@ func (UC *UserControl) Add_LoyaltyManagementRoutes(R *Routes) {
 	// Loyalty_Point_Expiry_Rules
 	//*****************************
 	Level2 = "Loyalty Point Expiry Rules"
-	Level2DisplayOrder = 5
+	Level2DisplayOrder = 6
 	r = Route{
 		"HTTP_Loyalty_Point_Expiry_Rules",
 		"GET",
@@ -1315,7 +1406,7 @@ func (UC *UserControl) Add_LoyaltyManagementRoutes(R *Routes) {
 	// Loyalty_Point_Redemption_Rules
 	//*****************************
 	Level2 = "Loyalty Point Redemption Rules"
-	Level2DisplayOrder = 6
+	Level2DisplayOrder = 7
 	r = Route{
 		"HTTP_Loyalty_Point_Redemption_Rules",
 		"GET",
@@ -1404,7 +1495,7 @@ func (UC *UserControl) Add_LoyaltyManagementRoutes(R *Routes) {
 	// Loyalty_Plan
 	//*****************************
 	Level2 = "Loyalty Plan"
-	Level2DisplayOrder = 7
+	Level2DisplayOrder = 8
 	r = Route{
 		"HTTP_Loyalty_Plan",
 		"GET",
@@ -1493,7 +1584,7 @@ func (UC *UserControl) Add_LoyaltyManagementRoutes(R *Routes) {
 	// Customer_Loyalty_Account
 	//*****************************
 	Level2 = "Customer Loyalty Account"
-	Level2DisplayOrder = 8
+	Level2DisplayOrder = 9
 	r = Route{
 		"HTTP_Customer_Loyalty_Account",
 		"GET",
