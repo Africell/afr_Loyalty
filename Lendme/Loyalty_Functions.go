@@ -6541,6 +6541,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 	var points, Outstanding_fraction_points float64
 	if response.PointsToCredit == 0 {
 		points, Outstanding_fraction_points = Calculate_Loyalty_Points(point_earning_rules, request, loyalty_account.Outstanding_fraction_points)
+		fmt.Println("reached here")
 		if !loyalty_account.Joining_Date.IsZero() && loyalty_account.Joining_Date.Year() != 1 {
 			now := time.Now()
 
@@ -6586,6 +6587,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 			}
 
 		}
+		fmt.Println("didnt reached here")
 
 	} else {
 		points = response.PointsToCredit
