@@ -3939,6 +3939,30 @@ func (Uc *UserControl) HTTP_INLiveFeed_Churn(w http.ResponseWriter, r *http.Requ
 		//churn from lendme
 		Uc.Subscriber_Delete(request.Key)
 		//churn from loyalty
+		entry_na, exits := Map_Customer_Loyalty_Account.CheckThenGet(request.Key)
+		if !exits {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to delete"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		entry, ok := entry_na.(Customer_Loyalty_Account)
+		if !ok {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to delete"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		// Add his points to the available points pool
+		Uc.Loyalty_Governance_Redeem_Points_Debit(entry.Available_Points, true)
+		//delete loyalty points monthly wallets
+		for _, pointDetailKey := range entry.Points_Detail_Keys {
+			Map_Customer_Loyalty_Account_Points_Detail.Delete(pointDetailKey)
+		}
 		err = Uc.Customer_Loyalty_Account_Delete(sr.Login, request.Key)
 		if err != nil {
 			sr.Status = "failed"
