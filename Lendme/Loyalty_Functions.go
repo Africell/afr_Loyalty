@@ -6539,9 +6539,9 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 	}
 	//calucate points
 	var points, Outstanding_fraction_points float64
+	initial_Outstanding_fraction_points := loyalty_account.Outstanding_fraction_points
 	if response.PointsToCredit == 0 {
 		points, Outstanding_fraction_points = Calculate_Loyalty_Points(point_earning_rules, request, loyalty_account.Outstanding_fraction_points)
-		fmt.Println("reached here")
 		if !loyalty_account.Joining_Date.IsZero() && loyalty_account.Joining_Date.Year() != 1 {
 			now := time.Now()
 
@@ -6561,23 +6561,12 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 						seniority, ok := seniorityLevel_na.(Loyalty_Seniority_Level)
 						if ok {
 							if months >= int(seniority.AON_From) && months <= int(seniority.AON_Till) {
-								fmt.Println("points", points)
-								fmt.Println("Outstanding_fraction_points", Outstanding_fraction_points)
-								initialPointsflt := float64(points + Outstanding_fraction_points)
-								fmt.Println("initialPointsflt", initialPointsflt)
-
+								addedFractionPoints := Outstanding_fraction_points - initial_Outstanding_fraction_points
+								initialPointsflt := float64(points + addedFractionPoints)
 								addedValueflt := float64(initialPointsflt*lvl.Multiplier_Percentage) / 100
-								fmt.Println("addedValueflt", addedValueflt)
-
-								flt_points := addedValueflt + initialPointsflt
-								fmt.Println("flt_points", flt_points)
-
+								flt_points := addedValueflt + float64(points+Outstanding_fraction_points)
 								points = float64(int(flt_points))
-								fmt.Println("points", points)
-
 								Outstanding_fraction_points = flt_points - points
-								fmt.Println("Outstanding_fraction_points", Outstanding_fraction_points)
-
 							}
 						}
 
@@ -8504,7 +8493,7 @@ func (Uc *UserControl) PointsExpiry_Process() {
 	for range time.Tick(time.Second * 1) {
 		_CurrentDateTime := time.Now()
 		_hr, _mi, _se := _CurrentDateTime.Clock()
-		if _hr == 00 {
+		if _hr == 13 {
 			if _mi == 00 {
 				if _se < 60 {
 					if exec == 0 {
@@ -8530,12 +8519,14 @@ func (Uc *UserControl) PointsExpiry_Process() {
 										}
 										// do the work here
 										for _, loyalty_Account := range loyalty_Accounts {
-											chan_PointsExpiry_Controler <- 1
+
 											finalAccount, err := Uc.Customer_Loyalty_Account_Get(loyalty_Account.Key)
 											if err != nil || len(finalAccount) == 0 {
 												break
 											}
+											fmt.Println("loyalty_Account.Key", loyalty_Account.Key)
 											if finalAccount[0].Coming_Expiry_Date.Before(time.Now()) {
+												fmt.Println("enterd", finalAccount[0].Key)
 												go Uc.PointsExpiry_ProcessExec(finalAccount[0])
 											}
 										}
@@ -8559,6 +8550,7 @@ func (Uc *UserControl) PointsExpiry_Process() {
 }
 
 func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account) {
+	chan_PointsExpiry_Controler <- 1
 	var expiry_log Loyalty_Expiry_log
 	expiry_log.ExpiryTime = time.Now()
 	expiry_log.MSISDN = account.Key
@@ -8655,8 +8647,8 @@ func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account
 			Uc.Write_Loyalty_Expiry_log(expiry_log)
 		}
 		// }
-		// <-chan_PointsExpiry_Controler
 	}
+	<-chan_PointsExpiry_Controler
 }
 
 func removeStringFromArray(s []string, r string) []string {
