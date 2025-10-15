@@ -6579,8 +6579,6 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 			}
 
 		}
-		fmt.Println("didnt reached here")
-
 	} else {
 		points = response.PointsToCredit
 		Outstanding_fraction_points = loyalty_account.Outstanding_fraction_points
@@ -7087,6 +7085,10 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 		Uc.Write_Loyalty_Status_log(*response)
 		return
 	}
+	loyalty_account.Opt_Status = request.Opt_Status
+	loyalty_account.Last_Opt_Status_Date = time.Now()
+	Map_Customer_Loyalty_Account.Put(loyalty_account.Key, loyalty_account)
+
 	if loyalty_account.First_Opt_In_Status_Date.IsZero() && request.Opt_Status == "OptedIn" {
 		var loyalty_AccountCreditPoints_log Loyalty_AccountCreditPoints_log
 		var loyalty_AccountCreditPoints_Request Loyalty_AccountCreditPoints_Request
@@ -7145,11 +7147,10 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 			}
 		}
 		loyalty_account.First_Opt_In_Status_Date = time.Now()
+		Map_Customer_Loyalty_Account.Put(loyalty_account.Key, loyalty_account)
+
 	}
 	//response.ClosureAvailablePoints = (loyalty_account.Awarded_Points + loyalty_account.Expired_Points) - loyalty_account.Redeemed_Points
-	loyalty_account.Opt_Status = request.Opt_Status
-	loyalty_account.Last_Opt_Status_Date = time.Now()
-	Map_Customer_Loyalty_Account.Put(loyalty_account.Key, loyalty_account)
 
 	//successful reply
 	response.Request_Status = "successful"
