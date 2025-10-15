@@ -696,9 +696,10 @@ type Customer_Loyalty_Account struct {
 	Points_To_Expire   float64   `bson:"Points_To_Expire" json:"Points_To_Expire"`
 	Coming_Expiry_Date time.Time `bson:"Coming_Expiry_Date" json:"Coming_Expiry_Date"`
 
-	Opt_Status      string               `bson:"Opt_Status" json:"Opt_Status"` //OptedIn, OptedOut
-	Opt_Status_Date time.Time            `bson:"Opt_Status_Date" json:"Opt_Status_Date"`
-	Opt_Status_log  []Loyalty_Status_log `bson:"Opt_Status_log" json:"Opt_Status_log"`
+	Opt_Status               string               `bson:"Opt_Status" json:"Opt_Status"` //OptedIn, OptedOut
+	Last_Opt_Status_Date     time.Time            `bson:"Opt_Status_Date" json:"Opt_Status_Date"`
+	Opt_Status_log           []Loyalty_Status_log `bson:"Opt_Status_log" json:"Opt_Status_log"`
+	First_Opt_In_Status_Date time.Time            `bson:"First_Opt_In_Status_Date" json:"First_Opt_In_Status_Date"`
 
 	Expired_Points float64   `bson:"Expired_Points" json:"Expired_Points"` //expired are deducted from Awarded_Points
 	Expiry_Date    time.Time `bson:"Expiry_Date" json:"Expiry_Date"`

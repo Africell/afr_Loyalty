@@ -1161,7 +1161,7 @@ func (Uc *UserControl) Loyalty_Status_Expiry_Daily_Process() {
 							expiry_log.Opening_Expired_Points = doc.Expired_Points
 							expiry_log.OpeningLoyaltyLevel = doc.Loyalty_Level_Key
 							expiry_log.EndLoyaltyLevel = doc.Loyalty_Level_Key
-							expiry_log.Last_OptOut = doc.Opt_Status_Date
+							expiry_log.Last_OptOut = doc.Last_Opt_Status_Date
 							expiry_log.Grace_Period_Given_Days = graceDays
 							expiry_log.ExpiryReason = "Opt out grace period reached"
 							expiry_log.ExpiryAmount = doc.Available_Points
@@ -4485,8 +4485,9 @@ func (Uc *UserControl) Customer_Loyalty_Account_Add(Login string, request Custom
 		NewEntry.Opt_Status = "OptedOut"
 	} else {
 		NewEntry.Opt_Status = "OptedIn"
+		NewEntry.First_Opt_In_Status_Date = time.Now()
 	}
-	NewEntry.Opt_Status_Date = time.Now()
+	NewEntry.Last_Opt_Status_Date = time.Now()
 
 	if Login != "DWH_Import" {
 		NewEntry.Loyalty_Account_Segment_Key = Loyalty_Account_Segment_Selection(request.ARPU, request.Joining_Date)
@@ -4531,60 +4532,62 @@ func (Uc *UserControl) Customer_Loyalty_Account_Add(Login string, request Custom
 		})
 	}
 	NewJoiningsCount.With(prometheus.Labels{"Source": request.EventSource}).Inc()
-	var loyalty_AccountCreditPoints_log Loyalty_AccountCreditPoints_log
-	var loyalty_AccountCreditPoints_Request Loyalty_AccountCreditPoints_Request
-	loyalty_AccountCreditPoints_Request.MSISDN = NewEntry.Key
-	loyalty_AccountCreditPoints_Request.EventSource = request.EventSource
-	loyalty_AccountCreditPoints_Request.EventType = "NewJoining"
-	loyalty_AccountCreditPoints_Request.EventDetail = ""
-	loyalty_AccountCreditPoints_Request.EventAmount = 0
-	loyalty_AccountCreditPoints_Request.EventDescription = ""
-	var request_header Request_Header
-	request_header.SourceIP = "127.0.0.1"
-	request_header.SourceApp = request.EventSource
-	request_header.AppLogin = Login
-	Uc.Loyalty_AccountCreditPoints(&request_header, loyalty_AccountCreditPoints_Request, &loyalty_AccountCreditPoints_log)
+	if NewEntry.Opt_Status == "OptedIn" {
+		var loyalty_AccountCreditPoints_log Loyalty_AccountCreditPoints_log
+		var loyalty_AccountCreditPoints_Request Loyalty_AccountCreditPoints_Request
+		loyalty_AccountCreditPoints_Request.MSISDN = NewEntry.Key
+		loyalty_AccountCreditPoints_Request.EventSource = request.EventSource
+		loyalty_AccountCreditPoints_Request.EventType = "NewJoining"
+		loyalty_AccountCreditPoints_Request.EventDetail = ""
+		loyalty_AccountCreditPoints_Request.EventAmount = 0
+		loyalty_AccountCreditPoints_Request.EventDescription = ""
+		var request_header Request_Header
+		request_header.SourceIP = "127.0.0.1"
+		request_header.SourceApp = request.EventSource
+		request_header.AppLogin = Login
+		Uc.Loyalty_AccountCreditPoints(&request_header, loyalty_AccountCreditPoints_Request, &loyalty_AccountCreditPoints_log)
 
-	Earningrecord, err := Uc.Customer_Loyalty_Account_GetEarning_Rule(request.Key)
-	if err != nil {
-		log.Println("failed to get data")
-		return
-	}
-	if Earningrecord.Welcome_Notification {
-		WelcomeNotiLog := NotificationLog{
-			SourceAction:  "Welcome",
-			TransactionId: "",
-			Medium:        "SMS",
-			SourceAddress: Earningrecord.Welcome_Notification_Sender,
-			Destination:   request.Key,
-			Subject:       "Welcome",
-			AddUser:       "SYSTEM",
-			AddDate:       time.Now(),
+		Earningrecord, rule_err := Uc.Customer_Loyalty_Account_GetEarning_Rule(request.Key)
+		if rule_err != nil {
+			log.Println("failed to get data")
+			return
 		}
-		Welcome_Noti_Text := ""
-		Welcome_Noti_Text = Earningrecord.Welcome_Notification_Text
-		if Welcome_Noti_Text != "" {
-			Welcome_Noti_Text = strings.ReplaceAll(Welcome_Noti_Text, "{{WelcomePoints}}", fmt.Sprint(Earningrecord.Welcome_Points))
-			Welcome_Noti_Text = strings.ReplaceAll(Welcome_Noti_Text, "{{LoyaltyBalance}}", fmt.Sprint(Earningrecord.Welcome_Points))
-			Welcome_Noti_Text = strings.ReplaceAll(Welcome_Noti_Text, "{{NewLevel}}", fmt.Sprint(NewEntry.Loyalty_Level_Key))
-			WelcomeNotiLog.Payload = Welcome_Noti_Text
-			err := Send_SMS(Earningrecord.Welcome_Notification_Sender, request.Key, Welcome_Noti_Text)
-			if err != nil {
-				WelcomeNotiLog.Status = "Failed"
-				WelcomeNotiLog.Error = err.Error()
-			} else {
-				WelcomeNotiLog.Status = "Successful"
+		if Earningrecord.Welcome_Notification {
+			WelcomeNotiLog := NotificationLog{
+				SourceAction:  "Welcome",
+				TransactionId: "",
+				Medium:        "SMS",
+				SourceAddress: Earningrecord.Welcome_Notification_Sender,
+				Destination:   request.Key,
+				Subject:       "Welcome",
+				AddUser:       "SYSTEM",
+				AddDate:       time.Now(),
 			}
-		} else {
-			WelcomeNotiLog.Payload = Welcome_Noti_Text
-			WelcomeNotiLog.Status = "Failed"
-			WelcomeNotiLog.Error = "Undefined welcome notification for transaction"
-		}
-		YYYY, MM, _, _, _, _, _ := GetTimeParts(time.Now())
-		Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
-		_, err = DAO_NotificationLog.PutOneLogs(WelcomeNotiLog, Db, DAO_NotificationLog.Collection)
-		if err != nil {
-			log.Println("Error in Write welcome Notification Logs:", err, " (", WelcomeNotiLog, ")")
+			Welcome_Noti_Text := ""
+			Welcome_Noti_Text = Earningrecord.Welcome_Notification_Text
+			if Welcome_Noti_Text != "" {
+				Welcome_Noti_Text = strings.ReplaceAll(Welcome_Noti_Text, "{{WelcomePoints}}", fmt.Sprint(Earningrecord.Welcome_Points))
+				Welcome_Noti_Text = strings.ReplaceAll(Welcome_Noti_Text, "{{LoyaltyBalance}}", fmt.Sprint(Earningrecord.Welcome_Points))
+				Welcome_Noti_Text = strings.ReplaceAll(Welcome_Noti_Text, "{{NewLevel}}", fmt.Sprint(NewEntry.Loyalty_Level_Key))
+				WelcomeNotiLog.Payload = Welcome_Noti_Text
+				err := Send_SMS(Earningrecord.Welcome_Notification_Sender, request.Key, Welcome_Noti_Text)
+				if err != nil {
+					WelcomeNotiLog.Status = "Failed"
+					WelcomeNotiLog.Error = err.Error()
+				} else {
+					WelcomeNotiLog.Status = "Successful"
+				}
+			} else {
+				WelcomeNotiLog.Payload = Welcome_Noti_Text
+				WelcomeNotiLog.Status = "Failed"
+				WelcomeNotiLog.Error = "Undefined welcome notification for transaction"
+			}
+			YYYY, MM, _, _, _, _, _ := GetTimeParts(time.Now())
+			Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
+			_, err = DAO_NotificationLog.PutOneLogs(WelcomeNotiLog, Db, DAO_NotificationLog.Collection)
+			if err != nil {
+				log.Println("Error in Write welcome Notification Logs:", err, " (", WelcomeNotiLog, ")")
+			}
 		}
 	}
 	return Id, nil
@@ -4825,7 +4828,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_Get(Key string) (entries []Custo
 			if !entry.Expiry_Date.IsZero() {
 				initialDate = entry.Initial_Date
 			} else {
-				initialDate = entry.Creation_date
+				initialDate = entry.First_Opt_In_Status_Date
 			}
 			initialexpiryDate := addValidity(initialDate, expiry_Rule.Validity_Unit, expiry_Rule.Validity_Duration)
 			finalexpiryDate := addValidity(initialexpiryDate, expiry_Rule.Grace_Validity_Unit, expiry_Rule.Grace_Validity_Duration)
@@ -7084,10 +7087,68 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 		Uc.Write_Loyalty_Status_log(*response)
 		return
 	}
+	if loyalty_account.First_Opt_In_Status_Date.IsZero() && request.Opt_Status == "OptedIn" {
+		var loyalty_AccountCreditPoints_log Loyalty_AccountCreditPoints_log
+		var loyalty_AccountCreditPoints_Request Loyalty_AccountCreditPoints_Request
+		loyalty_AccountCreditPoints_Request.MSISDN = loyalty_account.Key
+		loyalty_AccountCreditPoints_Request.EventSource = request.EventSource
+		loyalty_AccountCreditPoints_Request.EventType = "NewJoining"
+		loyalty_AccountCreditPoints_Request.EventDetail = ""
+		loyalty_AccountCreditPoints_Request.EventAmount = 0
+		loyalty_AccountCreditPoints_Request.EventDescription = ""
+		var credit_request_header Request_Header
+		credit_request_header.SourceIP = "127.0.0.1"
+		credit_request_header.SourceApp = request.EventSource
+		credit_request_header.AppLogin = request_header.AppLogin
+		Uc.Loyalty_AccountCreditPoints(&credit_request_header, loyalty_AccountCreditPoints_Request, &loyalty_AccountCreditPoints_log)
 
+		Earningrecord, err := Uc.Customer_Loyalty_Account_GetEarning_Rule(plan.Earning_Rules_Key)
+		if err != nil {
+			log.Println("failed to get data")
+			return
+		}
+		if Earningrecord.Welcome_Notification {
+			WelcomeNotiLog := NotificationLog{
+				SourceAction:  "Welcome",
+				TransactionId: "",
+				Medium:        "SMS",
+				SourceAddress: Earningrecord.Welcome_Notification_Sender,
+				Destination:   loyalty_account.Key,
+				Subject:       "Welcome",
+				AddUser:       "SYSTEM",
+				AddDate:       time.Now(),
+			}
+			Welcome_Noti_Text := ""
+			Welcome_Noti_Text = Earningrecord.Welcome_Notification_Text
+			if Welcome_Noti_Text != "" {
+				Welcome_Noti_Text = strings.ReplaceAll(Welcome_Noti_Text, "{{WelcomePoints}}", fmt.Sprint(Earningrecord.Welcome_Points))
+				Welcome_Noti_Text = strings.ReplaceAll(Welcome_Noti_Text, "{{LoyaltyBalance}}", fmt.Sprint(Earningrecord.Welcome_Points))
+				Welcome_Noti_Text = strings.ReplaceAll(Welcome_Noti_Text, "{{NewLevel}}", fmt.Sprint(loyalty_account.Loyalty_Level_Key))
+				WelcomeNotiLog.Payload = Welcome_Noti_Text
+				err := Send_SMS(Earningrecord.Welcome_Notification_Sender, loyalty_account.Key, Welcome_Noti_Text)
+				if err != nil {
+					WelcomeNotiLog.Status = "Failed"
+					WelcomeNotiLog.Error = err.Error()
+				} else {
+					WelcomeNotiLog.Status = "Successful"
+				}
+			} else {
+				WelcomeNotiLog.Payload = Welcome_Noti_Text
+				WelcomeNotiLog.Status = "Failed"
+				WelcomeNotiLog.Error = "Undefined welcome notification for transaction"
+			}
+			YYYY, MM, _, _, _, _, _ := GetTimeParts(time.Now())
+			Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
+			_, err = DAO_NotificationLog.PutOneLogs(WelcomeNotiLog, Db, DAO_NotificationLog.Collection)
+			if err != nil {
+				log.Println("Error in Write welcome Notification Logs:", err, " (", WelcomeNotiLog, ")")
+			}
+		}
+		loyalty_account.First_Opt_In_Status_Date = time.Now()
+	}
 	//response.ClosureAvailablePoints = (loyalty_account.Awarded_Points + loyalty_account.Expired_Points) - loyalty_account.Redeemed_Points
 	loyalty_account.Opt_Status = request.Opt_Status
-	loyalty_account.Opt_Status_Date = time.Now()
+	loyalty_account.Last_Opt_Status_Date = time.Now()
 	Map_Customer_Loyalty_Account.Put(loyalty_account.Key, loyalty_account)
 
 	//successful reply
