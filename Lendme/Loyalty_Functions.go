@@ -7102,7 +7102,7 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 		credit_request_header.AppLogin = request_header.AppLogin
 		Uc.Loyalty_AccountCreditPoints(&credit_request_header, loyalty_AccountCreditPoints_Request, &loyalty_AccountCreditPoints_log)
 
-		Earningrecord, err := Uc.Customer_Loyalty_Account_GetEarning_Rule(plan.Earning_Rules_Key)
+		Earningrecord, err := Uc.Customer_Loyalty_Account_GetEarning_Rule(loyalty_account.Key)
 		if err != nil {
 			log.Println("failed to get data")
 			return
