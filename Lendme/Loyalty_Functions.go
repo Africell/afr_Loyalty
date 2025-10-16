@@ -6922,14 +6922,7 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 }
 
 func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Header, request Loyalty_Opt_Request, response *Loyalty_Status_log) {
-	response.StatusDate = time.Now()
-	//fill the request header info
-	response.SourceIP = request_header.SourceIP
-	response.SourceApp = request.EventSource
-	response.AppLogin = request_header.AppLogin
-	response.AppVersion = request_header.AppVersion
-	response.MSISDN = request.MSISDN
-	// request.MSISDN = Normalize_International_MSISDN(request.MSISDN)
+	request.MSISDN = Normalize_International_MSISDN(request.MSISDN)
 	if request.MSISDN == "" {
 		response.Request_Status = "failed"
 		response.Request_StatusCode = http.StatusBadRequest
@@ -6940,6 +6933,14 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 		Uc.Write_Loyalty_Status_log(*response)
 		return
 	}
+	response.StatusDate = time.Now()
+	//fill the request header info
+	response.SourceIP = request_header.SourceIP
+	response.SourceApp = request.EventSource
+	response.AppLogin = request_header.AppLogin
+	response.AppVersion = request_header.AppVersion
+	response.MSISDN = request.MSISDN
+	// request.MSISDN = Normalize_International_MSISDN(request.MSISDN)
 	if request.Opt_Status == "" {
 		response.Request_Status = "failed"
 		response.Request_StatusCode = http.StatusBadRequest
@@ -7090,10 +7091,12 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 	Map_Customer_Loyalty_Account.Put(loyalty_account.Key, loyalty_account)
 
 	if loyalty_account.First_Opt_In_Status_Date.IsZero() && request.Opt_Status == "OptedIn" {
+		loyalty_account.First_Opt_In_Status_Date = time.Now()
+		Map_Customer_Loyalty_Account.Put(loyalty_account.Key, loyalty_account)
 		var loyalty_AccountCreditPoints_log Loyalty_AccountCreditPoints_log
 		var loyalty_AccountCreditPoints_Request Loyalty_AccountCreditPoints_Request
 		loyalty_AccountCreditPoints_Request.MSISDN = loyalty_account.Key
-		loyalty_AccountCreditPoints_Request.EventSource = request.EventSource
+		loyalty_AccountCreditPoints_Request.EventSource = "First_Opt_In"
 		loyalty_AccountCreditPoints_Request.EventType = "NewJoining"
 		loyalty_AccountCreditPoints_Request.EventDetail = ""
 		loyalty_AccountCreditPoints_Request.EventAmount = 0
@@ -7146,9 +7149,6 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 				log.Println("Error in Write welcome Notification Logs:", err, " (", WelcomeNotiLog, ")")
 			}
 		}
-		loyalty_account.First_Opt_In_Status_Date = time.Now()
-		Map_Customer_Loyalty_Account.Put(loyalty_account.Key, loyalty_account)
-
 	}
 	//response.ClosureAvailablePoints = (loyalty_account.Awarded_Points + loyalty_account.Expired_Points) - loyalty_account.Redeemed_Points
 
@@ -7171,6 +7171,8 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 		default:
 			return 0, current_outstanding_points
 		}
+	case "First_Opt_In":
+		return rules.Welcome_Points, current_outstanding_points
 	case "IN_feed":
 		switch award_request.EventType {
 		case "NewJoining":
