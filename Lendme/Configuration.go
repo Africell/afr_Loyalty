@@ -413,6 +413,8 @@ func setDefaultConfiguration_DRC_Loyalty_UAT() (Configuration ConfigType) {
 
 	Configuration.IsProduction = true
 	Configuration.IsLoyaltyProduction = false
+	Configuration.ISLoyaltyOptIn = true
+	Configuration.ISLoyaltyOptOutGracePeriodDays = 30
 	Configuration.Min_Allowed_Amnt = 10
 	Configuration.Service_FeePerc = 0.1
 	Configuration.Min_Allowed_AON = 3
@@ -1612,7 +1614,7 @@ func setDefaultConfiguration_SL_Loyalty_UAT() (Configuration ConfigType) {
 	Configuration.OKAPI_AUC.S2S_Username = "Loyalty_OKAPI"
 	Configuration.OKAPI_AUC.S2S_Password = "]W8#x3D1USKUyH@p]s&D_"
 	Configuration.OKAPI_AUC.Timeout_After = 5 * time.Second
-	Configuration.ISLoyaltyOptOutGracePeriodDays = 1
+	Configuration.ISLoyaltyOptOutGracePeriodDays = 30
 	// //mongoDB
 	// Configuration.MongoDB.ReplicaSet = "reps0"
 	// Configuration.MongoDB.UserName = "LendMeApp"
@@ -2134,11 +2136,12 @@ func setDefaultConfiguration_Dev() (Configuration ConfigType) {
 	Configuration.LoyaltyModule = "Loyalty"
 
 	Configuration.MSISDN_Prefix = "0"
-	Configuration.MSISDN_Short_len = 8
+	Configuration.MSISDN_Short_len = 7
 	Configuration.CountryCode = "220"
 
 	Configuration.IsProduction = false
 	Configuration.IsLoyaltyProduction = false
+	Configuration.ISLoyaltyOptIn = true
 	Configuration.Min_Allowed_Amnt = 1
 	Configuration.Service_FeePerc = 0.15
 	Configuration.Min_Allowed_AON = 3
