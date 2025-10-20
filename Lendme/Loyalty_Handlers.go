@@ -480,7 +480,7 @@ func (Uc *UserControl) HTTP_Loyalty_Seniority_Level(w http.ResponseWriter, r *ht
 			Uc.HTTP_API_Standard_response(w, r, sr, false)
 			return
 		}
-		var request Loyalty_Seniority_Level_AddRequest
+		var request Loyalty_Seniority_Level
 		err = json.Unmarshal(body, &request)
 		if err != nil {
 			sr.Status = "failed"
@@ -514,7 +514,7 @@ func (Uc *UserControl) HTTP_Loyalty_Seniority_Level(w http.ResponseWriter, r *ht
 			Uc.HTTP_API_Standard_response(w, r, sr, false)
 			return
 		}
-		var request Loyalty_Seniority_Level_EditRequest
+		var request Loyalty_Seniority_Level
 		err = json.Unmarshal(body, &request)
 		if err != nil {
 			sr.Status = "failed"

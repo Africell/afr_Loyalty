@@ -1521,10 +1521,10 @@ func (Uc *UserControl) Loyalty_Level_Delete(Login, Key string) (err error) {
 // ***********************************************************************
 // Loyalty Seniiority Level functions
 // ***********************************************************************
-func (Uc *UserControl) Loyalty_Seniority_Level_Add(Login string, request Loyalty_Seniority_Level_AddRequest) (Id int64, err error) {
+func (Uc *UserControl) Loyalty_Seniority_Level_Add(Login string, request Loyalty_Seniority_Level) (Id int64, err error) {
 	//check key if filled and if already used
-	if request.Key == "" {
-		err = errors.New("key cannot be empty")
+	if request.Name == "" {
+		err = errors.New("name cannot be empty")
 		return Id, err
 	}
 	//check if key already used
@@ -1533,12 +1533,33 @@ func (Uc *UserControl) Loyalty_Seniority_Level_Add(Login string, request Loyalty
 		err = errors.New("key already exist")
 		return Id, err
 	}
+	if request.AON_From > request.AON_Till {
+		err = errors.New("invalid AON values")
+		return Id, err
+	}
+	entries_na := Map_Loyalty_Seniority_Level.ConvertToArray()
+	if len(entries_na) > 0 {
+		for _, entry_na := range entries_na {
+			entry, ok := entry_na.(Loyalty_Seniority_Level)
+			if !ok {
+				err = errors.New("error in type assertion")
+				return Id, err
+			} else {
+				if request.AON_From <= entry.AON_Till && request.AON_Till >= entry.AON_From {
+					err = errors.New("AON intersect with " + entry.Key + " AON")
+					return Id, err
+				}
 
+			}
+		}
+	}
 	//Prepare new entry
 	var NewEntry Loyalty_Seniority_Level
 	NewEntry.Seniority_Id = Map_Loyalty_AutoIncrement.GetNextAI("Loyalty_Seniority_Level-Id")
 	Id = NewEntry.Seniority_Id
-	NewEntry.Key = request.Key
+	convertedId := strconv.FormatInt(Id, 10)
+	NewEntry.Key = convertedId
+	NewEntry.Name = request.Name
 	NewEntry.Description = request.Description
 	NewEntry.AON_From = request.AON_From
 	NewEntry.AON_Till = request.AON_Till
@@ -1558,7 +1579,7 @@ func (Uc *UserControl) Loyalty_Seniority_Level_Add(Login string, request Loyalty
 	return Id, nil
 }
 
-func (Uc *UserControl) Loyalty_Seniority_Level_Edit(Login string, request Loyalty_Seniority_Level_EditRequest) (Id int64, err error) {
+func (Uc *UserControl) Loyalty_Seniority_Level_Edit(Login string, request Loyalty_Seniority_Level) (Id int64, err error) {
 	//check and validate
 	if request.Key == "" {
 		err = errors.New("key cannot be empty")
@@ -1576,20 +1597,33 @@ func (Uc *UserControl) Loyalty_Seniority_Level_Edit(Login string, request Loyalt
 	if entry.Seniority_Id != request.Seniority_Id {
 		return Id, errors.New("id is not matching")
 	}
+	if request.AON_From > request.AON_Till {
+		err = errors.New("invalid AON values")
+		return Id, err
+	}
 	Current_Entry := entry
+	entries_na := Map_Loyalty_Seniority_Level.ConvertToArray()
+	if len(entries_na) > 0 {
+		for _, entry_na := range entries_na {
+			entry, ok := entry_na.(Loyalty_Seniority_Level)
+			if !ok {
+				err = errors.New("error in type assertion")
+				return Id, err
+			} else {
+				if request.Key != entry.Key && request.AON_From <= entry.AON_Till && request.AON_Till >= entry.AON_From {
+					err = errors.New("AON intersect with " + entry.Key + " AON")
+					return Id, err
+				}
+
+			}
+		}
+	}
 	//Prepare new entry
-	entry.Key = request.Key
+	entry.Name = request.Name
 	entry.Description = request.Description
 	entry.AON_From = request.AON_From
 	entry.AON_Till = request.AON_Till
-	if request.NewKey != "" {
-		if request.NewKey != request.Key {
-			//delete old
-			Map_Loyalty_Seniority_Level.Delete(request.Key)
-			//update key
-			entry.Key = request.NewKey
-		}
-	}
+
 	//add to cache and DB
 	Map_Loyalty_Seniority_Level.Put(entry.Key, entry)
 	//add logs
@@ -8557,7 +8591,7 @@ func (Uc *UserControl) PointsExpiry_Process() {
 	for range time.Tick(time.Second * 1) {
 		_CurrentDateTime := time.Now()
 		_hr, _mi, _se := _CurrentDateTime.Clock()
-		if _hr == 13 {
+		if _hr == 00 {
 			if _mi == 00 {
 				if _se < 60 {
 					if exec == 0 {
@@ -8588,7 +8622,6 @@ func (Uc *UserControl) PointsExpiry_Process() {
 											if err != nil || len(finalAccount) == 0 {
 												break
 											}
-											fmt.Println("loyalty_Account.Key", loyalty_Account.Key)
 											if finalAccount[0].Coming_Expiry_Date.Before(time.Now()) {
 												fmt.Println("enterd", finalAccount[0].Key)
 												go Uc.PointsExpiry_ProcessExec(finalAccount[0])

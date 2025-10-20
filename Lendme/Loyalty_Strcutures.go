@@ -77,9 +77,9 @@ type Loyalty_Governance_log struct {
 	Merchant_Account_Balance float64   `bson:"Merchant_Account_Balance" json:"Merchant_Account_Balance"`
 }
 type Seniority_Level struct {
-	Key                         string  `bson:"Key" json:"Key"`
+	Key                        string  `bson:"Key" json:"Key"`
 	Loyalty_Seniority_Level_Key string  `bson:"Loyalty_Seniority_Level_Key" json:"Loyalty_Seniority_Level_Key"`
-	Multiplier_Percentage       float64 `bson:"Multiplier_Percentage" json:"Multiplier_Percentage"`
+	Multiplier_Percentage      float64 `bson:"Multiplier_Percentage" json:"Multiplier_Percentage"`
 }
 type Loyalty_Level struct {
 	Key                    string            `bson:"Key" json:"Key"`
@@ -118,28 +118,11 @@ type Loyalty_Level_EditRequest struct {
 type Loyalty_Seniority_Level struct {
 	Key          string  `bson:"Key" json:"Key"`
 	Seniority_Id int64   `bson:"Seniority_Id" json:"Seniority_Id"`
+	Name         string  `bson:"Name" json:"Name"`
 	Description  string  `bson:"Description" json:"Description"`
 	AON_From     float64 `bson:"AON_From" json:"AON_From"` //months
 	AON_Till     float64 `bson:"AON_Till" json:"AON_Till"` //months
 }
-
-type Loyalty_Seniority_Level_AddRequest struct {
-	Key          string  `bson:"Key" json:"Key"`
-	Seniority_Id int64   `bson:"Seniority_Id" json:"Seniority_Id"`
-	Description  string  `bson:"Description" json:"Description"`
-	AON_From     float64 `bson:"AON_From" json:"AON_From"` //months
-	AON_Till     float64 `bson:"AON_Till" json:"AON_Till"` //months
-}
-
-type Loyalty_Seniority_Level_EditRequest struct {
-	Key          string  `bson:"Key" json:"Key"`
-	NewKey       string  `bson:"NewKey" json:"NewKey"`
-	Seniority_Id int64   `bson:"Seniority_Id" json:"Seniority_Id"`
-	Description  string  `bson:"Description" json:"Description"`
-	AON_From     float64 `bson:"AON_From" json:"AON_From"` //months
-	AON_Till     float64 `bson:"AON_Till" json:"AON_Till"` //months
-}
-
 type Loyalty_Account_Segment struct {
 	Key         string  `bson:"Key" json:"Key"`
 	Segment_Id  int64   `bson:"Segment_Id" json:"Segment_Id"`
