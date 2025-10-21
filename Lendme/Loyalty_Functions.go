@@ -864,7 +864,7 @@ func (Uc *UserControl) Loyalty_Governance_Delete(Login, Key string) (err error) 
 	return nil
 }
 
-func (Uc *UserControl) Loyalty_Governance_Available_Points_Debit(points float64) (err error) {
+func (Uc *UserControl) Loyalty_Governance_Available_Points_Debit(points float64, refund ...bool) (err error) {
 	chan_LoyaltyGovernance_Controler <- 1
 	loyalty_governance_na, exist := Map_Loyalty_Governance.CheckThenGet(LOYALTY_GOVERNANCE_KEY)
 	if !exist {
@@ -877,7 +877,14 @@ func (Uc *UserControl) Loyalty_Governance_Available_Points_Debit(points float64)
 		return errors.New("loyalty governance type assertion issue")
 	}
 	if (loyalty_governance.Available_Points_Pool - (loyalty_governance.Distributed_Points_Pool + loyalty_governance.Expired_Points_Pool + loyalty_governance.Redeemed_Points_Pool)) > points {
+		refundValue := false
+		if len(refund) > 0 {
+			refundValue = refund[0]
+		}
 		loyalty_governance.Distributed_Points_Pool = loyalty_governance.Distributed_Points_Pool + points
+		if refundValue {
+			loyalty_governance.Redeemed_Points_Pool = loyalty_governance.Redeemed_Points_Pool - points
+		}
 		Map_Loyalty_Governance.Put(loyalty_governance.Key, loyalty_governance)
 		<-chan_LoyaltyGovernance_Controler
 		return
@@ -4979,7 +4986,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			refundRequest.EventAmount = 0
 			refundRequest.PointsToCredit = response.Points_To_Redeem
 			refundRequest.EventDescription = ""
-			Uc.Loyalty_AccountCreditPoints(request_header, refundRequest, &refund_response)
+			Uc.Loyalty_AccountCreditPoints(request_header, refundRequest, &refund_response, true)
 			return
 		}
 		if airtimeTransferReply.StatusCode != http.StatusOK {
@@ -5000,7 +5007,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			refundRequest.EventAmount = 0
 			refundRequest.PointsToCredit = response.Points_To_Redeem
 			refundRequest.EventDescription = ""
-			Uc.Loyalty_AccountCreditPoints(request_header, refundRequest, &refund_response)
+			Uc.Loyalty_AccountCreditPoints(request_header, refundRequest, &refund_response, true)
 			return
 		}
 		AirtimeRedemptionCount.With(prometheus.Labels{"EventSource": response.SourceApp, "Level": loyalty_Account.Loyalty_Level_Key}).Inc()
@@ -5173,7 +5180,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			refundRequest.EventAmount = 0
 			refundRequest.PointsToCredit = response.Points_To_Redeem
 			refundRequest.EventDescription = ""
-			Uc.Loyalty_AccountCreditPoints(request_header, refundRequest, &refund_response)
+			Uc.Loyalty_AccountCreditPoints(request_header, refundRequest, &refund_response, true)
 			return
 		}
 		if bundlePurchaseReply.StatusCode != http.StatusOK {
@@ -5194,7 +5201,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			refundRequest.EventAmount = 0
 			refundRequest.PointsToCredit = response.Points_To_Redeem
 			refundRequest.EventDescription = ""
-			Uc.Loyalty_AccountCreditPoints(request_header, refundRequest, &refund_response)
+			Uc.Loyalty_AccountCreditPoints(request_header, refundRequest, &refund_response, true)
 			return
 		}
 		BundleRedemptionCount.With(prometheus.Labels{"EventSource": response.SourceApp, "BunldeId": request.Redemption_Bunlde_Id, "Level": loyalty_Account.Loyalty_Level_Key}).Inc()
@@ -5528,7 +5535,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			refundRequest.EventAmount = 0
 			refundRequest.PointsToCredit = response.Points_To_Redeem
 			refundRequest.EventDescription = ""
-			Uc.Loyalty_AccountCreditPoints(request_header, refundRequest, &refund_response)
+			Uc.Loyalty_AccountCreditPoints(request_header, refundRequest, &refund_response, true)
 			return
 		}
 		if mm_CashIn_Reply.Status != "SUCCEEDED" {
@@ -5551,7 +5558,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			refundRequest.EventAmount = 0
 			refundRequest.PointsToCredit = response.Points_To_Redeem
 			refundRequest.EventDescription = ""
-			Uc.Loyalty_AccountCreditPoints(request_header, refundRequest, &refund_response)
+			Uc.Loyalty_AccountCreditPoints(request_header, refundRequest, &refund_response, true)
 			return
 		}
 		MobileMoneyRedemptionCount.With(prometheus.Labels{"EventSource": response.SourceApp, "Level": loyalty_Account.Loyalty_Level_Key}).Inc()
@@ -5709,7 +5716,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			refundRequest.EventAmount = 0
 			refundRequest.PointsToCredit = response.Points_To_Redeem
 			refundRequest.EventDescription = ""
-			Uc.Loyalty_AccountCreditPoints(request_header, refundRequest, &refund_response)
+			Uc.Loyalty_AccountCreditPoints(request_header, refundRequest, &refund_response, true)
 			return
 		}
 		if spinAndWin_Reply.StatusCode != http.StatusOK {
@@ -5730,7 +5737,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			refundRequest.EventAmount = 0
 			refundRequest.PointsToCredit = response.Points_To_Redeem
 			refundRequest.EventDescription = ""
-			Uc.Loyalty_AccountCreditPoints(request_header, refundRequest, &refund_response)
+			Uc.Loyalty_AccountCreditPoints(request_header, refundRequest, &refund_response,true)
 			return
 		}
 
@@ -5848,7 +5855,7 @@ func Loyalty_Level_Selection(Accumulated_Points float64) (level_key string) {
 	return
 }
 
-func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Header, request Loyalty_AccountCreditPoints_Request, response *Loyalty_AccountCreditPoints_log) {
+func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Header, request Loyalty_AccountCreditPoints_Request, response *Loyalty_AccountCreditPoints_log, refund ...bool) {
 	response.ReceiveDate = time.Now()
 	//fill the request header info
 	response.SourceIP = request_header.SourceIP
@@ -6131,8 +6138,16 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 			return
 		}
 		//credit loyalty account
-		loyalty_account.Awarded_Points = loyalty_account.Awarded_Points + points
-		loyalty_account.Available_Points = (loyalty_account.Awarded_Points + loyalty_account.Expired_Points) - loyalty_account.Redeemed_Points
+		refundValue := false
+		if len(refund) > 0 {
+			refundValue = refund[0]
+		}
+		if !refundValue {
+			loyalty_account.Awarded_Points = loyalty_account.Awarded_Points + points
+		} else {
+			loyalty_account.Redeemed_Points = loyalty_account.Redeemed_Points - points
+		}
+		loyalty_account.Available_Points = loyalty_account.Awarded_Points - loyalty_account.Redeemed_Points
 		loyalty_account.Last_Award_Date = time.Now()
 		loyalty_account.Outstanding_fraction_points = Outstanding_fraction_points
 		YYYY, MM, _, _, _, _, _ := GetTimeParts(time.Now())
@@ -6159,8 +6174,12 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 				Uc.Write_Loyalty_AccountCreditPoints_log(*response)
 				return
 			}
-			PointsDetail.Awarded_Points = PointsDetail.Awarded_Points + points
-			PointsDetail.Available_Points = (PointsDetail.Awarded_Points + PointsDetail.Expired_Points) - PointsDetail.Redeemed_Points
+			if !refundValue {
+				PointsDetail.Awarded_Points = PointsDetail.Awarded_Points + points
+			} else {
+				PointsDetail.Redeemed_Points = PointsDetail.Redeemed_Points - points
+			}
+			PointsDetail.Available_Points = PointsDetail.Awarded_Points - PointsDetail.Redeemed_Points
 			PointsDetail.Last_Credit_Date = time.Now()
 		}
 		if PointsDetail.Awarded_Points > loyalty_governance.MaxSubsAwardedPoints_PerMonth {
@@ -6173,7 +6192,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 			Uc.Write_Loyalty_AccountCreditPoints_log(*response)
 			return
 		}
-		err := Uc.Loyalty_Governance_Available_Points_Debit(points)
+		err := Uc.Loyalty_Governance_Available_Points_Debit(points, refundValue)
 		if err == nil {
 			Map_Customer_Loyalty_Account.Put(loyalty_account.Key, loyalty_account)
 			Map_Customer_Loyalty_Account_Points_Detail.Put(PointsDetail.Key, PointsDetail)
