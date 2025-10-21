@@ -5236,7 +5236,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 	response.Account_Status = loyalty_Account.Account_Status
 	response.Loyalty_Level_Key = loyalty_Account.Loyalty_Level_Key
 	response.Loyalty_Account_Segment_Key = loyalty_Account.Loyalty_Account_Segment_Key
-	response.Opening_Awarded_Points = loyalty_Account.Available_Points
+	response.Opening_Awarded_Points = loyalty_Account.Awarded_Points
 	response.Opening_Redeemed_Points = loyalty_Account.Redeemed_Points
 	response.Opening_Available_Points = loyalty_Account.Available_Points
 
