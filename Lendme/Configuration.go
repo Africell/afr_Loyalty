@@ -500,8 +500,8 @@ func setDefaultConfiguration_DRC_Loyalty_UAT() (Configuration ConfigType) {
 	Configuration.SMPP.Password = "Loyalty123"
 	Configuration.SMPP.TimeOut = 5 //in seconds
 	Configuration.SMPP.PrintLogs = true
-	Configuration.SMPP.MSISDN_Short_len = 8
-	Configuration.SMPP.CountryCodePrefix = "232"
+	Configuration.SMPP.MSISDN_Short_len = 9
+	Configuration.SMPP.CountryCodePrefix = "243"
 	Configuration.SMPP.DefaultSender = "Africell" //"Africell"
 	Configuration.SMPP.Encoding = 0
 	//CGW
@@ -2131,8 +2131,8 @@ func setDefaultConfiguration_Dev() (Configuration ConfigType) {
 	Configuration.LoyaltyModule = "Loyalty"
 
 	Configuration.MSISDN_Prefix = "0"
-	Configuration.MSISDN_Short_len = 8
-	Configuration.CountryCode = "232"
+	Configuration.MSISDN_Short_len = 7
+	Configuration.CountryCode = "220"
 
 	Configuration.IsProduction = false
 	Configuration.IsLoyaltyProduction = false
