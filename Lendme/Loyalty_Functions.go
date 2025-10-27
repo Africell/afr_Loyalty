@@ -484,20 +484,6 @@ func (Uc *UserControl) Write_Loyalty_Status_log(record Loyalty_Status_log) {
 		log.Println("Error in Write_Loyalty_Status_log:", err, " (", record, ")")
 		return
 	}
-	loyalty_account_na, subexist := Map_Customer_Loyalty_Account.CheckThenGet(record.MSISDN)
-	if !subexist {
-		log.Println("loyalty account does not exist:", err, " (", record, ")")
-		return
-
-	}
-	loyalty_account, ok := loyalty_account_na.(Customer_Loyalty_Account)
-	if !ok {
-		log.Println("type assertion issue with Customer_Loyalty_Account:", err, " (", record, ")")
-		return
-	}
-	loyalty_account.Opt_Status_log = append(loyalty_account.Opt_Status_log, record)
-	Map_Customer_Loyalty_Account.Put(loyalty_account.Key, loyalty_account)
-
 }
 
 func (Uc *UserControl) Write_Loyalty_Status_Expiry_log(record Loyalty_Status_Expiry_Log) {
@@ -4864,18 +4850,16 @@ func (Uc *UserControl) Customer_Loyalty_Account_Get(Key string) (entries []Custo
 			err = errors.New("type assertion issue with Loyalty_Point_Expiry_Rules")
 			return entries, err
 		}
-		if entry.Expiry_Date.IsZero() || entry.Initial_Date.Before(entry.Expiry_Date) {
-			var initialDate time.Time
-			if !entry.Expiry_Date.IsZero() {
-				initialDate = entry.Initial_Date
-			} else {
-				initialDate = entry.First_Opt_In_Status_Date
-			}
-			initialexpiryDate := addValidity(initialDate, expiry_Rule.Validity_Unit, expiry_Rule.Validity_Duration)
-			finalexpiryDate := addValidity(initialexpiryDate, expiry_Rule.Grace_Validity_Unit, expiry_Rule.Grace_Validity_Duration)
-			entry.Coming_Expiry_Date = finalexpiryDate
-			entry.Initial_Date = initialexpiryDate
+		var initialDate time.Time
+		if !entry.Expiry_Date.IsZero() {
+			initialDate = entry.Expiry_Date
+		} else {
+			initialDate = entry.First_Opt_In_Status_Date
 		}
+		initialexpiryDate := addValidity(initialDate, expiry_Rule.Validity_Unit, expiry_Rule.Validity_Duration)
+		finalexpiryDate := addValidity(initialexpiryDate, expiry_Rule.Grace_Validity_Unit, expiry_Rule.Grace_Validity_Duration)
+		entry.Coming_Expiry_Date = finalexpiryDate
+		entry.Initial_Date = initialexpiryDate
 		var expiryPoints float64 = 0
 		for _, pointKey := range entry.Points_Detail_Keys {
 			pointsDetail, err := Uc.Customer_Loyalty_Account_Points_Details_Get(pointKey)
@@ -6895,7 +6879,7 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 		loyalty_Account.Redeemed_Points = loyalty_Account.Redeemed_Points + request.Debit_Amount
 		loyalty_Account.Last_Redeem_Date = time.Now()
 	}
-	loyalty_Account.Available_Points = (loyalty_Account.Awarded_Points + loyalty_Account.Expired_Points) - loyalty_Account.Redeemed_Points //(Awarded_Points + Expired_Points) - Redeemed_Points
+	loyalty_Account.Available_Points = loyalty_Account.Awarded_Points - loyalty_Account.Redeemed_Points //(Awarded_Points + Expired_Points) - Redeemed_Points
 	//update Monthly points
 	start_date := time.Date(2025, 04, 01, 00, 00, 59, 0, time.UTC)
 	end_date := start_date.AddDate(50, 0, 0)
@@ -6929,7 +6913,7 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 							PointsDetail.Redeemed_Points = PointsDetail.Redeemed_Points + Amount_to_debit
 							PointsDetail.Last_Redeem_Date = time.Now()
 						}
-						PointsDetail.Available_Points = (PointsDetail.Awarded_Points + PointsDetail.Expired_Points) - PointsDetail.Redeemed_Points //(Awarded_Points + Expired_Points) - Redeemed_Points
+						PointsDetail.Available_Points = PointsDetail.Awarded_Points - PointsDetail.Redeemed_Points //(Awarded_Points + Expired_Points) - Redeemed_Points
 						Amount_to_debit = 0
 					} else {
 						//partial amount available
@@ -8553,15 +8537,15 @@ func (Uc *UserControl) EvaluateAndUpdate_CustomerLoyaltyLevel(Login string, Acco
 
 		} else {
 			//downgrade ==> Sof landing (one downgrade during anniversary year)
-			if loyalty_account.Creation_date.AddDate(0, 12, 0).After(time.Now()) {
-				return loyalty_account.Loyalty_Level_Key, errors.New("downgrade is allowed after the first anniversary year")
+			if Login != "Points_Expiry" {
+				return loyalty_account.Loyalty_Level_Key, errors.New("downgrade is allowed only on expiry")
 			}
 			//check if the last action was downgrade and allow 12 months for the next dowgrade
-			if loyalty_account.Loyalty_Level_Direction == "Downgrade" {
-				if loyalty_account.Loyalty_Level_Date.AddDate(0, 12, 0).After(time.Now()) {
-					return loyalty_account.Loyalty_Level_Key, errors.New("only one downgrade is allowed during one anniversary year")
-				}
-			}
+			// if loyalty_account.Loyalty_Level_Direction == "Downgrade" {
+			// 	if loyalty_account.Loyalty_Level_Date.AddDate(0, 12, 0).After(time.Now()) {
+			// 		return loyalty_account.Loyalty_Level_Key, errors.New("only one downgrade is allowed during one anniversary year")
+			// 	}
+			// }
 			if current_level.DowngradeToLevel_Key != "" {
 				New_Loyalty_Level_Key = current_level.DowngradeToLevel_Key
 				loyalty_account.Previous_Loyalty_Level_Key = loyalty_account.Loyalty_Level_Key
@@ -8636,13 +8620,11 @@ func (Uc *UserControl) PointsExpiry_Process() {
 										}
 										// do the work here
 										for _, loyalty_Account := range loyalty_Accounts {
-
 											finalAccount, err := Uc.Customer_Loyalty_Account_Get(loyalty_Account.Key)
 											if err != nil || len(finalAccount) == 0 {
 												break
 											}
 											if finalAccount[0].Coming_Expiry_Date.Before(time.Now()) {
-												fmt.Println("enterd", finalAccount[0].Key)
 												go Uc.PointsExpiry_ProcessExec(finalAccount[0])
 											}
 										}
@@ -8702,7 +8684,6 @@ func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account
 		<-chan_PointsExpiry_Controler
 		return
 	}
-
 	for _, pointKey := range account.Points_Detail_Keys {
 		pointsDetail, err := Uc.Customer_Loyalty_Account_Points_Details_Get(pointKey)
 		if err != nil {
@@ -8720,34 +8701,37 @@ func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account
 			<-chan_PointsExpiry_Controler
 			return
 		}
-		month, err := strconv.Atoi(pointsDetail[0].Year_Month[4:])
-		if err == nil && (year < int(account.Initial_Date.Year()) || (year == account.Initial_Date.Year() && month < int(account.Initial_Date.Month()))) && pointsDetail[0].Available_Points > 0 {
-			expired_Points := pointsDetail[0].Available_Points
-			pointsDetail[0].Expired_Points = pointsDetail[0].Available_Points
-			pointsDetail[0].Available_Points = 0
-			pointsDetail[0].Expiry_Date = account.Coming_Expiry_Date
-			Map_Customer_Loyalty_Account_Points_Detail.Put(pointsDetail[0].Key, pointsDetail[0])
 
+		month, err := strconv.Atoi(pointsDetail[0].Year_Month[4:])
+		if err == nil && (year < int(account.Initial_Date.Year()) || (year == account.Initial_Date.Year() && month <= int(account.Initial_Date.Month()))) {
 			expiry_log.Year_Month = pointsDetail[0].Year_Month
 			expiry_log.Opening_Awarded_Points = pointsDetail[0].Awarded_Points
 			expiry_log.Opening_Redeemed_Points = pointsDetail[0].Redeemed_Points
 			expiry_log.Opening_Available_Points = pointsDetail[0].Available_Points
-			expiry_log.Opening_Expired_Points = pointsDetail[0].Available_Points
-			// Map_Customer_Loyalty_Account_Points_Detail.Delete(account.Key + "|" + YYYY + MM)
-			//remove detail key from account
-			// account.Points_Detail_Keys = removeStringFromArray(account.Points_Detail_Keys, pointsDetail[0].Key)
+			expiry_log.Opening_Expired_Points = pointsDetail[0].Expired_Points
+			expiry_log.Opening_Expired_Points = pointsDetail[0].Expired_Points
+
+			expired_Points := pointsDetail[0].Available_Points
+			redeemed_Points := pointsDetail[0].Redeemed_Points
+
 			account.Expired_Points = account.Expired_Points + expired_Points
+			account.Redeemed_Expired_Points = account.Redeemed_Expired_Points + redeemed_Points
 			account.Expiry_Date = account.Coming_Expiry_Date
-			// account.Awarded_Points = account.Awarded_Points - pointsDetail[0].Available_Points
-			account.Available_Points = account.Awarded_Points - (account.Expired_Points + account.Redeemed_Points) //(Awarded_Points + Expired_Points) - Redeemed_Points
-			Map_Customer_Loyalty_Account.Put(account.Key, account)
+			account.Awarded_Points = account.Awarded_Points - (expired_Points + redeemed_Points)
+			account.Redeemed_Points = account.Redeemed_Points - redeemed_Points
+			account.Available_Points = account.Awarded_Points - account.Redeemed_Points
+			//remove detail key from account
+			account.Points_Detail_Keys = removeStringFromArray(account.Points_Detail_Keys, pointsDetail[0].Key)
+
 			//update governance expiry
 			Uc.Loyalty_Governance_Expiry_Points_Credit(expired_Points)
+			Map_Customer_Loyalty_Account.Put(account.Key, account)
+
 			//update logs
-			expiry_log.End_Awarded_Points = account.Awarded_Points
-			expiry_log.End_Redeemed_Points = account.Redeemed_Points
-			expiry_log.End_Available_Points = account.Available_Points
-			expiry_log.End_Expired_Points = account.Expired_Points
+			expiry_log.End_Awarded_Points = 0
+			expiry_log.End_Redeemed_Points = 0
+			expiry_log.End_Available_Points = 0
+			expiry_log.End_Expired_Points = expired_Points
 			//check level downgrade
 			new_Loyalty_level_key, errNL := Uc.EvaluateAndUpdate_CustomerLoyaltyLevel("Points_Expiry", account.Key)
 			if errNL == nil {
@@ -8756,13 +8740,13 @@ func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account
 			if errNL != nil {
 				expiry_log.EndLoyaltyLevel = new_Loyalty_level_key
 			}
-			Map_Customer_Loyalty_Account.Put(account.Key, account)
 
 			expiry_log.ExpiryStatus = "successful"
-			expiry_log.ExpiryStatusDescription = ""
+			expiry_log.ExpiryStatusDescription = "Cycle expiry"
 			Uc.Write_Loyalty_Expiry_log(expiry_log)
+			Map_Customer_Loyalty_Account_Points_Detail.Delete(pointsDetail[0].Key)
+
 		}
-		// }
 	}
 	<-chan_PointsExpiry_Controler
 }
