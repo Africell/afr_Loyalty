@@ -767,10 +767,10 @@ type Loyalty_Logs struct {
 	Debit_Logs               Loyalty_AccountDebitPoints_log  `bson:"Debit_Logs" json:"Debit_Logs"`
 	Credit_Logs              Loyalty_AccountCreditPoints_log `bson:"Credit_Logs" json:"Credit_Logs"`
 	Redemption_Logs          Loyalty_Redemption_log          `bson:"Redemption_Logs" json:"Redemption_Logs"`
-	Expiry_Logs              Loyalty_Expiry_log              `bson:"Expiry_Logs" json:"Expiry_Logs"`
+	Expiry_Logs              Loyalty_Monthly_Expiry_log      `bson:"Expiry_Logs" json:"Expiry_Logs"`
 	Level_Change_Logs        Loyalty_Level_Change_log        `bson:"Level_Change_Logs" json:"Level_Change_Logs"`
 	Status_Logs              Loyalty_Status_log              `bson:"Status_Logs" json:"Status_Logs"`
-	Status_Expiry_Logs       Loyalty_Status_Expiry_Log       `bson:"Status_Expiry_Logs" json:"Status_Expiry_Logs"`
+	Full_Expiry_Logs         Loyalty_Full_Expiry_Log         `bson:"Full_Expiry_Logs" json:"Full_Expiry_Logs"`
 }
 
 type Loyalty_AccountCreditPoints_log struct {
@@ -818,7 +818,7 @@ type Loyalty_AccountCreditPoints_log struct {
 	E2E_Elapsedtime   int64     `bson:"E2E_Elapsedtime" json:"E2E_Elapsedtime"` //receive date till return
 }
 
-type Loyalty_Expiry_log struct {
+type Loyalty_Monthly_Expiry_log struct {
 	ExpiryTime       time.Time `bson:"ExpiryTime" json:"ExpiryTime"`
 	MSISDN           string    `bson:"MSISDN" json:"MSISDN"` //MSISDN
 	Expiry_Rules_Key string    `bson:"Expiry_Rules_Key" json:"Expiry_Rules_Key"`
@@ -842,7 +842,7 @@ type Loyalty_Expiry_log struct {
 	ExpiryStatusDescription string `bson:"ExpiryStatusDescription" json:"ExpiryStatusDescription"`
 }
 
-type Loyalty_Status_Expiry_Log struct {
+type Loyalty_Full_Expiry_Log struct {
 	MSISDN string `bson:"MSISDN" json:"MSISDN"` //MSISDN
 
 	Opening_Awarded_Points     float64 `bson:"Opening_Awarded_Points" json:"Opening_Awarded_Points"`

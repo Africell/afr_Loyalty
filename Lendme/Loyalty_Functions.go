@@ -83,7 +83,7 @@ var DAO_Loyalty_Event_Log daoc.DAO
 var DAO_Loyalty_Expiry_log daoc.DAO
 var DAO_Loyalty_Redemption_log daoc.DAO
 var DAO_Loyalty_Status_log daoc.DAO
-var DAO_Loyalty_Status_Expiry_log daoc.DAO
+var DAO_Loyalty_Full_Expiry_log daoc.DAO
 
 var DAO_Loyalty_AccountCreditPoints_log daoc.DAO
 var DAO_Loyalty_AccountDebitPoints_log daoc.DAO
@@ -171,10 +171,10 @@ func (uc *UserControl) InitializeLoyaltyDAO() {
 	DAO_Customer_Exclusion.Initialize("Customer_Exclusion", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Customer_Exclusion{}), Configuration.DB_Name_Loyalty, "Col_Customer_Exclusion", "")
 	DAO_Customer_COS_Exclusion.Initialize("Customer_COS_Exclusion", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Customer_COS_Exclusion{}), Configuration.DB_Name_Loyalty, "Col_Customer_COS_Exclusion", "")
 	DAO_Customer_UAT.Initialize("Customer_UAT", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Customer_UAT{}), Configuration.DB_Name_Loyalty, "Col_Customer_UAT", "")
-	DAO_Loyalty_Expiry_log.Initialize("Loyalty_Expiry_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Expiry_log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Expiry_log", "")
+	DAO_Loyalty_Expiry_log.Initialize("Loyalty_Expiry_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Monthly_Expiry_log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Expiry_log", "")
 	DAO_Loyalty_Redemption_log.Initialize("Loyalty_Redemption_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Redemption_log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Redemption_log", "")
 	DAO_Loyalty_Status_log.Initialize("Loyalty_Status_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Status_log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Status_log", "")
-	DAO_Loyalty_Status_Expiry_log.Initialize("Loyalty_Status_Expiry_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Status_Expiry_Log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Status_Expiry_log", "")
+	DAO_Loyalty_Full_Expiry_log.Initialize("Loyalty_Full_Expiry_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Full_Expiry_Log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Full_Expiry_log", "")
 	DAO_Loyalty_AccountCreditPoints_log.Initialize("Loyalty_AccountCreditPoints_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_AccountCreditPoints_log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_AccountCreditPoints_log", "")
 	DAO_Loyalty_AccountDebitPoints_log.Initialize("Loyalty_AccountDebitPoints_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_AccountDebitPoints_log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_AccountDebitPoints_log", "")
 	DAO_NotificationLog.Initialize("NotificationLog", uc.MongoDB.MongoDBClient, reflect.TypeOf(NotificationLog{}), Configuration.DB_Name, "Col_NotificationLog", "")
@@ -453,7 +453,7 @@ func (Uc *UserControl) Write_Loyalty_AccountCreditPoints_log(record Loyalty_Acco
 	}
 }
 
-func (Uc *UserControl) Write_Loyalty_Expiry_log(record Loyalty_Expiry_log) {
+func (Uc *UserControl) Write_Loyalty_Monthly_Expiry_log(record Loyalty_Monthly_Expiry_log) {
 	YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.ExpiryTime)
 	Db := DAO_Loyalty_Expiry_log.DB + "_" + YYYY + MM
 	Col := DAO_Loyalty_Expiry_log.Collection + "_" + DD
@@ -486,13 +486,13 @@ func (Uc *UserControl) Write_Loyalty_Status_log(record Loyalty_Status_log) {
 	}
 }
 
-func (Uc *UserControl) Write_Loyalty_Status_Expiry_log(record Loyalty_Status_Expiry_Log) {
+func (Uc *UserControl) Write_Loyalty_Full_Expiry_log(record Loyalty_Full_Expiry_Log) {
 	YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.ExpiryTime)
-	Db := DAO_Loyalty_Status_Expiry_log.DB + "_" + YYYY + MM
-	Col := DAO_Loyalty_Status_Expiry_log.Collection + "_" + DD
-	_, err := DAO_Loyalty_Status_Expiry_log.PutOneLogs(record, Db, Col)
+	Db := DAO_Loyalty_Full_Expiry_log.DB + "_" + YYYY + MM
+	Col := DAO_Loyalty_Full_Expiry_log.Collection + "_" + DD
+	_, err := DAO_Loyalty_Full_Expiry_log.PutOneLogs(record, Db, Col)
 	if err != nil {
-		log.Println("Error in Write_Loyalty_Status_Expiry_log:", err, " (", record, ")")
+		log.Println("Error in Write_Loyalty_Full_Expiry_log:", err, " (", record, ")")
 		return
 	}
 }
@@ -1144,7 +1144,7 @@ func (Uc *UserControl) Loyalty_Status_Expiry_Daily_Process() {
 								log.Printf("Failed decoding result for %s: %v", collName, err)
 								continue
 							}
-							var expiry_log Loyalty_Status_Expiry_Log
+							var expiry_log Loyalty_Full_Expiry_Log
 							expiry_log.ExpiryTime = time.Now()
 							expiry_log.MSISDN = doc.Key
 							expiry_log.Opening_Awarded_Points = doc.Awarded_Points
@@ -1158,7 +1158,7 @@ func (Uc *UserControl) Loyalty_Status_Expiry_Daily_Process() {
 							expiry_log.Grace_Period_Given_Days = graceDays
 							expiry_log.ExpiryReason = "Opt out grace period reached"
 							expiry_log.ExpiryAmount = doc.Available_Points
-							var monthly_expiry_log Loyalty_Expiry_log
+							var monthly_expiry_log Loyalty_Monthly_Expiry_log
 							monthly_expiry_log.OpeningLoyaltyLevel = doc.Loyalty_Level_Key
 							monthly_expiry_log.EndLoyaltyLevel = doc.Loyalty_Level_Key
 							monthly_expiry_log.Expiry_Rules_Key = "Opt Out Expiry"
@@ -1169,7 +1169,7 @@ func (Uc *UserControl) Loyalty_Status_Expiry_Daily_Process() {
 								if err != nil {
 									expiry_log.ExpiryStatus = "failed"
 									expiry_log.ExpiryStatusDescription = "points expiry rules not found"
-									Uc.Write_Loyalty_Status_Expiry_log(expiry_log)
+									Uc.Write_Loyalty_Full_Expiry_log(expiry_log)
 									// <-chan_PointsExpiry_Controler
 									return
 								}
@@ -1193,7 +1193,7 @@ func (Uc *UserControl) Loyalty_Status_Expiry_Daily_Process() {
 
 								monthly_expiry_log.ExpiryStatus = "successful"
 								monthly_expiry_log.ExpiryStatusDescription = ""
-								Uc.Write_Loyalty_Expiry_log(monthly_expiry_log)
+								Uc.Write_Loyalty_Monthly_Expiry_log(monthly_expiry_log)
 
 								// }
 								// <-chan_PointsExpiry_Controler
@@ -1256,8 +1256,8 @@ func (Uc *UserControl) Loyalty_Status_Expiry_Daily_Process() {
 								}
 							}
 							expiry_log.ExpiryStatus = "successful"
-							expiry_log.ExpiryStatusDescription = ""
-							Uc.Write_Loyalty_Status_Expiry_log(expiry_log)
+							expiry_log.ExpiryStatusDescription = "opt expiry"
+							Uc.Write_Loyalty_Full_Expiry_log(expiry_log)
 						}
 
 						// yesterday := time.Now().AddDate(0, 0, -1)
@@ -7849,7 +7849,7 @@ func (Uc *UserControl) ReadAccountRedemptionPointsDetailsFromMongoDB(startDate, 
 	return response, err
 }
 
-func (Uc *UserControl) Customer_Loyalty_Account_GetExpiryPoints_log(startDate, endDate time.Time, MSISDN string, Filter string) (response []Loyalty_Expiry_log, err error) {
+func (Uc *UserControl) Customer_Loyalty_Account_GetExpiryPoints_log(startDate, endDate time.Time, MSISDN string, Filter string) (response []Loyalty_Monthly_Expiry_log, err error) {
 
 	findResult, err := Uc.ReadAccountExpiryPointsDetailsFromMongoDB(startDate, endDate, MSISDN, 1, 0)
 	if err != nil {
@@ -7860,7 +7860,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_GetExpiryPoints_log(startDate, e
 	return response, nil
 }
 
-func (Uc *UserControl) ReadAccountExpiryPointsDetailsFromMongoDB(startDate, endDate time.Time, MSISDN string, page, limit int64) (response []Loyalty_Expiry_log, err error) {
+func (Uc *UserControl) ReadAccountExpiryPointsDetailsFromMongoDB(startDate, endDate time.Time, MSISDN string, page, limit int64) (response []Loyalty_Monthly_Expiry_log, err error) {
 	// Ensure startDate is before or equal to endDate
 
 	if startDate.After(endDate) {
@@ -7906,7 +7906,7 @@ func (Uc *UserControl) ReadAccountExpiryPointsDetailsFromMongoDB(startDate, endD
 		defer cursor.Close(context.Background())
 
 		for cursor.Next(context.Background()) {
-			var result Loyalty_Expiry_log
+			var result Loyalty_Monthly_Expiry_log
 
 			if err := cursor.Decode(&result); err != nil {
 				return nil, fmt.Errorf("failed to decode result: %w", err)
@@ -8141,7 +8141,7 @@ func (Uc *UserControl) ReadAccountStatusDetailsFromMongoDB(startDate, endDate ti
 	return response, err
 }
 
-func (Uc *UserControl) Customer_Loyalty_Account_GetStatusExpiry_log(startDate, endDate time.Time, MSISDN string, Filter string) (response []Loyalty_Status_Expiry_Log, err error) {
+func (Uc *UserControl) Customer_Loyalty_Account_GetStatusExpiry_log(startDate, endDate time.Time, MSISDN string, Filter string) (response []Loyalty_Full_Expiry_Log, err error) {
 
 	findResult, err := Uc.ReadAccountStatusExpiryDetailsFromMongoDB(startDate, endDate, MSISDN, 1, 0)
 	if err != nil {
@@ -8153,7 +8153,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_GetStatusExpiry_log(startDate, e
 	return response, nil
 }
 
-func (Uc *UserControl) ReadAccountStatusExpiryDetailsFromMongoDB(startDate, endDate time.Time, MSISDN string, page, limit int64) (response []Loyalty_Status_Expiry_Log, err error) {
+func (Uc *UserControl) ReadAccountStatusExpiryDetailsFromMongoDB(startDate, endDate time.Time, MSISDN string, page, limit int64) (response []Loyalty_Full_Expiry_Log, err error) {
 	// Ensure startDate is before or equal to endDate
 
 	if startDate.After(endDate) {
@@ -8177,7 +8177,7 @@ func (Uc *UserControl) ReadAccountStatusExpiryDetailsFromMongoDB(startDate, endD
 			dayStr = "0" + dayStr
 		}
 
-		collName := "Col_Loyalty_Status_Expiry_log_" + dayStr
+		collName := "Col_Loyalty_Full_Expiry_log_" + dayStr
 
 		// Fetch the collection
 		collection := Uc.LoyaltyMongoDB.MongoDBClient.Database(MongoDB_DB_Name).Collection(collName)
@@ -8199,7 +8199,7 @@ func (Uc *UserControl) ReadAccountStatusExpiryDetailsFromMongoDB(startDate, endD
 		defer cursor.Close(context.Background())
 
 		for cursor.Next(context.Background()) {
-			var result Loyalty_Status_Expiry_Log
+			var result Loyalty_Full_Expiry_Log
 
 			if err := cursor.Decode(&result); err != nil {
 				return nil, fmt.Errorf("failed to decode result: %w", err)
@@ -8396,15 +8396,15 @@ func (Uc *UserControl) Customer_Loyalty_Account_Getlogs(Type string, startDate, 
 			allLogs = append(allLogs, newLog)
 		}
 	}
-	if Type == "All Logs" || Type == "Status Expiry Logs" {
+	if Type == "All Logs" || Type == "Full Expiry Logs" {
 		findResult, err := Uc.Customer_Loyalty_Account_GetStatusExpiry_log(startDate, endDate, MSISDN, Filter)
 		if err != nil {
 			return response, err
 		}
 		for _, log := range findResult {
 			var newLog = Loyalty_Logs{}
-			newLog.Logs_Type = "Status Expiry"
-			newLog.Status_Expiry_Logs = log
+			newLog.Logs_Type = "Full Expiry"
+			newLog.Full_Expiry_Logs = log
 			newLog.Status = log.ExpiryStatus
 			newLog.Date = log.ExpiryTime
 			newLog.PointsToCredit = log.ExpiryAmount
@@ -8649,7 +8649,7 @@ func (Uc *UserControl) PointsExpiry_Process() {
 
 func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account) {
 	chan_PointsExpiry_Controler <- 1
-	var expiry_log Loyalty_Expiry_log
+	var expiry_log Loyalty_Monthly_Expiry_log
 	expiry_log.ExpiryTime = time.Now()
 	expiry_log.MSISDN = account.Key
 	expiry_log.Opening_Awarded_Points = account.Awarded_Points
@@ -8663,7 +8663,7 @@ func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account
 	if !planexist {
 		expiry_log.ExpiryStatus = "failed"
 		expiry_log.ExpiryStatusDescription = "loyalty plan does not exist"
-		Uc.Write_Loyalty_Expiry_log(expiry_log)
+		Uc.Write_Loyalty_Monthly_Expiry_log(expiry_log)
 		<-chan_PointsExpiry_Controler
 		return
 	}
@@ -8671,7 +8671,7 @@ func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account
 	if !ok {
 		expiry_log.ExpiryStatus = "failed"
 		expiry_log.ExpiryStatusDescription = "type assertion issue with Loyalty_Plan"
-		Uc.Write_Loyalty_Expiry_log(expiry_log)
+		Uc.Write_Loyalty_Monthly_Expiry_log(expiry_log)
 		<-chan_PointsExpiry_Controler
 		return
 	}
@@ -8680,7 +8680,7 @@ func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account
 	if plan.Expiry_Rules_Key == "" {
 		expiry_log.ExpiryStatus = "failed"
 		expiry_log.ExpiryStatusDescription = "points expiry rules not defined"
-		Uc.Write_Loyalty_Expiry_log(expiry_log)
+		Uc.Write_Loyalty_Monthly_Expiry_log(expiry_log)
 		<-chan_PointsExpiry_Controler
 		return
 	}
@@ -8689,7 +8689,7 @@ func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account
 		if err != nil {
 			expiry_log.ExpiryStatus = "failed"
 			expiry_log.ExpiryStatusDescription = "points expiry rules not found"
-			Uc.Write_Loyalty_Expiry_log(expiry_log)
+			Uc.Write_Loyalty_Monthly_Expiry_log(expiry_log)
 			<-chan_PointsExpiry_Controler
 			return
 		}
@@ -8697,7 +8697,7 @@ func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account
 		if err != nil {
 			expiry_log.ExpiryStatus = "failed"
 			expiry_log.ExpiryStatusDescription = "points expiry rules not found"
-			Uc.Write_Loyalty_Expiry_log(expiry_log)
+			Uc.Write_Loyalty_Monthly_Expiry_log(expiry_log)
 			<-chan_PointsExpiry_Controler
 			return
 		}
@@ -8743,7 +8743,7 @@ func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account
 
 			expiry_log.ExpiryStatus = "successful"
 			expiry_log.ExpiryStatusDescription = "Cycle expiry"
-			Uc.Write_Loyalty_Expiry_log(expiry_log)
+			Uc.Write_Loyalty_Monthly_Expiry_log(expiry_log)
 			Map_Customer_Loyalty_Account_Points_Detail.Delete(pointsDetail[0].Key)
 
 		}
