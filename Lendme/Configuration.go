@@ -496,12 +496,10 @@ func setDefaultConfiguration_DRC_Loyalty_UAT() (Configuration ConfigType) {
 	//http://10.95.64.6:15403/?systemid=lendme&password=lendmeP@ssw0rd&Originator=setest&dest_addr=243900100606&msg_text=test&registered_delivery=0&ston=5&snpi=0&dton=1&dnpi=1&encoding=1
 
 	//SMPP
-	Configuration.SMPP.IP = "10.95.64.6" //// floating IS IP: "10.250.8.53", test IP VPN: "10.250.0.52" (or .50, .51)
+	Configuration.SMPP.IP = "10.95.72.6" //// floating IS IP: "10.250.8.53", test IP VPN: "10.250.0.52" (or .50, .51)
 	Configuration.SMPP.Port = "15403"
-	//Configuration.SMPP.Login = "lendme"
-	//Configuration.SMPP.Password = "lendmeP@ssw0rd"
-	Configuration.SMPP.Login = "Loyalty"
-	Configuration.SMPP.Password = "Loyalty123"
+	Configuration.SMPP.Login = "lendme"
+	Configuration.SMPP.Password = "lendmeP@ssw0rd"
 	Configuration.SMPP.TimeOut = 5 //in seconds
 	Configuration.SMPP.PrintLogs = true
 	Configuration.SMPP.MSISDN_Short_len = 9
