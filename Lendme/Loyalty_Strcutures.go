@@ -727,7 +727,7 @@ type Loyalty_Logs struct {
 	Debit_Logs               Loyalty_AccountDebitPoints_log  `bson:"Debit_Logs" json:"Debit_Logs"`
 	Credit_Logs              Loyalty_AccountCreditPoints_log `bson:"Credit_Logs" json:"Credit_Logs"`
 	Redemption_Logs          Loyalty_Redemption_log          `bson:"Redemption_Logs" json:"Redemption_Logs"`
-	Expiry_Logs              Loyalty_Expiry_log              `bson:"Expiry_Logs" json:"Expiry_Logs"`
+	Expiry_Logs              Loyalty_Monthly_Expiry_log      `bson:"Expiry_Logs" json:"Expiry_Logs"`
 	Level_Change_Logs        Loyalty_Level_Change_log        `bson:"Level_Change_Logs" json:"Level_Change_Logs"`
 }
 
@@ -775,7 +775,7 @@ type Loyalty_AccountCreditPoints_log struct {
 	E2E_Elapsedtime   int64     `bson:"E2E_Elapsedtime" json:"E2E_Elapsedtime"` //receive date till return
 }
 
-type Loyalty_Expiry_log struct {
+type Loyalty_Monthly_Expiry_log struct {
 	ExpiryTime       time.Time `bson:"ExpiryTime" json:"ExpiryTime"`
 	MSISDN           string    `bson:"MSISDN" json:"MSISDN"` //MSISDN
 	Expiry_Rules_Key string    `bson:"Expiry_Rules_Key" json:"Expiry_Rules_Key"`
@@ -803,6 +803,33 @@ type Loyalty_Expiry_log struct {
 	ExpiryStatusDescription string `bson:"ExpiryStatusDescription" json:"ExpiryStatusDescription"`
 }
 
+type Loyalty_Final_Expiry_Log struct {
+	MSISDN string `bson:"MSISDN" json:"MSISDN"` //MSISDN
+
+	Opening_Awarded_Points     float64 `bson:"Opening_Awarded_Points" json:"Opening_Awarded_Points"`
+	Opening_Redeemed_Points    float64 `bson:"Opening_Redeemed_Points" json:"Opening_Redeemed_Points"`
+	Opening_Available_Points   float64 `bson:"Opening_Available_Points" json:"Opening_Available_Points"`     //(Awarded_Points + Expired_Points) - Redeemed_Points
+	Opening_Expired_Points     float64 `bson:"Opening_Expired_Points" json:"Opening_Expired_Points"`         //expired are deducted from Awarded_Points
+	Opening_OutStanding_Points float64 `bson:"Opening_OutStanding_Points" json:"Opening_OutStanding_Points"` //
+
+	End_Awarded_Points     float64 `bson:"End_Awarded_Points" json:"End_Awarded_Points"`
+	End_Redeemed_Points    float64 `bson:"End_Redeemed_Points" json:"End_Redeemed_Points"`
+	End_Available_Points   float64 `bson:"End_Available_Points" json:"End_Available_Points"`     //(Awarded_Points + Expired_Points) - Redeemed_Points
+	End_Expired_Points     float64 `bson:"End_Expired_Points" json:"End_Expired_Points"`         //expired are deducted from Awarded_Points
+	End_Outstanding_Points float64 `bson:"End_Outstanding_Points" json:"End_Outstanding_Points"` //
+
+	OpeningLoyaltyLevel string `bson:"OpeningLoyaltyLevel" json:"OpeningLoyaltyLevel"`
+	EndLoyaltyLevel     string `bson:"EndLoyaltyLevel" json:"EndLoyaltyLevel"`
+
+	Grace_Period_Given_Days int       `bson:"Grace_Period_Given_Days" json:"Grace_Period_Given_Days"`
+	Last_OptOut             time.Time `bson:"Last_OptOut" json:"Last_OptOut"`
+
+	ExpiryAmount            float64   `bson:"ExpiryAmount" json:"ExpiryAmount"`
+	ExpiryTime              time.Time `bson:"ExpiryTime" json:"ExpiryTime"`
+	ExpiryReason            string    `bson:"ExpiryReason" json:"ExpiryReason"`
+	ExpiryStatus            string    `bson:"ExpiryStatus" json:"ExpiryStatus"`
+	ExpiryStatusDescription string    `bson:"ExpiryStatusDescription" json:"ExpiryStatusDescription"`
+}
 type Customer_Loyalty_Account_DeleteRequest struct {
 	Key         string `bson:"Key" json:"Key"` //MSISDN
 	Customer_Id int64  `bson:"Customer_Id" json:"Customer_Id"`
