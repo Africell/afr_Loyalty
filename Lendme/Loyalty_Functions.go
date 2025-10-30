@@ -84,7 +84,6 @@ var DAO_Loyalty_Expiry_log daoc.DAO
 var DAO_Loyalty_Full_Expiry_log daoc.DAO
 var DAO_Loyalty_Redemption_log daoc.DAO
 var DAO_Loyalty_Status_log daoc.DAO
-var DAO_Loyalty_Full_Expiry_log daoc.DAO
 
 var DAO_Loyalty_AccountCreditPoints_log daoc.DAO
 var DAO_Loyalty_AccountDebitPoints_log daoc.DAO
@@ -173,7 +172,6 @@ func (uc *UserControl) InitializeLoyaltyDAO() {
 	DAO_Customer_COS_Exclusion.Initialize("Customer_COS_Exclusion", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Customer_COS_Exclusion{}), Configuration.DB_Name_Loyalty, "Col_Customer_COS_Exclusion", "")
 	DAO_Customer_UAT.Initialize("Customer_UAT", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Customer_UAT{}), Configuration.DB_Name_Loyalty, "Col_Customer_UAT", "")
 	DAO_Loyalty_Expiry_log.Initialize("Loyalty_Expiry_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Monthly_Expiry_log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Expiry_log", "")
-	DAO_Loyalty_Expiry_log.Initialize("Loyalty_Full_Expiry_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Full_Expiry_Log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Full_Expiry_log", "")
 	DAO_Loyalty_Redemption_log.Initialize("Loyalty_Redemption_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Redemption_log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Redemption_log", "")
 	DAO_Loyalty_Status_log.Initialize("Loyalty_Status_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Status_log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Status_log", "")
 	DAO_Loyalty_Full_Expiry_log.Initialize("Loyalty_Full_Expiry_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Full_Expiry_Log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Full_Expiry_log", "")
@@ -495,17 +493,6 @@ func (Uc *UserControl) Write_Loyalty_Status_log(record Loyalty_Status_log) {
 	_, err := DAO_Loyalty_Status_log.PutOneLogs(record, Db, Col)
 	if err != nil {
 		log.Println("Error in Write_Loyalty_Status_log:", err, " (", record, ")")
-		return
-	}
-}
-
-func (Uc *UserControl) Write_Loyalty_Full_Expiry_log(record Loyalty_Full_Expiry_Log) {
-	YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.ExpiryTime)
-	Db := DAO_Loyalty_Full_Expiry_log.DB + "_" + YYYY + MM
-	Col := DAO_Loyalty_Full_Expiry_log.Collection + "_" + DD
-	_, err := DAO_Loyalty_Full_Expiry_log.PutOneLogs(record, Db, Col)
-	if err != nil {
-		log.Println("Error in Write_Loyalty_Full_Expiry_log:", err, " (", record, ")")
 		return
 	}
 }
