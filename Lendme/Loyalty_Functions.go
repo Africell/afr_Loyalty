@@ -4723,6 +4723,14 @@ func (Uc *UserControl) Customer_Loyalty_Account_Edit(Login string, request Custo
 			})
 		}
 	}
+	if Configuration.ISLoyaltyOptIn && entry.First_Opt_In_Status_Date.IsZero() {
+		entry.Opt_Status = "OptedOut"
+		entry.Last_Opt_Status_Date = time.Now()
+	} else if entry.First_Opt_In_Status_Date.IsZero() {
+		entry.Opt_Status = "OptedIn"
+		entry.First_Opt_In_Status_Date = time.Now()
+		entry.Last_Opt_Status_Date = time.Now()
+	}
 	//evaluate the loyalty Account segment
 	if Login == "DWH_Import" {
 		entry.ARPU = request.ARPU
@@ -4733,6 +4741,57 @@ func (Uc *UserControl) Customer_Loyalty_Account_Edit(Login string, request Custo
 			entry.Loyalty_Account_Segment_Date = time.Now()
 			entry.Loyalty_Account_Segment_Direction = ""
 			entry.Loyalty_Account_Segment_SetBy = Login
+		}
+
+		plan_na, planexist := Map_Loyalty_Plan.CheckThenGet(entry.Loyalty_Level_Key + "|" + entry.Loyalty_Account_Segment_Key)
+		if !planexist {
+			err = errors.New("loyalty plan does not exist")
+			return Id, err
+		}
+		plan, ok := plan_na.(Loyalty_Plan)
+		if !ok {
+			err = errors.New("type assertion issue with Loyalty_Plan")
+			return Id, err
+		}
+		if plan.Expiry_Rules_Key == "" {
+			err = errors.New("expiry rules is not defined")
+			return Id, err
+		}
+		expiry_Rules_na, expirynexist := Map_Loyalty_Point_Expiry_Rules.CheckThenGet(plan.Expiry_Rules_Key)
+		if !expirynexist {
+			err = errors.New("expiry rules is not defined")
+			return Id, err
+		}
+		expiry_Rule, ok := expiry_Rules_na.(Loyalty_Point_Expiry_Rules)
+		if !ok {
+			err = errors.New("type assertion issue with Loyalty_Point_Expiry_Rules")
+			return Id, err
+		}
+		var initialDate time.Time
+		if !entry.Expiry_Date.IsZero() {
+			initialDate = entry.Expiry_Date
+		} else {
+			initialDate = entry.First_Opt_In_Status_Date
+		}
+		initialexpiryDate := addValidity(initialDate, expiry_Rule.Validity_Unit, expiry_Rule.Validity_Duration)
+		finalexpiryDate := addValidity(initialexpiryDate, expiry_Rule.Grace_Validity_Unit, expiry_Rule.Grace_Validity_Duration)
+		entry.Coming_Expiry_Date = finalexpiryDate
+		entry.Initial_Date = initialexpiryDate
+		var expiryPoints float64 = 0
+		for _, pointKey := range entry.Points_Detail_Keys {
+			pointsDetail, err := Uc.Customer_Loyalty_Account_Points_Details_Get(pointKey)
+			if err != nil {
+				return Id, err
+			}
+			year, err := strconv.Atoi(pointsDetail[0].Year_Month[:4])
+			if err != nil {
+				return Id, err
+			}
+			month, err := strconv.Atoi(pointsDetail[0].Year_Month[4:])
+			if err == nil && year < int(entry.Initial_Date.Year()) || (year == entry.Initial_Date.Year() && month < int(entry.Initial_Date.Month())) {
+				expiryPoints += pointsDetail[0].Available_Points
+			}
+			entry.Points_To_Expire = expiryPoints
 		}
 	} else {
 		subscriber_na, subexist := Map_Subscribers.CheckThenGet(request.Key)
