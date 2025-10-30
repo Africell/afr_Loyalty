@@ -36,6 +36,7 @@ type ConfigType struct {
 	LoyaltyProgramName             string
 	LoyaltyVersion                 string
 	LoyaltyModule                  string
+	LoyaltyMMBundleCode            string
 
 	MSISDN_Prefix    string
 	MSISDN_Short_len int
@@ -249,6 +250,7 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 
 	Configuration.LoyaltyVersion = "V1"
 	Configuration.LoyaltyModule = "Loyalty"
+	Configuration.LoyaltyMMBundleCode = "BUNDLERECHARGE"
 
 	Configuration.MSISDN_Prefix = ""
 	Configuration.MSISDN_Short_len = 9
@@ -406,6 +408,7 @@ func setDefaultConfiguration_DRC_Loyalty_UAT() (Configuration ConfigType) {
 
 	Configuration.LoyaltyVersion = "V1"
 	Configuration.LoyaltyModule = "Loyalty"
+	Configuration.LoyaltyMMBundleCode = "BUNDLERECHARGE"
 
 	Configuration.MSISDN_Prefix = ""
 	Configuration.MSISDN_Short_len = 9
@@ -577,6 +580,7 @@ func setDefaultConfiguration_GM_Live() (Configuration ConfigType) {
 
 	Configuration.LoyaltyVersion = "V1"
 	Configuration.LoyaltyModule = "Loyalty"
+	Configuration.LoyaltyMMBundleCode = "AFRICELL DATA"
 
 	Configuration.IsProduction = false
 	Configuration.IsLoyaltyProduction = false
@@ -717,6 +721,7 @@ func setDefaultConfiguration_GM_Loyalty() (Configuration ConfigType) {
 
 	Configuration.LoyaltyVersion = "V1"
 	Configuration.LoyaltyModule = "Loyalty"
+	Configuration.LoyaltyMMBundleCode = "AFRICELL DATA"
 
 	Configuration.MSISDN_Prefix = ""
 	Configuration.MSISDN_Short_len = 7
@@ -1065,6 +1070,7 @@ func setDefaultConfiguration_GM_Loyalty_UAT() (Configuration ConfigType) {
 
 	Configuration.LoyaltyVersion = "V1"
 	Configuration.LoyaltyModule = "Loyalty"
+	Configuration.LoyaltyMMBundleCode = "AFRICELL DATA"
 
 	Configuration.MSISDN_Prefix = ""
 	Configuration.MSISDN_Short_len = 7
