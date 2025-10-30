@@ -78,6 +78,7 @@ var DAO_Customer_UAT daoc.DAO
 var DAO_Loyalty_Event_Log daoc.DAO
 
 var DAO_Loyalty_Expiry_log daoc.DAO
+var DAO_Loyalty_Full_Expiry_log daoc.DAO
 var DAO_Loyalty_Redemption_log daoc.DAO
 
 var DAO_Loyalty_AccountCreditPoints_log daoc.DAO
@@ -164,6 +165,7 @@ func (uc *UserControl) InitializeLoyaltyDAO() {
 	DAO_Customer_COS_Exclusion.Initialize("Customer_COS_Exclusion", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Customer_COS_Exclusion{}), Configuration.DB_Name_Loyalty, "Col_Customer_COS_Exclusion", "")
 	DAO_Customer_UAT.Initialize("Customer_UAT", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Customer_UAT{}), Configuration.DB_Name_Loyalty, "Col_Customer_UAT", "")
 	DAO_Loyalty_Expiry_log.Initialize("Loyalty_Expiry_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Monthly_Expiry_log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Expiry_log", "")
+	DAO_Loyalty_Expiry_log.Initialize("Loyalty_Full_Expiry_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Full_Expiry_Log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Full_Expiry_log", "")
 	DAO_Loyalty_Redemption_log.Initialize("Loyalty_Redemption_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Redemption_log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Redemption_log", "")
 	DAO_Loyalty_AccountCreditPoints_log.Initialize("Loyalty_AccountCreditPoints_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_AccountCreditPoints_log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_AccountCreditPoints_log", "")
 	DAO_Loyalty_AccountDebitPoints_log.Initialize("Loyalty_AccountDebitPoints_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_AccountDebitPoints_log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_AccountDebitPoints_log", "")
@@ -424,6 +426,17 @@ func (Uc *UserControl) Write_Loyalty_Monthly_Expiry_log(record Loyalty_Monthly_E
 	_, err := DAO_Loyalty_Expiry_log.PutOneLogs(record, Db, Col)
 	if err != nil {
 		log.Println("Error in Write_Loyalty_Expiry_log:", err, " (", record, ")")
+		return
+	}
+}
+
+func (Uc *UserControl) Write_Loyalty_Full_Expiry_log(record Loyalty_Full_Expiry_Log) {
+	YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.ExpiryTime)
+	Db := DAO_Loyalty_Full_Expiry_log.DB + "_" + YYYY + MM
+	Col := DAO_Loyalty_Full_Expiry_log.Collection + "_" + DD
+	_, err := DAO_Loyalty_Full_Expiry_log.PutOneLogs(record, Db, Col)
+	if err != nil {
+		log.Println("Error in Write_Full_Loyalty_Expiry_log:", err, " (", record, ")")
 		return
 	}
 }
@@ -6737,7 +6750,7 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 			}
 			return 0, current_outstanding_points
 		case "RC": //self recharge
-			if CheckMMEventDetailType(award_request.EventDetail) == "AFRICELL DATA" {
+			if CheckMMEventDetailType(award_request.EventDetail) == Configuration.LoyaltyMMBundleCode {
 				if rules.MM_RC_Bundle_Award_Type == "Transaction" {
 					if rules.MM_RC_Bundle_Points > 0 {
 						// return rules.MM_RC_Bundle_Points, current_outstanding_points
@@ -7695,67 +7708,81 @@ func (Uc *UserControl) PointsExpiry_Process() {
 
 func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account) {
 	chan_PointsExpiry_Controler <- 1
-	var expiry_log Loyalty_Monthly_Expiry_log
+	var expiry_log Loyalty_Full_Expiry_Log
 	expiry_log.ExpiryTime = time.Now()
 	expiry_log.MSISDN = account.Key
 	expiry_log.Opening_Awarded_Points = account.Awarded_Points
 	expiry_log.Opening_Redeemed_Points = account.Redeemed_Points
 	expiry_log.Opening_Available_Points = account.Available_Points
+	expiry_log.Opening_OutStanding_Points = account.Outstanding_fraction_points
 	expiry_log.Opening_Expired_Points = account.Expired_Points
+	expiry_log.Opening_Redeemed_Expired_Points = account.Redeemed_Expired_Points
 	expiry_log.OpeningLoyaltyLevel = account.Loyalty_Level_Key
 	expiry_log.EndLoyaltyLevel = account.Loyalty_Level_Key
+	expiry_log.ExpiryReason = "Cycle expiry reached"
+	expiry_log.ExpiryAmount = account.Available_Points
+	var monthly_expiry_log Loyalty_Monthly_Expiry_log
+	monthly_expiry_log.ExpiryTime = time.Now()
+	monthly_expiry_log.MSISDN = account.Key
+	monthly_expiry_log.Opening_Awarded_Points = account.Awarded_Points
+	monthly_expiry_log.Opening_Redeemed_Points = account.Redeemed_Points
+	monthly_expiry_log.Opening_Available_Points = account.Available_Points
+	monthly_expiry_log.Opening_Expired_Points = account.Expired_Points
+	monthly_expiry_log.OpeningLoyaltyLevel = account.Loyalty_Level_Key
+	monthly_expiry_log.EndLoyaltyLevel = account.Loyalty_Level_Key
 	//validate the loyalty plan
 	plan_na, planexist := Map_Loyalty_Plan.CheckThenGet(account.Loyalty_Level_Key + "|" + account.Loyalty_Account_Segment_Key)
 	if !planexist {
-		expiry_log.ExpiryStatus = "failed"
-		expiry_log.ExpiryStatusDescription = "loyalty plan does not exist"
-		Uc.Write_Loyalty_Monthly_Expiry_log(expiry_log)
+		monthly_expiry_log.ExpiryStatus = "failed"
+		monthly_expiry_log.ExpiryStatusDescription = "loyalty plan does not exist"
+		Uc.Write_Loyalty_Monthly_Expiry_log(monthly_expiry_log)
 		<-chan_PointsExpiry_Controler
 		return
 	}
 	plan, ok := plan_na.(Loyalty_Plan)
 	if !ok {
-		expiry_log.ExpiryStatus = "failed"
-		expiry_log.ExpiryStatusDescription = "type assertion issue with Loyalty_Plan"
-		Uc.Write_Loyalty_Monthly_Expiry_log(expiry_log)
+		monthly_expiry_log.ExpiryStatus = "failed"
+		monthly_expiry_log.ExpiryStatusDescription = "type assertion issue with Loyalty_Plan"
+		Uc.Write_Loyalty_Monthly_Expiry_log(monthly_expiry_log)
 		<-chan_PointsExpiry_Controler
 		return
 	}
-	expiry_log.Expiry_Rules_Key = plan.Expiry_Rules_Key
+	monthly_expiry_log.Expiry_Rules_Key = plan.Expiry_Rules_Key
 	//validate expiry rules
 	if plan.Expiry_Rules_Key == "" {
-		expiry_log.ExpiryStatus = "failed"
-		expiry_log.ExpiryStatusDescription = "points expiry rules not defined"
-		Uc.Write_Loyalty_Monthly_Expiry_log(expiry_log)
+		monthly_expiry_log.ExpiryStatus = "failed"
+		monthly_expiry_log.ExpiryStatusDescription = "points expiry rules not defined"
+		Uc.Write_Loyalty_Monthly_Expiry_log(monthly_expiry_log)
 		<-chan_PointsExpiry_Controler
 		return
 	}
 	for _, pointKey := range account.Points_Detail_Keys {
 		pointsDetail, err := Uc.Customer_Loyalty_Account_Points_Details_Get(pointKey)
 		if err != nil {
-			expiry_log.ExpiryStatus = "failed"
-			expiry_log.ExpiryStatusDescription = "points expiry rules not found"
-			Uc.Write_Loyalty_Monthly_Expiry_log(expiry_log)
+			monthly_expiry_log.ExpiryStatus = "failed"
+			monthly_expiry_log.ExpiryStatusDescription = "points expiry rules not found"
+			Uc.Write_Loyalty_Monthly_Expiry_log(monthly_expiry_log)
 			<-chan_PointsExpiry_Controler
 			return
 		}
 		year, err := strconv.Atoi(pointsDetail[0].Year_Month[:4])
 		if err != nil {
-			expiry_log.ExpiryStatus = "failed"
-			expiry_log.ExpiryStatusDescription = "points expiry rules not found"
-			Uc.Write_Loyalty_Monthly_Expiry_log(expiry_log)
+			monthly_expiry_log.ExpiryStatus = "failed"
+			monthly_expiry_log.ExpiryStatusDescription = "points expiry rules not found"
+			Uc.Write_Loyalty_Monthly_Expiry_log(monthly_expiry_log)
 			<-chan_PointsExpiry_Controler
 			return
 		}
-
+		changedPoints := 0.0
 		month, err := strconv.Atoi(pointsDetail[0].Year_Month[4:])
 		if err == nil && (year < int(account.Initial_Date.Year()) || (year == account.Initial_Date.Year() && month <= int(account.Initial_Date.Month()))) {
-			expiry_log.Year_Month = pointsDetail[0].Year_Month
-			expiry_log.Opening_Awarded_Points = pointsDetail[0].Awarded_Points
-			expiry_log.Opening_Redeemed_Points = pointsDetail[0].Redeemed_Points
-			expiry_log.Opening_Available_Points = pointsDetail[0].Available_Points
-			expiry_log.Opening_Expired_Points = pointsDetail[0].Expired_Points
-			expiry_log.Opening_Expired_Points = pointsDetail[0].Expired_Points
+			changedPoints += pointsDetail[0].Available_Points
+			monthly_expiry_log.Year_Month = pointsDetail[0].Year_Month
+			monthly_expiry_log.Opening_Awarded_Points = pointsDetail[0].Awarded_Points
+			monthly_expiry_log.Opening_Redeemed_Points = pointsDetail[0].Redeemed_Points
+			monthly_expiry_log.Opening_Available_Points = pointsDetail[0].Available_Points
+			monthly_expiry_log.Opening_Expired_Points = pointsDetail[0].Expired_Points
+			monthly_expiry_log.Opening_Expired_Points = pointsDetail[0].Expired_Points
 
 			expired_Points := pointsDetail[0].Available_Points
 			redeemed_Points := pointsDetail[0].Redeemed_Points
@@ -7774,25 +7801,47 @@ func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account
 			Map_Customer_Loyalty_Account.Put(account.Key, account)
 
 			//update logs
-			expiry_log.End_Awarded_Points = 0
-			expiry_log.End_Redeemed_Points = 0
-			expiry_log.End_Available_Points = 0
-			expiry_log.End_Expired_Points = expired_Points
+			monthly_expiry_log.End_Awarded_Points = 0
+			monthly_expiry_log.End_Redeemed_Points = 0
+			monthly_expiry_log.End_Available_Points = 0
+			monthly_expiry_log.End_Expired_Points = expired_Points
 			//check level downgrade
 			new_Loyalty_level_key, errNL := Uc.EvaluateAndUpdate_CustomerLoyaltyLevel("Points_Expiry", account.Key)
 			if errNL == nil {
 				fmt.Println("error", errNL)
 			}
 			if errNL != nil {
-				expiry_log.EndLoyaltyLevel = new_Loyalty_level_key
+				monthly_expiry_log.EndLoyaltyLevel = new_Loyalty_level_key
 			}
 
-			expiry_log.ExpiryStatus = "successful"
-			expiry_log.ExpiryStatusDescription = "Cycle expiry"
-			Uc.Write_Loyalty_Monthly_Expiry_log(expiry_log)
+			monthly_expiry_log.ExpiryStatus = "successful"
+			monthly_expiry_log.ExpiryStatusDescription = "Cycle expiry"
+			Uc.Write_Loyalty_Monthly_Expiry_log(monthly_expiry_log)
 			Map_Customer_Loyalty_Account_Points_Detail.Delete(pointsDetail[0].Key)
 
 		}
+		entry_na, exits := Map_Customer_Loyalty_Account.CheckThenGet(account.Key)
+		if !exits {
+			err = errors.New("key does not exist")
+
+		}
+		entry, ok := entry_na.(Customer_Loyalty_Account)
+		if !ok {
+			err = errors.New("error in type assertion")
+
+		}
+
+		expiry_log.EndLoyaltyLevel = entry.Loyalty_Level_Key
+		expiry_log.End_Available_Points = entry.Available_Points
+		expiry_log.End_Awarded_Points = entry.Awarded_Points
+		expiry_log.End_Expired_Points = entry.Expired_Points
+		expiry_log.End_Redeemed_Points = entry.Redeemed_Points
+		expiry_log.End_Outstanding_Points = entry.Outstanding_fraction_points
+		expiry_log.End_Redeemed_Points = entry.Redeemed_Points
+		expiry_log.End_Redeemed_Expired_Points = entry.Redeemed_Expired_Points
+		expiry_log.ExpiryAmount = changedPoints
+		Uc.Write_Loyalty_Full_Expiry_log(expiry_log)
+
 	}
 	<-chan_PointsExpiry_Controler
 }

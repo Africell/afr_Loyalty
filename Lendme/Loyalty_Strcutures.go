@@ -803,20 +803,22 @@ type Loyalty_Monthly_Expiry_log struct {
 	ExpiryStatusDescription string `bson:"ExpiryStatusDescription" json:"ExpiryStatusDescription"`
 }
 
-type Loyalty_Final_Expiry_Log struct {
+type Loyalty_Full_Expiry_Log struct {
 	MSISDN string `bson:"MSISDN" json:"MSISDN"` //MSISDN
 
-	Opening_Awarded_Points     float64 `bson:"Opening_Awarded_Points" json:"Opening_Awarded_Points"`
-	Opening_Redeemed_Points    float64 `bson:"Opening_Redeemed_Points" json:"Opening_Redeemed_Points"`
-	Opening_Available_Points   float64 `bson:"Opening_Available_Points" json:"Opening_Available_Points"`     //(Awarded_Points + Expired_Points) - Redeemed_Points
-	Opening_Expired_Points     float64 `bson:"Opening_Expired_Points" json:"Opening_Expired_Points"`         //expired are deducted from Awarded_Points
-	Opening_OutStanding_Points float64 `bson:"Opening_OutStanding_Points" json:"Opening_OutStanding_Points"` //
+	Opening_Awarded_Points          float64 `bson:"Opening_Awarded_Points" json:"Opening_Awarded_Points"`
+	Opening_Redeemed_Points         float64 `bson:"Opening_Redeemed_Points" json:"Opening_Redeemed_Points"`
+	Opening_Available_Points        float64 `bson:"Opening_Available_Points" json:"Opening_Available_Points"`               //(Awarded_Points + Expired_Points) - Redeemed_Points
+	Opening_Expired_Points          float64 `bson:"Opening_Expired_Points" json:"Opening_Expired_Points"`                   //expired are deducted from Awarded_Points
+	Opening_Redeemed_Expired_Points float64 `bson:"Opening_Redeemed_Expired_Points" json:"Opening_Redeemed_Expired_Points"` //expired are deducted from Awarded_Points
+	Opening_OutStanding_Points      float64 `bson:"Opening_OutStanding_Points" json:"Opening_OutStanding_Points"`           //
 
-	End_Awarded_Points     float64 `bson:"End_Awarded_Points" json:"End_Awarded_Points"`
-	End_Redeemed_Points    float64 `bson:"End_Redeemed_Points" json:"End_Redeemed_Points"`
-	End_Available_Points   float64 `bson:"End_Available_Points" json:"End_Available_Points"`     //(Awarded_Points + Expired_Points) - Redeemed_Points
-	End_Expired_Points     float64 `bson:"End_Expired_Points" json:"End_Expired_Points"`         //expired are deducted from Awarded_Points
-	End_Outstanding_Points float64 `bson:"End_Outstanding_Points" json:"End_Outstanding_Points"` //
+	End_Awarded_Points          float64 `bson:"End_Awarded_Points" json:"End_Awarded_Points"`
+	End_Redeemed_Points         float64 `bson:"End_Redeemed_Points" json:"End_Redeemed_Points"`
+	End_Available_Points        float64 `bson:"End_Available_Points" json:"End_Available_Points"`               //(Awarded_Points + Expired_Points) - Redeemed_Points
+	End_Expired_Points          float64 `bson:"End_Expired_Points" json:"End_Expired_Points"`                   //expired are deducted from Awarded_Points
+	End_Redeemed_Expired_Points float64 `bson:"End_Redeemed_Expired_Points" json:"End_Redeemed_Expired_Points"` //expired are deducted from Awarded_Points
+	End_Outstanding_Points      float64 `bson:"End_Outstanding_Points" json:"End_Outstanding_Points"`           //
 
 	OpeningLoyaltyLevel string `bson:"OpeningLoyaltyLevel" json:"OpeningLoyaltyLevel"`
 	EndLoyaltyLevel     string `bson:"EndLoyaltyLevel" json:"EndLoyaltyLevel"`
