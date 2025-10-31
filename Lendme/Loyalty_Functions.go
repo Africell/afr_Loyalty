@@ -75,6 +75,8 @@ var DAO_Customer_COS_Exclusion daoc.DAO
 var Map_Customer_UAT daoc.Cache_Synch
 var DAO_Customer_UAT daoc.DAO
 
+var DAO_Churned_Customer_Loyalty_Account daoc.DAO
+
 var DAO_Loyalty_Event_Log daoc.DAO
 
 var DAO_Loyalty_Expiry_log daoc.DAO
@@ -158,6 +160,7 @@ func (uc *UserControl) InitializeLoyaltyDAO() {
 	DAO_Loyalty_Point_Redemption_Rules.Initialize("Loyalty_Point_Redemption_Rules", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Point_Redemption_Rules{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Point_Redemption_Rules", "")
 	DAO_Loyalty_Plan.Initialize("Loyalty_Plan", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Plan{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Plan", "")
 	DAO_Customer_Loyalty_Account.Initialize("Customer_Loyalty_Account", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Customer_Loyalty_Account{}), Configuration.DB_Name_Loyalty, "Col_Customer_Loyalty_Account", "")
+	DAO_Churned_Customer_Loyalty_Account.Initialize("Churned_Customer_Loyalty_Account", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Customer_Loyalty_Account{}), Configuration.DB_Name_Loyalty, "Col_Churned_Customer_Loyalty_Account", "")
 	DAO_Customer_Loyalty_Account_Points_Detail.Initialize("Customer_Loyalty_Account_Points_Detail", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Customer_Loyalty_Account_Points_Detail{}), Configuration.DB_Name_Loyalty, "Col_Customer_Loyalty_Account_Points_Detail", "")
 	DAO_Loyalty_Event_Log.Initialize("Loyalty_Event_Log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Event_Log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Event_Log", "")
 	DAO_Customer_DND.Initialize("Customer_DND", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Customer_DND{}), Configuration.DB_Name_Loyalty, "Col_Customer_DND", "")
@@ -448,6 +451,17 @@ func (Uc *UserControl) Write_Loyalty_Redemption_log(record Loyalty_Redemption_lo
 	_, err := DAO_Loyalty_Redemption_log.PutOneLogs(record, Db, Col)
 	if err != nil {
 		log.Println("Error in Write_Loyalty_Redemption_log:", err, " (", record, ")")
+		return
+	}
+}
+
+func (Uc *UserControl) Write_Loyalty_Account_Churned_log(record Customer_Loyalty_Account) {
+	YYYY, MM, _, _, _, _, _ := GetTimeParts(time.Now())
+	Db := DAO_Churned_Customer_Loyalty_Account.DB + "_" + YYYY + MM
+	Col := DAO_Churned_Customer_Loyalty_Account.Collection //+ "_" + DD
+	_, err := DAO_Churned_Customer_Loyalty_Account.PutOneLogs(record, Db, Col)
+	if err != nil {
+		log.Println("Error in Write_Loyalty_Account_Churned_log:", err, " (", record, ")")
 		return
 	}
 }
@@ -6790,7 +6804,7 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 				return 0, current_outstanding_points
 			}
 		case "CTMMOREQ": //recharge for others
-			if CheckMMEventDetailType(award_request.EventDetail) == "AFRICELL DATA" {
+			if CheckMMEventDetailType(award_request.EventDetail) == Configuration.LoyaltyMMBundleCode {
 				if rules.MM_CTMMOREQ_Bundle_Award_Type == "Transaction" {
 					if rules.MM_CTMMOREQ_Bundle_Points > 0 {
 						// return rules.MM_CTMMOREQ_Bundle_Points, current_outstanding_points
