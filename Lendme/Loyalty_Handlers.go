@@ -3724,7 +3724,7 @@ func (Uc *UserControl) HTTP_INLiveFeed_Churn(w http.ResponseWriter, r *http.Requ
 			sr.Status = "failed"
 			sr.StatusCode = http.StatusBadRequest
 			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": user does not exist in lendme or loyalty"
-			sr.ErrorDescription = err.Error()
+			sr.ErrorDescription = " user does not exist in lendme or loyalty"
 			Uc.HTTP_API_Standard_response(w, r, sr, false)
 			return
 		}
@@ -3746,7 +3746,7 @@ func (Uc *UserControl) HTTP_INLiveFeed_Churn(w http.ResponseWriter, r *http.Requ
 				sr.Status = "failed"
 				sr.StatusCode = http.StatusBadRequest
 				sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to delete"
-				sr.ErrorDescription = err.Error()
+				sr.ErrorDescription = "failed to cast entry to Customer_Loyalty_Account"
 				Uc.HTTP_API_Standard_response(w, r, sr, false)
 				return
 			}
@@ -3769,6 +3769,7 @@ func (Uc *UserControl) HTTP_INLiveFeed_Churn(w http.ResponseWriter, r *http.Requ
 			if exits {
 				Map_Customer_Exclusion.Delete(key)
 			}
+			Uc.Write_Loyalty_Account_Churned_log(entry)
 		}
 		LiveFeedCounters.With(prometheus.Labels{"Stream": request.EventSource, "Type": "Chrun", "Description": "Chrun"}).Inc()
 	}
@@ -3777,8 +3778,7 @@ func (Uc *UserControl) HTTP_INLiveFeed_Churn(w http.ResponseWriter, r *http.Requ
 	sr.StatusCode = http.StatusOK
 	sr.StatusDescription = ""
 	sr.ErrorDescription = ""
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	Uc.HTTP_API_Standard_response(w, r, sr, true)
 }
 
 func (Uc *UserControl) HTTP_INLiveFeed_Consuption(w http.ResponseWriter, r *http.Request) {

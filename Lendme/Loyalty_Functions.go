@@ -456,9 +456,9 @@ func (Uc *UserControl) Write_Loyalty_Redemption_log(record Loyalty_Redemption_lo
 }
 
 func (Uc *UserControl) Write_Loyalty_Account_Churned_log(record Customer_Loyalty_Account) {
-	YYYY, MM, _, _, _, _, _ := GetTimeParts(time.Now())
+	YYYY, MM, _, DD, _, _, _ := GetTimeParts(time.Now())
 	Db := DAO_Churned_Customer_Loyalty_Account.DB + "_" + YYYY + MM
-	Col := DAO_Churned_Customer_Loyalty_Account.Collection //+ "_" + DD
+	Col := DAO_Churned_Customer_Loyalty_Account.Collection + "_" + DD
 	_, err := DAO_Churned_Customer_Loyalty_Account.PutOneLogs(record, Db, Col)
 	if err != nil {
 		log.Println("Error in Write_Loyalty_Account_Churned_log:", err, " (", record, ")")
