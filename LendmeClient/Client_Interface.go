@@ -67,6 +67,67 @@ type Customer_Lendme_Account_Data struct {
 	Data []Lendme_Subscriber `bson:"Data" json:"Data"`
 }
 
+func (GWClient *Lendme_Client) Lendme_Credit_Limit_Scheme_Get(credit_limit_scheme string) (schemes []Credit_Limit_Scheme, err error) {
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	http_req := Generic_http_call_Request{
+		Url:             GWClient.Protocol + "://" + GWClient.Hostname + ":" + GWClient.LendmePort + "/" + GWClient.LendMeModule + "/" + GWClient.LendMeVersion + "/HTTP_Credit_Limit_Scheme/",
+		Method:          "GET",
+		Token:           GWClient.S2S_AccessToken,
+		QueryParameters: map[string]string{"Key": credit_limit_scheme},
+	}
+	response_generic, err := GWClient.generic_http_call(http_req)
+	if err != nil {
+		log.Println("generic_http_call failed : ", err)
+		return schemes, err
+	} else {
+		if response_generic.Statuscode == http.StatusOK {
+			type Credit_Limit_Scheme_Data struct {
+				Data []Credit_Limit_Scheme `json:"Data"`
+			}
+			var clsd Credit_Limit_Scheme_Data
+			err = json.Unmarshal(response_generic.Body, &clsd)
+			if err != nil {
+				log.Println("generic_http_call body unmarshal error : ", err)
+				return schemes, err
+			}
+			schemes = clsd.Data
+			return schemes, nil
+		}
+		if response_generic.Statuscode == http.StatusUnauthorized {
+			srl, errl := GWClient.AUC_client.Login(GWClient.AUC_client.S2S_Username, GWClient.AUC_client.S2S_Password) // try to get a new token using login if token is unauthenticated
+			if errl != nil {
+				log.Println("AUC init - FAILED :: ", errl)
+				return schemes, errl
+			}
+			rt, errl := GWClient.AUC_client.RefreshToken(srl.Token)
+			if errl != nil {
+				log.Println("AUC init - FAILED :: ", errl)
+				return schemes, err
+			} else {
+				GWClient.AUC_client.S2S_AccessToken = rt.Token // save token global variable to re-use
+				GWClient.S2S_AccessToken = rt.Token            // save token global variable to re-use
+				response_generic, err = GWClient.generic_http_call(http_req)
+				if err != nil {
+					log.Println("generic_http_call error : ", err)
+					return schemes, err
+				}
+				type Credit_Limit_Scheme_Data struct {
+					Data []Credit_Limit_Scheme `json:"Data"`
+				}
+				var clsd Credit_Limit_Scheme_Data
+				err = json.Unmarshal(response_generic.Body, &clsd)
+				if err != nil {
+					log.Println("generic_http_call body unmarshal error : ", err)
+					return schemes, err
+				}
+				schemes = clsd.Data
+				return schemes, nil
+			}
+		}
+	}
+	return schemes, err
+}
+
 func (GWClient *Lendme_Client) Lendme_Subscriber_Get(MSISDN string) (response Lendme_Subscriber, err error) {
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	http_req := Generic_http_call_Request{
