@@ -51,6 +51,25 @@ type Lendme_Subscriber struct {
 	StatusDescription string    `bson:"StatusDescription" json:"StatusDescription"`
 }
 
+type Event_Log struct {
+	Event_User         string      `bson:"Event_User" json:"Event_User"`
+	Event_Time         time.Time   `bson:"Event_Time" json:"Event_Time"`
+	Event_Type         string      `bson:"Event_Type" json:"Event_Type"`
+	Event_Description  string      `bson:"Event_Description" json:"Event_Description"`
+	Event_Entry_Before interface{} `bson:"Event_Entry_Before" json:"Event_Entry_Before"`
+	Event_Entry_After  interface{} `bson:"Event_Entry_After" json:"Event_Entry_After"`
+}
+type Credit_Limit_Scheme struct {
+	Key                 string      `bson:"Key" json:"Key"` //Scheme name
+	Scheme_Id           int64       `bson:"Scheme_Id" json:"Scheme_Id"`
+	Amount_From         float64     `bson:"Amount_From" json:"Amount_From"`
+	Amount_Till         float64     `bson:"Amount_Till" json:"Amount_Till"`
+	AON_From            float64     `bson:"AON_From" json:"AON_From"` //months
+	AON_Till            float64     `bson:"AON_Till" json:"AON_Till"` //months
+	Credit_limit_Amount float64     `bson:"Credit_limit_Amount" json:"Credit_limit_Amount"`
+	Event_Logs          []Event_Log `bson:"Event_Logs" json:"Event_Logs"`
+}
+
 // **********************************************************************************************
 // Loyalty structures
 // **********************************************************************************************
