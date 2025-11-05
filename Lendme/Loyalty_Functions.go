@@ -4278,14 +4278,6 @@ func (Uc *UserControl) Customer_Loyalty_Account_Edit(Login string, request Custo
 			})
 		}
 	}
-	if Configuration.ISLoyaltyOptIn && entry.First_Opt_In_Status_Date.IsZero() {
-		entry.Opt_Status = "OptedOut"
-		entry.Last_Opt_Status_Date = time.Now()
-	} else if entry.First_Opt_In_Status_Date.IsZero() {
-		entry.Opt_Status = "OptedIn"
-		entry.First_Opt_In_Status_Date = time.Now()
-		entry.Last_Opt_Status_Date = time.Now()
-	}
 	//evaluate the loyalty Account segment
 	if Login == "DWH_Import" {
 		entry.ARPU = request.ARPU
@@ -4326,7 +4318,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_Edit(Login string, request Custo
 		if !entry.Expiry_Date.IsZero() {
 			initialDate = entry.Expiry_Date
 		} else {
-			initialDate = entry.First_Opt_In_Status_Date
+			initialDate = entry.Creation_date
 		}
 		initialexpiryDate := addValidity(initialDate, expiry_Rule.Validity_Unit, expiry_Rule.Validity_Duration)
 		finalexpiryDate := addValidity(initialexpiryDate, expiry_Rule.Grace_Validity_Unit, expiry_Rule.Grace_Validity_Duration)
