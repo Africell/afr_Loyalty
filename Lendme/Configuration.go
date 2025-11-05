@@ -1761,6 +1761,8 @@ func setDefaultConfiguration_AO_Loyalty() (Configuration ConfigType) {
 
 	Configuration.IsProduction = false
 	Configuration.IsLoyaltyProduction = false
+	Configuration.ISLoyaltyOptIn = true
+	Configuration.ISLoyaltyOptOutGracePeriodDays = 30
 	Configuration.Min_Allowed_Amnt = 50
 	Configuration.Service_FeePerc = 0.15
 	Configuration.Min_Allowed_AON = 3
@@ -1923,6 +1925,8 @@ func setDefaultConfiguration_AO_Loyalty_UAT() (Configuration ConfigType) {
 
 	Configuration.IsProduction = false
 	Configuration.IsLoyaltyProduction = false
+	Configuration.ISLoyaltyOptIn = true
+	Configuration.ISLoyaltyOptOutGracePeriodDays = 30
 	Configuration.Min_Allowed_Amnt = 50
 	Configuration.Service_FeePerc = 0.12
 	Configuration.Min_Allowed_AON = 3
