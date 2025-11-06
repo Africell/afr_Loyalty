@@ -543,6 +543,8 @@ func (Uc *UserControl) InitializeLoyaltyDefaultUAT() {
 		MaxAllowedPoints_PerTransaction: 100,
 		MaxSubsAwardedPoints_PerMonth:   10000,
 		MaxSubsAwardedPoints:            100000,
+		EVC_Account_Balance:             0,
+		Merchant_Account_Balance:        0,
 	})
 	Uc.Loyalty_Level_Add("Default", Loyalty_Level_AddRequest{
 		Key:                    "Member",
@@ -4655,7 +4657,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_Edit(Login string, request Custo
 	}
 	Current_Entry := entry
 	//check opt status
-	if entry.Opt_Status != "OptedIn" {
+	if entry.Opt_Status != "OptedIn" && Login != "DWH_Import" {
 		err = errors.New("customer is opted out")
 		return Id, err
 	}

@@ -52,6 +52,8 @@ type Loyalty_Governance_AddRequest struct {
 	MaxAllowedPoints_PerTransaction float64 `bson:"MaxAllowedPoints_PerTransaction" json:"MaxAllowedPoints_PerTransaction"`
 	MaxSubsAwardedPoints_PerMonth   float64 `bson:"MaxSubsAwardedPoints_PerMonth" json:"MaxSubsAwardedPoints_PerMonth"`
 	MaxSubsAwardedPoints            float64 `bson:"MaxSubsAwardedPoints" json:"MaxSubsAwardedPoints"`
+	EVC_Account_Balance             float64 `bson:"EVC_Account_Balance" json:"EVC_Account_Balance"`
+	Merchant_Account_Balance        float64 `bson:"Merchant_Account_Balance" json:"Merchant_Account_Balance"`
 }
 
 type Loyalty_Governance_EditRequest struct {
