@@ -815,8 +815,8 @@ func (Uc *UserControl) Loyalty_Governance_Get(Key string) (entries []Loyalty_Gov
 							}
 						}
 					}
-					entries = append(entries, entry)
 				}
+				entries = append(entries, entry)
 			}
 		}
 		return entries, nil
