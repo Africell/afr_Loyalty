@@ -2038,8 +2038,8 @@ func setDefaultConfiguration_AO_Loyalty_UAT() (Configuration ConfigType) {
 
 	Configuration.Propylaea.Description = "Product Design Center - Propylaea"
 	Configuration.Propylaea.Protocol = "http"
-	Configuration.Propylaea.Port = "9900"
-	Configuration.Propylaea.Hostname = "10.250.1.228"
+	Configuration.Propylaea.Port = "9910"
+	Configuration.Propylaea.Hostname = "10.250.1.229"
 	Configuration.Propylaea.Module = "Propylaea"
 	Configuration.Propylaea.Version = "V1"
 	Configuration.Propylaea.S2S_Username = "Propylaea_Admin"
