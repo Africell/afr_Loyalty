@@ -424,7 +424,7 @@ func (GWClient *Lendme_Client) Loyalty_Products_Catalogue(MSISDN string) (respon
 		Url:             GWClient.Protocol + "://" + GWClient.Hostname + ":" + GWClient.LoyaltyPort + "/" + GWClient.LoyaltyModule + "/" + GWClient.LoyaltyVersion + "/HTTP_Loyalty_Products_Catalogue/",
 		Method:          "GET",
 		Token:           GWClient.S2S_AccessToken,
-		QueryParameters: map[string]string{"Key": MSISDN},
+		QueryParameters: map[string]string{"MSISDN": MSISDN},
 	}
 	response_generic, err := GWClient.generic_http_call(http_req)
 	if err != nil {

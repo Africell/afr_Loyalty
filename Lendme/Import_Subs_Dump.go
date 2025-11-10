@@ -246,7 +246,7 @@ func (Uc *UserControl) Subscriber_Update(request Sub_Update_Request) {
 			<-chan_SubQueueExecution_controler
 			return
 		}
-		if subscriber.COS == loyalty_account.COS && subscriber.ARPU == loyalty_account.ARPU && !loyalty_account.First_Opt_In_Status_Date.IsZero() && !loyalty_account.Coming_Expiry_Date.IsZero() {
+		if subscriber.COS == loyalty_account.COS && subscriber.ARPU == loyalty_account.ARPU && !loyalty_account.Coming_Expiry_Date.IsZero() && !loyalty_account.First_Opt_In_Status_Date.IsZero() {
 			<-chan_SubQueueExecution_controler
 			return
 		} else {
