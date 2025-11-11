@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"mime/multipart"
 	"regexp"
 	"sync"
@@ -2790,6 +2791,7 @@ func (Uc *UserControl) HTTP_Loyalty_Products_Catalogue(w http.ResponseWriter, r 
 	case "GET":
 		sr.TransactionType = sr.TransactionType + " - Read"
 		MSISDN := r.URL.Query().Get("MSISDN")
+		log.Println("MSISDN:", MSISDN)
 		productCatalogue, err := Uc.Customer_Loyalty_Account_GetRedemptionProductCatalogue(MSISDN)
 		if err != nil {
 			sr.Status = "failed"
