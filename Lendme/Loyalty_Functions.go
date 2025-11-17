@@ -5228,13 +5228,25 @@ func (Uc *UserControl) Customer_Loyalty_Account_GetRedemptionProductCatalogue(MS
 	// }
 	return response, nil
 }
-func FormatMBs(mb float64) string {
+func FormatMBs1024(mb float64) string {
 	if mb >= 1024*1024 {
 		// 1 TB or more
 		return fmt.Sprintf("%.2f TB", mb/1024/1024)
 	} else if mb >= 1024 {
 		// 1 GB or more
 		return fmt.Sprintf("%.2f GB", mb/1024)
+	} else {
+		// Less than 1 GB
+		return fmt.Sprintf("%.0f MB", mb)
+	}
+}
+func FormatMBs1000(mb float64) string {
+	if mb >= 1000*1000 {
+		// 1 TB or more
+		return fmt.Sprintf("%.2f TB", mb/1000/1000)
+	} else if mb >= 1000 {
+		// 1 GB or more
+		return fmt.Sprintf("%.2f GB", mb/1000)
 	} else {
 		// Less than 1 GB
 		return fmt.Sprintf("%.0f MB", mb)
@@ -5834,28 +5846,54 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 				fmt.Printf("Parsed size: %.2f\n", size) // e.g., show 2 decimal places
 
 				if DO_A.IsBonus {
-					if DO_A.Offer_Size_Unit == "MB" {
-						size += (size * 1024 * 1024)
-					} else if DO_A.Offer_Size_Unit == "GB" {
-						size += (size * 1024 * 1024 * 1024)
+					if Configuration.Operation == "DRC" {
+						if DO_A.Offer_Size_Unit == "MB" {
+							size += (size * 1000 * 1000)
+						} else if DO_A.Offer_Size_Unit == "GB" {
+							size += (size * 1000 * 1000 * 1000)
+						}
+						bonus_DO_bytes += size
+					} else {
+						if DO_A.Offer_Size_Unit == "MB" {
+							size += (size * 1024 * 1024)
+						} else if DO_A.Offer_Size_Unit == "GB" {
+							size += (size * 1024 * 1024 * 1024)
+						}
+						bonus_DO_bytes += size
 					}
-					bonus_DO_bytes += size
 
 				} else {
-					if DO_A.Offer_Size_Unit == "MB" {
-						size += (size * 1024 * 1024)
-					} else if DO_A.Offer_Size_Unit == "GB" {
-						size += (size * 1024 * 1024 * 1024)
+					if Configuration.Operation == "DRC" {
+						if DO_A.Offer_Size_Unit == "MB" {
+							size += (size * 1000 * 1000)
+						} else if DO_A.Offer_Size_Unit == "GB" {
+							size += (size * 1000 * 1000 * 1000)
+						}
+						DO_bytes += size
+					} else {
+						if DO_A.Offer_Size_Unit == "MB" {
+							size += (size * 1024 * 1024)
+						} else if DO_A.Offer_Size_Unit == "GB" {
+							size += (size * 1024 * 1024 * 1024)
+						}
+						DO_bytes += size
 					}
-					DO_bytes += size
 				}
 			}
 
 			if DO_bytes > 0 {
-				MBs = int(DO_bytes / 1024 / 1024)
+				if Configuration.Operation == "DRC" {
+					MBs = int(DO_bytes / 1000 / 1000)
+				} else {
+					MBs = int(DO_bytes / 1024 / 1024)
+				}
 			}
 			if bonus_DO_bytes > 0 {
-				Bonus_MBs = int(bonus_DO_bytes / 1024 / 1024)
+				if Configuration.Operation == "DRC" {
+					Bonus_MBs = int(bonus_DO_bytes / 1000 / 1000)
+				} else {
+					Bonus_MBs = int(bonus_DO_bytes / 1024 / 1024)
+				}
 			}
 
 			// Expiry Date from bundle Validity
@@ -5895,8 +5933,13 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 
 			totalMBs := MBs + Bonus_MBs
 			if totalMBs > 0 {
+				formatted := ""
+				if Configuration.Operation == "DRC" {
+					formatted = FormatMBs1000(float64(totalMBs))
 
-				formatted := FormatMBs(float64(totalMBs))
+				} else {
+					formatted = FormatMBs1024(float64(totalMBs))
+				}
 				sizeParts = append(sizeParts, formatted)
 			}
 
