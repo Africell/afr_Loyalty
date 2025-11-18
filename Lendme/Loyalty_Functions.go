@@ -5949,9 +5949,12 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			}
 
 			totalMinutes := Minutes + Bonus_Minutes
+			fmt.Println("totalMinutes",totalMinutes)
+
 			if totalMinutes > 0 {
 				sizeParts = append(sizeParts, fmt.Sprintf("%.0f Minutes", totalMinutes))
 			}
+			fmt.Println("sizeParts",sizeParts)
 
 			Size := strings.Join(sizeParts, " + ")
 
