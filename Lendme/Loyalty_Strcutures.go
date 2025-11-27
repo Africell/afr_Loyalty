@@ -659,6 +659,8 @@ type Customer_Loyalty_Account struct {
 	Account_Status  string    `bson:"Account_Status" json:"Account_Status"`
 	Account_Profile string    `bson:"Account_Profile" json:"Account_Profile"`
 
+	Multiplier_Percentage float64 `bson:"Multiplier_Percentage" json:"Multiplier_Percentage"`
+
 	Previous_Loyalty_Level_Key  string    `bson:"Previous_Loyalty_Level_Key" json:"Previous_Loyalty_Level_Key"`
 	Previous_Loyalty_Level_Date time.Time `bson:"Previous_Loyalty_Level_Date" json:"Previous_Loyalty_Level_Date"`
 

@@ -4951,6 +4951,45 @@ func (Uc *UserControl) Customer_Loyalty_Account_Get(Key string) (entries []Custo
 			}
 			entry.Points_To_Expire = expiryPoints
 		}
+		if !entry.Joining_Date.IsZero() && entry.Joining_Date.Year() != 1 {
+			now := time.Now()
+
+			years := now.Year() - entry.Joining_Date.Year()
+			months := int(now.Month()) - int(entry.Joining_Date.Month())
+
+			totalMonths := years*12 + months
+
+			// Adjust if current day is before the joining day in the month
+			if now.Day() < entry.Joining_Date.Day() {
+				totalMonths--
+			}
+			if totalMonths > 0 {
+				loyalty_Level_na, exits := Map_Loyalty_Level.CheckThenGet(entry.Loyalty_Level_Key)
+				if !exits {
+					err = errors.New("failed to get loyalty account level")
+					return entries, err
+				}
+				loyalty_Level, ok := loyalty_Level_na.(Loyalty_Level)
+				if !ok {
+					err = errors.New("failed to get loyalty account level")
+					return entries, err
+				}
+				for _, lvl := range loyalty_Level.Seniority_Levels {
+					seniorityLevel_na, seniorityexist := Map_Loyalty_Seniority_Level.CheckThenGet(lvl.Loyalty_Seniority_Level_Key)
+					if seniorityexist {
+						seniority, ok := seniorityLevel_na.(Loyalty_Seniority_Level)
+						if ok {
+							if months >= int(seniority.AON_From) && months <= int(seniority.AON_Till) {
+								entry.Multiplier_Percentage = lvl.Multiplier_Percentage
+							}
+						}
+
+					}
+
+				}
+			}
+
+		}
 		entries = append(entries, entry)
 	}
 
