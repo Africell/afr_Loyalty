@@ -894,6 +894,7 @@ func setDefaultConfiguration_GM_Loyalty_Live() (Configuration ConfigType) {
 
 	Configuration.LoyaltyVersion = "V1"
 	Configuration.LoyaltyModule = "Loyalty"
+	Configuration.LoyaltyMMBundleCode = "AFRICELL DATA"
 
 	Configuration.MSISDN_Prefix = ""
 	Configuration.MSISDN_Short_len = 7
@@ -1243,6 +1244,7 @@ func setDefaultConfiguration_SL_Live() (Configuration ConfigType) {
 
 	Configuration.LoyaltyVersion = "V1"
 	Configuration.LoyaltyModule = "Loyalty"
+	Configuration.LoyaltyMMBundleCode = "AFRICELL DATA"
 
 	Configuration.MSISDN_Prefix = "0"
 	Configuration.MSISDN_Short_len = 8
@@ -1408,6 +1410,7 @@ func setDefaultConfiguration_SL_Loyalty() (Configuration ConfigType) {
 
 	Configuration.LoyaltyVersion = "V1"
 	Configuration.LoyaltyModule = "Loyalty"
+	Configuration.LoyaltyMMBundleCode = "AFRICELL DATA"
 
 	Configuration.MSISDN_Prefix = "0"
 	Configuration.MSISDN_Short_len = 8
@@ -1578,6 +1581,7 @@ func setDefaultConfiguration_SL_Loyalty_UAT() (Configuration ConfigType) {
 
 	Configuration.LoyaltyVersion = "V1"
 	Configuration.LoyaltyModule = "Loyalty"
+	Configuration.LoyaltyMMBundleCode = "AFRICELL DATA"
 
 	Configuration.MSISDN_Prefix = "0"
 	Configuration.MSISDN_Short_len = 8
@@ -1748,6 +1752,7 @@ func setDefaultConfiguration_AO_Loyalty() (Configuration ConfigType) {
 
 	Configuration.LoyaltyVersion = "V1"
 	Configuration.LoyaltyModule = "Loyalty"
+	Configuration.LoyaltyMMBundleCode = "AFRICELL DATA"
 
 	Configuration.MSISDN_Prefix = ""
 	Configuration.MSISDN_Short_len = 8
@@ -1910,6 +1915,7 @@ func setDefaultConfiguration_AO_Loyalty_UAT() (Configuration ConfigType) {
 
 	Configuration.LoyaltyVersion = "V1"
 	Configuration.LoyaltyModule = "Loyalty"
+	Configuration.LoyaltyMMBundleCode = "AFRICELL DATA"
 
 	Configuration.MSISDN_Prefix = ""
 	Configuration.MSISDN_Short_len = 8
