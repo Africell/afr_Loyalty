@@ -5832,6 +5832,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			var bundleName string
 			if err == nil && len(bundleResponse.Data) > 0 {
 				bundle = bundleResponse.Data[0]
+				bundleName = bundle.Name_Lang1
 			} else {
 				bundleName = ""
 			}
