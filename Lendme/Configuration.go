@@ -258,6 +258,8 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 
 	Configuration.IsProduction = true
 	Configuration.IsLoyaltyProduction = false
+	Configuration.ISLoyaltyOptIn = true
+	Configuration.ISLoyaltyOptOutGracePeriodDays = 30
 	Configuration.Min_Allowed_Amnt = 10
 	Configuration.Service_FeePerc = 0.1
 	Configuration.Min_Allowed_AON = 3
