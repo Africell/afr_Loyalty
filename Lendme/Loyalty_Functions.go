@@ -6741,13 +6741,13 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 			if now.Day() < loyalty_account.Joining_Date.Day() {
 				totalMonths--
 			}
-			if totalMonths > 0 {
+			if totalMonths >= 0 {
 				for _, lvl := range loyalty_Level.Seniority_Levels {
 					seniorityLevel_na, seniorityexist := Map_Loyalty_Seniority_Level.CheckThenGet(lvl.Loyalty_Seniority_Level_Key)
 					if seniorityexist {
 						seniority, ok := seniorityLevel_na.(Loyalty_Seniority_Level)
 						if ok {
-							if months >= int(seniority.AON_From) && months <= int(seniority.AON_Till) {
+							if totalMonths >= int(seniority.AON_From) && totalMonths <= int(seniority.AON_Till) {
 								addedFractionPoints := Outstanding_fraction_points - initial_Outstanding_fraction_points
 								initialPointsflt := float64(points + addedFractionPoints)
 								addedValueflt := float64(initialPointsflt*lvl.Multiplier_Percentage) / 100
