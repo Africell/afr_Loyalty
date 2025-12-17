@@ -585,7 +585,8 @@ func setDefaultConfiguration_GM_Live() (Configuration ConfigType) {
 	Configuration.LoyaltyMMBundleCode = "AFRICELL DATA"
 
 	Configuration.IsProduction = false
-	Configuration.IsLoyaltyProduction = false
+	Configuration.IsLoyaltyProduction = true
+	Configuration.ISLoyaltyOptIn = false
 	Configuration.Min_Allowed_Amnt = 5
 	Configuration.Service_FeePerc = 0.04
 	Configuration.Min_Allowed_AON = 3
@@ -1080,7 +1081,8 @@ func setDefaultConfiguration_GM_Loyalty_UAT() (Configuration ConfigType) {
 	Configuration.CountryCode = "220"
 
 	Configuration.IsProduction = true
-	Configuration.IsLoyaltyProduction = true
+	Configuration.IsLoyaltyProduction = false
+	Configuration.ISLoyaltyOptIn = false
 	Configuration.Min_Allowed_Amnt = 5
 	Configuration.Service_FeePerc = 0.04
 	Configuration.Min_Allowed_AON = 3

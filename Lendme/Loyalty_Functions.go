@@ -4657,7 +4657,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_Edit(Login string, request Custo
 	}
 	Current_Entry := entry
 	//check opt status
-	if entry.Opt_Status != "OptedIn" && Login != "DWH_Import" {
+	if entry.Opt_Status != "OptedIn" && Login != "DWH_Import" && Configuration.ISLoyaltyOptIn {
 		err = errors.New("customer is opted out")
 		return Id, err
 	}
@@ -6547,7 +6547,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 	response.Opening_Outstanding_fraction_points = loyalty_account.Outstanding_fraction_points
 
 	//check opt status
-	if loyalty_account.Opt_Status != "OptedIn" {
+	if loyalty_account.Opt_Status != "OptedIn" && Configuration.ISLoyaltyOptIn {
 		response.Status = "failed"
 		response.StatusCode = http.StatusBadRequest
 		response.StatusDescription = "customer is opted out"
@@ -6983,7 +6983,7 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 	response.Opening_Redeemed_Points = loyalty_Account.Redeemed_Points
 	response.Opening_Available_Points = loyalty_Account.Available_Points
 	//check exclusion list
-	if loyalty_Account.Opt_Status != "OptedIn" {
+	if loyalty_Account.Opt_Status != "OptedIn" && Configuration.ISLoyaltyOptIn {
 		response.Status = "failed"
 		response.StatusCode = http.StatusBadRequest
 		response.StatusDescription = "customer is opted out"
