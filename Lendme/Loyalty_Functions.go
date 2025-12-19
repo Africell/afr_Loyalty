@@ -6739,7 +6739,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 			if now.Day() < loyalty_account.Joining_Date.Day() {
 				totalMonths--
 			}
-			fmt.Println("total months",totalMonths)
+			fmt.Println("total months", totalMonths)
 			if totalMonths >= 0 {
 				for _, lvl := range loyalty_Level.Seniority_Levels {
 					seniorityLevel_na, seniorityexist := Map_Loyalty_Seniority_Level.CheckThenGet(lvl.Loyalty_Seniority_Level_Key)
@@ -6754,13 +6754,15 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 								// 	points =  math.Floor(endPoints)
 								// 	Outstanding_fraction_points = endPoints - points
 								// }else{
-			fmt.Println("sen lvl",lvl.Key)
+								fmt.Println("sen lvl", lvl.Multiplier_Percentage)
+								fmt.Println("sen lvl", lvl.Key)
 
-									changedPointsflt := (points + Outstanding_fraction_points) - initial_Outstanding_fraction_points
-									seniorityPoints := changedPointsflt*lvl.Multiplier_Percentage / 100
-									endPoints := seniorityPoints + changedPointsflt + initial_Outstanding_fraction_points
-									points =  math.Floor(endPoints)
-									Outstanding_fraction_points = endPoints - points
+								changedPointsflt := (points + Outstanding_fraction_points) - initial_Outstanding_fraction_points
+								seniorityPoints := changedPointsflt * lvl.Multiplier_Percentage / 100
+								endPoints := seniorityPoints + changedPointsflt + initial_Outstanding_fraction_points
+								points = math.Floor(endPoints)
+								Outstanding_fraction_points = endPoints - points
+								break
 								// }
 							}
 						}
