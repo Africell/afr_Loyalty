@@ -2588,7 +2588,11 @@ func (Uc *UserControl) HTTP_Customer_Loyalty_RedeemRequest(w http.ResponseWriter
 		return
 	}
 	//execute the request
-	Uc.Customer_Loyalty_RedeemRequest(&validated_Headers, Request, &transaction)
+	if Configuration.Operation == "Angola" {
+		Uc.Customer_Loyalty_RedeemRequest_Angola(&validated_Headers, Request, &transaction)
+	} else {
+		Uc.Customer_Loyalty_RedeemRequest(&validated_Headers, Request, &transaction)
+	}
 	Uc.HTTP_Customer_Loyalty_RedeemRequest_Response(w, r, &transaction, false)
 }
 

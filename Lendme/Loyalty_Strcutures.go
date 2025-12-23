@@ -1441,3 +1441,18 @@ type JobStatus struct {
 	Errors        []string
 	Result        map[string][]string
 }
+
+type MM_CashIn_request struct {
+	SenderMSISDN        string  `bson:"SenderMSISDN" json:"SenderMSISDN"`
+	SenderPIN           string  `bson:"SenderPIN" json:"SenderPIN"`
+	ReceiverType        string  `bson:"ReceiverType" json:"ReceiverType"` //mobileNumber, userCode
+	ReceiverMSISDN      string  `bson:"ReceiverMSISDN" json:"ReceiverMSISDN"`
+	SenderProductId     string  `bson:"SenderProductId" json:"SenderProductId"`
+	ReceiverProductId   string  `bson:"ReceiverProductId" json:"ReceiverProductId"`
+	BearerCode          string  `bson:"BearerCode" json:"BearerCode"`                   //default is USSD
+	Currency            string  `bson:"Currency" json:"Currency"`                       //default is 101
+	ExternalReferenceId string  `bson:"ExternalReferenceId" json:"ExternalReferenceId"` //default is Generated UUID
+	Amount              float64 `bson:"Amount" json:"Amount"`
+	Remark              string  `bson:"Remark" json:"Remark"`
+	Source              string  `bson:"Source" json:"Source"`
+}

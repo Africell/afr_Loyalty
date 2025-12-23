@@ -1,6 +1,8 @@
 package Lendme
 
 import (
+	apgw "afr_ao_apgw_v2/afr_apgw"
+	"afr_ao_apgw_v2/APGWClientV2"
 	"context"
 	"daoc"
 	"errors"
@@ -6437,6 +6439,1200 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 	response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 	Uc.Write_Loyalty_Redemption_log(*response)
 }
+func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Request_Header, request Loyalty_Redemption_Request, response *Loyalty_Redemption_log) {
+	response.ReceiveDate = time.Now()
+	//fill the request header info
+	response.SourceIP = request_header.SourceIP
+	response.SourceApp = request_header.SourceApp
+	response.AppLogin = request_header.AppLogin
+	response.AppVersion = request_header.AppVersion
+	response.GPSLocation = request_header.GPSLocation
+	response.GSMLocation = request_header.GSMLocation
+	request.MSISDN = Normalize_International_MSISDN(request.MSISDN)
+	if request.MSISDN == "" {
+		response.Status = "failed"
+		response.StatusCode = http.StatusBadRequest
+		response.StatusDescription = "incorrect msisdn"
+		response.ErrorDescription = "incorrect msisdn"
+		response.StatusDate = time.Now()
+		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+		Uc.Write_Loyalty_Redemption_log(*response)
+		return
+	}
+	//fill the request info
+	response.MSISDN = request.MSISDN
+	response.ReceiveDate = time.Now()
+	response.Redemption_Type = request.Redemption_Type //Airtime, Bundle, MobileMoney, SpinAndWin
+	response.Redemption_Bunlde_Id = request.Redemption_Bunlde_Id
+	response.Redemption_Amount = request.Redemption_Amount
+	response.Points_To_Redeem = request.Points_To_Redeem
+
+	//get loyalty account detail
+	loyalty_Account_na, exits := Map_Customer_Loyalty_Account.CheckThenGet(request.MSISDN)
+	if !exits {
+		response.Status = "failed"
+		response.StatusCode = http.StatusBadRequest
+		response.StatusDescription = "loyalty account not found"
+		response.ErrorDescription = "loyalty account not found"
+		response.StatusDate = time.Now()
+		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+		Uc.Write_Loyalty_Redemption_log(*response)
+		return
+	}
+	loyalty_Account, ok := loyalty_Account_na.(Customer_Loyalty_Account)
+	if !ok {
+		response.Status = "failed"
+		response.StatusCode = http.StatusBadRequest
+		response.StatusDescription = "error in loyalty account type assertion"
+		response.ErrorDescription = "error in loyalty account type assertion"
+		response.StatusDate = time.Now()
+		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+		Uc.Write_Loyalty_Redemption_log(*response)
+		return
+	}
+	response.Customer_Id = loyalty_Account.Customer_Id
+	response.Account_Status = loyalty_Account.Account_Status
+	response.Loyalty_Level_Key = loyalty_Account.Loyalty_Level_Key
+	response.Loyalty_Account_Segment_Key = loyalty_Account.Loyalty_Account_Segment_Key
+	response.Opening_Awarded_Points = loyalty_Account.Awarded_Points
+	response.Opening_Redeemed_Points = loyalty_Account.Redeemed_Points
+	response.Opening_Available_Points = loyalty_Account.Available_Points
+
+	//get redemption rules
+	redemption_Rules, err := Uc.Customer_Loyalty_Account_GetRedemption_Rules(request.MSISDN)
+	if err != nil {
+		response.Status = "failed"
+		response.StatusCode = http.StatusBadRequest
+		response.StatusDescription = "failed to get redemption rules"
+		response.ErrorDescription = err.Error()
+		response.StatusDate = time.Now()
+		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+		Uc.Write_Loyalty_Redemption_log(*response)
+		return
+	}
+	if response.Opening_Available_Points < redemption_Rules.Min_Accumulated_Points {
+		response.Status = "failed"
+		response.StatusCode = http.StatusBadRequest
+		response.StatusDescription = "no enough points"
+		response.ErrorDescription = "no enough points"
+		response.StatusDate = time.Now()
+		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+		Uc.Write_Loyalty_Redemption_log(*response)
+		return
+	}
+	response.Allow_Negative_Balance_ToRedeem = redemption_Rules.Allow_Negative_Balance_ToRedeem
+	//validate nagtive balance and pending lendme
+	if !redemption_Rules.Allow_Negative_Balance_ToRedeem {
+		IN_MSISDN := response.MSISDN
+		if Configuration.Operation == "Gambia" {
+			if len(response.MSISDN) > 7 {
+				IN_MSISDN = IN_MSISDN[len(response.MSISDN)-7 : len(response.MSISDN)]
+			}
+		} else if Configuration.Operation == "SierraLeone" { //077928014
+			if len(response.MSISDN) > 8 {
+				IN_MSISDN = "0" + IN_MSISDN[len(response.MSISDN)-8:len(response.MSISDN)]
+			}
+		}
+		IN_Response, err := Uc.IN.INClient.GetAccountDetails("", "", IN_MSISDN)
+		if err != nil {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "failed to get IN account detail"
+			response.ErrorDescription = err.Error()
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		if IN_Response.Balance < 0 {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "balance must be positive"
+			response.ErrorDescription = "main GSM balance must be positive"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+	}
+	response.Allow_PendingLendme_ToRedeem = redemption_Rules.Allow_PendingLendme_ToRedeem
+	if !redemption_Rules.Allow_PendingLendme_ToRedeem {
+		subscriber_na, exist := Map_Subscribers.CheckThenGet(response.MSISDN)
+		if exist {
+			subscriber, ok := subscriber_na.(Subscriber)
+			if ok {
+				if subscriber.Lendme_Outstanding_Amount > 0 {
+					response.Status = "failed"
+					response.StatusCode = http.StatusBadRequest
+					response.StatusDescription = "pending outstanding amount must be closed"
+					response.ErrorDescription = "pending outstanding amount must be closed"
+					response.StatusDate = time.Now()
+					response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+					Uc.Write_Loyalty_Redemption_log(*response)
+					return
+				}
+			}
+		}
+	}
+
+	//validate and execute redemption request
+	switch request.Redemption_Type {
+	case "Airtime":
+		if request.Redemption_Amount <= 0 && request.Points_To_Redeem <= 0 {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "invalid redemption amount"
+			response.ErrorDescription = "invalid redemption airtime amount"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		response.MinAvailableRequiredPoints = redemption_Rules.Available_MinPoints_for_Airtime
+		if response.Opening_Available_Points < response.MinAvailableRequiredPoints {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "no enough points"
+			response.ErrorDescription = "no enough points"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		if redemption_Rules.Bundles_Product_Catalogue_Channel == "" {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "redemption product catalogue channel is not provided"
+			response.ErrorDescription = "redemption product catalogue channel is not provided"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		if redemption_Rules.Airtime_EVC_Account == "" {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "airtime payer account is not provided"
+			response.ErrorDescription = "airtime payer account is not provided"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		//debit loyalty points
+		if redemption_Rules.Airtime_Points <= 0 || redemption_Rules.Airtime_Amount <= 0 {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "airtime redeem rules are not defined"
+			response.ErrorDescription = "airtime redeem rules are not defined"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		//do the calculation
+		if response.Points_To_Redeem > 0 {
+			//calculate Redemption_Amount
+			response.Redemption_Amount = (response.Points_To_Redeem * redemption_Rules.Airtime_Amount) / redemption_Rules.Airtime_Points
+		} else {
+			if response.Redemption_Amount > 0 {
+				//calculate Points_To_Redeem
+				response.Points_To_Redeem = (response.Redemption_Amount * redemption_Rules.Airtime_Points) / redemption_Rules.Airtime_Amount
+			} else {
+				//return error
+				response.Status = "failed"
+				response.StatusCode = http.StatusBadRequest
+				response.StatusDescription = "invalid redemption amount"
+				response.ErrorDescription = "invalid redemption airtime amount"
+				response.StatusDate = time.Now()
+				response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+				Uc.Write_Loyalty_Redemption_log(*response)
+				return
+			}
+		}
+		response.MinRequiredPoints = redemption_Rules.Airtime_MinPoints
+		if response.Points_To_Redeem < response.MinRequiredPoints {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "requested points are less than the minimum allowed points for redemption"
+			response.ErrorDescription = "requested points are less than the minimum allowed points for redemption"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		//check if subscriber have enough points
+		if response.Points_To_Redeem > response.Opening_Available_Points {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "no enough points"
+			response.ErrorDescription = "no enough points"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+
+		var Debit_Request Loyalty_AccountDebitPoints_Request
+		Debit_Request.MSISDN = response.MSISDN
+		Debit_Request.Debit_Amount = response.Points_To_Redeem
+		Debit_Request.Debit_Reason = "Redeem Request"
+		Debit_Request.Redemption_Type = "Airtime" //Airtime, Bundle, MobileMoney, SpinAndWin
+		Debit_Request.Redemption_Bunlde_Id = ""
+		Debit_Request.Redemption_Amount = response.Redemption_Amount
+		var debit_Log Loyalty_AccountDebitPoints_log
+		Uc.Loyalty_AccountDebitPoints(request_header, Debit_Request, &debit_Log)
+		response.Points_Debit_Result = debit_Log
+		if debit_Log.StatusCode != http.StatusOK {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = debit_Log.StatusDescription
+			response.ErrorDescription = debit_Log.ErrorDescription
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		response.Closure_Awarded_Points = debit_Log.Closure_Awarded_Points
+		response.Closure_Redeemed_Points = debit_Log.Closure_Redeemed_Points
+		response.Closure_Available_Points = debit_Log.Closure_Available_Points
+		//credit airtime
+		Airtime_EVC_PIN, err := DecryptHexString(redemption_Rules.Airtime_EVC_PIN)
+		if err != nil {
+			fmt.Println("error in decrypting artime evc pin", err.Error())
+		}
+		// airtimeTransferReply, err := Uc.CGW.UC_GWClient.AirtimePurchase(Unified_charging_gateway_Client.AirtimePurchase_Request{
+		// 	PayerMSISDN:            redemption_Rules.Airtime_EVC_Account,
+		// 	PayerPIN:               Airtime_EVC_PIN,
+		// 	PaymentMethod:          "Loyalty Points",
+		// 	TargetMSISDN:           request.MSISDN,
+		// 	Amount:                 response.Redemption_Amount,
+		// 	SendPayerNotification:  false,
+		// 	SendTargetNotification: true,
+		// 	Language:               "EN",
+		// }, redemption_Rules.Bundles_Product_Catalogue_Channel)
+
+		airtimeTransferReply, err := Uc.APGW.APGWClient.AirtimePurchase(apgw.AirtimePurchase_Request{
+			PayerMSISDN:  redemption_Rules.Airtime_EVC_Account,
+			PayerPIN:     Airtime_EVC_PIN,
+			TargetMSISDN: request.MSISDN,
+			// EVCAccount:             Configuration.BundlePurchase.EVC_Account,
+			// EVCPIN:                 Configuration.BundlePurchase.EVC_PIN,
+			// MMMerchantAccount:      Configuration.Airtime.MM_MerchantAccount, //receive the mobile money amount
+			Amount:                 response.Redemption_Amount,
+			SendPayerNotification:  false,
+			SendTargetNotification: true,
+		})
+		response.Airtime_PurchaseResult = airtimeTransferReply
+		if err != nil {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "failed to recharge airtime"
+			response.ErrorDescription = err.Error()
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			//refund points
+			var refund_response Loyalty_AccountCreditPoints_log
+			var refundRequest Loyalty_AccountCreditPoints_Request
+			refundRequest.MSISDN = response.MSISDN
+			refundRequest.EventSource = response.SourceApp
+			refundRequest.EventType = "refund"
+			refundRequest.EventDetail = request.Redemption_Type + " - refund"
+			refundRequest.EventAmount = 0
+			refundRequest.PointsToCredit = response.Points_To_Redeem
+			refundRequest.EventDescription = ""
+			Uc.Loyalty_AccountCreditPoints(request_header, refundRequest, &refund_response, true)
+			return
+		}
+		if airtimeTransferReply.StatusCode != http.StatusOK {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = airtimeTransferReply.AirtimeAllocate_StatusDescription
+			response.ErrorDescription = airtimeTransferReply.ErrorCode
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			//refund points
+			var refund_response Loyalty_AccountCreditPoints_log
+			var refundRequest Loyalty_AccountCreditPoints_Request
+			refundRequest.MSISDN = response.MSISDN
+			refundRequest.EventSource = response.SourceApp
+			refundRequest.EventType = "refund"
+			refundRequest.EventDetail = request.Redemption_Type + " - refund"
+			refundRequest.EventAmount = 0
+			refundRequest.PointsToCredit = response.Points_To_Redeem
+			refundRequest.EventDescription = ""
+			Uc.Loyalty_AccountCreditPoints(request_header, refundRequest, &refund_response, true)
+			return
+		}
+		AirtimeRedemptionCount.With(prometheus.Labels{"EventSource": response.SourceApp, "Level": loyalty_Account.Loyalty_Level_Key}).Inc()
+		AirtimeRedemptionPoints.With(prometheus.Labels{"EventSource": response.SourceApp, "Level": loyalty_Account.Loyalty_Level_Key}).Add(response.Points_To_Redeem)
+		AirtimeRedemptionAmount.With(prometheus.Labels{"EventSource": response.SourceApp, "Level": loyalty_Account.Loyalty_Level_Key}).Add(response.Redemption_Amount)
+
+		record, err := Uc.Customer_Loyalty_Account_GetRedemption_Rules(response.MSISDN)
+		if err != nil {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+			response.ErrorDescription = err.Error()
+			return
+		}
+		if record.Airtime_Notification {
+			AirtimeNotiLog := NotificationLog{
+				SourceAction:  "AirtimeRedemption",
+				TransactionId: "",
+				Medium:        "SMS",
+				SourceAddress: record.Airtime_Notification_Sender,
+				Destination:   response.MSISDN,
+				Subject:       "Redemption",
+				AddUser:       "SYSTEM",
+				AddDate:       time.Now(),
+			}
+			Airtime_Noti_Text := ""
+			Airtime_Noti_Text = record.Airtime_Notification_Text
+
+			if Airtime_Noti_Text != "" {
+				Airtime_Noti_Text = strings.ReplaceAll(Airtime_Noti_Text, "{{ PointsDeducted }}", fmt.Sprint(response.Points_To_Redeem))
+				Airtime_Noti_Text = strings.ReplaceAll(Airtime_Noti_Text, "{{ AirtimeAwarded }}", fmt.Sprint(response.Redemption_Amount))
+				Airtime_Noti_Text = strings.ReplaceAll(Airtime_Noti_Text, "{{ LoyaltyBalance }}", fmt.Sprint(response.Closure_Available_Points))
+				AirtimeNotiLog.Payload = Airtime_Noti_Text
+				err := Send_SMS(record.Airtime_Notification_Sender, response.MSISDN, Airtime_Noti_Text)
+				if err != nil {
+					AirtimeNotiLog.Status = "Failed"
+					AirtimeNotiLog.Error = err.Error()
+				} else {
+					AirtimeNotiLog.Status = "Successful"
+				}
+			} else {
+				AirtimeNotiLog.Payload = Airtime_Noti_Text
+				AirtimeNotiLog.Status = "Failed"
+				AirtimeNotiLog.Error = "Undefined Airtime notification for transaction, check bundle definition"
+			}
+			YYYY, MM, _, _, _, _, _ := GetTimeParts(response.ReceiveDate)
+			Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
+			_, err = DAO_NotificationLog.PutOneLogs(AirtimeNotiLog, Db, DAO_NotificationLog.Collection)
+			if err != nil {
+				log.Println("Error in Write Airtime Notification Logs:", err, " (", AirtimeNotiLog, ")")
+			}
+		}
+
+	case "Bundle":
+		if request.Redemption_Bunlde_Id == "" {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "bundle is not provided"
+			response.ErrorDescription = "bundle is not provided"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		response.MinRequiredPoints = redemption_Rules.Bundles_MinPoints
+		if response.Opening_Available_Points < response.MinRequiredPoints {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "no enough points"
+			response.ErrorDescription = "no enough points"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		//get bundles detail
+		bundle_response, err := Uc.Propylaea.PropylaeaClient.Get_Bundle(
+			request.Redemption_Bunlde_Id,
+			"", "", "")
+		if err != nil {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "failed to get bundle detail"
+			response.ErrorDescription = err.Error()
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		if len(bundle_response.Data) < 1 {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "bundle not found"
+			response.ErrorDescription = "bundle not found"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+
+		//check if subscriber have enough points
+		response.Price_Loyalty_Points = bundle_response.Data[0].Price_Loyalty_Points
+		response.Points_To_Redeem = response.Price_Loyalty_Points
+		//check if subscriber have enough points
+		if response.Points_To_Redeem > response.Opening_Available_Points {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "no enough points"
+			response.ErrorDescription = "no enough points"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		//debit the loyalty points
+		var Debit_Request Loyalty_AccountDebitPoints_Request
+		Debit_Request.MSISDN = response.MSISDN
+		Debit_Request.Debit_Amount = response.Points_To_Redeem
+		Debit_Request.Debit_Reason = "Redeem Request"
+		Debit_Request.Redemption_Type = "Bundle" //Airtime, Bundle, MobileMoney, SpinAndWin
+		Debit_Request.Redemption_Bunlde_Id = request.Redemption_Bunlde_Id
+		Debit_Request.Redemption_Amount = response.Price_Loyalty_Points
+		var debit_Log Loyalty_AccountDebitPoints_log
+		Uc.Loyalty_AccountDebitPoints(request_header, Debit_Request, &debit_Log)
+		response.Points_Debit_Result = debit_Log
+		if debit_Log.StatusCode != http.StatusOK {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = debit_Log.StatusDescription
+			response.ErrorDescription = debit_Log.ErrorDescription
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		response.Closure_Awarded_Points = debit_Log.Closure_Awarded_Points
+		response.Closure_Redeemed_Points = debit_Log.Closure_Redeemed_Points
+		response.Closure_Available_Points = debit_Log.Closure_Available_Points
+		//recharge the bundle
+		Bundles_EVC_PIN, err := DecryptHexString(redemption_Rules.Bundles_EVC_PIN)
+		if err != nil {
+			fmt.Println("error in decrypting artime evc pin", err.Error())
+		}
+		// bundlePurchaseReply, err := Uc.CGW.UC_GWClient.BundlePurchase(Unified_charging_gateway_Client.BundlePurchase_Request{
+		// 	PayerMSISDN:            redemption_Rules.Bundles_EVC_Account,
+		// 	PayerPIN:               Bundles_EVC_PIN,
+		// 	PaymentMethod:          "Loyalty Points",
+		// 	TargetMSISDN:           request.MSISDN,
+		// 	BundleKey:              request.Redemption_Bunlde_Id,
+		// 	SendPayerNotification:  false,
+		// 	SendTargetNotification: true,
+		// 	Language:               "EN",
+		// }, redemption_Rules.Bundles_Product_Catalogue_Channel)
+
+		bundlePurchaseReply, err := Uc.APGW.APGWClient.BundlePurchase(apgw.BundlePurchase_Request{
+			PayerMSISDN:            redemption_Rules.Bundles_EVC_Account,
+			PaymentMethod:          "Loyalty Points",
+			PayerPIN:               Bundles_EVC_PIN,
+			TargetMSISDN:           request.MSISDN,
+			EVCAccount:             redemption_Rules.Bundles_EVC_Account,
+			EVCPIN:                 Bundles_EVC_PIN,
+			BundleKey:              request.Redemption_Bunlde_Id,
+			SendPayerNotification:  false,
+			SendTargetNotification: true,
+		})
+
+		response.Bundle_PurchaseResult = bundlePurchaseReply
+		if err != nil {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "failed to recharge bundle"
+			response.ErrorDescription = err.Error()
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			//refund points
+			var refund_response Loyalty_AccountCreditPoints_log
+			var refundRequest Loyalty_AccountCreditPoints_Request
+			refundRequest.MSISDN = response.MSISDN
+			refundRequest.EventSource = response.SourceApp
+			refundRequest.EventType = "refund"
+			refundRequest.EventDetail = request.Redemption_Type + " - refund"
+			refundRequest.EventAmount = 0
+			refundRequest.PointsToCredit = response.Points_To_Redeem
+			refundRequest.EventDescription = ""
+			Uc.Loyalty_AccountCreditPoints(request_header, refundRequest, &refund_response, true)
+			return
+		}
+		if bundlePurchaseReply.StatusCode != http.StatusOK {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = bundlePurchaseReply.ApplyCharge_StatusDescription
+			response.ErrorDescription = bundlePurchaseReply.ErrorCode
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			//refund points
+			var refund_response Loyalty_AccountCreditPoints_log
+			var refundRequest Loyalty_AccountCreditPoints_Request
+			refundRequest.MSISDN = response.MSISDN
+			refundRequest.EventSource = response.SourceApp
+			refundRequest.EventType = "refund"
+			refundRequest.EventDetail = request.Redemption_Type + " - refund"
+			refundRequest.EventAmount = 0
+			refundRequest.PointsToCredit = response.Points_To_Redeem
+			refundRequest.EventDescription = ""
+			Uc.Loyalty_AccountCreditPoints(request_header, refundRequest, &refund_response, true)
+			return
+		}
+		BundleRedemptionCount.With(prometheus.Labels{"EventSource": response.SourceApp, "BunldeId": request.Redemption_Bunlde_Id, "Level": loyalty_Account.Loyalty_Level_Key}).Inc()
+		BundleRedemptionPoints.With(prometheus.Labels{"EventSource": response.SourceApp, "BunldeId": request.Redemption_Bunlde_Id, "Level": loyalty_Account.Loyalty_Level_Key}).Add(response.Points_To_Redeem)
+
+		record, err := Uc.Customer_Loyalty_Account_GetRedemption_Rules(response.MSISDN)
+		if record.Bundles_Notification {
+			if err != nil {
+				response.Status = "failed"
+				response.StatusCode = http.StatusBadRequest
+				response.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+				response.ErrorDescription = err.Error()
+				return
+			}
+			BundleNotiLog := NotificationLog{
+				SourceAction:  "BundleRedemption",
+				TransactionId: "",
+				Medium:        "SMS",
+				SourceAddress: record.Bundles_Notification_Sender,
+				Destination:   response.MSISDN,
+				Subject:       "Redemption",
+				AddUser:       "SYSTEM",
+				AddDate:       time.Now(),
+			}
+			Bundle_Noti_Text := ""
+			var bundle propylaea.Bundle
+			Bundle_Noti_Text = record.Bundles_Notification_Text
+			bundleResponse, err := Uc.Propylaea.PropylaeaClient.Get_Bundle(response.Redemption_Bunlde_Id, "", "", "")
+			if err != nil {
+				fmt.Println("failed to get bundle")
+			}
+			var bundleName string
+			if err == nil && len(bundleResponse.Data) > 0 {
+				bundle = bundleResponse.Data[0]
+				bundleName = bundle.Name_Lang1
+			} else {
+				bundleName = ""
+			}
+			// Variables to replace
+			Minutes := 0.0
+			MBs := 0
+			SMS := 0
+			Bonus_Minutes := 0.0
+			Bonus_MBs := 0
+			Bonus_SMS := 0
+
+			Validity_value := bundle.Validity_Value
+			Validity_type := ""
+			// Minutes and SMSs from IN tokens
+			seconds := 0.0
+			bonus_seconds := 0.0
+			for _, token := range bundle.IN_Tokens {
+				if token.Token_Type == "SMS (whole SMS messages)" {
+					if token.IsBonus {
+						Bonus_SMS += int(token.Token_Value)
+					} else {
+						SMS += int(token.Token_Value)
+					}
+				} else if token.Token_Type == "time (seconds)" {
+					if token.IsBonus {
+						bonus_seconds += token.Token_Value
+					} else {
+						seconds += token.Token_Value
+					}
+				}
+			}
+
+			if seconds > 0 {
+				Minutes = seconds / 60
+			}
+			if bonus_seconds > 0 {
+				Bonus_Minutes = bonus_seconds / 60
+			}
+			// MBs from Alepo and Protei
+			var DO_bytes float64 = 0
+			var bonus_DO_bytes float64 = 0
+			for _, DO_A := range bundle.Data_Offers {
+				var size float64
+				size, err := strconv.ParseFloat(DO_A.Offer_Size_Value, 64)
+				if err != nil {
+					fmt.Println("Error parsing Alepo Offer size value:", DO_A.Offer_Size_Value)
+					continue
+				}
+
+				// Use size as float64 here
+				fmt.Printf("Parsed size: %.2f\n", size) // e.g., show 2 decimal places
+
+				if DO_A.IsBonus {
+					if Configuration.Operation == "DRC" {
+						if DO_A.Offer_Size_Unit == "MB" {
+							size += (size * 1000 * 1000)
+						} else if DO_A.Offer_Size_Unit == "GB" {
+							size += (size * 1000 * 1000 * 1000)
+						}
+						bonus_DO_bytes += size
+					} else {
+						if DO_A.Offer_Size_Unit == "MB" {
+							size += (size * 1024 * 1024)
+						} else if DO_A.Offer_Size_Unit == "GB" {
+							size += (size * 1024 * 1024 * 1024)
+						}
+						bonus_DO_bytes += size
+					}
+
+				} else {
+					if Configuration.Operation == "DRC" {
+						if DO_A.Offer_Size_Unit == "MB" {
+							size += (size * 1000 * 1000)
+						} else if DO_A.Offer_Size_Unit == "GB" {
+							size += (size * 1000 * 1000 * 1000)
+						}
+						DO_bytes += size
+					} else {
+						if DO_A.Offer_Size_Unit == "MB" {
+							size += (size * 1024 * 1024)
+						} else if DO_A.Offer_Size_Unit == "GB" {
+							size += (size * 1024 * 1024 * 1024)
+						}
+						DO_bytes += size
+					}
+				}
+			}
+
+			if DO_bytes > 0 {
+				if Configuration.Operation == "DRC" {
+					MBs = int(DO_bytes / 1000 / 1000)
+				} else {
+					MBs = int(DO_bytes / 1024 / 1024)
+				}
+			}
+			if bonus_DO_bytes > 0 {
+				if Configuration.Operation == "DRC" {
+					Bonus_MBs = int(bonus_DO_bytes / 1000 / 1000)
+				} else {
+					Bonus_MBs = int(bonus_DO_bytes / 1024 / 1024)
+				}
+			}
+
+			// Expiry Date from bundle Validity
+			switch bundle.Validity_Type {
+			case "Hourly":
+				if bundle.Validity_Value == 1 {
+					Validity_type = "hour"
+				} else {
+					Validity_type = "hours"
+				}
+			case "Daily":
+				if bundle.Validity_Value == 1 {
+					Validity_type = "day"
+				} else {
+					Validity_type = "days"
+				}
+			case "Weekly":
+				if bundle.Validity_Value == 1 {
+					Validity_type = "week"
+				} else {
+					Validity_type = "weeks"
+				}
+			case "Monthly":
+				if bundle.Validity_Value == 1 {
+					Validity_type = "month"
+				} else {
+					Validity_type = "months"
+				}
+			case "Yearly":
+				if bundle.Validity_Value == 1 {
+					Validity_type = "year"
+				} else {
+					Validity_type = "years"
+				}
+			}
+			sizeParts := []string{}
+
+			totalMBs := MBs + Bonus_MBs
+			if totalMBs > 0 {
+				formatted := ""
+				if Configuration.Operation == "DRC" {
+					formatted = FormatMBs1000(float64(totalMBs))
+
+				} else {
+					formatted = FormatMBs1024(float64(totalMBs))
+				}
+				sizeParts = append(sizeParts, formatted)
+			}
+
+			totalSMS := SMS + Bonus_SMS
+			if totalSMS > 0 {
+				sizeParts = append(sizeParts, fmt.Sprintf("%d SMS", totalSMS))
+			}
+
+			totalMinutes := Minutes + Bonus_Minutes
+
+			if totalMinutes > 0 {
+				sizeParts = append(sizeParts, fmt.Sprintf("%.1f Minutes", totalMinutes))
+			}
+
+			Size := strings.Join(sizeParts, " + ")
+
+			Validity := fmt.Sprintf("%d %s", Validity_value, Validity_type)
+			if Bundle_Noti_Text != "" {
+				Bundle_Noti_Text = strings.ReplaceAll(Bundle_Noti_Text, "{{ PointsDeducted }}", fmt.Sprint(response.Points_To_Redeem))
+				Bundle_Noti_Text = strings.ReplaceAll(Bundle_Noti_Text, "{{ BundleName }}", fmt.Sprint(bundleName))
+				Bundle_Noti_Text = strings.ReplaceAll(Bundle_Noti_Text, "{{ BundleSize }}", fmt.Sprint(Size))
+				Bundle_Noti_Text = strings.ReplaceAll(Bundle_Noti_Text, "{{ BundleValidity }}", fmt.Sprint(Validity))
+				Bundle_Noti_Text = strings.ReplaceAll(Bundle_Noti_Text, "{{ LoyaltyBalance }}", fmt.Sprint(response.Closure_Available_Points))
+				BundleNotiLog.Payload = Bundle_Noti_Text
+				err := Send_SMS(record.Bundles_Notification_Sender, response.MSISDN, Bundle_Noti_Text)
+				if err != nil {
+					BundleNotiLog.Status = "Failed"
+					BundleNotiLog.Error = err.Error()
+				} else {
+					BundleNotiLog.Status = "Successful"
+				}
+			} else {
+				BundleNotiLog.Payload = Bundle_Noti_Text
+				BundleNotiLog.Status = "Failed"
+				BundleNotiLog.Error = "Undefined Bundle notification for transaction"
+			}
+			YYYY, MM, _, _, _, _, _ := GetTimeParts(response.ReceiveDate)
+			Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
+			_, err = DAO_NotificationLog.PutOneLogs(BundleNotiLog, Db, DAO_NotificationLog.Collection)
+			if err != nil {
+				log.Println("Error in Write Bundle Notification Logs:", err, " (", BundleNotiLog, ")")
+			}
+		}
+	case "MobileMoney":
+		if request.Redemption_Amount <= 0 && request.Points_To_Redeem <= 0 {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "invalid redemption amount"
+			response.ErrorDescription = "invalid redemption airtime amount"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		response.MinAvailableRequiredPoints = redemption_Rules.Available_MinPoints_for_MobileMoney
+		if response.Opening_Available_Points < response.MinAvailableRequiredPoints {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "no enough points"
+			response.ErrorDescription = "no enough points"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		if redemption_Rules.MobileMoney_MerchantAccount == "" {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "mobile money payer account is not provided"
+			response.ErrorDescription = "mobile money payer account is not provided"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		//debit loyalty points
+		if redemption_Rules.MobileMoney_Points <= 0 || redemption_Rules.MobileMoney_Amount <= 0 {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "mobile money redeem rules are not defined"
+			response.ErrorDescription = "mobile money redeem rules are not defined"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		//do the calculation
+		if response.Points_To_Redeem > 0 {
+			//calculate Redemption_Amount
+			response.Redemption_Amount = (response.Points_To_Redeem * redemption_Rules.MobileMoney_Amount) / redemption_Rules.MobileMoney_Points
+		} else {
+			if response.Redemption_Amount > 0 {
+				//calculate Points_To_Redeem
+				response.Points_To_Redeem = (response.Redemption_Amount * redemption_Rules.MobileMoney_Points) / redemption_Rules.MobileMoney_Amount
+			} else {
+				//return error
+				response.Status = "failed"
+				response.StatusCode = http.StatusBadRequest
+				response.StatusDescription = "invalid redemption amount"
+				response.ErrorDescription = "invalid redemption mobile money amount"
+				response.StatusDate = time.Now()
+				response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+				Uc.Write_Loyalty_Redemption_log(*response)
+				return
+			}
+		}
+		response.MinRequiredPoints = redemption_Rules.MobileMoney_MinPoints
+		if response.Points_To_Redeem < response.MinRequiredPoints {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "requested points are less than the minimum allowed points for redemption"
+			response.ErrorDescription = "requested points are less than the minimum allowed points for redemption"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		//check if subscriber have enough points
+		if response.Points_To_Redeem > response.Opening_Available_Points {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "no enough points"
+			response.ErrorDescription = "no enough points"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		var Debit_Request Loyalty_AccountDebitPoints_Request
+		Debit_Request.MSISDN = response.MSISDN
+		Debit_Request.Debit_Amount = response.Points_To_Redeem
+		Debit_Request.Debit_Reason = "Redeem Request"
+		Debit_Request.Redemption_Type = "MobileMoney" //Airtime, Bundle, MobileMoney, SpinAndWin
+		Debit_Request.Redemption_Bunlde_Id = ""
+		Debit_Request.Redemption_Amount = response.Redemption_Amount
+		var debit_Log Loyalty_AccountDebitPoints_log
+		Uc.Loyalty_AccountDebitPoints(request_header, Debit_Request, &debit_Log)
+		response.Points_Debit_Result = debit_Log
+		if debit_Log.StatusCode != http.StatusOK {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = debit_Log.StatusDescription
+			response.ErrorDescription = debit_Log.ErrorDescription
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		response.Closure_Awarded_Points = debit_Log.Closure_Awarded_Points
+		response.Closure_Redeemed_Points = debit_Log.Closure_Redeemed_Points
+		response.Closure_Available_Points = debit_Log.Closure_Available_Points
+		//to do: credit mobile money amount --> merchant transfer
+		MobileMoney_MerchantPIN, err := DecryptHexString(redemption_Rules.MobileMoney_MerchantPIN)
+		if err != nil {
+			fmt.Println("error in decrypting artime evc pin", err.Error())
+		}
+
+		// mm_CashIn_Reply, err := Uc.CGW.UC_GWClient.MM_Agent_CashIN_ToBonusWallet(MM.CashIN_Request{
+		// 	SenderMSISDN:   redemption_Rules.MobileMoney_MerchantAccount,
+		// 	SenderPIN:      MobileMoney_MerchantPIN,
+		// 	ReceiverMSISDN: request.MSISDN,
+		// 	Amount:         fmt.Sprintf("%f", response.Redemption_Amount),
+		// 	Remark:         "Loyalty Redemption",
+		// 	// Currency:       "102",
+		// })
+
+		// var request MM_CashIn_request
+		// mm_CashIn_Reply, err :=Uc.APGW.APGWClient.MM_CashIn(request{
+		// TransactionAmount :strconv.FormatFloat(response.Redemption_Amount, 'f', -1, 64),
+		// Remarks : "Loyalty Redemption",
+		// Transactor.IdValue : redemption_Rules.MobileMoney_MerchantAccount,
+		// Transactor.Mpin : MobileMoney_MerchantPIN,
+		// Receiver.IdType : "mobileNumber",
+		// // Receiver.ProductId : request.ReceiverProductId,
+		// Receiver.IdValue  :request.MSISDN,
+		// })
+
+		var mm_request APGWClientV2.MM_CashIn_Request
+		mm_request.TransactionAmount =strconv.FormatFloat(response.Redemption_Amount, 'f', -1, 64)
+		mm_request.Remarks ="Loyalty Redemption"
+
+		mm_request.Transactor.IdType = "mobileNumber"
+		mm_request.Transactor.IdValue =redemption_Rules.MobileMoney_MerchantAccount
+		mm_request.Transactor.Mpin =MobileMoney_MerchantPIN
+
+		mm_request.Receiver.IdType = "mobileNumber"
+		mm_request.Receiver.ProductId = "11"
+		mm_request.Receiver.IdValue = request.MSISDN
+		mm_CashIn_Reply, err := Uc.APGW.APGWClient.MM_CashIn(mm_request)
+
+		response.MobileMoney_PurchaseResult = mm_CashIn_Reply
+		if err != nil {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "failed to redeem mobile money"
+			response.ErrorDescription = err.Error()
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			//refund points
+			var refund_response Loyalty_AccountCreditPoints_log
+			var refundRequest Loyalty_AccountCreditPoints_Request
+			refundRequest.MSISDN = response.MSISDN
+			refundRequest.EventSource = response.SourceApp
+			refundRequest.EventType = "refund"
+			refundRequest.EventDetail = request.Redemption_Type + " - refund"
+			refundRequest.EventAmount = 0
+			refundRequest.PointsToCredit = response.Points_To_Redeem
+			refundRequest.EventDescription = ""
+			Uc.Loyalty_AccountCreditPoints(request_header, refundRequest, &refund_response, true)
+			return
+		}
+		if mm_CashIn_Reply.Status != "SUCCEEDED" {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "failed to redeem mobile money"
+			response.ErrorDescription = mm_CashIn_Reply.Status
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			//refund points
+			var refund_response Loyalty_AccountCreditPoints_log
+			var refundRequest Loyalty_AccountCreditPoints_Request
+			refundRequest.MSISDN = response.MSISDN
+			refundRequest.EventSource = response.SourceApp
+			refundRequest.EventType = "refund"
+			refundRequest.EventDetail = request.Redemption_Type + " - refund"
+			refundRequest.EventAmount = 0
+			refundRequest.PointsToCredit = response.Points_To_Redeem
+			refundRequest.EventDescription = ""
+			Uc.Loyalty_AccountCreditPoints(request_header, refundRequest, &refund_response, true)
+			return
+		}
+		MobileMoneyRedemptionCount.With(prometheus.Labels{"EventSource": response.SourceApp, "Level": loyalty_Account.Loyalty_Level_Key}).Inc()
+		MobileMoneyRedemptionPoints.With(prometheus.Labels{"EventSource": response.SourceApp, "Level": loyalty_Account.Loyalty_Level_Key}).Add(response.Points_To_Redeem)
+		MobileMoneyRedemptionAmount.With(prometheus.Labels{"EventSource": response.SourceApp, "Level": loyalty_Account.Loyalty_Level_Key}).Add(response.Redemption_Amount)
+
+		record, err := Uc.Customer_Loyalty_Account_GetRedemption_Rules(response.MSISDN)
+		if err != nil {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+			response.ErrorDescription = err.Error()
+			return
+		}
+		if record.MobileMoney_Notification {
+			MobileMoneyNotiLog := NotificationLog{
+				SourceAction:  "MobileMoneyRedemption",
+				TransactionId: "",
+				Medium:        "SMS",
+				SourceAddress: record.MobileMoney_Notification_Sender,
+				Destination:   response.MSISDN,
+				Subject:       "Redemption",
+				AddUser:       "SYSTEM",
+				AddDate:       time.Now(),
+			}
+			MobileMoney_Noti_Text := ""
+			MobileMoney_Noti_Text = record.MobileMoney_Notification_Text
+
+			if MobileMoney_Noti_Text != "" {
+				MobileMoney_Noti_Text = strings.ReplaceAll(MobileMoney_Noti_Text, "{{ PointsDeducted }}", fmt.Sprint(response.Points_To_Redeem))
+				MobileMoney_Noti_Text = strings.ReplaceAll(MobileMoney_Noti_Text, "{{ MobileMoneyAwarded }}", fmt.Sprint(response.Redemption_Amount))
+				MobileMoney_Noti_Text = strings.ReplaceAll(MobileMoney_Noti_Text, "{{ LoyaltyBalance }}", fmt.Sprint(response.Closure_Available_Points))
+				MobileMoneyNotiLog.Payload = MobileMoney_Noti_Text
+				err := Send_SMS(record.MobileMoney_Notification_Sender, response.MSISDN, MobileMoney_Noti_Text)
+				if err != nil {
+					MobileMoneyNotiLog.Status = "Failed"
+					MobileMoneyNotiLog.Error = err.Error()
+				} else {
+					MobileMoneyNotiLog.Status = "Successful"
+				}
+			} else {
+				MobileMoneyNotiLog.Payload = MobileMoney_Noti_Text
+				MobileMoneyNotiLog.Status = "Failed"
+				MobileMoneyNotiLog.Error = "Undefined Mobile Money notification for transaction"
+			}
+			YYYY, MM, _, _, _, _, _ := GetTimeParts(response.ReceiveDate)
+			Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
+			_, err = DAO_NotificationLog.PutOneLogs(MobileMoneyNotiLog, Db, DAO_NotificationLog.Collection)
+			if err != nil {
+				log.Println("Error in Write Mobile Money Notification Logs:", err, " (", MobileMoneyNotiLog, ")")
+			}
+		}
+	case "SpinAndWin":
+		if request.Redemption_Amount <= 0 {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "invalid redemption amount"
+			response.ErrorDescription = "invalid redemption spin and win amount"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		response.MinAvailableRequiredPoints = redemption_Rules.Available_MinPoints_for_SpinAndWin
+		if response.Opening_Available_Points < response.MinAvailableRequiredPoints {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "no enough points"
+			response.ErrorDescription = "no enough points"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		//debit loyalty points
+		if redemption_Rules.FreeSpinAndWin_PointsPerSpin <= 0 {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "airtime redeem rules are not defined"
+			response.ErrorDescription = "airtime redeem rules are not defined"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		//do the calculation
+		response.Points_To_Redeem = response.Redemption_Amount * redemption_Rules.FreeSpinAndWin_PointsPerSpin
+		response.MinRequiredPoints = redemption_Rules.FreeSpinAndWin_MinPoints
+		if response.Points_To_Redeem < response.MinRequiredPoints {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "requested points are less than the minimum allowed points for redemption"
+			response.ErrorDescription = "requested points are less than the minimum allowed points for redemption"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		//check if subscriber have enough points
+		if response.Points_To_Redeem > response.Opening_Available_Points {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "no enough points"
+			response.ErrorDescription = "no enough points"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+
+		var Debit_Request Loyalty_AccountDebitPoints_Request
+		Debit_Request.MSISDN = response.MSISDN
+		Debit_Request.Debit_Amount = response.Points_To_Redeem
+		Debit_Request.Debit_Reason = "Redeem Request"
+		Debit_Request.Redemption_Type = "SpinAndWin" //Airtime, Bundle, MobileMoney, SpinAndWin
+		Debit_Request.Redemption_Bunlde_Id = ""
+		Debit_Request.Redemption_Amount = response.Redemption_Amount
+		var debit_Log Loyalty_AccountDebitPoints_log
+		Uc.Loyalty_AccountDebitPoints(request_header, Debit_Request, &debit_Log)
+		response.Points_Debit_Result = debit_Log
+		if debit_Log.StatusCode != http.StatusOK {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = debit_Log.StatusDescription
+			response.ErrorDescription = debit_Log.ErrorDescription
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
+		}
+		response.Closure_Awarded_Points = debit_Log.Closure_Awarded_Points
+		response.Closure_Redeemed_Points = debit_Log.Closure_Redeemed_Points
+		response.Closure_Available_Points = debit_Log.Closure_Available_Points
+		//awar spins chances
+		spinAndWin_Reply, err := Uc.SpinAndWin.SpinAndWinClient.EligibleSubs_AddChances(SpinAndWin.EligibleSubs_AddChances_Request{
+			Key:            request.MSISDN,
+			SpinCountToAdd: int64(response.Redemption_Amount),
+		})
+		response.SpinAndWin_PurchaseResult = spinAndWin_Reply
+		if err != nil {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "failed to redeem Spin And Win Chances"
+			response.ErrorDescription = err.Error()
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			//refund points
+			var refund_response Loyalty_AccountCreditPoints_log
+			var refundRequest Loyalty_AccountCreditPoints_Request
+			refundRequest.MSISDN = response.MSISDN
+			refundRequest.EventSource = response.SourceApp
+			refundRequest.EventType = "refund"
+			refundRequest.EventDetail = request.Redemption_Type + " - refund"
+			refundRequest.EventAmount = 0
+			refundRequest.PointsToCredit = response.Points_To_Redeem
+			refundRequest.EventDescription = ""
+			Uc.Loyalty_AccountCreditPoints(request_header, refundRequest, &refund_response, true)
+			return
+		}
+		if spinAndWin_Reply.StatusCode != http.StatusOK {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = spinAndWin_Reply.StatusDescription
+			response.ErrorDescription = spinAndWin_Reply.ErrorDescription
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			//refund points
+			var refund_response Loyalty_AccountCreditPoints_log
+			var refundRequest Loyalty_AccountCreditPoints_Request
+			refundRequest.MSISDN = response.MSISDN
+			refundRequest.EventSource = response.SourceApp
+			refundRequest.EventType = "refund"
+			refundRequest.EventDetail = request.Redemption_Type + " - refund"
+			refundRequest.EventAmount = 0
+			refundRequest.PointsToCredit = response.Points_To_Redeem
+			refundRequest.EventDescription = ""
+			Uc.Loyalty_AccountCreditPoints(request_header, refundRequest, &refund_response, true)
+			return
+		}
+
+		record, err := Uc.Customer_Loyalty_Account_GetRedemption_Rules(response.MSISDN)
+		if err != nil {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+			response.ErrorDescription = err.Error()
+			return
+		}
+		if record.FreeSpinAndWin_Notification {
+			SpinWinNotiLog := NotificationLog{
+				SourceAction:  "SpinAndWinRedemption",
+				TransactionId: "",
+				Medium:        "SMS",
+				SourceAddress: record.FreeSpinAndWin_Notification_Sender,
+				Destination:   response.MSISDN,
+				Subject:       "Redemption",
+				AddUser:       "SYSTEM",
+				AddDate:       time.Now(),
+			}
+			SpinWin_Noti_Text := ""
+			SpinWin_Noti_Text = record.FreeSpinAndWin_Notification_Text
+
+			if SpinWin_Noti_Text != "" {
+				SpinWin_Noti_Text = strings.ReplaceAll(SpinWin_Noti_Text, "{{ PointsDeducted }}", fmt.Sprint(response.Points_To_Redeem))
+				SpinWin_Noti_Text = strings.ReplaceAll(SpinWin_Noti_Text, "{{ SpinsAwarded }}", fmt.Sprint(response.Redemption_Amount))
+				SpinWin_Noti_Text = strings.ReplaceAll(SpinWin_Noti_Text, "{{ LoyaltyBalance }}", fmt.Sprint(response.Closure_Available_Points))
+				SpinWinNotiLog.Payload = SpinWin_Noti_Text
+				err := Send_SMS(record.FreeSpinAndWin_Notification_Sender, response.MSISDN, SpinWin_Noti_Text)
+				if err != nil {
+					SpinWinNotiLog.Status = "Failed"
+					SpinWinNotiLog.Error = err.Error()
+				} else {
+					SpinWinNotiLog.Status = "Successful"
+				}
+			} else {
+				SpinWinNotiLog.Payload = SpinWin_Noti_Text
+				SpinWinNotiLog.Status = "Failed"
+				SpinWinNotiLog.Error = "Undefined Mobile Money notification for transaction"
+			}
+			YYYY, MM, _, _, _, _, _ := GetTimeParts(response.ReceiveDate)
+			Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
+			_, err = DAO_NotificationLog.PutOneLogs(SpinWinNotiLog, Db, DAO_NotificationLog.Collection)
+			if err != nil {
+				log.Println("Error in Write Mobile Money Notification Logs:", err, " (", SpinWinNotiLog, ")")
+			}
+		}
+
+	default:
+		response.Status = "failed"
+		response.StatusCode = http.StatusBadRequest
+		response.StatusDescription = "invalid redemption type"
+		response.ErrorDescription = "invalid redemption type (accepted values: Airtime, Bundle, MobileMoney, SpinAndWin)"
+		response.StatusDate = time.Now()
+		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+		Uc.Write_Loyalty_Redemption_log(*response)
+		return
+	}
+	//successful reply
+	response.Status = "successful"
+	response.StatusCode = http.StatusOK
+	response.StatusDescription = ""
+	response.ErrorDescription = ""
+	response.StatusDate = time.Now()
+	response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+	Uc.Write_Loyalty_Redemption_log(*response)
+}
+
 
 func Loyalty_Account_Segment_Selection(Amount float64, FirstUse_date time.Time) (scheme_name string) {
 	//AON_Hours := time.Now().Sub(FirstUse_date).Hours()
