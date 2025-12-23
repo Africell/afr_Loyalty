@@ -1,8 +1,8 @@
 package Lendme
 
 import (
-	apgw "afr_ao_apgw_v2/afr_apgw"
 	"afr_ao_apgw_v2/APGWClientV2"
+	apgw "afr_ao_apgw_v2/afr_apgw"
 	"context"
 	"daoc"
 	"errors"
@@ -6533,22 +6533,25 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 				IN_MSISDN = "0" + IN_MSISDN[len(response.MSISDN)-8:len(response.MSISDN)]
 			}
 		}
-		IN_Response, err := Uc.IN.INClient.GetAccountDetails("", "", IN_MSISDN)
+		// IN_Response, err := Uc.IN.INClient.GetAccountDetails("", "", IN_MSISDN)
+		IN_Response, err := Uc.APGW.APGWClient.CS_AccountDetails(IN_MSISDN)
+		success := IN_Response.Data.Response.Success == "true"
+		message := IN_Response.Data.Response.Result.Message
 		if err != nil {
 			response.Status = "failed"
 			response.StatusCode = http.StatusBadRequest
 			response.StatusDescription = "failed to get IN account detail"
-			response.ErrorDescription = err.Error()
+			response.ErrorDescription = message
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
 			return
 		}
-		if IN_Response.Balance < 0 {
+		if !success {
 			response.Status = "failed"
 			response.StatusCode = http.StatusBadRequest
-			response.StatusDescription = "balance must be positive"
-			response.ErrorDescription = "main GSM balance must be positive"
+			response.StatusDescription = message
+			response.ErrorDescription = message
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
@@ -7331,12 +7334,12 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 		// })
 
 		var mm_request APGWClientV2.MM_CashIn_Request
-		mm_request.TransactionAmount =strconv.FormatFloat(response.Redemption_Amount, 'f', -1, 64)
-		mm_request.Remarks ="Loyalty Redemption"
+		mm_request.TransactionAmount = strconv.FormatFloat(response.Redemption_Amount, 'f', -1, 64)
+		mm_request.Remarks = "Loyalty Redemption"
 
 		mm_request.Transactor.IdType = "mobileNumber"
-		mm_request.Transactor.IdValue =redemption_Rules.MobileMoney_MerchantAccount
-		mm_request.Transactor.Mpin =MobileMoney_MerchantPIN
+		mm_request.Transactor.IdValue = redemption_Rules.MobileMoney_MerchantAccount
+		mm_request.Transactor.Mpin = MobileMoney_MerchantPIN
 
 		mm_request.Receiver.IdType = "mobileNumber"
 		mm_request.Receiver.ProductId = "11"
@@ -7632,7 +7635,6 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 	response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 	Uc.Write_Loyalty_Redemption_log(*response)
 }
-
 
 func Loyalty_Account_Segment_Selection(Amount float64, FirstUse_date time.Time) (scheme_name string) {
 	//AON_Hours := time.Now().Sub(FirstUse_date).Hours()
