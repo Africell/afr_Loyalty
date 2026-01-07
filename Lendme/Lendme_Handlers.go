@@ -510,6 +510,7 @@ func (Uc *UserControl) HTTP_Lendme_Request(w http.ResponseWriter, r *http.Reques
 			return
 		}
 		err = Uc.Lendme_exec_Request(request.Source, request.MSISDN, request.Amount)
+		log.Println("Lendme Request Received ", err)
 		if err != nil {
 			sr.Status = "failed"
 			sr.StatusCode = http.StatusBadRequest
