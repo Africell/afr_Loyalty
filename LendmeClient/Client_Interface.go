@@ -278,6 +278,7 @@ func (GWClient *Lendme_Client) AO_Lendme_Request(request lendme.LendMe_Request) 
 			}
 		}
 		if response_generic.Statuscode == http.StatusBadRequest {
+			log.Println("Lendme AO_Lendme_Request BAD REQUEST: ", response)
 			err = json.Unmarshal(response_generic.Body, &response)
 			if err != nil {
 				log.Println("generic_http_call boby unmarshal error : ", err)
