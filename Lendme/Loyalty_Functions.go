@@ -6538,6 +6538,8 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 		}
 		// IN_Response, err := Uc.IN.INClient.GetAccountDetails("", "", IN_MSISDN)
 		IN_Response, err := Uc.APGW.APGWClient.CS_AccountDetails(IN_MSISDN)
+		fmt.Println("IN_Response", IN_Response)
+		fmt.Println("err", err)
 		success := IN_Response.Data.Response.Success == "true"
 		message := IN_Response.Data.Response.Result.Message
 		if err != nil {
@@ -6553,7 +6555,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 		if !success {
 			response.Status = "failed"
 			response.StatusCode = http.StatusBadRequest
-			response.StatusDescription = message
+			response.StatusDescription = "failed to get IN account detail" + message
 			response.ErrorDescription = message
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
@@ -6935,7 +6937,8 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			SendPayerNotification:  false,
 			SendTargetNotification: true,
 		})
-
+		fmt.Println("bundlePurchaseReply", bundlePurchaseReply)
+		fmt.Println("err", err)
 		response.Bundle_PurchaseResult = bundlePurchaseReply
 		if err != nil {
 			response.Status = "failed"
@@ -6961,7 +6964,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 		if bundlePurchaseReply.StatusCode != http.StatusOK {
 			response.Status = "failed"
 			response.StatusCode = http.StatusBadRequest
-			response.StatusDescription = bundlePurchaseReply.ApplyCharge_StatusDescription
+			response.StatusDescription = "error from here"
 			response.ErrorDescription = bundlePurchaseReply.ErrorCode
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
@@ -7348,7 +7351,8 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 		mm_request.Receiver.ProductId = "11"
 		mm_request.Receiver.IdValue = request.MSISDN
 		mm_CashIn_Reply, err := Uc.APGW.APGWClient.MM_CashIn(mm_request)
-
+		fmt.Println("mm_CashIn_Reply", mm_CashIn_Reply)
+		fmt.Println("err", err)
 		response.MobileMoney_PurchaseResult = mm_CashIn_Reply
 		if err != nil {
 			response.Status = "failed"
