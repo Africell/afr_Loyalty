@@ -203,6 +203,8 @@ func (GWClient *Lendme_Client) Lendme_Request(request lendme.LendMe_Request) (re
 		Load:   request_byte,
 	}
 	response_generic, err := GWClient.generic_http_call(http_req)
+	log.Println("Lendme_Request response_generic: ", response_generic)
+	log.Println("Lendme_Request err: ", err)
 	if err != nil {
 		log.Println("generic_http_call failed : ", err)
 		return response, err
