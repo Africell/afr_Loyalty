@@ -1127,6 +1127,9 @@ func (Uc *UserControl) Loyalty_Customer_Account_Daily_Snapshot() {
 }
 
 func (Uc *UserControl) Loyalty_Status_Expiry_Daily_Process() {
+	if !Configuration.ISLoyaltyOptIn {
+		return
+	}
 	exec := 0
 	LOG_ID := "<<Loyalty Status Expiry Daily check>>"
 	for range time.Tick(time.Second * 1) {
