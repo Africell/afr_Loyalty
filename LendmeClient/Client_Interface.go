@@ -217,6 +217,11 @@ func (GWClient *Lendme_Client) Lendme_Request(request lendme.LendMe_Request) (re
 				return
 			}
 		}
+		if response_generic.Statuscode == http.StatusBadRequest {
+			log.Println("Lendme Lendme_Request BAD REQUEST: ", response)
+			err = errors.New(string(response_generic.Body))
+			return response, err
+		}
 		if response_generic.Statuscode == http.StatusUnauthorized {
 			srl, errl := GWClient.AUC_client.Login(GWClient.AUC_client.S2S_Username, GWClient.AUC_client.S2S_Password) // try to get a new token using login if token is unauthenticated
 			if errl != nil {
@@ -269,6 +274,11 @@ func (GWClient *Lendme_Client) AO_Lendme_Request(request lendme.LendMe_Request) 
 				log.Println("generic_http_call boby unmarshal error : ", err)
 				return
 			}
+		}
+		if response_generic.Statuscode == http.StatusBadRequest {
+			log.Println("Lendme AO_Lendme_Request BAD REQUEST: ", response)
+			err = errors.New(string(response_generic.Body))
+			return response, err
 		}
 		if response_generic.Statuscode == http.StatusUnauthorized {
 			srl, errl := GWClient.AUC_client.Login(GWClient.AUC_client.S2S_Username, GWClient.AUC_client.S2S_Password) // try to get a new token using login if token is unauthenticated
