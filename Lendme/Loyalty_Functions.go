@@ -5391,7 +5391,8 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 				IN_MSISDN = "0" + IN_MSISDN[len(response.MSISDN)-8:len(response.MSISDN)]
 			}
 		}
-		IN_Response, err := Uc.IN.INClient.GetAccountDetails("", "", IN_MSISDN)
+		IN_Response, err := Uc.CGW.UC_GWClient.IN_GetAccountDetails(response.SourceApp, request.MSISDN)
+		// IN_Response, err := Uc.IN.INClient.GetAccountDetails("", "", IN_MSISDN)
 		if err != nil {
 			response.Status = "failed"
 			response.StatusCode = http.StatusBadRequest
@@ -5402,7 +5403,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			Uc.Write_Loyalty_Redemption_log(*response)
 			return
 		}
-		if IN_Response.Balance < 0 {
+		if IN_Response.Data.Balance < 0 {
 			response.Status = "failed"
 			response.StatusCode = http.StatusBadRequest
 			response.StatusDescription = "balance must be positive"
