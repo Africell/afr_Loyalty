@@ -196,6 +196,7 @@ func (GWClient *Lendme_Client) Lendme_Request(request lendme.LendMe_Request) (re
 	if err != nil {
 		return response, err
 	}
+	log.Println("Lendme_Request")
 	http_req := Generic_http_call_Request{
 		Url:    GWClient.Protocol + "://" + GWClient.Hostname + ":" + GWClient.LendmePort + "/" + GWClient.LendMeModule + "/" + GWClient.LendMeVersion + "/HTTP_Lendme_Request/",
 		Method: "POST",
