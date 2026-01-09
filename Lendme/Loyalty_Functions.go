@@ -6721,7 +6721,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 		// 	Language:               "EN",
 		// }, redemption_Rules.Bundles_Product_Catalogue_Channel)
 
-		airtimeTransferReply, err := Uc.APGW.APGWClient.AirtimePurchase(apgw.AirtimePurchase_Request{
+		airtimeTransferReply, err := Uc.APGW.APGWClient.D2C_AirtimePurchase(apgw.AirtimePurchase_Request{
 			PayerMSISDN:  redemption_Rules.Airtime_EVC_Account,
 			PayerPIN:     Airtime_EVC_PIN,
 			TargetMSISDN: request.MSISDN,
@@ -6731,7 +6731,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			Amount:                 response.Redemption_Amount,
 			SendPayerNotification:  false,
 			SendTargetNotification: true,
-		})
+		}, "Loyalty")
 		response.Airtime_PurchaseResult = airtimeTransferReply
 		if err != nil {
 			response.Status = "failed"
