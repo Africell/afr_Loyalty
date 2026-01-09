@@ -1860,7 +1860,7 @@ func setDefaultConfiguration_AO_Loyalty() (Configuration ConfigType) {
 	Configuration.SMPP.Password = "Lm*!op25"
 	Configuration.SMPP.TimeOut = 5 //in seconds
 	Configuration.SMPP.PrintLogs = true
-	Configuration.SMPP.MSISDN_Short_len = 8
+	Configuration.SMPP.MSISDN_Short_len = 9
 	Configuration.SMPP.CountryCodePrefix = "244"
 	Configuration.SMPP.DefaultSender = "Africell" //"Africell"
 	Configuration.SMPP.Encoding = 0
@@ -1929,7 +1929,7 @@ func setDefaultConfiguration_AO_Loyalty_UAT() (Configuration ConfigType) {
 	Configuration.LoyaltyMMBundleCode = "AFRICELL DATA"
 
 	Configuration.MSISDN_Prefix = ""
-	Configuration.MSISDN_Short_len = 8
+	Configuration.MSISDN_Short_len = 9
 	Configuration.CountryCode = "244"
 
 	Configuration.Lendme_EVC_Dealer_MSISDN = "244951010534"
