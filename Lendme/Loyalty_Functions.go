@@ -7349,7 +7349,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 		mm_request.Transactor.Mpin = MobileMoney_MerchantPIN
 
 		mm_request.Receiver.IdType = "mobileNumber"
-		mm_request.Receiver.ProductId = "11"
+		mm_request.Receiver.ProductId = "12"
 		mm_request.Receiver.IdValue = request.MSISDN
 		mm_CashIn_Reply, err := Uc.APGW.APGWClient.MM_CashIn(mm_request)
 		fmt.Println("mm_CashIn_Reply", mm_CashIn_Reply)
