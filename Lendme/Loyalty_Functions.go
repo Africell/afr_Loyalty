@@ -6722,12 +6722,9 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 		// }, redemption_Rules.Bundles_Product_Catalogue_Channel)
 
 		airtimeTransferReply, err := Uc.APGW.APGWClient.D2C_AirtimePurchase(apgw.AirtimePurchase_Request{
-			PayerMSISDN:  redemption_Rules.Airtime_EVC_Account,
-			PayerPIN:     Airtime_EVC_PIN,
-			TargetMSISDN: request.MSISDN,
-			// EVCAccount:             Configuration.BundlePurchase.EVC_Account,
-			// EVCPIN:                 Configuration.BundlePurchase.EVC_PIN,
-			// MMMerchantAccount:      Configuration.Airtime.MM_MerchantAccount, //receive the mobile money amount
+			TargetMSISDN:           request.MSISDN,
+			EVCAccount:             redemption_Rules.Airtime_EVC_Account,
+			EVCPIN:                 Airtime_EVC_PIN,
 			Amount:                 response.Redemption_Amount,
 			SendPayerNotification:  false,
 			SendTargetNotification: true,
@@ -6916,16 +6913,6 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 		if err != nil {
 			fmt.Println("error in decrypting artime evc pin", err.Error())
 		}
-		// bundlePurchaseReply, err := Uc.CGW.UC_GWClient.BundlePurchase(Unified_charging_gateway_Client.BundlePurchase_Request{
-		// 	PayerMSISDN:            redemption_Rules.Bundles_EVC_Account,
-		// 	PayerPIN:               Bundles_EVC_PIN,
-		// 	PaymentMethod:          "Loyalty Points",
-		// 	TargetMSISDN:           request.MSISDN,
-		// 	BundleKey:              request.Redemption_Bunlde_Id,
-		// 	SendPayerNotification:  false,
-		// 	SendTargetNotification: true,
-		// 	Language:               "EN",
-		// }, redemption_Rules.Bundles_Product_Catalogue_Channel)
 
 		bundlePurchaseReply, err := Uc.APGW.APGWClient.BundlePurchase(apgw.BundlePurchase_Request{
 			PayerMSISDN:            redemption_Rules.Bundles_EVC_Account,
@@ -6938,8 +6925,6 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			SendPayerNotification:  false,
 			SendTargetNotification: true,
 		})
-		fmt.Println("bundlePurchaseReply", bundlePurchaseReply)
-		fmt.Println("err", err)
 		response.Bundle_PurchaseResult = bundlePurchaseReply
 		if err != nil {
 			response.Status = "failed"
@@ -6965,7 +6950,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 		if bundlePurchaseReply.StatusCode != http.StatusOK {
 			response.Status = "failed"
 			response.StatusCode = http.StatusBadRequest
-			response.StatusDescription = "error from here"
+			response.StatusDescription = bundlePurchaseReply.ErrorTechnicalReason
 			response.ErrorDescription = bundlePurchaseReply.ErrorCode
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
