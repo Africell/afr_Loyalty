@@ -6144,7 +6144,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			fmt.Println("error in decrypting artime evc pin", err.Error())
 		}
 
-		mm_CashIn_Reply, err := Uc.CGW.UC_GWClient.MM_Agent_CashIN_ToBonusWallet(MM.CashIN_Request{
+		mm_CashIn_Reply, err := Uc.CGW.UC_GWClient.MM_Agent_CashIN(MM.CashIN_Request{
 			SenderMSISDN:   redemption_Rules.MobileMoney_MerchantAccount,
 			SenderPIN:      MobileMoney_MerchantPIN,
 			ReceiverMSISDN: request.MSISDN,
@@ -7327,6 +7327,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 
 		var mm_request APGWClientV2.MM_CashIn_Request
 		mm_request.TransactionAmount = strconv.FormatFloat(response.Redemption_Amount, 'f', -1, 64)
+		fmt.Println("mm_request.TransactionAmount",mm_request.TransactionAmount)
 		mm_request.Remarks = "Loyalty Redemption"
 
 		mm_request.Transactor.IdType = "mobileNumber"
@@ -7337,8 +7338,6 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 		mm_request.Receiver.ProductId = "12"
 		mm_request.Receiver.IdValue = request.MSISDN
 		mm_CashIn_Reply, err := Uc.APGW.APGWClient.MM_CashIn(mm_request)
-		fmt.Println("mm_CashIn_Reply", mm_CashIn_Reply)
-		fmt.Println("err", err)
 		response.MobileMoney_PurchaseResult = mm_CashIn_Reply
 		if err != nil {
 			response.Status = "failed"
