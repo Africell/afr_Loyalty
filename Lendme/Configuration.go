@@ -217,10 +217,10 @@ func GetDefaultConfiguration() (err error) {
 
 	// Configuration = setDefaultConfiguration_SL_Live()
 	// Configuration = setDefaultConfiguration_SL_Loyalty()
-	// Configuration = setDefaultConfiguration_SL_Loyalty_UAT()
+	//Configuration = setDefaultConfiguration_SL_Loyalty_UAT()
 
 	// Configuration = setDefaultConfiguration_AO_Loyalty()
-	//Configuration = setDefaultConfiguration_AO_Loyalty_UAT()
+	Configuration = setDefaultConfiguration_AO_Loyalty_UAT()
 
 	// Configuration = setDefaultConfiguration_GM_Loyalty_Live()
 	// Configuration = setDefaultConfiguration_GM_Loyalty_UAT()
