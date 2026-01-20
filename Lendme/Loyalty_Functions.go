@@ -7327,7 +7327,6 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 
 		var mm_request APGWClientV2.MM_CashIn_Request
 		mm_request.TransactionAmount = strconv.FormatFloat(response.Redemption_Amount, 'f', -1, 64)
-		fmt.Println("mm_request.TransactionAmount",mm_request.TransactionAmount)
 		mm_request.Remarks = "Loyalty Redemption"
 
 		mm_request.Transactor.IdType = "mobileNumber"
@@ -7339,6 +7338,8 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 		mm_request.Receiver.IdValue = request.MSISDN
 		mm_CashIn_Reply, err := Uc.APGW.APGWClient.MM_CashIn(mm_request)
 		response.MobileMoney_PurchaseResult = mm_CashIn_Reply
+		fmt.Println("mm_CashIn_Reply", mm_CashIn_Reply)
+		fmt.Println("err", err)
 		if err != nil {
 			response.Status = "failed"
 			response.StatusCode = http.StatusBadRequest
