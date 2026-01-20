@@ -7338,8 +7338,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 		mm_request.Receiver.IdValue = request.MSISDN
 		mm_CashIn_Reply, err := Uc.APGW.APGWClient.MM_CashIn(mm_request)
 		response.MobileMoney_PurchaseResult = mm_CashIn_Reply
-		fmt.Println("mm_CashIn_Reply", mm_CashIn_Reply)
-		fmt.Println("err", err)
+		fmt.Println("mm_CashIn_Reply.Status", mm_CashIn_Reply.Status)
 		if err != nil {
 			response.Status = "failed"
 			response.StatusCode = http.StatusBadRequest
@@ -7361,7 +7360,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			Uc.Loyalty_AccountCreditPoints(request_header, refundRequest, &refund_response, true)
 			return
 		}
-		if mm_CashIn_Reply.Status != "SUCCEEDED" {
+		if mm_CashIn_Reply.Status != "successful" {
 			response.Status = "failed"
 			response.StatusCode = http.StatusBadRequest
 			response.StatusDescription = "failed to redeem mobile money"
