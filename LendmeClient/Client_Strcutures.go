@@ -102,6 +102,8 @@ type Customer_Loyalty_Account struct {
 	Account_Status  string    `bson:"Account_Status" json:"Account_Status"`
 	Account_Profile string    `bson:"Account_Profile" json:"Account_Profile"`
 
+	Multiplier_Percentage float64 `bson:"Multiplier_Percentage" json:"Multiplier_Percentage"`
+
 	Previous_Loyalty_Level_Key  string    `bson:"Previous_Loyalty_Level_Key" json:"Previous_Loyalty_Level_Key"`
 	Previous_Loyalty_Level_Date time.Time `bson:"Previous_Loyalty_Level_Date" json:"Previous_Loyalty_Level_Date"`
 
@@ -124,11 +126,15 @@ type Customer_Loyalty_Account struct {
 	Points_To_Expire   float64   `bson:"Points_To_Expire" json:"Points_To_Expire"`
 	Coming_Expiry_Date time.Time `bson:"Coming_Expiry_Date" json:"Coming_Expiry_Date"`
 
-	Expired_Points float64   `bson:"Expired_Points" json:"Expired_Points"` //expired are deducted from Awarded_Points
-	Expiry_Date    time.Time `bson:"Expiry_Date" json:"Expiry_Date"`
-	Initial_Date   time.Time `bson:"Initial_Date" json:"Initial_Date"`
+	Opt_Status               string    `bson:"Opt_Status" json:"Opt_Status"` //OptedIn, OptedOut
+	Last_Opt_Status_Date     time.Time `bson:"Opt_Status_Date" json:"Opt_Status_Date"`
+	First_Opt_In_Status_Date time.Time `bson:"First_Opt_In_Status_Date" json:"First_Opt_In_Status_Date"`
 
-	Outstanding_fraction_points float64 `bson:"Outstanding_fraction_points" json:"Outstanding_fraction_points"`
+	Expired_Points              float64   `bson:"Expired_Points" json:"Expired_Points"`                   //expired are deducted from Awarded_Points
+	Redeemed_Expired_Points     float64   `bson:"Redeemed_Expired_Points" json:"Redeemed_Expired_Points"` //redeemed expired are deducted from Awarded_Points
+	Expiry_Date                 time.Time `bson:"Expiry_Date" json:"Expiry_Date"`
+	Initial_Date                time.Time `bson:"Initial_Date" json:"Initial_Date"`
+	Outstanding_fraction_points float64   `bson:"Outstanding_fraction_points" json:"Outstanding_fraction_points"`
 
 	Points_Detail_Keys []string `bson:"Points_Detail_Keys" json:"Points_Detail_Keys"`
 }
