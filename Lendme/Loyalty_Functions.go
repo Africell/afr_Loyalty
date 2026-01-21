@@ -1426,6 +1426,7 @@ func (Uc *UserControl) Loyalty_Level_Edit(Login string, request Loyalty_Level_Ed
 }
 
 func (Uc *UserControl) Loyalty_Level_Get(Key string) (entries []Loyalty_Level, err error) {
+	log.Println("Loyalty_Level_Get Key:", Key)
 	if Key == "" {
 		entries_na := Map_Loyalty_Level.ConvertToArray()
 		if len(entries_na) > 0 {
@@ -4874,7 +4875,6 @@ func (Uc *UserControl) Customer_Loyalty_Account_Edit(Login string, request Custo
 }
 
 func (Uc *UserControl) Customer_Loyalty_Account_Get(Key string) (entries []Customer_Loyalty_Account, err error) {
-	log.Println("Customer_Loyalty_Account_Get Key:", Key)
 	if Key == "" {
 		entries_na := Map_Customer_Loyalty_Account.ConvertToArray()
 		if len(entries_na) > 0 {
