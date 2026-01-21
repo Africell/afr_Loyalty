@@ -260,7 +260,7 @@ func (Uc *UserControl) HTTP_Loyalty_Level(w http.ResponseWriter, r *http.Request
 		key := r.URL.Query().Get("Key")
 		LimitStr := r.URL.Query().Get("Limit")
 		PageStr := r.URL.Query().Get("Page")
-
+		log.Println("HTTP_Loyalty_Level GET Key:", key, " Limit:", LimitStr, " Page:", PageStr)
 		if LimitStr != "" || PageStr != "" {
 			Limit, limiterr := strconv.ParseInt(LimitStr, 10, 64)
 			if limiterr != nil {
