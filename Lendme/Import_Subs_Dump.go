@@ -55,7 +55,7 @@ func (Uc *UserControl) Import_Subscribers_Dump_LineByLine(FileName string) (err 
 		}
 		if len(line) > 0 {
 			//log.Println(string(line))
-			result := strings.Split(string(line), ",")
+			result := strings.Split(string(line), Configuration.ARPU_File_Column_Separator)
 			if len(result) == 11 {
 				//file fields: MSISDN, Cos ID, Enrol Date, Last Credited, Loyalty Status, Credit Limit, Revenue,
 				//	Recharge, Last Recharge date, Dealer bundle recharge, Last Dealer bundle recharge date
@@ -80,11 +80,19 @@ func (Uc *UserControl) Import_Subscribers_Dump_LineByLine(FileName string) (err 
 				}
 				var firstUsed time.Time
 				if len(result[2]) == 10 {
-					firstUsed, _ = time.Parse("2006-01-02", result[2])
+					firstUsed, err = time.Parse("2006-01-02", result[2])
+					if err != nil {
+						log.Println("error parsing first used: ", err)
+						continue
+					}
 				}
 				var lastCredit time.Time
 				if len(result[3]) == 10 {
-					lastCredit, _ = time.Parse("2006-01-02", result[3])
+					lastCredit, err = time.Parse("2006-01-02", result[3])
+					if err != nil {
+						log.Println("error parsing last credit: ", err)
+						continue
+					}
 				}
 				Recharge_amnt_str := result[7]
 				if Recharge_amnt_str == "" {
@@ -97,7 +105,11 @@ func (Uc *UserControl) Import_Subscribers_Dump_LineByLine(FileName string) (err 
 				}
 				var lastRecharge time.Time
 				if len(result[8]) == 10 {
-					lastRecharge, _ = time.Parse("2006-01-02", result[8])
+					lastRecharge, err = time.Parse("2006-01-02", result[8])
+					if err != nil {
+						log.Println("error parsing last recharge: ", err)
+						continue
+					}
 				}
 				dealerPurchase_amnt_str := result[9]
 				if dealerPurchase_amnt_str == "" {
@@ -110,7 +122,11 @@ func (Uc *UserControl) Import_Subscribers_Dump_LineByLine(FileName string) (err 
 				}
 				var lastdealerPurchase time.Time
 				if len(result[10]) == 10 {
-					lastdealerPurchase, _ = time.Parse("2006-01-02", result[10])
+					lastdealerPurchase, err = time.Parse("2006-01-02", result[10])
+					if err != nil {
+						log.Println("error parsing last dealer purchase: ", err)
+						continue
+					}
 				}
 				request := Sub_Update_Request{
 					MSISDN:                           result[0],
@@ -152,6 +168,9 @@ func (Uc *UserControl) Subscriber_Update(request Sub_Update_Request) {
 		<-chan_SubQueueExecution_controler
 		return
 	}
+	if request.ARPU_Amount < 0 {
+		request.ARPU_Amount = 0
+	}
 	//check if key already used
 	var subscriber Subscriber
 	subscriber_na, exits := Map_Subscribers.CheckThenGet(request.MSISDN)
@@ -190,8 +209,61 @@ func (Uc *UserControl) Subscriber_Update(request Sub_Update_Request) {
 	} else {
 		subscriber.IsLendmeEligible = false
 	}
+	_, exits = Map_Lendme_Customer_COS_Exclusion.CheckThenGet(subscriber.COS)
+	if exits {
+		subscriber.IsLendmeEligible = false
+	}
+	_, exits = Map_Lendme_Customer_Exclusion.CheckThenGet(subscriber.Key)
+	if exits {
+		subscriber.IsLendmeEligible = false
+	}
 	//add to cache and DB
 	Map_Subscribers.Put(subscriber.Key, subscriber)
+	//*******************************
+	//Update loyalty profile
+	//*******************************
+	subscriber.Key = Normalize_International_MSISDN(subscriber.Key)
+	if subscriber.Key == "" {
+		<-chan_SubQueueExecution_controler
+		return
+	}
+	loyalty_account_na, cl_exits := Map_Customer_Loyalty_Account.CheckThenGet(subscriber.Key)
+	if !cl_exits {
+		_, errAdd := Uc.Customer_Loyalty_Account_Add("DWH_Import", Customer_Loyalty_Account_AddRequest{
+			Key:          subscriber.Key,
+			EventSource:  "DWH_Import",
+			COS:          subscriber.COS,
+			ARPU:         subscriber.ARPU,
+			Joining_Date: subscriber.FirstUse_date,
+		})
+		if errAdd != nil {
+			log.Println("DWH_Import Customer_Loyalty_Account_Add error: ", errAdd)
+			log.Println("DWH_Import Customer_Loyalty_Account_Add error: ", subscriber)
+		}
+	} else {
+		loyalty_account, ok := loyalty_account_na.(Customer_Loyalty_Account)
+		if !ok {
+			<-chan_SubQueueExecution_controler
+			return
+		}
+		if subscriber.COS == loyalty_account.COS && subscriber.ARPU == loyalty_account.ARPU && !loyalty_account.Coming_Expiry_Date.IsZero() && !loyalty_account.First_Opt_In_Status_Date.IsZero() {
+			<-chan_SubQueueExecution_controler
+			return
+		} else {
+			_, errEdit := Uc.Customer_Loyalty_Account_Edit("DWH_Import", Customer_Loyalty_Account_EditRequest{
+				Key:               loyalty_account.Key,
+				Customer_Id:       loyalty_account.Customer_Id,
+				Loyalty_Level_Key: loyalty_account.Loyalty_Level_Key,
+				COS:               subscriber.COS,
+				ARPU:              subscriber.ARPU,
+				Joining_Date:      subscriber.FirstUse_date,
+			})
+			if errEdit != nil {
+				log.Println("DWH_Import Customer_Loyalty_Account_Edit error: ", errEdit)
+				log.Println("DWH_Import Customer_Loyalty_Account_Add error: ", subscriber)
+			}
+		}
+	}
 	<-chan_SubQueueExecution_controler
 }
 
@@ -200,7 +272,7 @@ func (Uc *UserControl) Auto_Import_Subscribers_Dump() (err error) {
 	for range time.Tick(time.Second * 60) {
 		if exec == 0 {
 			timeparts := GetTimeParts_V2(time.Now().Add(-24 * time.Hour))
-			fileName := "Rgs_" + timeparts.YYYY + timeparts.MM + timeparts.DD + ".txt"
+			fileName := Configuration.ARPU_File_Prefix + timeparts.YYYY + timeparts.MM + timeparts.DD + ".txt"
 			//check if file exist
 			FullFileName := Configuration.ARPU_File_Path + fileName
 			if CheckIfExists(FullFileName) {

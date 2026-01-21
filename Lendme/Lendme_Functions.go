@@ -5,17 +5,29 @@ import (
 	"context"
 	"daoc"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+
+	apgw "afr_ao_apgw_v2/afr_apgw"
+)
+
+const (
+	EVC_ACCOUNTNO_PREFIX = "DLR_"
+	RBB_BAL_ELEM         = "6010001"
+	EVC_BAL_ELEM         = "6010006"
+	DEALER_EVC_BAL_ELEM  = "6010000"
+	PINEncryptionKey     = "191026789922345378911284"
 )
 
 var Map_DefaultValues daoc.Cache_Synch
@@ -29,11 +41,18 @@ var DAO_AutoIncrement daoc.DAO
 
 var Map_Subscribers daoc.Cache_Synch
 var DAO_Subscribers daoc.DAO
+var DAO_Subscribers_Chrun daoc.DAO
 
 var Map_Credit_Limit_Scheme daoc.Cache_Synch
 var DAO_Credit_Limit_Scheme daoc.DAO
 
 var DAO_Lendme_log daoc.DAO
+
+var Map_Lendme_Customer_Exclusion daoc.Cache_Synch
+var DAO_Lendme_Customer_Exclusion daoc.DAO
+
+var Map_Lendme_Customer_COS_Exclusion daoc.Cache_Synch
+var DAO_Lendme_Customer_COS_Exclusion daoc.DAO
 
 func (uc *UserControl) InitializeCache() {
 	var access_entry AuthCenter.AccessEntry
@@ -46,6 +65,10 @@ func (uc *UserControl) InitializeCache() {
 	Map_Subscribers.Initialize("Subscriber", "Subscriber", reflect.TypeOf(Subscriber{}), subscriber, true, &DAO_Subscribers, uc.CacheDir.List)
 	var credit_Limit_Scheme Credit_Limit_Scheme
 	Map_Credit_Limit_Scheme.Initialize("Credit_Limit_Scheme", "Credit_Limit_Scheme", reflect.TypeOf(Credit_Limit_Scheme{}), credit_Limit_Scheme, true, &DAO_Credit_Limit_Scheme, uc.CacheDir.List)
+	var customer_Exclusion Customer_Exclusion
+	Map_Lendme_Customer_Exclusion.Initialize("Customer_Exclusion", "Customer_Exclusion", reflect.TypeOf(Customer_Exclusion{}), customer_Exclusion, true, &DAO_Lendme_Customer_Exclusion, uc.CacheDir.List)
+	var customer_COS_Exclusion Customer_COS_Exclusion
+	Map_Lendme_Customer_COS_Exclusion.Initialize("Customer_COS_Exclusion", "Customer_COS_Exclusion", reflect.TypeOf(Customer_COS_Exclusion{}), customer_COS_Exclusion, true, &DAO_Lendme_Customer_COS_Exclusion, uc.CacheDir.List)
 }
 
 func (uc *UserControl) InitializeDAO() {
@@ -53,8 +76,11 @@ func (uc *UserControl) InitializeDAO() {
 	DAO_AutoIncrement.Initialize("AutoIncrement", uc.MongoDB.MongoDBClient, reflect.TypeOf(daoc.AutoIncrement{}), Configuration.DB_Name, "Col_AutoIncrement", "")
 	DAO_DefaultValues.Initialize("DefaultValues", uc.MongoDB.MongoDBClient, reflect.TypeOf(DefaultValues{}), Configuration.DB_Name, "Col_DefaultValues", "")
 	DAO_Subscribers.Initialize("Subscriber", uc.MongoDB.MongoDBClient, reflect.TypeOf(Subscriber{}), Configuration.DB_Name, "Col_Subscriber", "")
+	DAO_Subscribers_Chrun.Initialize("Subscriber_Churn", uc.MongoDB.MongoDBClient, reflect.TypeOf(Subscriber{}), Configuration.DB_Name, "Col_Subscriber_Churn", "")
 	DAO_Credit_Limit_Scheme.Initialize("Credit_Limit_Scheme", uc.MongoDB.MongoDBClient, reflect.TypeOf(Credit_Limit_Scheme{}), Configuration.DB_Name, "Col_Credit_Limit_Scheme", "")
 	DAO_Lendme_log.Initialize("Lendme_log", uc.MongoDB.MongoDBClient, reflect.TypeOf(Lendme_log{}), Configuration.DB_Name, "Col_Lendme_log", "")
+	DAO_Lendme_Customer_Exclusion.Initialize("Customer_Exclusion", uc.MongoDB.MongoDBClient, reflect.TypeOf(Customer_Exclusion{}), Configuration.DB_Name, "Col_Customer_Exclusion", "")
+	DAO_Lendme_Customer_COS_Exclusion.Initialize("Customer_COS_Exclusion", uc.MongoDB.MongoDBClient, reflect.TypeOf(Customer_COS_Exclusion{}), Configuration.DB_Name, "Col_Customer_COS_Exclusion", "")
 }
 
 func (uc *UserControl) IndexesMaintenanceProcess() {
@@ -95,6 +121,24 @@ func (uc *UserControl) IndexesMaintenanceProcess() {
 		}
 	}
 
+	exists, err = DAO_Lendme_Customer_Exclusion.CheckAndCreateIndex("Idx_Customer_Exclusion_Key", []string{"Key"}, true)
+	if err != nil {
+		log.Println("Error creating index Idx_Customer_Exclusion_Key: ", err)
+	} else {
+		if !exists {
+			log.Println("Index Idx_Customer_Exclusion_Key created")
+		}
+	}
+
+	exists, err = DAO_Lendme_Customer_COS_Exclusion.CheckAndCreateIndex("Idx_Customer_COS_Exclusion_Key", []string{"Key"}, true)
+	if err != nil {
+		log.Println("Error creating index Idx_Customer_COS_Exclusion_Key: ", err)
+	} else {
+		if !exists {
+			log.Println("Index Idx_Customer_COS_Exclusion_Key created")
+		}
+	}
+
 	log.Println("DB index manintenance process finished")
 }
 
@@ -112,6 +156,8 @@ func (uc *UserControl) LoadDefaultValues() {
 		uc.Credit_Limit_Scheme_LoadDefaultValues_Gambia()
 	} else if Configuration.Operation == "SierraLeone" {
 		uc.Credit_Limit_Scheme_LoadDefaultValues_SierraLeone()
+	} else if Configuration.Operation == "Angola" {
+		uc.Credit_Limit_Scheme_LoadDefaultValues_Angola()
 	}
 
 }
@@ -123,6 +169,17 @@ func (Uc *UserControl) Write_Lendme_log(record Lendme_log) {
 	_, err := DAO_Lendme_log.PutOneLogs(record, Db, Col)
 	if err != nil {
 		log.Println("Error in Write_Lendme_log:", err, " (", record, ")")
+		return
+	}
+}
+
+func (Uc *UserControl) Write_Subscribers_Chrun_log(record Subscriber) {
+	YYYY, MM, _, DD, _, _, _ := GetTimeParts(time.Now())
+	Db := DAO_Subscribers_Chrun.DB + "_" + YYYY + MM
+	Col := DAO_Subscribers_Chrun.Collection + "_" + DD
+	_, err := DAO_Subscribers_Chrun.PutOneLogs(record, Db, Col)
+	if err != nil {
+		log.Println("Error in Write_Subscribers_Chrun_log:", err, " (", record, ")")
 		return
 	}
 }
@@ -1185,7 +1242,7 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_Gambia() {
 }
 
 func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_SierraLeone() {
-	log.Println("Loading credit limit scheme default values for Gambia")
+	log.Println("Loading credit limit scheme default values for SierraLeone")
 	//
 	request := Credit_Limit_Scheme_Add_Request{
 		Key:                 "0_33_3_6",
@@ -1416,13 +1473,14 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_SierraLeone() {
 
 	//
 	request = Credit_Limit_Scheme_Add_Request{
-		Key:                 "175_375_3_6",
-		Scheme_Id:           0,
-		Amount_From:         175,
-		Amount_Till:         375,
-		AON_From:            3,
-		AON_Till:            6,
-		Credit_limit_Amount: 8,
+		Key:         "175_375_3_6",
+		Scheme_Id:   0,
+		Amount_From: 175,
+		Amount_Till: 375,
+		AON_From:    3,
+		AON_Till:    6,
+		// Credit_limit_Amount: 8,
+		Credit_limit_Amount: 18,
 	}
 	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
 	if err != nil {
@@ -1430,41 +1488,44 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_SierraLeone() {
 	}
 
 	request = Credit_Limit_Scheme_Add_Request{
-		Key:                 "175_375_6_12",
-		Scheme_Id:           0,
-		Amount_From:         175,
-		Amount_Till:         375,
-		AON_From:            6,
-		AON_Till:            12,
-		Credit_limit_Amount: 8,
-	}
-	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
-	if err != nil {
-		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
-	}
-
-	request = Credit_Limit_Scheme_Add_Request{
-		Key:                 "175_375_12_24",
-		Scheme_Id:           0,
-		Amount_From:         175,
-		Amount_Till:         375,
-		AON_From:            12,
-		AON_Till:            24,
-		Credit_limit_Amount: 15,
-	}
-	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
-	if err != nil {
-		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
-	}
-
-	request = Credit_Limit_Scheme_Add_Request{
-		Key:                 "175_375_24_1200",
-		Scheme_Id:           0,
-		Amount_From:         175,
-		Amount_Till:         375,
-		AON_From:            24,
-		AON_Till:            1200,
+		Key:         "175_375_6_12",
+		Scheme_Id:   0,
+		Amount_From: 175,
+		Amount_Till: 375,
+		AON_From:    6,
+		AON_Till:    12,
+		// Credit_limit_Amount: 8,
 		Credit_limit_Amount: 20,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:         "175_375_12_24",
+		Scheme_Id:   0,
+		Amount_From: 175,
+		Amount_Till: 375,
+		AON_From:    12,
+		AON_Till:    24,
+		// Credit_limit_Amount: 15,
+		Credit_limit_Amount: 30,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:         "175_375_24_1200",
+		Scheme_Id:   0,
+		Amount_From: 175,
+		Amount_Till: 375,
+		AON_From:    24,
+		AON_Till:    1200,
+		// Credit_limit_Amount: 20,
+		Credit_limit_Amount: 50,
 	}
 	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
 	if err != nil {
@@ -1586,6 +1647,137 @@ func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_SierraLeone() {
 	}
 }
 
+func (uc *UserControl) Credit_Limit_Scheme_LoadDefaultValues_Angola() {
+	log.Println("Loading credit limit scheme default values for Angola")
+	//
+	request := Credit_Limit_Scheme_Add_Request{
+		Key:                 "0_200_2000_3_9",
+		Scheme_Id:           0,
+		Amount_From:         200,
+		Amount_Till:         2000,
+		AON_From:            3,
+		AON_Till:            9,
+		Credit_limit_Amount: 250,
+	}
+	_, err := uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "0_2001_5000_3_9",
+		Scheme_Id:           0,
+		Amount_From:         2001,
+		Amount_Till:         5000,
+		AON_From:            3,
+		AON_Till:            9,
+		Credit_limit_Amount: 450,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "0_5001_999999999_3_9",
+		Scheme_Id:           0,
+		Amount_From:         5001,
+		Amount_Till:         999999999,
+		AON_From:            3,
+		AON_Till:            9,
+		Credit_limit_Amount: 1300,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "0_200_2000_9_24",
+		Scheme_Id:           0,
+		Amount_From:         200,
+		Amount_Till:         2000,
+		AON_From:            9,
+		AON_Till:            24,
+		Credit_limit_Amount: 450,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "0_2001_5000_9_24",
+		Scheme_Id:           0,
+		Amount_From:         2001,
+		Amount_Till:         5000,
+		AON_From:            9,
+		AON_Till:            24,
+		Credit_limit_Amount: 1300,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "0_5001_999999999_9_24",
+		Scheme_Id:           0,
+		Amount_From:         5001,
+		Amount_Till:         999999999,
+		AON_From:            9,
+		AON_Till:            24,
+		Credit_limit_Amount: 2200,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "0_200_2000_24_9999999",
+		Scheme_Id:           0,
+		Amount_From:         200,
+		Amount_Till:         2000,
+		AON_From:            24,
+		AON_Till:            9999999,
+		Credit_limit_Amount: 1300,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "0_2001_5000_24_9999999",
+		Scheme_Id:           0,
+		Amount_From:         2001,
+		Amount_Till:         5000,
+		AON_From:            24,
+		AON_Till:            9999999,
+		Credit_limit_Amount: 1800,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+	request = Credit_Limit_Scheme_Add_Request{
+		Key:                 "0_5001_999999999_24_9999999",
+		Scheme_Id:           0,
+		Amount_From:         5001,
+		Amount_Till:         999999999,
+		AON_From:            24,
+		AON_Till:            9999999,
+		Credit_limit_Amount: 2700,
+	}
+	_, err = uc.Credit_Limit_Scheme_Add("LoadDefaultValues", request)
+	if err != nil {
+		log.Println("error adding credit limit scheme (" + request.Key + "): " + err.Error())
+	}
+
+}
+
 func (Uc *UserControl) Credit_Limit_Scheme_Selection(Amount float64, FirstUse_date time.Time, LastRecharge_date time.Time) (scheme_name string, NotElligibleReason string) {
 	//AON >= 3 months
 	//Avg 3M Recharge >= 50
@@ -1612,14 +1804,14 @@ func (Uc *UserControl) Credit_Limit_Scheme_Selection(Amount float64, FirstUse_da
 		return
 	}
 
-	LastRecharge_Hours := time.Now().Sub(LastRecharge_date).Hours()
-	LastRecharge_Months := (LastRecharge_Hours / 24) / 30
+	LastRecharge_Hours := time.Since(LastRecharge_date).Hours()
+	LastRecharge_Days := (LastRecharge_Hours / 24)
 	if LastRecharge_date.IsZero() {
 		NotElligibleReason = "Min Last Recharge Period"
 		DailyImportSubsStats.With(prometheus.Labels{"IsElligble": "false", "Reason": NotElligibleReason, "Scheme": ""}).Inc()
 		return
 	}
-	if LastRecharge_Months > Configuration.Min_LastRechargePeriod {
+	if LastRecharge_Days > Configuration.Min_LastRechargePeriod {
 		NotElligibleReason = "Min Last Recharge Period"
 		DailyImportSubsStats.With(prometheus.Labels{"IsElligble": "false", "Reason": NotElligibleReason, "Scheme": ""}).Inc()
 		return
@@ -1892,11 +2084,17 @@ func (Uc *UserControl) Subscriber_Delete(Key string) (err error) {
 		err = errors.New("msisdn cannot be empty")
 		return err
 	}
-	exits := Map_Subscribers.Check(Key)
+	subscriber_na, exits := Map_Subscribers.CheckThenGet(Key)
 	if !exits {
 		err = errors.New("msisdn does not exist")
 		return err
 	}
+	subscriber, ok := subscriber_na.(Subscriber)
+	if !ok {
+		err = errors.New("error in subscriber type assertion")
+		return err
+	}
+	Uc.Write_Subscribers_Chrun_log(subscriber)
 	Map_Subscribers.Delete(Key)
 	return nil
 }
@@ -2150,6 +2348,262 @@ func (Uc *UserControl) Lendme_exec_Request(Source, MSISDN string, Amount float64
 	return nil
 }
 
+func (Uc *UserControl) LendmeAO_exec_Request(Source, MSISDN string, Amount float64) (err error) {
+	log.Println("Lendme Request for "+MSISDN+": ", Amount)
+	var lendLog Lendme_log
+	lendLog.Source = Source
+	lendLog.MSISDN = MSISDN
+	lendLog.Log_Date = time.Now()
+	lendLog.Type = "Lendme Request"
+	lendLog.Lendme_Amount = Amount
+	lendLog.Lendme_Fee = (Amount * Configuration.Service_FeePerc)
+
+	// check if subscriber exist, return error if not existing
+	subscriber_na, exist := Map_Subscribers.CheckThenGet(MSISDN)
+	if !exist {
+		error_msg := "subscriber does not exist in the service pool"
+		err = errors.New(error_msg)
+		lendLog.Status = "failed"
+		lendLog.StatusDescription = err.Error()
+		go Uc.Write_Lendme_log(lendLog)
+
+		LendMeRequestsCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Inc()
+		LendMeRequestsAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Add(Amount)
+		return err
+		// var addRequest Subscriber_Add_Request
+		// addRequest.Key = MSISDN
+		// _, err := Uc.Subscriber_Add("Lendme Request", addRequest)
+		// if err != nil {
+		// 	lendLog.Status = "failed"
+		// 	lendLog.StatusDescription = err.Error()
+		// 	go Uc.Write_Lendme_log(lendLog)
+		// 	return err
+		// }
+	}
+	subscriber, ok := subscriber_na.(Subscriber)
+	if !ok {
+		error_msg := "error in subscriber type assertion"
+		err = errors.New(error_msg)
+		lendLog.Status = "failed"
+		lendLog.StatusDescription = err.Error()
+		go Uc.Write_Lendme_log(lendLog)
+		LendMeRequestsCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Inc()
+		LendMeRequestsAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Add(Amount)
+		return err
+	}
+	lendLog.Lendme_Outstanding_Amount = subscriber.Lendme_Outstanding_Amount
+	lendLog.Lendme_Outstanding_Fee = subscriber.Lendme_Outstanding_Fee
+	if !subscriber.IsLendmeEligible {
+		error_msg := "subscriber is not eligible"
+		err = errors.New(error_msg)
+		lendLog.Status = "failed"
+		lendLog.StatusDescription = err.Error()
+		go Uc.Write_Lendme_log(lendLog)
+		LendMeRequestsCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Inc()
+		LendMeRequestsAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Add(Amount)
+		return err
+	}
+	OpeningBalance_RBB, OpeningBalance_EVC, balOpenErr := Uc.GetCustomerMainBalance(MSISDN)
+	if balOpenErr != nil {
+		lendLog.Status = "failed"
+		lendLog.StatusDescription = balOpenErr.Error()
+		go Uc.Write_Lendme_log(lendLog)
+		LendMeRequestsCount.With(prometheus.Labels{"Status": "failed", "Reason": balOpenErr.Error(), "Scheme": ""}).Inc()
+		LendMeRequestsAmount.With(prometheus.Labels{"Status": "failed", "Reason": balOpenErr.Error(), "Scheme": ""}).Add(Amount)
+		return balOpenErr
+	}
+	lendLog.Subscriber_OpeningBlance = OpeningBalance_RBB + OpeningBalance_EVC
+
+	//check balance min and max
+	if lendLog.Subscriber_OpeningBlance < Configuration.Min_Allowed_Balance {
+		err = errors.New("balance must be greater than " + strconv.FormatFloat(Round(Configuration.Min_Allowed_Balance, 1, 0), 'f', -1, 64))
+		lendLog.Status = "failed"
+		lendLog.StatusDescription = err.Error()
+		go Uc.Write_Lendme_log(lendLog)
+		error_msg := "balance must be greater than minimum allowed"
+		LendMeRequestsCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Inc()
+		LendMeRequestsAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Add(Amount)
+		return err
+	}
+	if lendLog.Subscriber_OpeningBlance > Configuration.Max_Allowed_Balance {
+		err = errors.New("balance must be less than " + strconv.FormatFloat(Round(Configuration.Max_Allowed_Balance, 1, 0), 'f', -1, 64))
+		lendLog.Status = "failed"
+		lendLog.StatusDescription = err.Error()
+		go Uc.Write_Lendme_log(lendLog)
+		error_msg := "balance must be less than maximum allowed"
+		LendMeRequestsCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Inc()
+		LendMeRequestsAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Add(Amount)
+		return err
+	}
+
+	//check the amount
+	if subscriber.Lendme_Outstanding_Amount == 0 {
+		if Amount < Configuration.Min_Allowed_Amnt {
+			err = errors.New("amount must greater than " + strconv.FormatFloat(Round(Configuration.Min_Allowed_Amnt, 1, 0), 'f', -1, 64))
+			lendLog.Status = "failed"
+			lendLog.StatusDescription = err.Error()
+			go Uc.Write_Lendme_log(lendLog)
+			error_msg := "requested amount must greater than minimum allowed amount"
+			LendMeRequestsCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Inc()
+			LendMeRequestsAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Add(Amount)
+			return err
+		}
+	}
+	scheme_na, scheme_exist := Map_Credit_Limit_Scheme.CheckThenGet(subscriber.Credit_Limit_Scheme)
+	if !scheme_exist {
+		error_msg := "credit limit schema does not exist"
+		err = errors.New(error_msg)
+		lendLog.Status = "failed"
+		lendLog.StatusDescription = err.Error()
+		go Uc.Write_Lendme_log(lendLog)
+		LendMeRequestsCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Inc()
+		LendMeRequestsAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Add(Amount)
+		return err
+	}
+	scheme, ok := scheme_na.(Credit_Limit_Scheme)
+	if !ok {
+		error_msg := "error in credit limit schema type assertion"
+		err = errors.New(error_msg)
+		lendLog.Status = "failed"
+		lendLog.StatusDescription = err.Error()
+		go Uc.Write_Lendme_log(lendLog)
+		LendMeRequestsCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Inc()
+		LendMeRequestsAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Add(Amount)
+		return err
+	}
+
+	if Amount > scheme.Credit_limit_Amount {
+		error_msg := "requested amount is not allowed"
+		err = errors.New(error_msg)
+		lendLog.Status = "failed"
+		lendLog.StatusDescription = err.Error()
+		go Uc.Write_Lendme_log(lendLog)
+		LendMeRequestsCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Inc()
+		LendMeRequestsAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Add(Amount)
+		return err
+	}
+	if (subscriber.Lendme_Outstanding_Amount + Amount) > scheme.Credit_limit_Amount {
+		error_msg := "requested amount is exceeding credit limit"
+		err = errors.New(error_msg)
+		lendLog.Status = "failed"
+		lendLog.StatusDescription = err.Error()
+		go Uc.Write_Lendme_log(lendLog)
+		LendMeRequestsCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Inc()
+		LendMeRequestsAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Add(Amount)
+		return err
+	}
+
+	//credit the amount
+	DBT_Response, credit_err := CS_DealerBalanceTransfer("customer", Configuration.Lendme_EVC_Dealer_MSISDN, Configuration.Lendme_EVC_Dealer_PIN, MSISDN, strconv.Itoa(int(Amount)))
+	if credit_err != nil {
+		lendLog.Status = "failed"
+		lendLog.StatusDescription = credit_err.Error()
+		go Uc.Write_Lendme_log(lendLog)
+		LendMeRequestsCount.With(prometheus.Labels{"Status": "failed", "Reason": credit_err.Error(), "Scheme": ""}).Inc()
+		LendMeRequestsAmount.With(prometheus.Labels{"Status": "failed", "Reason": credit_err.Error(), "Scheme": ""}).Add(Amount)
+
+		// Post to Kafka
+		var evc_Recharge_request EVC_Recharge_request
+		evc_Recharge_request.TransID = ""
+		evc_Recharge_request.TransStatus = "failed"
+		evc_Recharge_request.TransStatusDescription = credit_err.Error()
+		evc_Recharge_request.DealerMSISDN = Configuration.Lendme_EVC_Dealer_MSISDN
+		evc_Recharge_request.DealerName = "Lendme"
+		evc_Recharge_request.TargetMSISDN = MSISDN
+		evc_Recharge_request.Amount = Amount
+		evc_Recharge_request.GSMLocation = ""
+		go Post_EVC_Recharge_ToKafka(evc_Recharge_request)
+
+		return credit_err
+	} else if DBT_Response.Response.Success != "true" {
+		err_ret := errors.New("CS success flag is not true")
+		lendLog.Status = "failed"
+		lendLog.StatusDescription = "CS success flag is not true. " + DBT_Response.Response.Result.Message
+		go Uc.Write_Lendme_log(lendLog)
+		LendMeRequestsCount.With(prometheus.Labels{"Status": "failed", "Reason": "CS success flag is not true", "Scheme": ""}).Inc()
+		LendMeRequestsAmount.With(prometheus.Labels{"Status": "failed", "Reason": "CS success flag is not true", "Scheme": ""}).Add(Amount)
+
+		var evc_Recharge_request EVC_Recharge_request
+		evc_Recharge_request.TransID = ""
+		evc_Recharge_request.TransStatus = "failed"
+		evc_Recharge_request.TransStatusDescription = "CDS response Success flag is not true"
+		evc_Recharge_request.DealerMSISDN = Configuration.Lendme_EVC_Dealer_MSISDN
+		evc_Recharge_request.DealerName = "Lendme"
+		evc_Recharge_request.TargetMSISDN = MSISDN
+		evc_Recharge_request.Amount = Amount
+		evc_Recharge_request.GSMLocation = ""
+		go Post_EVC_Recharge_ToKafka(evc_Recharge_request)
+
+		return err_ret
+	}
+	// update subscription
+	subscriber.Lendme_Outstanding_Amount = subscriber.Lendme_Outstanding_Amount + Amount
+	subscriber.Lendme_Outstanding_Fee = subscriber.Lendme_Outstanding_Fee + (Amount * Configuration.Service_FeePerc)
+	subscriber.Last_Lend_Date = time.Now()
+	subscriber.Cumulative_Lent_Amount = subscriber.Cumulative_Lent_Amount + Amount
+	subscriber.Cumulative_Lent_Fee = subscriber.Cumulative_Lent_Fee + (Amount * Configuration.Service_FeePerc)
+	Map_Subscribers.Put(subscriber.Key, subscriber)
+
+	//save log into DB
+	lendLog.Status = "successful"
+	lendLog.StatusDescription = ""
+	go Uc.Write_Lendme_log(lendLog)
+	LendMeRequestsCount.With(prometheus.Labels{"Status": "successful", "Reason": "", "Scheme": subscriber.Credit_Limit_Scheme}).Inc()
+	LendMeRequestsAmount.With(prometheus.Labels{"Status": "successful", "Reason": "", "Scheme": subscriber.Credit_Limit_Scheme}).Add(Amount)
+
+	var evc_Recharge_request EVC_Recharge_request
+	evc_Recharge_request.TransID = DBT_Response.Response.Result.Arguments.TransID
+	evc_Recharge_request.TransStatus = "success"
+	evc_Recharge_request.TransStatusDescription = ""
+	evc_Recharge_request.DealerMSISDN = Configuration.Lendme_EVC_Dealer_MSISDN
+	evc_Recharge_request.DealerName = "Lendme"
+	evc_Recharge_request.TargetMSISDN = MSISDN
+	evc_Recharge_request.Amount = Amount
+	evc_Recharge_request.GSMLocation = ""
+	if len(DBT_Response.Response.Result.Arguments.AfricellFldSourceAccount.BalanceGroups) > 0 {
+		if len(DBT_Response.Response.Result.Arguments.AfricellFldSourceAccount.BalanceGroups[0].Balances) > 0 {
+			for _, value := range DBT_Response.Response.Result.Arguments.AfricellFldSourceAccount.BalanceGroups[0].Balances {
+				if value.Elem == "6010000" {
+					bal_float, err := strconv.ParseFloat(strings.TrimSpace(value.CurrentBal), 64)
+					if err != nil {
+						fmt.Println("Failed to parse dealer endbal on recharge ", err.Error())
+						break
+					}
+					evc_Recharge_request.DealerClosingBalance = bal_float * -1
+				}
+			}
+		}
+	}
+
+	go Post_EVC_Recharge_ToKafka(evc_Recharge_request)
+
+	return nil
+}
+
+func (Uc *UserControl) GetCustomerMainBalance(MSISDN string) (balance_RBB float64, balance_EVC float64, err error) {
+	Balance_Response, err := CS_GetAccountBalance_ByDeviceId(MSISDN)
+	if err != nil {
+		return balance_RBB, balance_EVC, err
+	}
+	if Balance_Response.Response.Success != "true" {
+		errN := errors.New("success is false")
+		return balance_RBB, balance_EVC, errN
+	}
+	for _, balanceGroupes := range Balance_Response.Response.Result.Arguments.BalanceGroups {
+		for _, balances := range balanceGroupes.Balances {
+			RBB_BAL_ELEM_int, _ := strconv.Atoi(RBB_BAL_ELEM)
+			if balances.Elem == RBB_BAL_ELEM_int {
+				balance_RBB = balances.CurrentBal * -1
+			}
+			EVC_BAL_ELEM_int, _ := strconv.Atoi(EVC_BAL_ELEM)
+			if balances.Elem == EVC_BAL_ELEM_int {
+				balance_EVC = balances.CurrentBal * -1
+			}
+		}
+	}
+	return balance_RBB, balance_EVC, nil
+}
+
 func (Uc *UserControl) Lendme_PayBack(Source, MSISDN string, RechargeAmount float64, Opid string) (err error) {
 	if Opid == "lendme" {
 		LendMePayBackCount.With(prometheus.Labels{"Status": "Ignored", "Reason": "Opid is lendme", "Description": Source}).Inc()
@@ -2348,16 +2802,193 @@ func (Uc *UserControl) Lendme_PayBack(Source, MSISDN string, RechargeAmount floa
 	} else if Configuration.Operation == "DRC" {
 		//SMSText := "Cher abonne, merci d'avoir paye le montant emprunte par Lendme de " + PaidAmount_str + "u"
 		SMSText := "Cher abonne, merci d'avoir paye le montant emprunte par Le service pretez moi de" + PaidAmount_str + "u"
+		// SMSText := "Felicitations ! Votre compte a ete credite de " + fmt.Sprint(Round((DebitAmount), 1, 2)) + " unites et " + fmt.Sprint(Round((DebitfeeAmount), 1, 2)) + " unites des frais. Pour verifier votre solde, tapez *1099#"
 		go SendSMS("Africell", subscriber.Key, SMSText)
 	} else if Configuration.Operation == "SierraLeone" {
 		SMS_MSISDN := subscriber.Key
 		if len(SMS_MSISDN) >= 8 {
 			SMS_MSISDN = "232" + SMS_MSISDN[len(SMS_MSISDN)-8:]
 		}
-		SMSText := "Dear subscriber, thank you for paying outstanding TrossMi amount " + PaidAmount_str + " NLE"
+		SMSText := "Dear subscriber, thank you for paying outstanding TrossMi amount NLE " + PaidAmount_str
 		go SendSMS("TrossMi", SMS_MSISDN, SMSText)
 
 	}
+
+	//save log into DB
+	lendLog.Status = "successful"
+	lendLog.StatusDescription = ""
+	go Uc.Write_Lendme_log(lendLog)
+	return nil
+}
+
+func (Uc *UserControl) LendmeAO_PayBack(Source, MSISDN string, RechargeAmount float64, Opid string) (err error) {
+	if Opid == Configuration.Lendme_EVC_Dealer_MSISDN {
+		LendMePayBackCount.With(prometheus.Labels{"Status": "Ignored", "Reason": "Opid is lendme", "Description": Source}).Inc()
+		return
+	}
+	LendMePayBackCount.With(prometheus.Labels{"Status": "requested", "Reason": "", "Description": Source}).Inc()
+	var lendLog Lendme_log
+	lendLog.Source = Source
+	lendLog.MSISDN = MSISDN
+	lendLog.Log_Date = time.Now()
+	lendLog.Type = "Lendme PayBack"
+	// lendLog.Lendme_Amount = Amount
+	// lendLog.Lendme_Fee = (Amount * Configuration.Service_FeePerc)
+
+	if RechargeAmount <= 0 {
+		error_msg := "recharge amount must be positive"
+		err = errors.New(error_msg)
+		lendLog.Status = "failed"
+		lendLog.StatusDescription = err.Error()
+		go Uc.Write_Lendme_log(lendLog)
+		LendMePayBackCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Description": ""}).Inc()
+		//LendMePayBackAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Description" : ""}).Add(RechargeAmount)
+		return err
+	}
+
+	// check if subscriber exist, return error if not existing
+	subscriber_na, exist := Map_Subscribers.CheckThenGet(MSISDN)
+	if !exist {
+		error_msg := "subscriber does not exist in the service pool"
+		err = errors.New(error_msg)
+		lendLog.Status = "failed"
+		lendLog.StatusDescription = err.Error()
+		go Uc.Write_Lendme_log(lendLog)
+		LendMePayBackCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Description": ""}).Inc()
+		//LendMePayBackAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Description" : ""}).Add(RechargeAmount)
+		return err
+	}
+	subscriber, ok := subscriber_na.(Subscriber)
+	if !ok {
+		error_msg := "error in subscriber type assertion"
+		err = errors.New(error_msg)
+		lendLog.Status = "failed"
+		lendLog.StatusDescription = err.Error()
+		go Uc.Write_Lendme_log(lendLog)
+		LendMePayBackCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Description": ""}).Inc()
+		//LendMePayBackAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Description" : ""}).Add(RechargeAmount)
+		return err
+	}
+	lendLog.Lendme_Outstanding_Amount = subscriber.Lendme_Outstanding_Amount
+	lendLog.Lendme_Outstanding_Fee = subscriber.Lendme_Outstanding_Fee
+	//check if subscriber have outstanding amount
+	Outstanding_Amount := subscriber.Lendme_Outstanding_Amount + subscriber.Lendme_Outstanding_Fee
+	if Outstanding_Amount <= 0 {
+		return nil
+	}
+	//check if exists on IN and get details
+	OpeningBalance_RBB, OpeningBalance_EVC, balOpenErr := Uc.GetCustomerMainBalance(MSISDN)
+	if balOpenErr != nil {
+		lendLog.Status = "failed"
+		lendLog.StatusDescription = balOpenErr.Error()
+		go Uc.Write_Lendme_log(lendLog)
+		LendMePayBackCount.With(prometheus.Labels{"Status": "failed", "Reason": balOpenErr.Error(), "Description": ""}).Inc()
+		//LendMePayBackAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Description" : ""}).Add(RechargeAmount)
+		return balOpenErr
+	}
+
+	lendLog.Subscriber_OpeningBlance = OpeningBalance_RBB + OpeningBalance_EVC
+	//check balance min and max
+	if lendLog.Subscriber_OpeningBlance <= 0 {
+		error_msg := "balance must be positive"
+		err = errors.New(error_msg)
+		lendLog.Status = "failed"
+		lendLog.StatusDescription = err.Error()
+		go Uc.Write_Lendme_log(lendLog)
+		LendMePayBackCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Description": ""}).Inc()
+		//LendMePayBackAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Description" : ""}).Add(RechargeAmount)
+		return err
+	}
+	//calculate debit fee/amount
+	//change here
+	var DebitfeeAmount float64
+	var DebitAmount float64
+	if lendLog.Subscriber_OpeningBlance >= Outstanding_Amount {
+		DebitfeeAmount = subscriber.Lendme_Outstanding_Fee
+		DebitAmount = subscriber.Lendme_Outstanding_Amount
+	} else {
+		if lendLog.Subscriber_OpeningBlance > subscriber.Lendme_Outstanding_Fee {
+			DebitfeeAmount = subscriber.Lendme_Outstanding_Fee
+			DebitAmount = lendLog.Subscriber_OpeningBlance - subscriber.Lendme_Outstanding_Fee
+		} else {
+			DebitfeeAmount = lendLog.Subscriber_OpeningBlance
+		}
+	}
+	lendLog.Lendme_PayBack_Amount = DebitAmount
+	lendLog.Lendme_PayBack_Fee = DebitfeeAmount
+	//debit the fee amount
+	if DebitfeeAmount > 0 {
+		var debitfee_request apgw.DebitSubscriber_V3_request
+		debitfee_request.Program_Name = "LendmeFee"
+		debitfee_request.MSISDN = MSISDN
+		debitfee_request.Amount = DebitfeeAmount
+		debitfee_response, err := Uc.APGW.APGWClient.DebitSubscriber(debitfee_request)
+		if err != nil {
+			error_msg := err.Error()
+			lendLog.Status = "failed"
+			lendLog.StatusDescription = error_msg
+			go Uc.Write_Lendme_log(lendLog)
+			LendMePayBackCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Description": "LendmeFee"}).Inc()
+			LendMePayBackAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Description": "LendmeFee"}).Add(DebitfeeAmount)
+			return err
+		}
+		if debitfee_response.StatusCode != http.StatusOK {
+			error_msg := debitfee_response.ErrorDescription
+			err = errors.New(error_msg)
+			lendLog.Status = "failed"
+			lendLog.StatusDescription = error_msg
+			go Uc.Write_Lendme_log(lendLog)
+			LendMePayBackCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Description": "LendmeFee"}).Inc()
+			LendMePayBackAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Description": "LendmeFee"}).Add(DebitfeeAmount)
+			return err
+		}
+		//subscriber.Cumulative_Payback_Amount
+		subscriber.Lendme_Outstanding_Fee = subscriber.Lendme_Outstanding_Fee - DebitfeeAmount
+		subscriber.Cumulative_Payback_Fee = subscriber.Cumulative_Payback_Fee + DebitfeeAmount
+		subscriber.Last_Payback_Fee_Date = time.Now()
+		Map_Subscribers.Put(subscriber.Key, subscriber)
+		LendMePayBackCount.With(prometheus.Labels{"Status": "successful", "Reason": "", "Description": "LendmeFee"}).Inc()
+		LendMePayBackAmount.With(prometheus.Labels{"Status": "successful", "Reason": "", "Description": "LendmeFee"}).Add(DebitfeeAmount)
+	}
+	//debit the amount
+	if DebitAmount > 0 {
+		var debitAmount_request apgw.DebitSubscriber_V3_request
+		debitAmount_request.Program_Name = "LendmePayBack"
+		debitAmount_request.MSISDN = MSISDN
+		debitAmount_request.Amount = DebitAmount
+		debitAmount_response, err := Uc.APGW.APGWClient.DebitSubscriber(debitAmount_request)
+		if err != nil {
+			error_msg := err.Error()
+			lendLog.Status = "failed"
+			lendLog.StatusDescription = error_msg
+			go Uc.Write_Lendme_log(lendLog)
+			LendMePayBackCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Description": "LendmePayBack"}).Inc()
+			LendMePayBackAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Description": "LendmePayBack"}).Add(DebitAmount)
+			return err
+		}
+		if debitAmount_response.StatusCode != http.StatusOK {
+			error_msg := debitAmount_response.ErrorDescription
+			err = errors.New(error_msg)
+			lendLog.Status = "failed"
+			lendLog.StatusDescription = error_msg
+			go Uc.Write_Lendme_log(lendLog)
+			LendMePayBackCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Description": "LendmePayBack"}).Inc()
+			LendMePayBackAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Description": "LendmePayBack"}).Add(DebitAmount)
+			return err
+		}
+		subscriber.Lendme_Outstanding_Amount = subscriber.Lendme_Outstanding_Amount - DebitAmount
+		subscriber.Cumulative_Payback_Amount = subscriber.Cumulative_Payback_Amount + DebitAmount
+		subscriber.Last_Payback_Date = time.Now()
+		Map_Subscribers.Put(subscriber.Key, subscriber)
+		LendMePayBackCount.With(prometheus.Labels{"Status": "successful", "Reason": "", "Description": "LendmePayBack"}).Inc()
+		LendMePayBackAmount.With(prometheus.Labels{"Status": "successful", "Reason": "", "Description": "LendmePayBack"}).Add(DebitAmount)
+	}
+	//Send notification SMS
+	PaidAmount_round := Round((DebitAmount + DebitfeeAmount), 1, 2)
+	PaidAmount_str := strconv.FormatFloat(PaidAmount_round, 'f', -1, 64)
+
+	SMSText := "Dear subscriber, thank you for paying outstanding SERVICE_NAME amount " + PaidAmount_str + " Kz"
+	go SendSMS("Africell", subscriber.Key, SMSText)
 
 	//save log into DB
 	lendLog.Status = "successful"
@@ -2426,6 +3057,392 @@ func (Uc *UserControl) SubscriberUSSD_Get(Key string) (response Subscriber_USSD,
 		}
 		return response, nil
 	}
+}
+
+// ***********************************************************************
+// Customer Exclusion functions
+// ***********************************************************************
+func (Uc *UserControl) Lendme_Customer_Exclusion_Add(Login string, request Customer_Exclusion_AddRequest) (Id int64, err error) {
+	request.Key = Normalize_International_MSISDN(request.Key)
+	//check key if filled and if already used
+	if request.Key == "" {
+		err = errors.New("key cannot be empty")
+		return Id, err
+	}
+	//check if key already used
+	exits := Map_Lendme_Customer_Exclusion.Check(request.Key)
+	if exits {
+		err = errors.New("key already exist")
+		return Id, err
+	}
+	//Prepare new entry
+	var NewEntry Customer_Exclusion
+	NewEntry.Id = Map_Loyalty_AutoIncrement.GetNextAI("Customer_Exclusion-Id")
+	Id = NewEntry.Id
+
+	NewEntry.Key = request.Key
+	NewEntry.AddTime = time.Now()
+	NewEntry.AddReason = request.AddReason
+	subscriber_na, exits := Map_Subscribers.CheckThenGet(NewEntry.Key)
+	if !exits {
+		err = errors.New("msisdn is not created")
+		return Id, err
+	}
+	subscriber, ok := subscriber_na.(Subscriber)
+	if !ok {
+		return Id, errors.New("error in subscriber type assertion")
+	}
+	//add to cache and DB
+	Map_Lendme_Customer_Exclusion.Put(NewEntry.Key, NewEntry)
+	subscriber.IsLendmeEligible = false
+	Map_Subscribers.Put(subscriber.Key, subscriber)
+	return Id, nil
+}
+
+func (Uc *UserControl) Lendme_Customer_Exclusion_Edit(Login string, request Customer_Exclusion_EditRequest) (Id int64, err error) {
+	//check and validate
+	if request.Key == "" {
+		err = errors.New("key cannot be empty")
+		return Id, err
+	}
+	entry_na, exits := Map_Lendme_Customer_Exclusion.CheckThenGet(request.Key)
+	if !exits {
+		err = errors.New("key is not created")
+		return Id, err
+	}
+	entry, ok := entry_na.(Customer_Exclusion)
+	if !ok {
+		return Id, errors.New("error in type assertion")
+	}
+	if entry.Id != request.Id {
+		return Id, errors.New("id is not matching")
+	}
+
+	//Prepare new entry
+	entry.Key = request.Key
+	entry.AddReason = request.AddReason
+
+	if request.NewKey != "" {
+		if request.NewKey != request.Key {
+			//delete old
+			Map_Lendme_Customer_Exclusion.Delete(request.Key)
+			//update key
+			entry.Key = request.NewKey
+		}
+	}
+	//add to cache and DB
+	subscriber_na, exits := Map_Subscribers.CheckThenGet(entry.Key)
+	if !exits {
+		err = errors.New("msisdn is not created")
+		return Id, err
+	}
+	subscriber, ok := subscriber_na.(Subscriber)
+	if !ok {
+		return Id, errors.New("error in subscriber type assertion")
+	}
+	Map_Lendme_Customer_Exclusion.Put(entry.Key, entry)
+	subscriber.IsLendmeEligible = false
+	Map_Subscribers.Put(subscriber.Key, subscriber)
+	return Id, nil
+}
+
+func (Uc *UserControl) Lendme_Customer_Exclusion_Get(Key string) (entries []Customer_Exclusion, err error) {
+	if Key == "" {
+		entries_na := Map_Lendme_Customer_Exclusion.ConvertToArray()
+		if len(entries_na) > 0 {
+			for _, entry_na := range entries_na {
+				entry, ok := entry_na.(Customer_Exclusion)
+				if !ok {
+					err = errors.New("error in type assertion")
+					return entries, err
+				} else {
+					entries = append(entries, entry)
+				}
+			}
+		}
+		return entries, nil
+	} else {
+		entry_na, exits := Map_Lendme_Customer_Exclusion.CheckThenGet(Key)
+		if !exits {
+			err = errors.New("key does not exist")
+			return entries, err
+		}
+		entry, ok := entry_na.(Customer_Exclusion)
+		if !ok {
+			err = errors.New("error in type assertion")
+			return entries, err
+		}
+		entries = append(entries, entry)
+		return entries, nil
+	}
+}
+
+func (Uc *UserControl) Lendme_Customer_Exclusion_GetPaginated(Page, Limit int64) (entries []Customer_Exclusion, err error) {
+	if Page < 1 {
+		return entries, errors.New("invalid page")
+	}
+	if Limit < 1 || Limit > 50000 {
+		return entries, errors.New("invalid limit (accept value between 1 and 50000)")
+	}
+
+	var findparams daoc.DAOFindParams
+	//var array []daoc.DAOFindCriteria
+	// if Outlet_Key != "" {
+	// 	//restrict access for records that belong to this user
+	// 	var criteria daoc.DAOFindCriteria = daoc.DAOFindCriteria{
+	// 		Field:    "Outlet_Key",
+	// 		Value:    Outlet_Key,
+	// 		Operator: "EQUAL",
+	// 	}
+	// 	array = append(array, criteria)
+	// }
+	// if Agent_Key != "" {
+	// 	//restrict access for records that belong to this user
+	// 	var criteria daoc.DAOFindCriteria = daoc.DAOFindCriteria{
+	// 		Field:    "Agent_Key",
+	// 		Value:    Agent_Key,
+	// 		Operator: "EQUAL",
+	// 	}
+	// 	array = append(array, criteria)
+	// }
+	// if len(array) > 0 {
+	// 	findparams.FindCriteria = array
+	// }
+	var paginationparams daoc.DAOPaginate
+	paginationparams.Limit = Limit
+	paginationparams.Page = Page
+	findResult, err := DAO_Lendme_Customer_Exclusion.FindPaginate(findparams, paginationparams)
+	if err != nil {
+		return entries, err
+	}
+	if len(findResult) > 0 {
+		for _, findres := range findResult {
+			InterfaceValue := reflect.ValueOf(findres).Elem().Interface().(Customer_Exclusion)
+			entries = append(entries, InterfaceValue)
+		}
+	}
+	return entries, nil
+
+}
+
+func (Uc *UserControl) Lendme_Customer_Exclusion_Delete(Login, Key string) (err error) {
+	if Key == "" {
+		err = errors.New("key cannot be empty")
+		return err
+	}
+	_, exits := Map_Lendme_Customer_Exclusion.CheckThenGet(Key)
+	if !exits {
+		err = errors.New("entry does not exist")
+		return err
+	}
+	Map_Lendme_Customer_Exclusion.Delete(Key)
+
+	return nil
+}
+
+// ***********************************************************************
+// Customer Exclusion functions
+// ***********************************************************************
+func (Uc *UserControl) Lendme_Customer_COS_Exclusion_Add(Login string, request Customer_COS_Exclusion_AddRequest) (Id int64, err error) {
+	//check key if filled and if already used
+	if request.Key == "" {
+		err = errors.New("key cannot be empty")
+		return Id, err
+	}
+	//check if key already used
+	exits := Map_Lendme_Customer_COS_Exclusion.Check(request.Key)
+	if exits {
+		err = errors.New("key already exist")
+		return Id, err
+	}
+	//Prepare new entry
+	var NewEntry Customer_COS_Exclusion
+	NewEntry.Id = Map_Loyalty_AutoIncrement.GetNextAI("Customer_COS_Exclusion-Id")
+	Id = NewEntry.Id
+	NewEntry.Key = request.Key
+	NewEntry.AddTime = time.Now()
+	NewEntry.AddReason = request.AddReason
+	//add to cache and DB
+	Map_Lendme_Customer_COS_Exclusion.Put(NewEntry.Key, NewEntry)
+	var findparams daoc.DAOFindParams
+	var array []daoc.DAOFindCriteria
+	//restrict access for records that belong to this user
+	var criteria daoc.DAOFindCriteria = daoc.DAOFindCriteria{
+		Field:    "COS",
+		Value:    NewEntry.Key,
+		Operator: "EQUAL",
+	}
+	array = append(array, criteria)
+
+	findparams.FindCriteria = array
+	//
+	findResult, err := DAO_Subscribers.Find(findparams)
+	if err != nil {
+		return Id, err
+	}
+
+	if len(findResult) > 0 {
+		for _, entry_na := range findResult {
+			subscriber := reflect.ValueOf(entry_na).Elem().Interface().(Subscriber)
+			subscriber.IsLendmeEligible = false
+			Map_Subscribers.Put(subscriber.Key, subscriber)
+		}
+	}
+	return Id, nil
+}
+
+func (Uc *UserControl) Lendme_Customer_COS_Exclusion_Edit(Login string, request Customer_COS_Exclusion_EditRequest) (Id int64, err error) {
+	//check and validate
+	if request.Key == "" {
+		err = errors.New("key cannot be empty")
+		return Id, err
+	}
+	entry_na, exits := Map_Lendme_Customer_COS_Exclusion.CheckThenGet(request.Key)
+	if !exits {
+		err = errors.New("key is not created")
+		return Id, err
+	}
+	entry, ok := entry_na.(Customer_COS_Exclusion)
+	if !ok {
+		return Id, errors.New("error in type assertion")
+	}
+	if entry.Id != request.Id {
+		return Id, errors.New("id is not matching")
+	}
+
+	//Prepare new entry
+	entry.Key = request.Key
+	entry.AddReason = request.AddReason
+
+	if request.NewKey != "" {
+		if request.NewKey != request.Key {
+			//delete old
+			Map_Lendme_Customer_COS_Exclusion.Delete(request.Key)
+			//update key
+			entry.Key = request.NewKey
+		}
+	}
+	//add to cache and DB
+	Map_Lendme_Customer_COS_Exclusion.Put(entry.Key, entry)
+	var findparams daoc.DAOFindParams
+	var array []daoc.DAOFindCriteria
+	//restrict access for records that belong to this user
+	var criteria daoc.DAOFindCriteria = daoc.DAOFindCriteria{
+		Field:    "COS",
+		Value:    entry.Key,
+		Operator: "EQUAL",
+	}
+	array = append(array, criteria)
+
+	findparams.FindCriteria = array
+	//
+	findResult, err := DAO_Subscribers.Find(findparams)
+	if err != nil {
+		return Id, err
+	}
+
+	if len(findResult) > 0 {
+		for _, entry_na := range findResult {
+			subscriber := reflect.ValueOf(entry_na).Elem().Interface().(Subscriber)
+			subscriber.IsLendmeEligible = false
+			Map_Subscribers.Put(subscriber.Key, subscriber)
+		}
+	}
+	return Id, nil
+}
+
+func (Uc *UserControl) Lendme_Customer_COS_Exclusion_Get(Key string) (entries []Customer_COS_Exclusion, err error) {
+	if Key == "" {
+		entries_na := Map_Lendme_Customer_COS_Exclusion.ConvertToArray()
+		if len(entries_na) > 0 {
+			for _, entry_na := range entries_na {
+				entry, ok := entry_na.(Customer_COS_Exclusion)
+				if !ok {
+					err = errors.New("error in type assertion")
+					return entries, err
+				} else {
+					entries = append(entries, entry)
+				}
+			}
+		}
+		return entries, nil
+	} else {
+		entry_na, exits := Map_Lendme_Customer_COS_Exclusion.CheckThenGet(Key)
+		if !exits {
+			err = errors.New("key does not exist")
+			return entries, err
+		}
+		entry, ok := entry_na.(Customer_COS_Exclusion)
+		if !ok {
+			err = errors.New("error in type assertion")
+			return entries, err
+		}
+		entries = append(entries, entry)
+		return entries, nil
+	}
+}
+
+func (Uc *UserControl) Lendme_Customer_COS_Exclusion_GetPaginated(Page, Limit int64) (entries []Customer_COS_Exclusion, err error) {
+	if Page < 1 {
+		return entries, errors.New("invalid page")
+	}
+	if Limit < 1 || Limit > 50000 {
+		return entries, errors.New("invalid limit (accept value between 1 and 50000)")
+	}
+
+	var findparams daoc.DAOFindParams
+	//var array []daoc.DAOFindCriteria
+	// if Outlet_Key != "" {
+	// 	//restrict access for records that belong to this user
+	// 	var criteria daoc.DAOFindCriteria = daoc.DAOFindCriteria{
+	// 		Field:    "Outlet_Key",
+	// 		Value:    Outlet_Key,
+	// 		Operator: "EQUAL",
+	// 	}
+	// 	array = append(array, criteria)
+	// }
+	// if Agent_Key != "" {
+	// 	//restrict access for records that belong to this user
+	// 	var criteria daoc.DAOFindCriteria = daoc.DAOFindCriteria{
+	// 		Field:    "Agent_Key",
+	// 		Value:    Agent_Key,
+	// 		Operator: "EQUAL",
+	// 	}
+	// 	array = append(array, criteria)
+	// }
+	// if len(array) > 0 {
+	// 	findparams.FindCriteria = array
+	// }
+	var paginationparams daoc.DAOPaginate
+	paginationparams.Limit = Limit
+	paginationparams.Page = Page
+	findResult, err := DAO_Lendme_Customer_COS_Exclusion.FindPaginate(findparams, paginationparams)
+	if err != nil {
+		return entries, err
+	}
+	if len(findResult) > 0 {
+		for _, findres := range findResult {
+			InterfaceValue := reflect.ValueOf(findres).Elem().Interface().(Customer_COS_Exclusion)
+			entries = append(entries, InterfaceValue)
+		}
+	}
+	return entries, nil
+
+}
+
+func (Uc *UserControl) Lendme_Customer_COS_Exclusion_Delete(Login, Key string) (err error) {
+	if Key == "" {
+		err = errors.New("key cannot be empty")
+		return err
+	}
+	_, exits := Map_Lendme_Customer_COS_Exclusion.CheckThenGet(Key)
+	if !exits {
+		err = errors.New("entry does not exist")
+		return err
+	}
+
+	Map_Lendme_Customer_COS_Exclusion.Delete(Key)
+	return nil
 }
 
 func (Uc *UserControl) GetOutstandingSummary() (err error) {
@@ -2508,12 +3525,44 @@ func (Uc *UserControl) Auto_GetOutstandingSummary() {
 	}
 }
 
+func (Uc *UserControl) Lendme_Subscriber_Daily_Snapshot() {
+	exec := 0
+	LOG_ID := "<<Lendme Subscriber Daily Snapshot>>"
+	for range time.Tick(time.Second * 1) {
+		_CurrentDateTime := time.Now()
+		_hr, _mi, _se := _CurrentDateTime.Clock()
+		if _hr == 00 {
+			if _mi == 00 {
+				if _se < 60 {
+					if exec == 0 {
+						exec = 1
+						log.Println(LOG_ID + " triggered")
+						yesterday := time.Now().AddDate(0, 0, -1)
+						YYYY, MM, _, DD, _, _, _ := GetTimeParts(yesterday)
+						Db := DAO_Lendme_log.DB + "_" + YYYY + MM
+						Col := DAO_Subscribers.Collection + "_" + DD
+						err := DAO_Subscribers.CollectionSnapshot(Db, Col)
+						if err != nil {
+							log.Println("error while taking a snapshot from subscriber collection", err)
+						}
+						log.Println(LOG_ID + " finished")
+					}
+				}
+			} else {
+				if exec == 1 {
+					exec = 0
+				}
+			}
+		}
+	}
+}
+
 // /////////////////////////////////////////////////////////////////////////////////////////////////////
 // /////SEND SMS////////////////////////////////////////////////////////////////////////////////////////
 // /////////////////////////////////////////////////////////////////////////////////////////////////////
 func SendSMS(Sender string, target string, SMSText string) (_rErr error) {
 	log.Println("Sending SMS: Sender (" + Sender + "), Target (" + target + "), text (" + SMSText + ") ")
-	url := "http://" + Configuration.SMPP.IP + ":" + Configuration.SMPP.Port + "/?systemid=" + Configuration.SMPP.Login + "&password=" + Configuration.SMPP.Password + "&Originator=" + Sender + "&dest_addr=" + target + "&msg_text=" + url.QueryEscape(SMSText) + "&encoding=0&ston=5&snpi=0&dton=1&registered_delivery=0"
+	url := "http://" + Configuration.SMPP.IP + ":" + Configuration.SMPP.Port + "/?systemid=" + Configuration.SMPP.Login + "&password=" + url.QueryEscape(Configuration.SMPP.Password) + "&Originator=" + Sender + "&dest_addr=" + target + "&msg_text=" + url.QueryEscape(SMSText) + "&encoding=1&ston=5&snpi=0&dton=1&registered_delivery=0"
 	//-------------- Encoding used in DRC and GM Start
 	//"&ston=5&snpi=0&dton=1&dnpi=1&encoding=1"
 	//-------------- Encoding used in DRC and GM End

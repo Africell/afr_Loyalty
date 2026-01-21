@@ -3,6 +3,7 @@ package Lendme
 import (
 	"afr_auth_center/AuthCenter"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -67,7 +68,202 @@ func (Uc *UserControl) AddToAppRouter(router *mux.Router, UC *UserControl) {
 	if err != nil {
 		log.Fatalln("Error Reading Existing Access Entries from AUC !!!")
 	}
+	log.Println("Read existing routes: #", len(accessEntries.Data))
+	MapAccessEntry.Clear()
+	for _, acc := range accessEntries.Data {
+		MapAccessEntry.Put(acc.Key, acc)
+	}
+	var existingEntries = make(map[string]AuthCenter.AccessEntry)
 
+	for _, route := range routes {
+		if route.AllowedFor_App {
+			//var handler http.Handler
+			handler := route.HandlerFunc
+			//handler = Logger(handler, route.Name)
+			router.
+				Methods(route.Method).
+				Path(route.Pattern).
+				Name(route.Name).
+				Handler(handler)
+
+			//add to OKAPI AUC
+			if route.AddToAccessEntry {
+				ok := MapAccessEntry.Check(route.Name + "|" + route.Method)
+				if !ok {
+					var accessEntry AuthCenter.AccessEntry
+					accessEntry.AddUser = "Auto Add"
+					accessEntry.AddDate = time.Now().UTC()
+					accessEntry.LastModifyUser = "Auto Add"
+					accessEntry.LastModifyDate = time.Now().UTC()
+					accessEntry.Key = route.Name + "|" + route.Method
+					accessEntry.AccessKey = route.Name
+					accessEntry.AccessMethod = route.Method
+					accessEntry.DisplayName = route.DisplayName
+					accessEntry.DisplayOrder = route.DisplayOrder
+					accessEntry.Module = route.Module
+					accessEntry.ModuleDisplayOrder = route.ModuleDisplayOrder
+					accessEntry.Level1 = route.Level1
+					accessEntry.Level1DisplayOrder = route.Level1DisplayOrder
+					accessEntry.Level2 = route.Level2
+					accessEntry.Level2DisplayOrder = route.Level2DisplayOrder
+					accessEntry.Level3 = route.Level3
+					accessEntry.Level3DisplayOrder = route.Level3DisplayOrder
+
+					AccessKeyDescription := strings.Replace(route.Name, "HTTP_", "", -1)
+					AccessKeyDescription = strings.Replace(AccessKeyDescription, "_", " ", -1)
+					accessEntry.AccessKeyDescription = AccessKeyDescription
+					//Insert into Cache
+					_, err := Uc.AppAUC.AUCClient.CreateAccessEntries(accessEntry)
+					if err == nil {
+						log.Println("Created Access Entry: ", accessEntry.Key)
+					} else {
+						log.Println("Error creating AccessEntry in AUC !!!")
+						json.NewEncoder(os.Stdout).Encode(accessEntry)
+					}
+
+				}
+			}
+		}
+
+	}
+
+	accessEntries_okapi, err := Uc.OKAPIAUC.AUCClient.ReadAccessEntries("")
+	if err != nil {
+		log.Fatalln("Error Reading Existing Access Entries from AUC !!!")
+	}
+
+	log.Println("Read existing routes: #", len(accessEntries.Data))
+	MapAccessEntry.Clear()
+	for _, acc := range accessEntries_okapi.Data {
+		MapAccessEntry.Put(acc.Key, acc)
+	}
+	var existingEntriesokapi = make(map[string]AuthCenter.AccessEntry)
+
+	for _, route := range routes {
+		if route.AllowedFor_App {
+			//var handler http.Handler
+			handler := route.HandlerFunc
+			//handler = Logger(handler, route.Name)
+			router.
+				Methods(route.Method).
+				Path(route.Pattern).
+				Name(route.Name).
+				Handler(handler)
+
+			//add to OKAPI AUC
+			if route.AddToAccessEntry {
+				ok := MapAccessEntry.Check(route.Name + "|" + route.Method)
+				if !ok {
+					var accessEntry AuthCenter.AccessEntry
+					accessEntry.AddUser = "Auto Add"
+					accessEntry.AddDate = time.Now().UTC()
+					accessEntry.LastModifyUser = "Auto Add"
+					accessEntry.LastModifyDate = time.Now().UTC()
+					accessEntry.Key = route.Name + "|" + route.Method
+					accessEntry.AccessKey = route.Name
+					accessEntry.AccessMethod = route.Method
+					accessEntry.DisplayName = route.DisplayName
+					accessEntry.DisplayOrder = route.DisplayOrder
+					accessEntry.Module = route.Module
+					accessEntry.ModuleDisplayOrder = route.ModuleDisplayOrder
+					accessEntry.Level1 = route.Level1
+					accessEntry.Level1DisplayOrder = route.Level1DisplayOrder
+					accessEntry.Level2 = route.Level2
+					accessEntry.Level2DisplayOrder = route.Level2DisplayOrder
+					accessEntry.Level3 = route.Level3
+					accessEntry.Level3DisplayOrder = route.Level3DisplayOrder
+
+					AccessKeyDescription := strings.Replace(route.Name, "HTTP_", "", -1)
+					AccessKeyDescription = strings.Replace(AccessKeyDescription, "_", " ", -1)
+					accessEntry.AccessKeyDescription = AccessKeyDescription
+					//Insert into Cache
+					_, err := Uc.OKAPIAUC.AUCClient.CreateAccessEntries(accessEntry)
+					if err == nil {
+						log.Println("Created Access Entry: ", accessEntry.Key)
+					} else {
+						log.Println("Error creating AccessEntry in AUC !!!")
+						json.NewEncoder(os.Stdout).Encode(accessEntry)
+					}
+
+				}
+			}
+		}
+
+	}
+
+	router.Path("/metrics").Handler(CustomPrometheusHandler())
+	// router.Path("/metrics_latency").Handler(CustomPrometheusLatencyHandler())
+
+	Uc.Add_Lendme_ToAccessEntry(existingEntries)
+	Uc.Add_Lendme_ToAccessEntry(existingEntriesokapi)
+
+	var Lendme_Group = AuthCenter.UserAccessGroup{
+		GroupName:        "VAS - Lendme",
+		GroupDescription: "Access group for VAS - Lendme",
+		Locked:           false,
+		AddUser:          "Auto Create",
+		AddDate:          time.Now(),
+		LastModifyUser:   "Auto Create",
+		LastModifyDate:   time.Now(),
+	}
+
+	userAccessGroups, err := Uc.OKAPIAUC.AUCClient.ReadUserAccessGroup("VAS - Lendme")
+	if err != nil {
+		fmt.Println("Error Reading VAS - Lendme Group from AUC, shutting down !!!")
+	}
+	if len(userAccessGroups.Data) < 1 {
+
+		_, err := Uc.OKAPIAUC.AUCClient.CreateUserAccessGroup((Lendme_Group))
+		if err != nil {
+			fmt.Println("Error Creating VAS - Lendme Group, shutting down !!!")
+		}
+
+		AccessEntries_to_add := []AuthCenter.GroupAccessEntries_comprehensive{
+			{AccessKey: "Value Added Services", AccessMethod: "Module", Allowed: true},
+			{AccessKey: "Lendme", AccessMethod: "Module Main Menu", Allowed: true},
+			{AccessKey: "Credit Limit Scheme", AccessMethod: "Module Sub Menu L1", Allowed: true},
+			{AccessKey: "HTTP_Credit_Limit_Scheme", AccessMethod: "GET", Allowed: true},
+			{AccessKey: "HTTP_Credit_Limit_Scheme", AccessMethod: "POST", Allowed: true},
+			{AccessKey: "HTTP_Credit_Limit_Scheme", AccessMethod: "PUT", Allowed: true},
+			{AccessKey: "HTTP_Credit_Limit_Scheme", AccessMethod: "DELETE", Allowed: true},
+			{AccessKey: "Subscriber", AccessMethod: "Module Sub Menu L1", Allowed: true},
+			{AccessKey: "HTTP_Subscriber", AccessMethod: "GET", Allowed: true},
+			{AccessKey: "HTTP_Subscriber", AccessMethod: "POST", Allowed: true},
+			{AccessKey: "HTTP_Subscriber", AccessMethod: "PUT", Allowed: true},
+			{AccessKey: "HTTP_Subscriber", AccessMethod: "DELETE", Allowed: true},
+			{AccessKey: "HTTP_Lendme_Logs", AccessMethod: "GET", Allowed: true},
+			{AccessKey: "Lendme Customer Exclusion", AccessMethod: "Module Sub Menu L1", Allowed: true},
+			{AccessKey: "HTTP_Lendme_Customer_Exclusion", AccessMethod: "GET", Allowed: true},
+			{AccessKey: "HTTP_Lendme_Customer_Exclusion", AccessMethod: "POST", Allowed: true},
+			{AccessKey: "HTTP_Lendme_Customer_Exclusion", AccessMethod: "PUT", Allowed: true},
+			{AccessKey: "HTTP_Lendme_Customer_Exclusion", AccessMethod: "DELETE", Allowed: true},
+			{AccessKey: "Lendme Customer COS Exclusion", AccessMethod: "Module Sub Menu L1", Allowed: true},
+			{AccessKey: "HTTP_Lendme_Customer_COS_Exclusion", AccessMethod: "GET", Allowed: true},
+			{AccessKey: "HTTP_Lendme_Customer_COS_Exclusion", AccessMethod: "POST", Allowed: true},
+			{AccessKey: "HTTP_Lendme_Customer_COS_Exclusion", AccessMethod: "PUT", Allowed: true},
+			{AccessKey: "HTTP_Lendme_Customer_COS_Exclusion", AccessMethod: "DELETE", Allowed: true},
+		}
+		_, err = Uc.OKAPIAUC.AUCClient.GroupAccessEntriesForGroup_Comprehensive("VAS - Lendme", AccessEntries_to_add)
+
+		if err != nil {
+			fmt.Println(err)
+			fmt.Println("Error Creating VAS - Lendme, shutting down !!!")
+		}
+	}
+}
+
+func (Uc *UserControl) AddToLoyaltyServiceRouter(router *mux.Router, UC *UserControl) {
+	// When StrictSlash is set to true, if the route path is "/path/", accessing "/path" will redirect
+	// to the former and vice versa
+	routes := CreateRoutes(UC)
+
+	Uc.Add_LoyaltyServiceRoutes(&routes)
+
+	accessEntries, err := Uc.AppAUC.AUCClient.ReadAccessEntries("")
+	if err != nil {
+		log.Fatalln("Error Reading Existing Access Entries from AUC !!!")
+	}
+	MapAccessEntry.Clear()
 	log.Println("Read existing routes: #", len(accessEntries.Data))
 
 	for _, acc := range accessEntries.Data {
@@ -124,80 +320,698 @@ func (Uc *UserControl) AddToAppRouter(router *mux.Router, UC *UserControl) {
 		}
 
 	}
+	router.Path("/Loyalty_metrics").Handler(LoyaltyPrometheusHandler())
+	// router.Path("/metrics_latency").Handler(CustomPrometheusLatencyHandler())
+	Uc.Create_UCGW_AUCUser()
+	Uc.Create_USSD_AUCUser()
+}
+
+func (Uc *UserControl) AddToLoyaltyManagementRouter(router *mux.Router, UC *UserControl) {
+	// When StrictSlash is set to true, if the route path is "/path/", accessing "/path" will redirect
+	// to the former and vice versa
+	routes := CreateRoutes(UC)
+
+	Uc.Add_LoyaltyManagementRoutes(&routes)
+
+	accessEntries, err := Uc.OKAPIAUC.AUCClient.ReadAccessEntries("")
+	if err != nil {
+		log.Fatalln("Error Reading Existing Access Entries from AUC !!!")
+	}
+	MapAccessEntry.Clear()
+
+	fmt.Println("Read existing routes: #", len(accessEntries.Data))
+	var existingEntries = make(map[string]AuthCenter.AccessEntry)
+
+	for _, acc := range accessEntries.Data {
+		MapAccessEntry.Put(acc.Key, acc)
+	}
+
+	for _, route := range routes {
+		if route.AllowedFor_App {
+			//var handler http.Handler
+			handler := route.HandlerFunc
+			//handler = Logger(handler, route.Name)
+			router.
+				Methods(route.Method).
+				Path(route.Pattern).
+				Name(route.Name).
+				Handler(handler)
+
+			//add to OKAPI AUC
+			if route.AddToAccessEntry {
+				ok := MapAccessEntry.Check(route.Name + "|" + route.Method)
+				if !ok {
+					var accessEntry AuthCenter.AccessEntry
+					accessEntry.AddUser = "Auto Add"
+					accessEntry.AddDate = time.Now().UTC()
+					accessEntry.LastModifyUser = "Auto Add"
+					accessEntry.LastModifyDate = time.Now().UTC()
+					accessEntry.Key = route.Name + "|" + route.Method
+					accessEntry.AccessKey = route.Name
+					accessEntry.AccessMethod = route.Method
+					accessEntry.DisplayName = route.DisplayName
+					accessEntry.DisplayOrder = route.DisplayOrder
+					accessEntry.Module = route.Module
+					accessEntry.ModuleDisplayOrder = route.ModuleDisplayOrder
+					accessEntry.Level1 = route.Level1
+					accessEntry.Level1DisplayOrder = route.Level1DisplayOrder
+					accessEntry.Level2 = route.Level2
+					accessEntry.Level2DisplayOrder = route.Level2DisplayOrder
+					accessEntry.Level3 = route.Level3
+					accessEntry.Level3DisplayOrder = route.Level3DisplayOrder
+
+					AccessKeyDescription := strings.Replace(route.Name, "HTTP_", "", -1)
+					AccessKeyDescription = strings.Replace(AccessKeyDescription, "_", " ", -1)
+					accessEntry.AccessKeyDescription = AccessKeyDescription
+					//Insert into Cache
+					_, err := Uc.OKAPIAUC.AUCClient.CreateAccessEntries(accessEntry)
+					if err == nil {
+						log.Println("Created Access Entry: ", accessEntry.Key)
+					} else {
+						log.Println("Error creating AccessEntry in AUC !!!")
+						json.NewEncoder(os.Stdout).Encode(accessEntry)
+					}
+				}
+			}
+		}
+
+	}
+
+	for _, route := range routes {
+		//var handler http.Handler
+		handler := route.HandlerFunc
+		//handler = Logger(handler, route.Name)
+		router.
+			Methods(route.Method).
+			Path(route.Pattern).
+			Name(route.Name).
+			Handler(handler)
+
+	}
 	router.Path("/metrics").Handler(CustomPrometheusHandler())
+	router.Path("/metrics_latency").Handler(CustomPrometheusLatencyHandler())
+
+	Uc.Add_Loyalty_ToAccessEntry(existingEntries)
+
+	var Loyalty_Group = AuthCenter.UserAccessGroup{
+		GroupName:        "VAS - Loyalty",
+		GroupDescription: "Access group for VAS - Loyalty",
+		Locked:           false,
+		AddUser:          "Auto Create",
+		AddDate:          time.Now(),
+		LastModifyUser:   "Auto Create",
+		LastModifyDate:   time.Now(),
+	}
+
+	userAccessGroups, err := Uc.OKAPIAUC.AUCClient.ReadUserAccessGroup("VAS - Loyalty")
+	if err != nil {
+		fmt.Println("Error Reading VAS - Loyalty Group from AUC, shutting down !!!")
+	}
+	if len(userAccessGroups.Data) < 1 {
+
+		_, err := Uc.OKAPIAUC.AUCClient.CreateUserAccessGroup((Loyalty_Group))
+		if err != nil {
+			fmt.Println("Error Creating VAS - Loyalty Group, shutting down !!!")
+		}
+
+		AccessEntries_to_add := []AuthCenter.GroupAccessEntries_comprehensive{
+			{AccessKey: "Value Added Services", AccessMethod: "Module", Allowed: true},
+			{AccessKey: "Loyalty", AccessMethod: "Module Main Menu", Allowed: true},
+			{AccessKey: "Loyalty Governance", AccessMethod: "Module Sub Menu L1", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Governance", AccessMethod: "GET", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Governance", AccessMethod: "POST", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Governance", AccessMethod: "PUT", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Governance", AccessMethod: "DELETE", Allowed: true},
+			{AccessKey: "Loyalty Level", AccessMethod: "Module Sub Menu L1", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Level", AccessMethod: "GET", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Level", AccessMethod: "POST", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Level", AccessMethod: "PUT", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Level", AccessMethod: "DELETE", Allowed: true},
+			{AccessKey: "Loyalty Seniority Level", AccessMethod: "Module Sub Menu L1", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Seniority_Level", AccessMethod: "GET", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Seniority_Level", AccessMethod: "POST", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Seniority_Level", AccessMethod: "PUT", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Seniority_Level", AccessMethod: "DELETE", Allowed: true},
+			{AccessKey: "Loyalty Account Segment", AccessMethod: "Module Sub Menu L1", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Account_Segment", AccessMethod: "GET", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Account_Segment", AccessMethod: "POST", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Account_Segment", AccessMethod: "PUT", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Account_Segment", AccessMethod: "DELETE", Allowed: true},
+			{AccessKey: "Loyalty Point Earning Rules", AccessMethod: "Module Sub Menu L1", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Point_Earning_Rules", AccessMethod: "GET", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Point_Earning_Rules", AccessMethod: "POST", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Point_Earning_Rules", AccessMethod: "PUT", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Point_Earning_Rules", AccessMethod: "DELETE", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Point_Earning_Rules_Overwrite", AccessMethod: "GET", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Point_Earning_Rules_Overwrite", AccessMethod: "POST", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Point_Earning_Rules_Overwrite", AccessMethod: "PUT", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Point_Earning_Rules_Overwrite", AccessMethod: "DELETE", Allowed: true},
+			{AccessKey: "Loyalty Point Expiry Rules", AccessMethod: "Module Sub Menu L1", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Point_Expiry_Rules", AccessMethod: "GET", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Point_Expiry_Rules", AccessMethod: "POST", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Point_Expiry_Rules", AccessMethod: "PUT", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Point_Expiry_Rules", AccessMethod: "DELETE", Allowed: true},
+			{AccessKey: "Loyalty Point Redemption Rules", AccessMethod: "Module Sub Menu L1", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Point_Redemption_Rules", AccessMethod: "GET", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Point_Redemption_Rules", AccessMethod: "POST", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Point_Redemption_Rules", AccessMethod: "PUT", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Point_Redemption_Rules", AccessMethod: "DELETE", Allowed: true},
+			{AccessKey: "Loyalty Plan", AccessMethod: "Module Sub Menu L1", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Plan", AccessMethod: "GET", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Plan", AccessMethod: "POST", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Plan", AccessMethod: "PUT", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Plan", AccessMethod: "DELETE", Allowed: true},
+			{AccessKey: "Customer Loyalty Account", AccessMethod: "Module Sub Menu L1", Allowed: true},
+			{AccessKey: "HTTP_Customer_Loyalty_Account", AccessMethod: "GET", Allowed: true},
+			{AccessKey: "HTTP_Customer_Loyalty_Account", AccessMethod: "POST", Allowed: true},
+			{AccessKey: "HTTP_Customer_Loyalty_Account", AccessMethod: "PUT", Allowed: true},
+			{AccessKey: "HTTP_Customer_Loyalty_Account", AccessMethod: "DELETE", Allowed: true},
+			{AccessKey: "Customer UAT", AccessMethod: "Module Sub Menu L1", Allowed: true},
+			{AccessKey: "HTTP_Customer_UAT", AccessMethod: "GET", Allowed: true},
+			{AccessKey: "HTTP_Customer_UAT", AccessMethod: "POST", Allowed: true},
+			{AccessKey: "HTTP_Customer_UAT", AccessMethod: "PUT", Allowed: true},
+			{AccessKey: "HTTP_Customer_UAT", AccessMethod: "DELETE", Allowed: true},
+			{AccessKey: "Customer DND", AccessMethod: "Module Sub Menu L1", Allowed: true},
+			{AccessKey: "HTTP_Customer_DND", AccessMethod: "GET", Allowed: true},
+			{AccessKey: "HTTP_Customer_DND", AccessMethod: "POST", Allowed: true},
+			{AccessKey: "HTTP_Customer_DND", AccessMethod: "PUT", Allowed: true},
+			{AccessKey: "HTTP_Customer_DND", AccessMethod: "DELETE", Allowed: true},
+			{AccessKey: "Customer Exclusion", AccessMethod: "Module Sub Menu L1", Allowed: true},
+			{AccessKey: "HTTP_Customer_Exclusion", AccessMethod: "GET", Allowed: true},
+			{AccessKey: "HTTP_Customer_Exclusion", AccessMethod: "POST", Allowed: true},
+			{AccessKey: "HTTP_Customer_Exclusion", AccessMethod: "PUT", Allowed: true},
+			{AccessKey: "HTTP_Customer_Exclusion", AccessMethod: "DELETE", Allowed: true},
+			{AccessKey: "Customer COS Exclusion", AccessMethod: "Module Sub Menu L1", Allowed: true},
+			{AccessKey: "HTTP_Customer_COS_Exclusion", AccessMethod: "GET", Allowed: true},
+			{AccessKey: "HTTP_Customer_COS_Exclusion", AccessMethod: "POST", Allowed: true},
+			{AccessKey: "HTTP_Customer_COS_Exclusion", AccessMethod: "PUT", Allowed: true},
+			{AccessKey: "HTTP_Customer_COS_Exclusion", AccessMethod: "DELETE", Allowed: true},
+			{AccessKey: "HTTP_Customer_Loyalty_Account_GetRedemption_Rules", AccessMethod: "GET", Allowed: true},
+			{AccessKey: "HTTP_Customer_Loyalty_RedeemRequest", AccessMethod: "PUT", Allowed: true},
+			{AccessKey: "HTTP_Customer_Loyalty_Account_Points_Details", AccessMethod: "GET", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_AccountDebitPoints_log", AccessMethod: "GET", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_AccountCreditPoints_log", AccessMethod: "GET", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_logs", AccessMethod: "GET", Allowed: true},
+			{AccessKey: "HTTP_Customer_Loyalty_Account_CreditPoints", AccessMethod: "PUT", Allowed: true},
+			{AccessKey: "HTTP_Customer_Loyalty_Account_DebitPoints", AccessMethod: "PUT", Allowed: true},
+			{AccessKey: "HTTP_Loyalty_Products_Catalogue", AccessMethod: "GET", Allowed: true},
+			{AccessKey: "HTTP_Customer_Loyalty_Account_OptRequest", AccessMethod: "POST", Allowed: true},
+			{AccessKey: "Customer Awarded Points", AccessMethod: "Module Sub Menu L1", Allowed: true},
+			{AccessKey: "HTTP_Customer_Loyalty_Account_Get_Awarded_Points", AccessMethod: "GET", Allowed: true},
+			{AccessKey: "Bulk Points Crediting", AccessMethod: "Module Sub Menu L1", Allowed: true},
+			{AccessKey: "HTTP_Bulk_Loyalty_Points_Crediting", AccessMethod: "POST", Allowed: true},
+			{AccessKey: "HTTP_Bulk_Loyalty_Points_Crediting_Progress", AccessMethod: "GET", Allowed: true},
+			{AccessKey: "Bulk Points Deduction", AccessMethod: "Module Sub Menu L1", Allowed: true},
+			{AccessKey: "HTTP_Bulk_Loyalty_Points_Deduction", AccessMethod: "POST", Allowed: true},
+			{AccessKey: "HTTP_Bulk_Loyalty_Points_Deduction_Progress", AccessMethod: "GET", Allowed: true},
+		}
+		_, err = Uc.OKAPIAUC.AUCClient.GroupAccessEntriesForGroup_Comprehensive("VAS - Loyalty", AccessEntries_to_add)
+
+		if err != nil {
+			fmt.Println(err)
+			fmt.Println("Error Creating VAS - Loyalty, shutting down !!!")
+		}
+	}
+
+}
+
+func (Uc *UserControl) AddToLoyaltyFeedRouter(router *mux.Router, UC *UserControl) {
+	// When StrictSlash is set to true, if the route path is "/path/", accessing "/path" will redirect
+	// to the former and vice versa
+	routes := CreateRoutes(UC)
+	Uc.Add_LoyaltyFeedRoutes(&routes)
+
+	for _, route := range routes {
+		//var handler http.Handler
+		handler := route.HandlerFunc
+		//handler = Logger(handler, route.Name)
+		router.
+			Methods(route.Method).
+			Path(route.Pattern).
+			Name(route.Name).
+			Handler(handler)
+	}
+	//router.Path("/metrics").Handler(CustomPrometheusHandler())
 	// router.Path("/metrics_latency").Handler(CustomPrometheusLatencyHandler())
 }
 
-// func (Uc *UserControl) AddToOKAPIRouter(router *mux.Router, UC *UserControl) {
-// 	// When StrictSlash is set to true, if the route path is "/path/", accessing "/path" will redirect
-// 	// to the former and vice versa
-// 	routes := CreateRoutes(UC)
+func (Uc *UserControl) AddToOKAPIAccessEntry(existing map[string]AuthCenter.AccessEntry, accessEntry AuthCenter.AccessEntry) {
+	accessEntry.Key = accessEntry.AccessKey + "|" + accessEntry.AccessMethod
+	_, ok := existing[accessEntry.Key]
 
-// 	Uc.Add_LendmeRoutes(&routes)
+	if !ok {
+		json.NewEncoder(os.Stdout).Encode(accessEntry)
+		accessEntry.Id = 0
+		accessEntry.Status = ""
+		accessEntry.AddUser = "Auto Add"
+		accessEntry.AddDate = time.Now().UTC()
+		accessEntry.LastModifyUser = "Auto Add"
+		accessEntry.LastModifyDate = time.Now().UTC()
+		//Insert into Cache
+		_, err := Uc.OKAPIAUC.AUCClient.CreateAccessEntries(accessEntry)
+		if err == nil {
+			MapAccessEntry.Put(accessEntry.AccessKey+"|"+accessEntry.AccessMethod, accessEntry)
+			fmt.Println("Created Access Entry: ", accessEntry.Key)
+		} else {
+			json.NewEncoder(os.Stdout).Encode(accessEntry)
+			fmt.Println("Error creating AccessEntry in AUC !!!")
+		}
+	}
+}
 
-// 	accessEntries, err := Uc.OKAPIAUC.AUCClient.ReadAccessEntries("")
-// 	if err != nil {
-// 		log.Fatalln("Error Reading Existing Access Entries from AUC !!!")
-// 	}
+func (Uc *UserControl) Add_Loyalty_ToAccessEntry(existing map[string]AuthCenter.AccessEntry) {
+	// Access Method: Module, Module Main Menu, Module Sub Menu L1, Module Sub Menu L2
+	Module := "Value Added Services"
+	var ModuleDisplayOrder int64 = 13
 
-// 	log.Println("Read existing routes: #", len(accessEntries.Data))
+	//Module (Purple circles)
+	sd_ae := AuthCenter.AccessEntry{
+		AccessKey:            "Value Added Services",
+		AccessMethod:         "Module",
+		AccessKeyDescription: "Value Added Services Module",
+		DisplayName:          "Value Added Services",
+		DisplayOrder:         13,
+		Module:               Module,
+		ModuleDisplayOrder:   ModuleDisplayOrder,
+		Level1:               "",
+		Level1DisplayOrder:   0,
+		Level2:               "",
+		Level2DisplayOrder:   0,
+		Level3:               "",
+		Level3DisplayOrder:   0,
+	}
+	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
 
-// 	for _, acc := range accessEntries.Data {
-// 		MapAccessEntry.Put(acc.Key, acc)
-// 	}
+	//Module Main Menu (yellow circles)
+	Level1 := "Loyalty"
+	var Level1DisplayOrder int64 = 6
 
-// 	for _, route := range routes {
-// 		if route.AllowedFor_OKAPI {
-// 			//var handler http.Handler
-// 			handler := route.HandlerFunc
-// 			//handler = Logger(handler, route.Name)
-// 			router.
-// 				Methods(route.Method).
-// 				Path(route.Pattern).
-// 				Name(route.Name).
-// 				Handler(handler)
-// 			//add to OKAPI AUC
+	sd_ae = AuthCenter.AccessEntry{
+		AccessKey:            "Loyalty",
+		AccessMethod:         "Module Main Menu",
+		AccessKeyDescription: "Loyalty",
+		DisplayName:          "Loyalty",
+		DisplayOrder:         13,
+		Module:               Module,
+		ModuleDisplayOrder:   ModuleDisplayOrder,
+		Level1:               Level1,
+		Level1DisplayOrder:   Level1DisplayOrder,
+		Level2:               "",
+		Level2DisplayOrder:   0,
+		Level3:               "",
+		Level3DisplayOrder:   0,
+	}
+	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
 
-// 			if route.AddToAccessEntry {
-// 				ok := MapAccessEntry.Check(route.Name + "|" + route.Method)
-// 				if !ok {
-// 					var accessEntry AuthCenter.AccessEntry
-// 					accessEntry.AddUser = "Auto Add"
-// 					accessEntry.AddDate = time.Now().UTC()
-// 					accessEntry.LastModifyUser = "Auto Add"
-// 					accessEntry.LastModifyDate = time.Now().UTC()
-// 					accessEntry.Key = route.Name + "|" + route.Method
-// 					accessEntry.AccessKey = route.Name
-// 					accessEntry.AccessMethod = route.Method
-// 					accessEntry.DisplayName = route.DisplayName
-// 					accessEntry.DisplayOrder = route.DisplayOrder
-// 					accessEntry.Module = route.Module
-// 					accessEntry.ModuleDisplayOrder = route.ModuleDisplayOrder
-// 					accessEntry.Level1 = route.Level1
-// 					accessEntry.Level1DisplayOrder = route.Level1DisplayOrder
-// 					accessEntry.Level2 = route.Level2
-// 					accessEntry.Level2DisplayOrder = route.Level2DisplayOrder
-// 					accessEntry.Level3 = route.Level3
-// 					accessEntry.Level3DisplayOrder = route.Level3DisplayOrder
+	sd_ae = AuthCenter.AccessEntry{
+		AccessKey:            "Loyalty Governance",
+		AccessMethod:         "Module Sub Menu L1",
+		AccessKeyDescription: "Loyalty Governance",
+		DisplayName:          "Loyalty Governance",
+		DisplayOrder:         13,
+		Module:               Module,
+		ModuleDisplayOrder:   ModuleDisplayOrder,
+		Level1:               Level1,
+		Level1DisplayOrder:   Level1DisplayOrder,
+		Level2:               "Loyalty Governance",
+		Level2DisplayOrder:   1,
+		Level3:               "",
+		Level3DisplayOrder:   0,
+	}
+	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
 
-// 					AccessKeyDescription := strings.Replace(route.Name, "HTTP_", "", -1)
-// 					AccessKeyDescription = strings.Replace(AccessKeyDescription, "_", " ", -1)
-// 					accessEntry.AccessKeyDescription = AccessKeyDescription
-// 					//Insert into Cache
-// 					_, err := Uc.OKAPIAUC.AUCClient.CreateAccessEntries(accessEntry)
-// 					if err == nil {
-// 						log.Println("Created Access Entry: ", accessEntry.Key)
-// 					} else {
-// 						log.Println("Error creating AccessEntry in AUC !!!")
-// 						json.NewEncoder(os.Stdout).Encode(accessEntry)
-// 					}
-// 				}
-// 			}
-// 		}
-// 	}
-// 	router.Path("/metrics").Handler(CustomPrometheusHandler())
-// 	router.Path("/metrics_latency").Handler(CustomPrometheusLatencyHandler())
-// }
+	sd_ae = AuthCenter.AccessEntry{
+		AccessKey:            "Loyalty Level",
+		AccessMethod:         "Module Sub Menu L1",
+		AccessKeyDescription: "Loyalty Level",
+		DisplayName:          "Loyalty Level",
+		DisplayOrder:         13,
+		Module:               Module,
+		ModuleDisplayOrder:   ModuleDisplayOrder,
+		Level1:               Level1,
+		Level1DisplayOrder:   Level1DisplayOrder,
+		Level2:               "Loyalty Level",
+		Level2DisplayOrder:   2,
+		Level3:               "",
+		Level3DisplayOrder:   0,
+	}
+	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
+
+	sd_ae = AuthCenter.AccessEntry{
+		AccessKey:            "Loyalty Seniority Level",
+		AccessMethod:         "Module Sub Menu L1",
+		AccessKeyDescription: "Loyalty Seniority Level",
+		DisplayName:          "Loyalty Seniority Level",
+		DisplayOrder:         13,
+		Module:               Module,
+		ModuleDisplayOrder:   ModuleDisplayOrder,
+		Level1:               Level1,
+		Level1DisplayOrder:   Level1DisplayOrder,
+		Level2:               "Loyalty Seniority Level",
+		Level2DisplayOrder:   3,
+		Level3:               "",
+		Level3DisplayOrder:   0,
+	}
+	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
+
+	sd_ae = AuthCenter.AccessEntry{
+		AccessKey:            "Loyalty Account Segment",
+		AccessMethod:         "Module Sub Menu L1",
+		AccessKeyDescription: "Loyalty Account Segment",
+		DisplayName:          "Loyalty Account Segment",
+		DisplayOrder:         13,
+		Module:               Module,
+		ModuleDisplayOrder:   ModuleDisplayOrder,
+		Level1:               Level1,
+		Level1DisplayOrder:   Level1DisplayOrder,
+		Level2:               "Loyalty Account Segment",
+		Level2DisplayOrder:   4,
+		Level3:               "",
+		Level3DisplayOrder:   0,
+	}
+	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
+
+	sd_ae = AuthCenter.AccessEntry{
+		AccessKey:            "Loyalty Point Earning Rules",
+		AccessMethod:         "Module Sub Menu L1",
+		AccessKeyDescription: "Loyalty Point Earning Rules",
+		DisplayName:          "Loyalty Point Earning Rules",
+		DisplayOrder:         13,
+		Module:               Module,
+		ModuleDisplayOrder:   ModuleDisplayOrder,
+		Level1:               Level1,
+		Level1DisplayOrder:   Level1DisplayOrder,
+		Level2:               "Loyalty Point Earning Rules",
+		Level2DisplayOrder:   5,
+		Level3:               "",
+		Level3DisplayOrder:   0,
+		Routes:               []string{"HTTP_Loyalty_Point_Earning_Rules_Overwrite|GET", "HTTP_Loyalty_Point_Earning_Rules_Overwrite|PUT", "HTTP_Loyalty_Point_Earning_Rules_Overwrite|POST", "HTTP_Loyalty_Point_Earning_Rules_Overwrite|DELETE"},
+	}
+	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
+
+	sd_ae = AuthCenter.AccessEntry{
+		AccessKey:            "Loyalty Point Expiry Rules",
+		AccessMethod:         "Module Sub Menu L1",
+		AccessKeyDescription: "Loyalty Point Expiry Rules",
+		DisplayName:          "Loyalty Point Expiry Rules",
+		DisplayOrder:         13,
+		Module:               Module,
+		ModuleDisplayOrder:   ModuleDisplayOrder,
+		Level1:               Level1,
+		Level1DisplayOrder:   Level1DisplayOrder,
+		Level2:               "Loyalty Point Expiry Rules",
+		Level2DisplayOrder:   6,
+		Level3:               "",
+		Level3DisplayOrder:   0,
+	}
+	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
+
+	sd_ae = AuthCenter.AccessEntry{
+		AccessKey:            "Loyalty Point Redemption Rules",
+		AccessMethod:         "Module Sub Menu L1",
+		AccessKeyDescription: "Loyalty Point Redemption Rules",
+		DisplayName:          "Loyalty Point Redemption Rules",
+		DisplayOrder:         13,
+		Module:               Module,
+		ModuleDisplayOrder:   ModuleDisplayOrder,
+		Level1:               Level1,
+		Level1DisplayOrder:   Level1DisplayOrder,
+		Level2:               "Loyalty Point Redemption Rules",
+		Level2DisplayOrder:   7,
+		Level3:               "",
+		Level3DisplayOrder:   0,
+	}
+	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
+
+	sd_ae = AuthCenter.AccessEntry{
+		AccessKey:            "Loyalty Plan",
+		AccessMethod:         "Module Sub Menu L1",
+		AccessKeyDescription: "Loyalty Plan",
+		DisplayName:          "Loyalty Plan",
+		DisplayOrder:         13,
+		Module:               Module,
+		ModuleDisplayOrder:   ModuleDisplayOrder,
+		Level1:               Level1,
+		Level1DisplayOrder:   Level1DisplayOrder,
+		Level2:               "Loyalty Plan",
+		Level2DisplayOrder:   8,
+		Level3:               "",
+		Level3DisplayOrder:   0,
+	}
+	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
+
+	sd_ae = AuthCenter.AccessEntry{
+		AccessKey:            "Customer Loyalty Account",
+		AccessMethod:         "Module Sub Menu L1",
+		AccessKeyDescription: "Customer Loyalty Account",
+		DisplayName:          "Customer Loyalty Account",
+		DisplayOrder:         13,
+		Module:               Module,
+		ModuleDisplayOrder:   ModuleDisplayOrder,
+		Level1:               Level1,
+		Level1DisplayOrder:   Level1DisplayOrder,
+		Level2:               "Customer Loyalty Account",
+		Level2DisplayOrder:   9,
+		Level3:               "",
+		Level3DisplayOrder:   0,
+		Routes:               []string{"HTTP_Customer_Loyalty_Account_GetRedemption_Rules|GET", "HTTP_Customer_Loyalty_RedeemRequest|PUT", "HTTP_Loyalty_AccountDebitPoints_log|GET", "HTTP_Customer_Loyalty_Account_Points_Details|GET", "HTTP_Loyalty_AccountCreditPoints_log|GET", "HTTP_Loyalty_logs|GET", "HTTP_Customer_Loyalty_Account_DebitPoints|PUT", "HTTP_Customer_Loyalty_Account_CreditPoints|PUT", "HTTP_Loyalty_Products_Catalogue|GET", "HTTP_Customer_Loyalty_Account_OptRequest|POST"},
+	}
+	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
+
+	sd_ae = AuthCenter.AccessEntry{
+		AccessKey:            "Customer UAT",
+		AccessMethod:         "Module Sub Menu L1",
+		AccessKeyDescription: "Customer UAT",
+		DisplayName:          "Customer UAT",
+		DisplayOrder:         13,
+		Module:               Module,
+		ModuleDisplayOrder:   ModuleDisplayOrder,
+		Level1:               Level1,
+		Level1DisplayOrder:   Level1DisplayOrder,
+		Level2:               "Customer UAT",
+		Level2DisplayOrder:   10,
+		Level3:               "",
+		Level3DisplayOrder:   0,
+	}
+	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
+
+	sd_ae = AuthCenter.AccessEntry{
+		AccessKey:            "Customer DND",
+		AccessMethod:         "Module Sub Menu L1",
+		AccessKeyDescription: "Customer DND",
+		DisplayName:          "Customer DND",
+		DisplayOrder:         13,
+		Module:               Module,
+		ModuleDisplayOrder:   ModuleDisplayOrder,
+		Level1:               Level1,
+		Level1DisplayOrder:   Level1DisplayOrder,
+		Level2:               "Customer DND",
+		Level2DisplayOrder:   11,
+		Level3:               "",
+		Level3DisplayOrder:   0,
+	}
+	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
+
+	sd_ae = AuthCenter.AccessEntry{
+		AccessKey:            "Customer Exclusion",
+		AccessMethod:         "Module Sub Menu L1",
+		AccessKeyDescription: "Customer Exclusion",
+		DisplayName:          "Customer Exclusion",
+		DisplayOrder:         13,
+		Module:               Module,
+		ModuleDisplayOrder:   ModuleDisplayOrder,
+		Level1:               Level1,
+		Level1DisplayOrder:   Level1DisplayOrder,
+		Level2:               "Customer Exclusion",
+		Level2DisplayOrder:   12,
+		Level3:               "",
+		Level3DisplayOrder:   0,
+	}
+	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
+
+	sd_ae = AuthCenter.AccessEntry{
+		AccessKey:            "Customer COS Exclusion",
+		AccessMethod:         "Module Sub Menu L1",
+		AccessKeyDescription: "Customer COS Exclusion",
+		DisplayName:          "Customer COS Exclusion",
+		DisplayOrder:         13,
+		Module:               Module,
+		ModuleDisplayOrder:   ModuleDisplayOrder,
+		Level1:               Level1,
+		Level1DisplayOrder:   Level1DisplayOrder,
+		Level2:               "Customer COS Exclusion",
+		Level2DisplayOrder:   13,
+		Level3:               "",
+		Level3DisplayOrder:   0,
+	}
+	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
+
+	sd_ae = AuthCenter.AccessEntry{
+		AccessKey:            "Customer Awarded Points",
+		AccessMethod:         "Module Sub Menu L1",
+		AccessKeyDescription: "Customer Awarded Points",
+		DisplayName:          "Customer Awarded Points",
+		DisplayOrder:         13,
+		Module:               Module,
+		ModuleDisplayOrder:   ModuleDisplayOrder,
+		Level1:               Level1,
+		Level1DisplayOrder:   Level1DisplayOrder,
+		Level2:               "Customer Awarded Points",
+		Level2DisplayOrder:   14,
+		Level3:               "",
+		Level3DisplayOrder:   0,
+	}
+	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
+
+	sd_ae = AuthCenter.AccessEntry{
+		AccessKey:            "Bulk Points Crediting",
+		AccessMethod:         "Module Sub Menu L1",
+		AccessKeyDescription: "Bulk Points Crediting",
+		DisplayName:          "Bulk Points Crediting",
+		DisplayOrder:         13,
+		Module:               Module,
+		ModuleDisplayOrder:   ModuleDisplayOrder,
+		Level1:               Level1,
+		Level1DisplayOrder:   Level1DisplayOrder,
+		Level2:               "Bulk Points Crediting",
+		Level2DisplayOrder:   15,
+		Level3:               "",
+		Level3DisplayOrder:   0,
+	}
+	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
+
+	sd_ae = AuthCenter.AccessEntry{
+		AccessKey:            "Bulk Points Deduction",
+		AccessMethod:         "Module Sub Menu L1",
+		AccessKeyDescription: "Bulk Points Deduction",
+		DisplayName:          "Bulk Points Deduction",
+		DisplayOrder:         13,
+		Module:               Module,
+		ModuleDisplayOrder:   ModuleDisplayOrder,
+		Level1:               Level1,
+		Level1DisplayOrder:   Level1DisplayOrder,
+		Level2:               "Bulk Points Deduction",
+		Level2DisplayOrder:   16,
+		Level3:               "",
+		Level3DisplayOrder:   0,
+	}
+	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
+
+}
+
+func (Uc *UserControl) Add_Lendme_ToAccessEntry(existing map[string]AuthCenter.AccessEntry) {
+	// Access Method: Module, Module Main Menu, Module Sub Menu L1, Module Sub Menu L2
+	Module := "Value Added Services"
+	var ModuleDisplayOrder int64 = 13
+
+	//Module (Purple circles)
+	sd_ae := AuthCenter.AccessEntry{
+		AccessKey:            "Value Added Services",
+		AccessMethod:         "Module",
+		AccessKeyDescription: "Value Added Services Module",
+		DisplayName:          "Value Added Services",
+		DisplayOrder:         13,
+		Module:               Module,
+		ModuleDisplayOrder:   ModuleDisplayOrder,
+		Level1:               "",
+		Level1DisplayOrder:   0,
+		Level2:               "",
+		Level2DisplayOrder:   0,
+		Level3:               "",
+		Level3DisplayOrder:   0,
+	}
+	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
+
+	//Module Main Menu (yellow circles)
+	Level1 := "Lendme"
+	var Level1DisplayOrder int64 = 7
+
+	sd_ae = AuthCenter.AccessEntry{
+		AccessKey:            "Lendme",
+		AccessMethod:         "Module Main Menu",
+		AccessKeyDescription: "Lendme",
+		DisplayName:          "Lendme",
+		DisplayOrder:         13,
+		Module:               Module,
+		ModuleDisplayOrder:   ModuleDisplayOrder,
+		Level1:               Level1,
+		Level1DisplayOrder:   Level1DisplayOrder,
+		Level2:               "",
+		Level2DisplayOrder:   0,
+		Level3:               "",
+		Level3DisplayOrder:   0,
+	}
+	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
+
+	sd_ae = AuthCenter.AccessEntry{
+		AccessKey:            "Credit Limit Scheme",
+		AccessMethod:         "Module Sub Menu L1",
+		AccessKeyDescription: "Credit Limit Scheme",
+		DisplayName:          "Credit Limit Scheme",
+		DisplayOrder:         13,
+		Module:               Module,
+		ModuleDisplayOrder:   ModuleDisplayOrder,
+		Level1:               Level1,
+		Level1DisplayOrder:   Level1DisplayOrder,
+		Level2:               "Credit Limit Scheme",
+		Level2DisplayOrder:   1,
+		Level3:               "",
+		Level3DisplayOrder:   0,
+	}
+	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
+
+	sd_ae = AuthCenter.AccessEntry{
+		AccessKey:            "Subscriber",
+		AccessMethod:         "Module Sub Menu L1",
+		AccessKeyDescription: "Subscriber",
+		DisplayName:          "Subscriber",
+		DisplayOrder:         13,
+		Module:               Module,
+		ModuleDisplayOrder:   ModuleDisplayOrder,
+		Level1:               Level1,
+		Level1DisplayOrder:   Level1DisplayOrder,
+		Level2:               "Subscriber",
+		Level2DisplayOrder:   2,
+		Level3:               "",
+		Level3DisplayOrder:   0,
+		Routes:               []string{"HTTP_Lendme_Logs|GET"},
+	}
+	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
+
+	sd_ae = AuthCenter.AccessEntry{
+		AccessKey:            "Lendme Customer Exclusion",
+		AccessMethod:         "Module Sub Menu L1",
+		AccessKeyDescription: "Lendme Customer Exclusion",
+		DisplayName:          "Lendme Customer Exclusion",
+		DisplayOrder:         13,
+		Module:               Module,
+		ModuleDisplayOrder:   ModuleDisplayOrder,
+		Level1:               Level1,
+		Level1DisplayOrder:   Level1DisplayOrder,
+		Level2:               "Lendme Customer Exclusion",
+		Level2DisplayOrder:   3,
+		Level3:               "",
+		Level3DisplayOrder:   0,
+	}
+	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
+
+	sd_ae = AuthCenter.AccessEntry{
+		AccessKey:            "Lendme Customer COS Exclusion",
+		AccessMethod:         "Module Sub Menu L1",
+		AccessKeyDescription: "Lendme Customer COS Exclusion",
+		DisplayName:          "Lendme Customer COS Exclusion",
+		DisplayOrder:         13,
+		Module:               Module,
+		ModuleDisplayOrder:   ModuleDisplayOrder,
+		Level1:               Level1,
+		Level1DisplayOrder:   Level1DisplayOrder,
+		Level2:               "Lendme Customer COS Exclusion",
+		Level2DisplayOrder:   4,
+		Level3:               "",
+		Level3DisplayOrder:   0,
+	}
+	Uc.AddToOKAPIAccessEntry(existing, sd_ae)
+}
 
 // /////////////////////////////////////////////////////////////////////////////////////////////////////
 // authentication functions
@@ -207,4 +1021,88 @@ func Use(h http.HandlerFunc, middleware ...func(http.HandlerFunc) http.HandlerFu
 		h = m(h)
 	}
 	return h
+}
+
+func (Uc *UserControl) Create_UCGW_AUCUser() {
+	// Create User in AUC
+	auc_user := AuthCenter.User{
+		Key:                      "UCGW_Loyalty",
+		FirstName:                "UCGW_Loyalty",
+		MiddleName:               "UCGW_Loyalty",
+		LastName:                 "UCGW_Loyalty",
+		BirthDate:                time.Now(),
+		Company:                  "Africell",
+		Email:                    "UCGW_Loyalty",
+		Phone:                    "UCGW_Loyalty",
+		Login:                    "UCGW_Loyalty",
+		Password:                 "Tles$h!s$w0P@$rd!$p0397",
+		LastPasswordSetDate:      time.Now(),
+		PasswordExpiryDate:       time.Now().AddDate(50, 0, 0),
+		EnableMFA:                false,
+		OTPBySMS:                 false,
+		SkipOTPByMail:            true,
+		LoginWithoutCaptcha:      true,
+		JWEOverwriteDefault:      true,
+		JWEOTPValidationValidity: 6000,
+		JWEAccessValidity:        3600,
+		JWERefreshValidity:       900000000,
+		KeepMeLoggedIn:           true,
+		PreferedLanguage:         "en",
+		AddUser:                  "LoyaltyBE",
+		AddDate:                  time.Now(),
+		LastModifyUser:           "LoyaltyBE",
+		LastModifyDate:           time.Now(),
+	}
+	sr, err := Uc.AppAUC.AUCClient.ReadUser(auc_user.Key)
+	if err == nil && sr.StatusCode != http.StatusOK && sr.ErrorDescription == "login does not exist" {
+		sr, err := Uc.AppAUC.AUCClient.CreateUser(auc_user)
+		if err != nil {
+			log.Println("error creating UCGW_Loyalty user: " + err.Error())
+		} else if sr.StatusCode != http.StatusOK {
+			log.Println("error creating UCGW_Loyalty user: " + sr.StatusDescription)
+		}
+	}
+	return
+}
+
+func (Uc *UserControl) Create_USSD_AUCUser() {
+	// Create User in AUC
+	auc_user := AuthCenter.User{
+		Key:                      "USSD_Loyalty",
+		FirstName:                "USSD_Loyalty",
+		MiddleName:               "USSD_Loyalty",
+		LastName:                 "USSD_Loyalty",
+		BirthDate:                time.Now(),
+		Company:                  "Africell",
+		Email:                    "USSD_Loyalty",
+		Phone:                    "USSD_Loyalty",
+		Login:                    "USSD_Loyalty",
+		Password:                 "Tles$h!s3$$w0P@$rd!$p0sdsef333227",
+		LastPasswordSetDate:      time.Now(),
+		PasswordExpiryDate:       time.Now().AddDate(50, 0, 0),
+		EnableMFA:                false,
+		OTPBySMS:                 false,
+		SkipOTPByMail:            true,
+		LoginWithoutCaptcha:      true,
+		JWEOverwriteDefault:      true,
+		JWEOTPValidationValidity: 6000,
+		JWEAccessValidity:        900000000,
+		JWERefreshValidity:       900000000,
+		KeepMeLoggedIn:           true,
+		PreferedLanguage:         "en",
+		AddUser:                  "LoyaltyBE",
+		AddDate:                  time.Now(),
+		LastModifyUser:           "LoyaltyBE",
+		LastModifyDate:           time.Now(),
+	}
+	sr, err := Uc.AppAUC.AUCClient.ReadUser(auc_user.Key)
+	if err == nil && sr.StatusCode != http.StatusOK && sr.ErrorDescription == "login does not exist" {
+		sr, err := Uc.AppAUC.AUCClient.CreateUser(auc_user)
+		if err != nil {
+			log.Println("error creating UCGW_Loyalty user: " + err.Error())
+		} else if sr.StatusCode != http.StatusOK {
+			log.Println("error creating UCGW_Loyalty user: " + sr.StatusDescription)
+		}
+	}
+	return
 }

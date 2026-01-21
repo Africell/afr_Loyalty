@@ -37,7 +37,6 @@ func (p *program) run() {
 		log.Println(err)
 		return
 	}
-
 	log.Println("Establishing connections...")
 	UserControl := lendme.NewUserControl()
 	UserControl.InitializeDAO()
@@ -53,10 +52,6 @@ func (p *program) run() {
 	go lendme.PortlinkInquiry()
 	go lendme.Reset_Prometheus_Metrics()
 	go lendme.Reset_Prometheus_Metrics_Latency()
-
-	go UserControl.SubQueueExecution()
-	go UserControl.Auto_Import_Subscribers_Dump()
-	go UserControl.Auto_GetOutstandingSummary()
 
 	go sysadmin.SysAdminInit(UserControl.CacheDir, "3"+lendme.Configuration.HttpAppServicePort)
 
@@ -77,8 +72,53 @@ func (p *program) run() {
 		},
 	})
 
-	//Add user routers to the web service
-	//**App web services
+	//**Loyalty main section
+	if lendme.Configuration.HttpAppLoyaltyServicePort != "" {
+		//Initialize loyalty
+		UserControl.InitializeLoyaltyDAO()
+		UserControl.InitializeLoyaltyCache()
+		UserControl.LoyaltyIndexesMaintenanceProcess()
+		UserControl.InitializeLoyaltyDefaultUAT()
+
+		//Loyalty service
+		log.Println("Add Loyalty service routers to the web service")
+		Loyalty_Service_router := mux.NewRouter().StrictSlash(true)
+		UserControl.AddToLoyaltyServiceRouter(Loyalty_Service_router, UserControl)
+		HttpLoyaltyServicePort := lendme.Configuration.HttpAppLoyaltyServicePort
+		log.Println("Loyalty service WS listen and serve on port: " + HttpLoyaltyServicePort) //auc.Configuration.HttpServicePort
+		go http.ListenAndServe(":"+HttpLoyaltyServicePort, corsOpts.Handler(Loyalty_Service_router))
+
+		//Loyalty management
+		log.Println("Add Loyalty management routers to the web service")
+		Loyalty_management_router := mux.NewRouter().StrictSlash(true)
+		UserControl.AddToLoyaltyManagementRouter(Loyalty_management_router, UserControl)
+		HttpLoyaltyManagementPort := lendme.Configuration.HttpAppLoyaltyManagementPort
+		log.Println("Loyalty management WS listen and serve on port: " + HttpLoyaltyManagementPort) //auc.Configuration.HttpServicePort
+		go http.ListenAndServe(":"+HttpLoyaltyManagementPort, corsOpts.Handler(Loyalty_management_router))
+
+		//Loyalty Feed
+		log.Println("Add Loyalty Feed routers to the web service")
+		Loyalty_Feed_router := mux.NewRouter().StrictSlash(true)
+		UserControl.AddToLoyaltyFeedRouter(Loyalty_Feed_router, UserControl)
+		HttpLoyaltyFeedPort := lendme.Configuration.HttpAppLoyaltyFeedPort
+		log.Println("Loyalty Feed WS listen and serve on port: " + HttpLoyaltyFeedPort) //auc.Configuration.HttpServicePort
+		go http.ListenAndServe(":"+HttpLoyaltyFeedPort, corsOpts.Handler(Loyalty_Feed_router))
+
+		go UserControl.PointsExpiry_Process()
+		go UserControl.Loyalty_Governance_DailyLog_Process()
+		go UserControl.Loyalty_Status_Expiry_Daily_Process()
+		go UserControl.Loyalty_Customer_Account_Daily_Snapshot()
+		go UserControl.LoyaltyGovernancePools_Metrics_Process()
+		go UserControl.Auto_GetLoyaltySubsSummary()
+
+	}
+
+	go UserControl.SubQueueExecution()
+	go UserControl.Auto_Import_Subscribers_Dump()
+	go UserControl.Auto_GetOutstandingSummary()
+	go UserControl.Lendme_Subscriber_Daily_Snapshot()
+
+	//**Lendme web services
 	log.Println("Add App routers to the web service")
 	App_router := mux.NewRouter().StrictSlash(true)
 	UserControl.AddToAppRouter(App_router, UserControl)
