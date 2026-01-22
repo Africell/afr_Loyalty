@@ -539,13 +539,12 @@ func (GWClient *Lendme_Client) Loyalty_RedeemRequest(request lendme.Loyalty_Rede
 	return response, nil
 }
 
-func (GWClient *Lendme_Client) Loyalty_Level_Get(key string) (response lendme.API_Standard_response, err error) {
+func (GWClient *Lendme_Client) Loyalty_Level_Get() (response lendme.API_Standard_response, err error) {
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	http_req := Generic_http_call_Request{
-		Url:             GWClient.Protocol + "://" + GWClient.Hostname + ":" + GWClient.LoyaltyPort + "/" + GWClient.LoyaltyModule + "/" + GWClient.LoyaltyVersion + "/HTTP_Loyalty_Level/",
-		Method:          "GET",
-		Token:           GWClient.S2S_AccessToken,
-		QueryParameters: map[string]string{"Key": key},
+		Url:    GWClient.Protocol + "://" + GWClient.Hostname + ":" + GWClient.LoyaltyPort + "/" + GWClient.LoyaltyModule + "/" + GWClient.LoyaltyVersion + "/HTTP_Loyalty_Level/",
+		Method: "GET",
+		Token:  GWClient.S2S_AccessToken,
 	}
 	response_generic, err := GWClient.generic_http_call(http_req)
 	if err != nil {
