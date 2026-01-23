@@ -244,7 +244,6 @@ func (Uc *UserControl) HTTP_Loyalty_Governance(w http.ResponseWriter, r *http.Re
 func (Uc *UserControl) HTTP_Loyalty_Level(w http.ResponseWriter, r *http.Request) {
 	var sr API_Standard_response
 	//**fill response source detail
-	log.Println("Loyalty_Level_Get func:")
 	SourceIp, _ := GetRequestIP(r)
 	sr.SourceIP = SourceIp
 	sr.Login = r.Header.Get("Login")
@@ -261,7 +260,6 @@ func (Uc *UserControl) HTTP_Loyalty_Level(w http.ResponseWriter, r *http.Request
 		key := r.URL.Query().Get("Key")
 		LimitStr := r.URL.Query().Get("Limit")
 		PageStr := r.URL.Query().Get("Page")
-		log.Println("HTTP_Loyalty_Level GET Key:", key, " Limit:", LimitStr, " Page:", PageStr)
 		if LimitStr != "" || PageStr != "" {
 			Limit, limiterr := strconv.ParseInt(LimitStr, 10, 64)
 			if limiterr != nil {
@@ -2606,7 +2604,6 @@ func (Uc *UserControl) HTTP_Customer_Loyalty_Account_OptRequest(w http.ResponseW
 	transaction.SourceApp = validated_Headers.SourceApp
 	transaction.AppLogin = validated_Headers.AppLogin
 	transaction.AppVersion = validated_Headers.AppVersion
-	log.Println("HTTP_Customer_Loyalty_Account_OptRequest called")
 	if !validated_Headers.IsValid {
 		transaction.Request_Status = "failed"
 		transaction.StatusDescription = validated_Headers.ValidationDescription
