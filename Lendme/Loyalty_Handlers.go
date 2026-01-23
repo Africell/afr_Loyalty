@@ -244,6 +244,7 @@ func (Uc *UserControl) HTTP_Loyalty_Governance(w http.ResponseWriter, r *http.Re
 func (Uc *UserControl) HTTP_Loyalty_Level(w http.ResponseWriter, r *http.Request) {
 	var sr API_Standard_response
 	//**fill response source detail
+	log.Println("Loyalty_Level_Get func:")
 	SourceIp, _ := GetRequestIP(r)
 	sr.SourceIP = SourceIp
 	sr.Login = r.Header.Get("Login")
@@ -291,6 +292,7 @@ func (Uc *UserControl) HTTP_Loyalty_Level(w http.ResponseWriter, r *http.Request
 			}
 			sr.Data = schemes
 		} else {
+			log.Println("Loyalty_Level_Get func: Key:", key)
 			schemes, err := Uc.Loyalty_Level_Get(key)
 			if err != nil {
 				sr.Status = "failed"
