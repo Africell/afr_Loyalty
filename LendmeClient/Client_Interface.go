@@ -106,6 +106,7 @@ func (GWClient *Lendme_Client) Lendme_Credit_Limit_Scheme_Get(credit_limit_schem
 			} else {
 				GWClient.AUC_client.S2S_AccessToken = rt.Token // save token global variable to re-use
 				GWClient.S2S_AccessToken = rt.Token            // save token global variable to re-use
+				http_req.Token = rt.Token
 				response_generic, err = GWClient.generic_http_call(http_req)
 				if err != nil {
 					log.Println("generic_http_call error : ", err)
@@ -167,6 +168,7 @@ func (GWClient *Lendme_Client) Lendme_Subscriber_Get(MSISDN string) (response Le
 			} else {
 				GWClient.AUC_client.S2S_AccessToken = rt.Token // save token global variable to re-use
 				GWClient.S2S_AccessToken = rt.Token            // save token global variable to re-use
+				http_req.Token = rt.Token
 				response_generic, err = GWClient.generic_http_call(http_req)
 				if err != nil {
 					log.Println("generic_http_call error : ", err)
@@ -237,6 +239,7 @@ func (GWClient *Lendme_Client) Lendme_Request(request lendme.LendMe_Request) (re
 			} else {
 				GWClient.AUC_client.S2S_AccessToken = rt.Token // save token global variable to re-use
 				GWClient.S2S_AccessToken = rt.Token            // save token global variable to re-use
+				http_req.Token = rt.Token
 				response_generic, err = GWClient.generic_http_call(http_req)
 				if err != nil {
 					log.Println("generic_http_call error : ", err)
@@ -299,6 +302,7 @@ func (GWClient *Lendme_Client) AO_Lendme_Request(request lendme.LendMe_Request) 
 			} else {
 				GWClient.AUC_client.S2S_AccessToken = rt.Token // save token global variable to re-use
 				GWClient.S2S_AccessToken = rt.Token            // save token global variable to re-use
+				http_req.Token = rt.Token
 				response_generic, err = GWClient.generic_http_call(http_req)
 				if err != nil {
 					log.Println("generic_http_call error : ", err)
@@ -361,6 +365,7 @@ func (GWClient *Lendme_Client) Loyalty_Account_Get(MSISDN string) (response Cust
 			} else {
 				GWClient.AUC_client.S2S_AccessToken = rt.Token // save token global variable to re-use
 				GWClient.S2S_AccessToken = rt.Token            // save token global variable to re-use
+				http_req.Token = rt.Token
 				response_generic, err = GWClient.generic_http_call(http_req)
 				if err != nil {
 					log.Println("generic_http_call error : ", err)
@@ -420,6 +425,7 @@ func (GWClient *Lendme_Client) Loyalty_Account_DebitPoints(request Loyalty_Accou
 			} else {
 				GWClient.AUC_client.S2S_AccessToken = rt.Token // save token global variable to re-use
 				GWClient.S2S_AccessToken = rt.Token            // save token global variable to re-use
+				http_req.Token = rt.Token
 				response_generic, err = GWClient.generic_http_call(http_req)
 				if err != nil {
 					log.Println("generic_http_call error : ", err)
@@ -470,6 +476,7 @@ func (GWClient *Lendme_Client) Loyalty_Products_Catalogue(MSISDN string) (respon
 			} else {
 				GWClient.AUC_client.S2S_AccessToken = rt.Token // save token global variable to re-use
 				GWClient.S2S_AccessToken = rt.Token            // save token global variable to re-use
+				http_req.Token = rt.Token
 				response_generic, err = GWClient.generic_http_call(http_req)
 				if err != nil {
 					log.Println("generic_http_call error : ", err)
@@ -523,6 +530,7 @@ func (GWClient *Lendme_Client) Loyalty_RedeemRequest(request lendme.Loyalty_Rede
 			} else {
 				GWClient.AUC_client.S2S_AccessToken = rt.Token // save token global variable to re-use
 				GWClient.S2S_AccessToken = rt.Token            // save token global variable to re-use
+				http_req.Token = rt.Token
 				response_generic, err = GWClient.generic_http_call(http_req)
 				if err != nil {
 					log.Println("generic_http_call error : ", err)
@@ -571,6 +579,7 @@ func (GWClient *Lendme_Client) Loyalty_Level_Get() (response lendme.API_Standard
 			} else {
 				GWClient.AUC_client.S2S_AccessToken = rt.Token // save token global variable to re-use
 				GWClient.S2S_AccessToken = rt.Token            // save token global variable to re-use
+				http_req.Token = rt.Token
 				response_generic, err = GWClient.generic_http_call(http_req)
 				if err != nil {
 					log.Println("generic_http_call error : ", err)
@@ -631,6 +640,7 @@ func (GWClient *Lendme_Client) Loyalty_Account_OptRequest(request lendme.Loyalty
 			} else {
 				GWClient.AUC_client.S2S_AccessToken = rt.Token // save token global variable to re-use
 				GWClient.S2S_AccessToken = rt.Token            // save token global variable to re-use
+				http_req.Token = rt.Token
 				response_generic, err = GWClient.generic_http_call(http_req)
 				if err != nil {
 					log.Println("generic_http_call error : ", err)
