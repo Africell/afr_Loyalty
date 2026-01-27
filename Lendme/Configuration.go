@@ -1892,7 +1892,7 @@ func setDefaultConfiguration_AO_Loyalty() (Configuration ConfigType) {
 	Configuration.Propylaea.Description = "Product Design Center - Propylaea"
 	Configuration.Propylaea.Protocol = "http"
 	Configuration.Propylaea.Port = "9900"
-	Configuration.Propylaea.Hostname = "10.250.1.228"
+	Configuration.Propylaea.Hostname = "10.250.1.229"
 	Configuration.Propylaea.Module = "Propylaea"
 	Configuration.Propylaea.Version = "V1"
 	Configuration.Propylaea.S2S_Username = "Propylaea_Admin"
@@ -1901,7 +1901,7 @@ func setDefaultConfiguration_AO_Loyalty() (Configuration ConfigType) {
 
 	Configuration.APGW.Description = "APGW service"
 	Configuration.APGW.Protocol = "http"
-	Configuration.APGW.Hostname = "10.250.1.229"
+	Configuration.APGW.Hostname = "10.250.1.228"
 	Configuration.APGW.Port = "9903"
 	Configuration.APGW.S2S_Username = "LendmeClient"
 	Configuration.APGW.S2S_Password = "L3ndM320#25)sdfj&^M@y"
