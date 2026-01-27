@@ -6528,15 +6528,6 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 	//validate nagtive balance and pending lendme
 	if !redemption_Rules.Allow_Negative_Balance_ToRedeem {
 		IN_MSISDN := response.MSISDN
-		if Configuration.Operation == "Gambia" {
-			if len(response.MSISDN) > 7 {
-				IN_MSISDN = IN_MSISDN[len(response.MSISDN)-7 : len(response.MSISDN)]
-			}
-		} else if Configuration.Operation == "SierraLeone" { //077928014
-			if len(response.MSISDN) > 8 {
-				IN_MSISDN = "0" + IN_MSISDN[len(response.MSISDN)-8:len(response.MSISDN)]
-			}
-		}
 		// IN_Response, err := Uc.IN.INClient.GetAccountDetails("", "", IN_MSISDN)
 		IN_Response, err := Uc.APGW.APGWClient.CS_AccountDetails(IN_MSISDN)
 		fmt.Println("IN_Response", IN_Response)
