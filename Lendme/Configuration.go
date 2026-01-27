@@ -1770,7 +1770,7 @@ func setDefaultConfiguration_AO_Loyalty() (Configuration ConfigType) {
 	Configuration.LoyaltyMMBundleCode = "AFRICELL DATA"
 
 	Configuration.MSISDN_Prefix = ""
-	Configuration.MSISDN_Short_len = 9
+	Configuration.MSISDN_Short_len = 8
 	Configuration.CountryCode = "244"
 
 	Configuration.Lendme_EVC_Dealer_MSISDN = "244951010532"
