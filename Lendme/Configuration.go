@@ -221,8 +221,8 @@ func GetDefaultConfiguration() (err error) {
 	// Configuration = setDefaultConfiguration_SL_Loyalty()
 	//Configuration = setDefaultConfiguration_SL_Loyalty_UAT()
 
-	// Configuration = setDefaultConfiguration_AO_Loyalty()
-	Configuration = setDefaultConfiguration_AO_Loyalty_UAT()
+	Configuration = setDefaultConfiguration_AO_Loyalty()
+	//Configuration = setDefaultConfiguration_AO_Loyalty_UAT()
 
 	// Configuration = setDefaultConfiguration_GM_Loyalty_Live()
 	// Configuration = setDefaultConfiguration_GM_Loyalty_UAT()
@@ -1901,7 +1901,7 @@ func setDefaultConfiguration_AO_Loyalty() (Configuration ConfigType) {
 
 	Configuration.APGW.Description = "APGW service"
 	Configuration.APGW.Protocol = "http"
-	Configuration.APGW.Hostname = "10.250.1.228"
+	Configuration.APGW.Hostname = "10.250.1.229"
 	Configuration.APGW.Port = "9903"
 	Configuration.APGW.S2S_Username = "LendmeClient"
 	Configuration.APGW.S2S_Password = "L3ndM320#25)sdfj&^M@y"
