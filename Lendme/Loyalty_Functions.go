@@ -7351,11 +7351,11 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			Uc.Loyalty_AccountCreditPoints(request_header, refundRequest, &refund_response, true)
 			return
 		}
-		if mm_CashIn_Reply.Status != "successful" {
+		if mm_CashIn_Reply.Data.Status != "SUCCEEDED" {
 			response.Status = "failed"
 			response.StatusCode = http.StatusBadRequest
 			response.StatusDescription = "failed to redeem mobile money"
-			response.ErrorDescription = mm_CashIn_Reply.Status
+			response.ErrorDescription = mm_CashIn_Reply.Data.Status
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
