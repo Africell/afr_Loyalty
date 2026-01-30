@@ -8716,7 +8716,25 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 				}
 			}
 			return 0, current_outstanding_points
-
+		case "EMISINTRA":
+			if rules.MM_P2P_Award_Type == "Transaction" {
+				if rules.MM_P2P_Points > 0 {
+					// return rules.MM_P2P_Points, current_outstanding_points
+					flt_points := rules.MM_P2P_Points + current_outstanding_points
+					int_points := int(flt_points)
+					outstanding_points = flt_points - float64(int_points)
+					return float64(int_points), outstanding_points
+				}
+			} else if rules.MM_P2P_Award_Type == "Amount" {
+				if rules.MM_P2P_Amount > 0 && award_request.EventAmount > 0 {
+					flt_fractions := award_request.EventAmount / rules.MM_P2P_Amount
+					flt_points := (flt_fractions * rules.MM_P2P_Points) + current_outstanding_points
+					int_points := int(flt_points)
+					outstanding_points = flt_points - float64(int_points)
+					return float64(int_points), outstanding_points
+				}
+			}
+			return 0, current_outstanding_points
 		case "CASHIN":
 			if rules.MM_CASHIN_Award_Type == "Transaction" {
 				if rules.MM_CASHIN_Points > 0 {
