@@ -1909,6 +1909,24 @@ func setDefaultConfiguration_AO_Loyalty() (Configuration ConfigType) {
 	Configuration.APGW.S2S_Username = "LendmeClient"
 	Configuration.APGW.S2S_Password = "L3ndM320#25)sdfj&^M@y"
 	Configuration.APGW.Timeout_After = 5 * time.Second
+
+	Configuration.SpinAndWin_AUC.Description = "App AUC service"
+	Configuration.SpinAndWin_AUC.Protocol = "http"
+	Configuration.SpinAndWin_AUC.Hostname = "10.250.3.149"
+	Configuration.SpinAndWin_AUC.Port = "9001"
+	Configuration.SpinAndWin_AUC.Module = "AUC"
+	Configuration.SpinAndWin_AUC.Version = "V1"
+	Configuration.SpinAndWin_AUC.S2S_Username = "OKAPI_SYSTEM"
+	Configuration.SpinAndWin_AUC.S2S_Password = "g9W&GdK8T6@O6VZx"
+	Configuration.SpinAndWin_AUC.Timeout_After = 5 * time.Second
+
+	Configuration.SpinAndWin.Protocol = "http"
+	Configuration.SpinAndWin.Hostname = "10.250.3.149"
+	Configuration.SpinAndWin.Port = "9110"
+	Configuration.SpinAndWin.Module = "SpinAndWin"
+	Configuration.SpinAndWin.Version = "V1"
+	Configuration.SpinAndWin.Timeout = 5 * time.Second
+	
 	return
 }
 
@@ -2087,7 +2105,7 @@ func setDefaultConfiguration_AO_Loyalty_UAT() (Configuration ConfigType) {
 
 	Configuration.SpinAndWin.Protocol = "http"
 	Configuration.SpinAndWin.Hostname = "10.250.3.149"
-	Configuration.SpinAndWin.Port = "9112"
+	Configuration.SpinAndWin.Port = "9110"
 	Configuration.SpinAndWin.Module = "SpinAndWin"
 	Configuration.SpinAndWin.Version = "V1"
 	Configuration.SpinAndWin.Timeout = 5 * time.Second
