@@ -8583,6 +8583,25 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 				}
 			}
 			return 0, current_outstanding_points
+			case "SSR_211": //scratch card recharge
+			if rules.GSM_EVC_Bundle_Award_Type == "Transaction" {
+				if rules.GSM_EVC_Bundle_Points > 0 {
+					// return rules.GSM_EVC_Bundle_Points, current_outstanding_points
+					flt_points := rules.GSM_EVC_Bundle_Points + current_outstanding_points
+					int_points := int(flt_points)
+					outstanding_points = flt_points - float64(int_points)
+					return float64(int_points), outstanding_points
+				}
+			} else if rules.GSM_EVC_Bundle_Award_Type == "Amount" {
+				if rules.GSM_EVC_Bundle_Amount > 0 && award_request.EventAmount > 0 {
+					flt_fractions := award_request.EventAmount / rules.GSM_EVC_Bundle_Amount
+					flt_points := (flt_fractions * rules.GSM_EVC_Bundle_Points) + current_outstanding_points
+					int_points := int(flt_points)
+					outstanding_points = flt_points - float64(int_points)
+					return float64(int_points), outstanding_points
+				}
+			}
+			return 0, current_outstanding_points
 		case "SSR_97": //EVC recharge
 			if rules.GSM_EVC_Airtime_Award_Type == "Transaction" {
 				if rules.GSM_EVC_Airtime_Points > 0 {
