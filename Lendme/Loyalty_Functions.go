@@ -8499,6 +8499,29 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 			log.Println("failed to get data")
 			return
 		}
+		loyalty_account_na, subexist := Map_Customer_Loyalty_Account.CheckThenGet(request.MSISDN)
+		if !subexist {
+			response.Request_Status = "failed"
+			response.Request_StatusCode = http.StatusBadRequest
+			response.StatusDescription = "failed to get loyalty account"
+			response.ErrorDescription = "loyalty account does not exist"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.StatusDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Status_log(*response)
+			return
+
+		}
+		loyalty_account, ok := loyalty_account_na.(Customer_Loyalty_Account)
+		if !ok {
+			response.Request_Status = "failed"
+			response.Request_StatusCode = http.StatusBadRequest
+			response.StatusDescription = "failed to get loyalty account"
+			response.ErrorDescription = "type assertion issue with Customer_Loyalty_Account"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.StatusDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Status_log(*response)
+			return
+		}
 		if Earningrecord.Welcome_Notification {
 			WelcomeNotiLog := NotificationLog{
 				SourceAction:  "Welcome",
@@ -8513,8 +8536,8 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 			Welcome_Noti_Text := ""
 			Welcome_Noti_Text = Earningrecord.Welcome_Notification_Text
 			if Welcome_Noti_Text != "" {
-				Welcome_Noti_Text = strings.ReplaceAll(Welcome_Noti_Text, "{{WelcomePoints}}", fmt.Sprint(Earningrecord.Welcome_Points))
-				Welcome_Noti_Text = strings.ReplaceAll(Welcome_Noti_Text, "{{LoyaltyBalance}}", fmt.Sprint(Earningrecord.Welcome_Points))
+				Welcome_Noti_Text = strings.ReplaceAll(Welcome_Noti_Text, "{{WelcomePoints}}", fmt.Sprint(loyalty_account.Awarded_Points))
+				Welcome_Noti_Text = strings.ReplaceAll(Welcome_Noti_Text, "{{LoyaltyBalance}}", fmt.Sprint(loyalty_account.Available_Points))
 				Welcome_Noti_Text = strings.ReplaceAll(Welcome_Noti_Text, "{{NewLevel}}", fmt.Sprint(loyalty_account.Loyalty_Level_Key))
 				WelcomeNotiLog.Payload = Welcome_Noti_Text
 				err := Send_SMS(Earningrecord.Welcome_Notification_Sender, loyalty_account.Key, Welcome_Noti_Text)
@@ -8583,7 +8606,7 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 				}
 			}
 			return 0, current_outstanding_points
-			case "SSR_211": //scratch card recharge
+		case "SSR_211": //scratch card recharge
 			if rules.GSM_EVC_Bundle_Award_Type == "Transaction" {
 				if rules.GSM_EVC_Bundle_Points > 0 {
 					// return rules.GSM_EVC_Bundle_Points, current_outstanding_points
