@@ -212,7 +212,7 @@ type ConfigType struct {
 }
 
 func GetDefaultConfiguration() (err error) {
-	// Configuration = setDefaultConfiguration_Dev()
+	Configuration = setDefaultConfiguration_Dev()
 	//Configuration = setDefaultConfiguration_DRC_Live()
 	// Configuration = setDefaultConfiguration_DRC_Loyalty_UAT()
 	//	Configuration = setDefaultConfiguration_GM_Live()
@@ -221,7 +221,7 @@ func GetDefaultConfiguration() (err error) {
 	// Configuration = setDefaultConfiguration_SL_Loyalty()
 	//Configuration = setDefaultConfiguration_SL_Loyalty_UAT()
 
-	Configuration = setDefaultConfiguration_AO_Loyalty()
+	// Configuration = setDefaultConfiguration_AO_Loyalty()
 	//Configuration = setDefaultConfiguration_AO_Loyalty_UAT()
 
 	// Configuration = setDefaultConfiguration_GM_Loyalty_Live()
@@ -1784,7 +1784,7 @@ func setDefaultConfiguration_AO_Loyalty() (Configuration ConfigType) {
 	Configuration.ISLoyaltyOptIn = true
 	Configuration.ISLoyaltyOptOutGracePeriodDays = 30
 	Configuration.Min_Allowed_Amnt = 50
-	Configuration.Service_FeePerc = 0.15
+	Configuration.Service_FeePerc = 0.12
 	Configuration.Min_Allowed_AON = 3
 	Configuration.Min_Avg3MRecharge = 200
 	Configuration.Min_LastRechargePeriod = 60
@@ -1926,7 +1926,7 @@ func setDefaultConfiguration_AO_Loyalty() (Configuration ConfigType) {
 	Configuration.SpinAndWin.Module = "SpinAndWin"
 	Configuration.SpinAndWin.Version = "V1"
 	Configuration.SpinAndWin.Timeout = 5 * time.Second
-	
+
 	return
 }
 
