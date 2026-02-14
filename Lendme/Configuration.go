@@ -1789,7 +1789,7 @@ func setDefaultConfiguration_AO_Loyalty() (Configuration ConfigType) {
 	Configuration.Min_Avg3MRecharge = 200
 	Configuration.Min_LastRechargePeriod = 60
 	Configuration.Min_Allowed_Balance = 0
-	Configuration.Max_Allowed_Balance = 100
+	Configuration.Max_Allowed_Balance = 50
 	Configuration.ARPU_File_Path = "/home/Subs_ARPU/"
 	Configuration.ARPU_File_Prefix = "lendme_"
 	Configuration.ARPU_File_Column_Separator = ";"
