@@ -2425,16 +2425,16 @@ func (Uc *UserControl) LendmeAO_exec_Request(Source, MSISDN string, Amount float
 		LendMeRequestsAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Add(Amount)
 		return err
 	}
-	if lendLog.Subscriber_OpeningBlance > Configuration.Max_Allowed_Balance {
-		err = errors.New("balance must be less than " + strconv.FormatFloat(Round(Configuration.Max_Allowed_Balance, 1, 0), 'f', -1, 64))
-		lendLog.Status = "failed"
-		lendLog.StatusDescription = err.Error()
-		go Uc.Write_Lendme_log(lendLog)
-		error_msg := "balance must be less than maximum allowed"
-		LendMeRequestsCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Inc()
-		LendMeRequestsAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Add(Amount)
-		return err
-	}
+	// if lendLog.Subscriber_OpeningBlance > Configuration.Max_Allowed_Balance {
+	// 	err = errors.New("balance must be less than " + strconv.FormatFloat(Round(Configuration.Max_Allowed_Balance, 1, 0), 'f', -1, 64))
+	// 	lendLog.Status = "failed"
+	// 	lendLog.StatusDescription = err.Error()
+	// 	go Uc.Write_Lendme_log(lendLog)
+	// 	error_msg := "balance must be less than maximum allowed"
+	// 	LendMeRequestsCount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Inc()
+	// 	LendMeRequestsAmount.With(prometheus.Labels{"Status": "failed", "Reason": error_msg, "Scheme": ""}).Add(Amount)
+	// 	return err
+	// }
 
 	//check the amount
 	if subscriber.Lendme_Outstanding_Amount == 0 {
