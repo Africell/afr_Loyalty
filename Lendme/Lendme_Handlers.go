@@ -716,7 +716,7 @@ func (Uc *UserControl) HTTP_Lendme_SendSMS(w http.ResponseWriter, r *http.Reques
 
 	method := r.Method
 	switch method {
-	case "GET":
+	case "POST":
 		sr.TransactionType = "Lendme Send SMS"
 		Sender := r.URL.Query().Get("Sender")
 		Target := r.URL.Query().Get("Target")
