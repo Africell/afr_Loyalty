@@ -1865,7 +1865,7 @@ func setDefaultConfiguration_AO_Loyalty() (Configuration ConfigType) {
 
 	//Configuration.SMPP.Login = "lendme"
 	//Configuration.SMPP.Password = "lendmeP@ssw0rd"
-	Configuration.SMPP.Login = "lendme"
+	Configuration.SMPP.Login = "lendmeSMPP"
 	Configuration.SMPP.Password = "Lm*!op25"
 	Configuration.SMPP.TimeOut = 5 //in seconds
 	Configuration.SMPP.PrintLogs = true

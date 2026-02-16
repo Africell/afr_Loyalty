@@ -6,6 +6,7 @@ import (
 	"daoc"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -3585,8 +3586,8 @@ func SendSMS(Sender string, target string, SMSText string) (_rErr error) {
 	if resp.StatusCode == 200 {
 		return nil
 	} else {
-		err := errors.New("error sending SMS")
-		log.Println("Error sending SMS: ", err)
+		body, _ := io.ReadAll(resp.Body)
+		log.Println("Error sending SMS: ", string(body))
 		return err
 	}
 }
