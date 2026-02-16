@@ -3567,7 +3567,7 @@ func SendSMS(Sender string, target string, SMSText string) (_rErr error) {
 	//-------------- Encoding used in DRC and GM Start
 	//"&ston=5&snpi=0&dton=1&dnpi=1&encoding=1"
 	//-------------- Encoding used in DRC and GM End
-	method := "GET"
+	method := "POST"
 	req, err := http.NewRequest(method, url, nil)
 	if err != nil {
 		log.Println("Error sending SMS: ", err)
