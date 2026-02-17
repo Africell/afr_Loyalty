@@ -3569,7 +3569,7 @@ func SendSMS(Sender string, target string, SMSText string) (_rErr error) {
 	//-------------- Encoding used in DRC and GM End
 	method := "GET"
 	if Configuration.Operation == "Angola" {
-		requrl = "http://" + Configuration.SMPP.IP + ":" + Configuration.SMPP.Port + "/sendsms?username=" + Configuration.SMPP.Login + "&password=" + url.QueryEscape(Configuration.SMPP.Password) + "&from=" + Sender + "&to=" + target + "&text=" + url.QueryEscape(SMSText) + "&coding=2"
+		requrl = "http://" + Configuration.SMPP.IP + ":" + Configuration.SMPP.Port + "/sendsms?username=" + Configuration.SMPP.Login + "&password=" + Configuration.SMPP.Password + "&from=" + Sender + "&to=" + target + "&text=" + url.QueryEscape(SMSText) + "&coding=2"
 	}
 	req, err := http.NewRequest(method, requrl, nil)
 	if err != nil {
