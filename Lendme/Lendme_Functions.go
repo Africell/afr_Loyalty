@@ -3589,9 +3589,7 @@ func SendSMS(Sender string, target string, SMSText string) (_rErr error) {
 	if resp.StatusCode == 200 {
 		return nil
 	} else {
-		body, _ := io.ReadAll(resp.Body)
-		log.Println("Error sending SMS: ", string(body))
-		err := errors.New("error sending SMS: " + resp.Status)
+		err := errors.New("error sending SMS: " + string(resp.StatusCode))
 		return err
 	}
 }
