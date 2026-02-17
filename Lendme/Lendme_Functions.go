@@ -3563,17 +3563,15 @@ func (Uc *UserControl) Lendme_Subscriber_Daily_Snapshot() {
 // /////////////////////////////////////////////////////////////////////////////////////////////////////
 func SendSMS(Sender string, target string, SMSText string) (_rErr error) {
 	log.Println("Sending SMS: Sender (" + Sender + "), Target (" + target + "), text (" + SMSText + ") ")
-	url := "http://" + Configuration.SMPP.IP + ":" + Configuration.SMPP.Port + "/?systemid=" + Configuration.SMPP.Login + "&password=" + url.QueryEscape(Configuration.SMPP.Password) + "&Originator=" + Sender + "&dest_addr=" + target + "&msg_text=" + url.QueryEscape(SMSText) + "&encoding=1&ston=5&snpi=0&dton=1&registered_delivery=0"
-	fmt.Println("url",url)
+	requrl := "http://" + Configuration.SMPP.IP + ":" + Configuration.SMPP.Port + "/?systemid=" + Configuration.SMPP.Login + "&password=" + url.QueryEscape(Configuration.SMPP.Password) + "&Originator=" + Sender + "&dest_addr=" + target + "&msg_text=" + url.QueryEscape(SMSText) + "&encoding=1&ston=5&snpi=0&dton=1&registered_delivery=0"
 	//-------------- Encoding used in DRC and GM Start
 	//"&ston=5&snpi=0&dton=1&dnpi=1&encoding=1"
 	//-------------- Encoding used in DRC and GM End
 	method := "GET"
-	if Configuration.Operation =="Angola" {
-		method= "POST"
-		// url = "http://" + Configuration.SMPP.IP + ":" + Configuration.SMPP.Port + "/?username=" + Configuration.SMPP.Login + "&password=" + url.QueryEscape(Configuration.SMPP.Password) + "&from=" + Sender + "&to=" + target + "&msg_text=" + url.QueryEscape(SMSText) + "&coding=2"
+	if Configuration.Operation == "Angola" {
+		requrl = "http://" + Configuration.SMPP.IP + ":" + Configuration.SMPP.Port + "/sendsms?username=" + Configuration.SMPP.Login + "&password=" + url.QueryEscape(Configuration.SMPP.Password) + "&from=" + Sender + "&to=" + target + "&msg_text=" + url.QueryEscape(SMSText) + "&coding=2"
 	}
-	req, err := http.NewRequest(method, url, nil)
+	req, err := http.NewRequest(method, requrl, nil)
 	if err != nil {
 		log.Println("Error sending SMS: ", err)
 		return err
