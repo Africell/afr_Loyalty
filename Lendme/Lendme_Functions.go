@@ -3588,7 +3588,7 @@ func SendSMS(Sender string, target string, SMSText string) (_rErr error) {
 	} else {
 		body, _ := io.ReadAll(resp.Body)
 		log.Println("Error sending SMS: ", string(body))
-		err := errors.New("error sending SMS")
+		err := errors.New("error sending SMS: " + resp.Status)
 		return err
 	}
 }
