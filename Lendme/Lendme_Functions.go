@@ -3564,13 +3564,11 @@ func (Uc *UserControl) Lendme_Subscriber_Daily_Snapshot() {
 func SendSMS(Sender string, target string, SMSText string) (_rErr error) {
 	log.Println("Sending SMS: Sender (" + Sender + "), Target (" + target + "), text (" + SMSText + ") ")
 	url := "http://" + Configuration.SMPP.IP + ":" + Configuration.SMPP.Port + "/?systemid=" + Configuration.SMPP.Login + "&password=" + url.QueryEscape(Configuration.SMPP.Password) + "&Originator=" + Sender + "&dest_addr=" + target + "&msg_text=" + url.QueryEscape(SMSText) + "&encoding=1&ston=5&snpi=0&dton=1&registered_delivery=0"
+	fmt.Println("url",url)
 	//-------------- Encoding used in DRC and GM Start
 	//"&ston=5&snpi=0&dton=1&dnpi=1&encoding=1"
 	//-------------- Encoding used in DRC and GM End
 	method := "GET"
-	if Configuration.Operation == "Angola" {
-		method = "POST"
-	}
 	req, err := http.NewRequest(method, url, nil)
 	if err != nil {
 		log.Println("Error sending SMS: ", err)

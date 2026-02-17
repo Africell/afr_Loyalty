@@ -1861,11 +1861,11 @@ func setDefaultConfiguration_AO_Loyalty() (Configuration ConfigType) {
 
 	//SMPP
 	Configuration.SMPP.IP = "10.250.11.111" //"10.10.215.52"
-	Configuration.SMPP.Port = "2775"        //"15403"
+	Configuration.SMPP.Port = "15403"       //"15403"
 
 	//Configuration.SMPP.Login = "lendme"
 	//Configuration.SMPP.Password = "lendmeP@ssw0rd"
-	Configuration.SMPP.Login = "lendmeSMPP"
+	Configuration.SMPP.Login = "lendme"
 	Configuration.SMPP.Password = "Lm*!op25"
 	Configuration.SMPP.TimeOut = 5 //in seconds
 	Configuration.SMPP.PrintLogs = true
