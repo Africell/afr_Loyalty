@@ -6,7 +6,6 @@ import (
 	"daoc"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"net/url"
