@@ -2986,8 +2986,7 @@ func (Uc *UserControl) LendmeAO_PayBack(Source, MSISDN string, RechargeAmount fl
 	//Send notification SMS
 	PaidAmount_round := Round((DebitAmount + DebitfeeAmount), 1, 2)
 	PaidAmount_str := strconv.FormatFloat(PaidAmount_round, 'f', -1, 64)
-
-	SMSText := "Dear subscriber, thank you for paying outstanding SERVICE_NAME amount " + PaidAmount_str + " Kz"
+	SMSText := "Caro cliente, informamos que debitamos do teu carregamento o valor de Kz " + PaidAmount_str + ", referente ao serviço Faz Sentir."
 	go SendSMS("Africell", subscriber.Key, SMSText)
 
 	//save log into DB
