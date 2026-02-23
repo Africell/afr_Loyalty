@@ -3584,7 +3584,7 @@ func SendSMS(Sender string, target string, SMSText string) (_rErr error) {
 		return err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode == 200 {
+	if Configuration.Operation == "Angola" || resp.StatusCode == 200 {
 		return nil
 	} else {
 		err := errors.New("error sending SMS: " + string(resp.StatusCode))
