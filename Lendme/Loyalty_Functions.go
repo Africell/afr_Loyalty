@@ -426,7 +426,12 @@ func (Uc *UserControl) Write_Loyalty_Level_Change_log(record Loyalty_Level_Chang
 			LevelChange_Noti_Text = strings.ReplaceAll(LevelChange_Noti_Text, "{{LevelChangeDirection}}", fmt.Sprint(record.New_Loyalty_Level_Direction))
 			LevelChange_Noti_Text = strings.ReplaceAll(LevelChange_Noti_Text, "{{LoyaltyBalance}}", fmt.Sprint(record.Available_Points))
 			LevelChangeNotiLog.Payload = LevelChange_Noti_Text
-			err := Send_SMS(Earningrecord.Level_Change_Notification_Sender, record.MSISDN, LevelChange_Noti_Text)
+			err := error(nil)
+			if Configuration.Operation == "Angola" {
+				err = SendSMS(Earningrecord.Level_Change_Notification_Sender, record.MSISDN, LevelChange_Noti_Text)
+			} else {
+				err = Send_SMS(Earningrecord.Level_Change_Notification_Sender, record.MSISDN, LevelChange_Noti_Text)
+			}
 			if err != nil {
 				LevelChangeNotiLog.Status = "Failed"
 				LevelChangeNotiLog.Error = err.Error()
@@ -4619,7 +4624,12 @@ func (Uc *UserControl) Customer_Loyalty_Account_Add(Login string, request Custom
 				Welcome_Noti_Text = strings.ReplaceAll(Welcome_Noti_Text, "{{LoyaltyBalance}}", fmt.Sprint(Earningrecord.Welcome_Points))
 				Welcome_Noti_Text = strings.ReplaceAll(Welcome_Noti_Text, "{{NewLevel}}", fmt.Sprint(NewEntry.Loyalty_Level_Key))
 				WelcomeNotiLog.Payload = Welcome_Noti_Text
-				err := Send_SMS(Earningrecord.Welcome_Notification_Sender, request.Key, Welcome_Noti_Text)
+				err := error(nil)
+				if Configuration.Operation == "Angola" {
+					err = SendSMS(Earningrecord.Welcome_Notification_Sender, request.Key, Welcome_Noti_Text)
+				} else {
+					err = Send_SMS(Earningrecord.Welcome_Notification_Sender, request.Key, Welcome_Noti_Text)
+				}
 				if err != nil {
 					WelcomeNotiLog.Status = "Failed"
 					WelcomeNotiLog.Error = err.Error()
@@ -6794,7 +6804,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 				Airtime_Noti_Text = strings.ReplaceAll(Airtime_Noti_Text, "{{ AirtimeAwarded }}", fmt.Sprint(response.Redemption_Amount))
 				Airtime_Noti_Text = strings.ReplaceAll(Airtime_Noti_Text, "{{ LoyaltyBalance }}", fmt.Sprint(response.Closure_Available_Points))
 				AirtimeNotiLog.Payload = Airtime_Noti_Text
-				err := Send_SMS(record.Airtime_Notification_Sender, response.MSISDN, Airtime_Noti_Text)
+				err := SendSMS(record.Airtime_Notification_Sender, response.MSISDN, Airtime_Noti_Text)
 				if err != nil {
 					AirtimeNotiLog.Status = "Failed"
 					AirtimeNotiLog.Error = err.Error()
@@ -7163,7 +7173,8 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 				Bundle_Noti_Text = strings.ReplaceAll(Bundle_Noti_Text, "{{ BundleValidity }}", fmt.Sprint(Validity))
 				Bundle_Noti_Text = strings.ReplaceAll(Bundle_Noti_Text, "{{ LoyaltyBalance }}", fmt.Sprint(response.Closure_Available_Points))
 				BundleNotiLog.Payload = Bundle_Noti_Text
-				err := Send_SMS(record.Bundles_Notification_Sender, response.MSISDN, Bundle_Noti_Text)
+
+				err := SendSMS(record.Bundles_Notification_Sender, response.MSISDN, Bundle_Noti_Text)
 				if err != nil {
 					BundleNotiLog.Status = "Failed"
 					BundleNotiLog.Error = err.Error()
@@ -7403,7 +7414,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 				MobileMoney_Noti_Text = strings.ReplaceAll(MobileMoney_Noti_Text, "{{ MobileMoneyAwarded }}", fmt.Sprint(response.Redemption_Amount))
 				MobileMoney_Noti_Text = strings.ReplaceAll(MobileMoney_Noti_Text, "{{ LoyaltyBalance }}", fmt.Sprint(response.Closure_Available_Points))
 				MobileMoneyNotiLog.Payload = MobileMoney_Noti_Text
-				err := Send_SMS(record.MobileMoney_Notification_Sender, response.MSISDN, MobileMoney_Noti_Text)
+				err := SendSMS(record.MobileMoney_Notification_Sender, response.MSISDN, MobileMoney_Noti_Text)
 				if err != nil {
 					MobileMoneyNotiLog.Status = "Failed"
 					MobileMoneyNotiLog.Error = err.Error()
@@ -7579,7 +7590,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 				SpinWin_Noti_Text = strings.ReplaceAll(SpinWin_Noti_Text, "{{ SpinsAwarded }}", fmt.Sprint(response.Redemption_Amount))
 				SpinWin_Noti_Text = strings.ReplaceAll(SpinWin_Noti_Text, "{{ LoyaltyBalance }}", fmt.Sprint(response.Closure_Available_Points))
 				SpinWinNotiLog.Payload = SpinWin_Noti_Text
-				err := Send_SMS(record.FreeSpinAndWin_Notification_Sender, response.MSISDN, SpinWin_Noti_Text)
+				err := SendSMS(record.FreeSpinAndWin_Notification_Sender, response.MSISDN, SpinWin_Noti_Text)
 				if err != nil {
 					SpinWinNotiLog.Status = "Failed"
 					SpinWinNotiLog.Error = err.Error()
@@ -8540,7 +8551,12 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 				Welcome_Noti_Text = strings.ReplaceAll(Welcome_Noti_Text, "{{LoyaltyBalance}}", fmt.Sprint(loyalty_account.Available_Points))
 				Welcome_Noti_Text = strings.ReplaceAll(Welcome_Noti_Text, "{{NewLevel}}", fmt.Sprint(loyalty_account.Loyalty_Level_Key))
 				WelcomeNotiLog.Payload = Welcome_Noti_Text
-				err := Send_SMS(Earningrecord.Welcome_Notification_Sender, loyalty_account.Key, Welcome_Noti_Text)
+				err := error(nil)
+				if Configuration.Operation == "Angola" {
+					err = SendSMS(Earningrecord.Welcome_Notification_Sender, loyalty_account.Key, Welcome_Noti_Text)
+				} else {
+					err = Send_SMS(Earningrecord.Welcome_Notification_Sender, loyalty_account.Key, Welcome_Noti_Text)
+				}
 				if err != nil {
 					WelcomeNotiLog.Status = "Failed"
 					WelcomeNotiLog.Error = err.Error()
