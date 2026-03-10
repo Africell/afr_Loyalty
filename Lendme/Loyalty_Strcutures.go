@@ -157,73 +157,142 @@ type Loyalty_Account_Segment_EditRequest struct {
 }
 
 type Loyalty_Point_Earning_Rules struct {
-	Key                              string  `bson:"Key" json:"Key"` //Program name
-	Earning_Rules_Id                 int64   `bson:"Earning_Rules_Id" json:"Earning_Rules_Id"`
-	Description                      string  `bson:"Description" json:"Description"`
-	Welcome_Points                   float64 `bson:"Welcome_Points" json:"Welcome_Points"`
-	MobileAppDaily_Login             float64 `bson:"MobileAppDaily_Login" json:"MobileAppDaily_Login"`
-	Welcome_Notification             bool    `bson:"Welcome_Notification" json:"Welcome_Notification"`
-	Welcome_Notification_Sender      string  `bson:"Welcome_Notification_Sender" json:"Welcome_Notification_Sender"`
-	Welcome_Notification_Text        string  `bson:"Welcome_Notification_Text" json:"Welcome_Notification_Text"`
-	Level_Change_Notification        bool    `bson:"Level_Change_Notification" json:"Level_Change_Notification"`
-	Level_Change_Notification_Sender string  `bson:"Level_Change_Notification_Sender" json:"Level_Change_Notification_Sender"`
-	Level_Change_Notification_Text   string  `bson:"Level_Change_Notification_Text" json:"Level_Change_Notification_Text"`
+	Key                                string  `bson:"Key" json:"Key"` //Program name
+	Earning_Rules_Id                   int64   `bson:"Earning_Rules_Id" json:"Earning_Rules_Id"`
+	Description                        string  `bson:"Description" json:"Description"`
+	Welcome_Points                     float64 `bson:"Welcome_Points" json:"Welcome_Points"`
+	MobileAppDaily_Notification        bool    `bson:"MobileAppDaily_Notification" json:"MobileAppDaily_Notification"`
+	MobileAppDaily_Notification_Sender string  `bson:"MobileAppDaily_Notification_Sender" json:"MobileAppDaily_Notification_Sender"`
+	MobileAppDaily_Notification_Text   string  `bson:"MobileAppDaily_Notification_Text" json:"MobileAppDaily_Notification_Text"`
+	MobileAppDaily_Login               float64 `bson:"MobileAppDaily_Login" json:"MobileAppDaily_Login"`
+	Welcome_Notification               bool    `bson:"Welcome_Notification" json:"Welcome_Notification"`
+	Welcome_Notification_Sender        string  `bson:"Welcome_Notification_Sender" json:"Welcome_Notification_Sender"`
+	Welcome_Notification_Text          string  `bson:"Welcome_Notification_Text" json:"Welcome_Notification_Text"`
+	Level_Change_Notification          bool    `bson:"Level_Change_Notification" json:"Level_Change_Notification"`
+	Level_Change_Notification_Sender   string  `bson:"Level_Change_Notification_Sender" json:"Level_Change_Notification_Sender"`
+	Level_Change_Notification_Text     string  `bson:"Level_Change_Notification_Text" json:"Level_Change_Notification_Text"`
 	//GSM main balance consumption
-	MainGSMBalance_Amount float64 `bson:"MainGSMBalance_Amount" json:"MainGSMBalance_Amount"`
-	MainGSMBalance_Points float64 `bson:"MainGSMBalance_Points" json:"MainGSMBalance_Points"`
+	MainGSM_Notification        bool    `bson:"MainGSM_Notification" json:"MainGSM_Notification"`
+	MainGSM_Notification_Sender string  `bson:"MainGSM_Notification_Sender" json:"MainGSM_Notification_Sender"`
+	MainGSM_Notification_Text   string  `bson:"MainGSM_Notification_Text" json:"MainGSM_Notification_Text"`
+	MainGSMBalance_Amount       float64 `bson:"MainGSMBalance_Amount" json:"MainGSMBalance_Amount"`
+	MainGSMBalance_Points       float64 `bson:"MainGSMBalance_Points" json:"MainGSMBalance_Points"`
 	//GSM Scratch Card Recharge
-	GSM_SC_Airtime_Award_Type string  `bson:"GSM_SC_Airtime_Award_Type" json:"GSM_SC_Airtime_Award_Type"` //"Transaction" or "Amount"
-	GSM_SC_Airtime_Amount     float64 `bson:"GSM_SC_Airtime_Amount" json:"GSM_SC_Airtime_Amount"`
-	GSM_SC_Airtime_Points     float64 `bson:"GSM_SC_Airtime_Points" json:"GSM_SC_Airtime_Points"`
+	GSM_SC_Notification        bool    `bson:"GSM_SC_Notification" json:"GSM_SC_Notification"`
+	GSM_SC_Notification_Sender string  `bson:"GSM_SC_Notification_Sender" json:"GSM_SC_Notification_Sender"`
+	GSM_SC_Notification_Text   string  `bson:"GSM_SC_Notification_Text" json:"GSM_SC_Notification_Text"`
+	GSM_SC_Airtime_Award_Type  string  `bson:"GSM_SC_Airtime_Award_Type" json:"GSM_SC_Airtime_Award_Type"` //"Transaction" or "Amount"
+	GSM_SC_Airtime_Amount      float64 `bson:"GSM_SC_Airtime_Amount" json:"GSM_SC_Airtime_Amount"`
+	GSM_SC_Airtime_Points      float64 `bson:"GSM_SC_Airtime_Points" json:"GSM_SC_Airtime_Points"`
 	//GSM EVC airtime recharge
-	GSM_EVC_Airtime_Award_Type string  `bson:"GSM_EVC_Airtime_Award_Type" json:"GSM_EVC_Airtime_Award_Type"` //"Transaction" or "Amount"
-	GSM_EVC_Airtime_Amount     float64 `bson:"GSM_EVC_Airtime_Amount" json:"GSM_EVC_Airtime_Amount"`
-	GSM_EVC_Airtime_Points     float64 `bson:"GSM_EVC_Airtime_Points" json:"GSM_EVC_Airtime_Points"`
+	GSM_EVC_Airtime_Notification        bool    `bson:"GSM_EVC_Airtime_Notification" json:"GSM_EVC_Airtime_Notification"`
+	GSM_EVC_Airtime_Notification_Sender string  `bson:"GSM_EVC_Airtime_Notification_Sender" json:"GSM_EVC_Airtime_Notification_Sender"`
+	GSM_EVC_Airtime_Notification_Text   string  `bson:"GSM_EVC_Airtime_Notification_Text" json:"GSM_EVC_Airtime_Notification_Text"`
+	GSM_EVC_Airtime_Award_Type          string  `bson:"GSM_EVC_Airtime_Award_Type" json:"GSM_EVC_Airtime_Award_Type"` //"Transaction" or "Amount"
+	GSM_EVC_Airtime_Amount              float64 `bson:"GSM_EVC_Airtime_Amount" json:"GSM_EVC_Airtime_Amount"`
+	GSM_EVC_Airtime_Points              float64 `bson:"GSM_EVC_Airtime_Points" json:"GSM_EVC_Airtime_Points"`
 	//GSM EVC Bundle purchase
-	GSM_EVC_Bundle_Award_Type string  `bson:"GSM_EVC_Bundle_Award_Type" json:"GSM_EVC_Bundle_Award_Type"` //"Transaction" or "Amount"
-	GSM_EVC_Bundle_Amount     float64 `bson:"GSM_EVC_Bundle_Amount" json:"GSM_EVC_Bundle_Amount"`
-	GSM_EVC_Bundle_Points     float64 `bson:"GSM_EVC_Bundle_Points" json:"GSM_EVC_Bundle_Points"`
+	GSM_EVC_Bundle_Notification        bool    `bson:"GSM_EVC_Bundle_Notification" json:"GSM_EVC_Bundle_Notification"`
+	GSM_EVC_Bundle_Notification_Sender string  `bson:"GSM_EVC_Bundle_Notification_Sender" json:"GSM_EVC_Bundle_Notification_Sender"`
+	GSM_EVC_Bundle_Notification_Text   string  `bson:"GSM_EVC_Bundle_Notification_Text" json:"GSM_EVC_Bundle_Notification_Text"`
+	GSM_EVC_Bundle_Award_Type          string  `bson:"GSM_EVC_Bundle_Award_Type" json:"GSM_EVC_Bundle_Award_Type"` //"Transaction" or "Amount"
+	GSM_EVC_Bundle_Amount              float64 `bson:"GSM_EVC_Bundle_Amount" json:"GSM_EVC_Bundle_Amount"`
+	GSM_EVC_Bundle_Points              float64 `bson:"GSM_EVC_Bundle_Points" json:"GSM_EVC_Bundle_Points"`
 	//Mobile Money
-	MM_P2P_Award_Type                        string   `bson:"MM_P2P_Award_Type" json:"MM_P2P_Award_Type"` //"Transaction" or "Amount"
-	MM_P2P_Amount                            float64  `bson:"MM_P2P_Amount" json:"MM_P2P_Amount"`
-	MM_P2P_Points                            float64  `bson:"MM_P2P_Points" json:"MM_P2P_Points"`
-	MM_CASHIN_Award_Type                     string   `bson:"MM_CASHIN_Award_Type" json:"MM_CASHIN_Award_Type"` //"Transaction" or "Amount"
-	MM_CASHIN_Amount                         float64  `bson:"MM_CASHIN_Amount" json:"MM_CASHIN_Amount"`
-	MM_CASHIN_Points                         float64  `bson:"MM_CASHIN_Points" json:"MM_CASHIN_Points"`
-	MM_CASHOUT_Award_Type                    string   `bson:"MM_CASHOUT_Award_Type" json:"MM_CASHOUT_Award_Type"` //"Transaction" or "Amount"
-	MM_CASHOUT_Amount                        float64  `bson:"MM_CASHOUT_Amount" json:"MM_CASHOUT_Amount"`
-	MM_CASHOUT_Points                        float64  `bson:"MM_CASHOUT_Points" json:"MM_CASHOUT_Points"`
-	MM_MERCHPAY_Award_Type                   string   `bson:"MM_MERCHPAY_Award_Type" json:"MM_MERCHPAY_Award_Type"` //"Transaction" or "Amount"
-	MM_MERCHPAY_Amount                       float64  `bson:"MM_MERCHPAY_Amount" json:"MM_MERCHPAY_Amount"`
-	MM_MERCHPAY_Points                       float64  `bson:"MM_MERCHPAY_Points" json:"MM_MERCHPAY_Points"`
-	MM_BILLPAY_Award_Type                    string   `bson:"MM_BILLPAY_Award_Type" json:"MM_BILLPAY_Award_Type"` //"Transaction" or "Amount"
-	MM_BILLPAY_Amount                        float64  `bson:"MM_BILLPAY_Amount" json:"MM_BILLPAY_Amount"`
-	MM_BILLPAY_Points                        float64  `bson:"MM_BILLPAY_Points" json:"MM_BILLPAY_Points"`
-	Earning_Rules_Overwrite_MM_MERCHPAY_Keys []string `bson:"Earning_Rules_Overwrite_MM_MERCHPAY_Keys" json:"Earning_Rules_Overwrite_MM_MERCHPAY_Keys"`
+	//P2P
+	MM_P2P_Notification        bool    `bson:"MM_P2P_Notification" json:"MM_P2P_Notification"`
+	MM_P2P_Notification_Sender string  `bson:"MM_P2P_Notification_Sender" json:"MM_P2P_Notification_Sender"`
+	MM_P2P_Notification_Text   string  `bson:"MM_P2P_Notification_Text" json:"MM_P2P_Notification_Text"`
+	MM_P2P_Award_Type          string  `bson:"MM_P2P_Award_Type" json:"MM_P2P_Award_Type"` //"Transaction" or "Amount"
+	MM_P2P_Amount              float64 `bson:"MM_P2P_Amount" json:"MM_P2P_Amount"`
+	MM_P2P_Points              float64 `bson:"MM_P2P_Points" json:"MM_P2P_Points"`
+	//CASHIN
+	MM_CASHIN_Notification        bool    `bson:"MM_CASHIN_Notification" json:"MM_CASHIN_Notification"`
+	MM_CASHIN_Notification_Sender string  `bson:"MM_CASHIN_Notification_Sender" json:"MM_CASHIN_Notification_Sender"`
+	MM_CASHIN_Notification_Text   string  `bson:"MM_CASHIN_Notification_Text" json:"MM_CASHIN_Notification_Text"`
+	MM_CASHIN_Award_Type          string  `bson:"MM_CASHIN_Award_Type" json:"MM_CASHIN_Award_Type"` //"Transaction" or "Amount"
+	MM_CASHIN_Amount              float64 `bson:"MM_CASHIN_Amount" json:"MM_CASHIN_Amount"`
+	MM_CASHIN_Points              float64 `bson:"MM_CASHIN_Points" json:"MM_CASHIN_Points"`
+	//CASHOUT
+	MM_CASHOUT_Notification        bool    `bson:"MM_CASHOUT_Notification" json:"MM_CASHOUT_Notification"`
+	MM_CASHOUT_Notification_Sender string  `bson:"MM_CASHOUT_Notification_Sender" json:"MM_CASHOUT_Notification_Sender"`
+	MM_CASHOUT_Notification_Text   string  `bson:"MM_CASHOUT_Notification_Text" json:"MM_CASHOUT_Notification_Text"`
+	MM_CASHOUT_Award_Type          string  `bson:"MM_CASHOUT_Award_Type" json:"MM_CASHOUT_Award_Type"` //"Transaction" or "Amount"
+	MM_CASHOUT_Amount              float64 `bson:"MM_CASHOUT_Amount" json:"MM_CASHOUT_Amount"`
+	MM_CASHOUT_Points              float64 `bson:"MM_CASHOUT_Points" json:"MM_CASHOUT_Points"`
+	//MERCHPAY
+	MM_MERCHPAY_Notification        bool    `bson:"MM_MERCHPAY_Notification" json:"MM_MERCHPAY_Notification"`
+	MM_MERCHPAY_Notification_Sender string  `bson:"MM_MERCHPAY_Notification_Sender" json:"MM_MERCHPAY_Notification_Sender"`
+	MM_MERCHPAY_Notification_Text   string  `bson:"MM_MERCHPAY_Notification_Text" json:"MM_MERCHPAY_Notification_Text"`
+	MM_MERCHPAY_Award_Type          string  `bson:"MM_MERCHPAY_Award_Type" json:"MM_MERCHPAY_Award_Type"` //"Transaction" or "Amount"
+	MM_MERCHPAY_Amount              float64 `bson:"MM_MERCHPAY_Amount" json:"MM_MERCHPAY_Amount"`
+	MM_MERCHPAY_Points              float64 `bson:"MM_MERCHPAY_Points" json:"MM_MERCHPAY_Points"`
+	//BILLPAY
+	MM_BILLPAY_Notification        bool    `bson:"MM_BILLPAY_Notification" json:"MM_BILLPAY_Notification"`
+	MM_BILLPAY_Notification_Sender string  `bson:"MM_BILLPAY_Notification_Sender" json:"MM_BILLPAY_Notification_Sender"`
+	MM_BILLPAY_Notification_Text   string  `bson:"MM_BILLPAY_Notification_Text" json:"MM_BILLPAY_Notification_Text"`
+	MM_BILLPAY_Award_Type          string  `bson:"MM_BILLPAY_Award_Type" json:"MM_BILLPAY_Award_Type"` //"Transaction" or "Amount"
+	MM_BILLPAY_Amount              float64 `bson:"MM_BILLPAY_Amount" json:"MM_BILLPAY_Amount"`
+	MM_BILLPAY_Points              float64 `bson:"MM_BILLPAY_Points" json:"MM_BILLPAY_Points"`
+	//overwrite for MERCHPAY
+	Overwrite_MM_MERCHPAY_Notification        bool     `bson:"Overwrite_MM_MERCHPAY_Notification" json:"Overwrite_MM_MERCHPAY_Notification"`
+	Overwrite_MM_MERCHPAY_Notification_Sender string   `bson:"Overwrite_MM_MERCHPAY_Notification_Sender" json:"Overwrite_MM_MERCHPAY_Notification_Sender"`
+	Overwrite_MM_MERCHPAY_Notification_Text   string   `bson:"Overwrite_MM_MERCHPAY_Notification_Text" json:"Overwrite_MM_MERCHPAY_Notification_Text"`
+	Earning_Rules_Overwrite_MM_MERCHPAY_Keys  []string `bson:"Earning_Rules_Overwrite_MM_MERCHPAY_Keys" json:"Earning_Rules_Overwrite_MM_MERCHPAY_Keys"`
+	//overwrite for BILLPAY
+	Overwrite_MM_BILLPAY_Notification        bool     `bson:"Overwrite_MM_BILLPAY_Notification" json:"Overwrite_MM_BILLPAY_Notification"`
+	Overwrite_MM_BILLPAY_Notification_Sender string   `bson:"Overwrite_MM_BILLPAY_Notification_Sender" json:"Overwrite_MM_BILLPAY_Notification_Sender"`
+	Overwrite_MM_BILLPAY_Notification_Text   string   `bson:"Overwrite_MM_BILLPAY_Notification_Text" json:"Overwrite_MM_BILLPAY_Notification_Text"`
 	Earning_Rules_Overwrite_MM_BILLPAY_Keys  []string `bson:"Earning_Rules_Overwrite_MM_BILLPAY_Keys" json:"Earning_Rules_Overwrite_MM_BILLPAY_Keys"`
-	MM_RC_Bundle_Award_Type                  string   `bson:"MM_RC_Bundle_Award_Type" json:"MM_RC_Bundle_Award_Type"` //"Transaction" or "Amount"
-	MM_RC_Bundle_Amount                      float64  `bson:"MM_RC_Bundle_Amount" json:"MM_RC_Bundle_Amount"`
-	MM_RC_Bundle_Points                      float64  `bson:"MM_RC_Bundle_Points" json:"MM_RC_Bundle_Points"`
-	MM_RC_Airtime_Award_Type                 string   `bson:"MM_RC_Airtime_Award_Type" json:"MM_RC_Airtime_Award_Type"` //"Transaction" or "Amount"
-	MM_RC_Airtime_Amount                     float64  `bson:"MM_RC_Airtime_Amount" json:"MM_RC_Airtime_Amount"`
-	MM_RC_Airtime_Points                     float64  `bson:"MM_RC_Airtime_Points" json:"MM_RC_Airtime_Points"`
-	MM_CTMMOREQ_Bundle_Award_Type            string   `bson:"MM_CTMMOREQ_Bundle_Award_Type" json:"MM_CTMMOREQ_Bundle_Award_Type"` //"Transaction" or "Amount"
-	MM_CTMMOREQ_Bundle_Amount                float64  `bson:"MM_CTMMOREQ_Bundle_Amount" json:"MM_CTMMOREQ_Bundle_Amount"`
-	MM_CTMMOREQ_Bundle_Points                float64  `bson:"MM_CTMMOREQ_Bundle_Points" json:"MM_CTMMOREQ_Bundle_Points"`
-	MM_CTMMOREQ_Airtime_Award_Type           string   `bson:"MM_CTMMOREQ_Airtime_Award_Type" json:"MM_CTMMOREQ_Airtime_Award_Type"` //"Transaction" or "Amount"
-	MM_CTMMOREQ_Airtime_Amount               float64  `bson:"MM_CTMMOREQ_Airtime_Amount" json:"MM_CTMMOREQ_Airtime_Amount"`
-	MM_CTMMOREQ_Airtime_Points               float64  `bson:"MM_CTMMOREQ_Airtime_Points" json:"MM_CTMMOREQ_Airtime_Points"`
-	MM_CBWREQ_Award_Type                     string   `bson:"MM_CBWREQ_Award_Type" json:"MM_CBWREQ_Award_Type"` //"Transaction" or "Amount"
-	MM_CBWREQ_Amount                         float64  `bson:"MM_CBWREQ_Amount" json:"MM_CBWREQ_Amount"`
-	MM_CBWREQ_Points                         float64  `bson:"MM_CBWREQ_Points" json:"MM_CBWREQ_Points"`
+	//Recharge Bundle
+	MM_RC_Bundle_Notification        bool    `bson:"MM_RC_Bundle_Notification" json:"MM_RC_Bundle_Notification"`
+	MM_RC_Bundle_Notification_Sender string  `bson:"MM_RC_Bundle_Notification_Sender" json:"MM_RC_Bundle_Notification_Sender"`
+	MM_RC_Bundle_Notification_Text   string  `bson:"MM_RC_Bundle_Notification_Text" json:"MM_RC_Bundle_Notification_Text"`
+	MM_RC_Bundle_Award_Type          string  `bson:"MM_RC_Bundle_Award_Type" json:"MM_RC_Bundle_Award_Type"` //"Transaction" or "Amount"
+	MM_RC_Bundle_Amount              float64 `bson:"MM_RC_Bundle_Amount" json:"MM_RC_Bundle_Amount"`
+	MM_RC_Bundle_Points              float64 `bson:"MM_RC_Bundle_Points" json:"MM_RC_Bundle_Points"`
+	//Recharge Airtime
+	MM_RC_Airtime_Notification        bool    `bson:"MM_RC_Airtime_Notification" json:"MM_RC_Airtime_Notification"`
+	MM_RC_Airtime_Notification_Sender string  `bson:"MM_RC_Airtime_Notification_Sender" json:"MM_RC_Airtime_Notification_Sender"`
+	MM_RC_Airtime_Notification_Text   string  `bson:"MM_RC_Airtime_Notification_Text" json:"MM_RC_Airtime_Notification_Text"`
+	MM_RC_Airtime_Award_Type          string  `bson:"MM_RC_Airtime_Award_Type" json:"MM_RC_Airtime_Award_Type"` //"Transaction" or "Amount"
+	MM_RC_Airtime_Amount              float64 `bson:"MM_RC_Airtime_Amount" json:"MM_RC_Airtime_Amount"`
+	MM_RC_Airtime_Points              float64 `bson:"MM_RC_Airtime_Points" json:"MM_RC_Airtime_Points"`
+	//Recharge Bundle for others
+	MM_CTMMOREQ_Bundle_Notification        bool    `bson:"MM_CTMMOREQ_Bundle_Notification" json:"MM_CTMMOREQ_Bundle_Notification"`
+	MM_CTMMOREQ_Bundle_Notification_Sender string  `bson:"MM_CTMMOREQ_Bundle_Notification_Sender" json:"MM_CTMMOREQ_Bundle_Notification_Sender"`
+	MM_CTMMOREQ_Bundle_Notification_Text   string  `bson:"MM_CTMMOREQ_Bundle_Notification_Text" json:"MM_CTMMOREQ_Bundle_Notification_Text"`
+	MM_CTMMOREQ_Bundle_Award_Type          string  `bson:"MM_CTMMOREQ_Bundle_Award_Type" json:"MM_CTMMOREQ_Bundle_Award_Type"` //"Transaction" or "Amount"
+	MM_CTMMOREQ_Bundle_Amount              float64 `bson:"MM_CTMMOREQ_Bundle_Amount" json:"MM_CTMMOREQ_Bundle_Amount"`
+	MM_CTMMOREQ_Bundle_Points              float64 `bson:"MM_CTMMOREQ_Bundle_Points" json:"MM_CTMMOREQ_Bundle_Points"`
+	//Recharge Airtime for others
+	MM_CTMMOREQ_Airtime_Notification        bool    `bson:"MM_CTMMOREQ_Airtime_Notification" json:"MM_CTMMOREQ_Airtime_Notification"`
+	MM_CTMMOREQ_Airtime_Notification_Sender string  `bson:"MM_CTMMOREQ_Airtime_Notification_Sender" json:"MM_CTMMOREQ_Airtime_Notification_Sender"`
+	MM_CTMMOREQ_Airtime_Notification_Text   string  `bson:"MM_CTMMOREQ_Airtime_Notification_Text" json:"MM_CTMMOREQ_Airtime_Notification_Text"`
+	MM_CTMMOREQ_Airtime_Award_Type          string  `bson:"MM_CTMMOREQ_Airtime_Award_Type" json:"MM_CTMMOREQ_Airtime_Award_Type"` //"Transaction" or "Amount"
+	MM_CTMMOREQ_Airtime_Amount              float64 `bson:"MM_CTMMOREQ_Airtime_Amount" json:"MM_CTMMOREQ_Airtime_Amount"`
+	MM_CTMMOREQ_Airtime_Points              float64 `bson:"MM_CTMMOREQ_Airtime_Points" json:"MM_CTMMOREQ_Airtime_Points"`
+	//MM_CBWREQ
+	MM_CBWREQ_Notification        bool    `bson:"MM_CBWREQ_Notification" json:"MM_CBWREQ_Notification"`
+	MM_CBWREQ_Notification_Sender string  `bson:"MM_CBWREQ_Notification_Sender" json:"MM_CBWREQ_Notification_Sender"`
+	MM_CBWREQ_Notification_Text   string  `bson:"MM_CBWREQ_Notification_Text" json:"MM_CBWREQ_Notification_Text"`
+	MM_CBWREQ_Award_Type          string  `bson:"MM_CBWREQ_Award_Type" json:"MM_CBWREQ_Award_Type"` //"Transaction" or "Amount"
+	MM_CBWREQ_Amount              float64 `bson:"MM_CBWREQ_Amount" json:"MM_CBWREQ_Amount"`
+	MM_CBWREQ_Points              float64 `bson:"MM_CBWREQ_Points" json:"MM_CBWREQ_Points"`
 	//Mobile money airtime --> detected from IN live feed
-	MM_Airtime_Award_Type string  `bson:"MM_Airtime_Award_Type" json:"MM_Airtime_Award_Type"` //"Transaction" or "Amount"
-	MM_Airtime_Amount     float64 `bson:"MM_Airtime_Amount" json:"MM_Airtime_Amount"`
-	MM_Airtime_Points     float64 `bson:"MM_Airtime_Points" json:"MM_Airtime_Points"`
+	MM_Airtime_Notification        bool    `bson:"MM_Airtime_Notification" json:"MM_Airtime_Notification"`
+	MM_Airtime_Notification_Sender string  `bson:"MM_Airtime_Notification_Sender" json:"MM_Airtime_Notification_Sender"`
+	MM_Airtime_Notification_Text   string  `bson:"MM_Airtime_Notification_Text" json:"MM_Airtime_Notification_Text"`
+	MM_Airtime_Award_Type          string  `bson:"MM_Airtime_Award_Type" json:"MM_Airtime_Award_Type"` //"Transaction" or "Amount"
+	MM_Airtime_Amount              float64 `bson:"MM_Airtime_Amount" json:"MM_Airtime_Amount"`
+	MM_Airtime_Points              float64 `bson:"MM_Airtime_Points" json:"MM_Airtime_Points"`
 	//Mobile money data purchase --> detected from IN live feed
-	MM_Bundle_Award_Type string  `bson:"MM_Bundle_Award_Type" json:"MM_Bundle_Award_Type"` //"Transaction" or "Amount"
-	MM_Bundle_Amount     float64 `bson:"MM_Bundle_Amount" json:"MM_Bundle_Amount"`
-	MM_Bundle_Points     float64 `bson:"MM_Bundle_Points" json:"MM_Bundle_Points"`
+	MM_Bundle_Notification        bool    `bson:"MM_Bundle_Notification" json:"MM_Bundle_Notification"`
+	MM_Bundle_Notification_Sender string  `bson:"MM_Bundle_Notification_Sender" json:"MM_Bundle_Notification_Sender"`
+	MM_Bundle_Notification_Text   string  `bson:"MM_Bundle_Notification_Text" json:"MM_Bundle_Notification_Text"`
+	MM_Bundle_Award_Type          string  `bson:"MM_Bundle_Award_Type" json:"MM_Bundle_Award_Type"` //"Transaction" or "Amount"
+	MM_Bundle_Amount              float64 `bson:"MM_Bundle_Amount" json:"MM_Bundle_Amount"`
+	MM_Bundle_Points              float64 `bson:"MM_Bundle_Points" json:"MM_Bundle_Points"`
 }
 
 type Loyalty_Point_Earning_Rules_AddRequest struct {
