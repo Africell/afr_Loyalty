@@ -7918,10 +7918,13 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 		return
 	}
 	//calucate points
+	sms := false
+	sender := ""
+	text := ""
 	var points, Outstanding_fraction_points float64
 	initial_Outstanding_fraction_points := loyalty_account.Outstanding_fraction_points
 	if response.PointsToCredit == 0 {
-		points, Outstanding_fraction_points = Calculate_Loyalty_Points(point_earning_rules, request, loyalty_account.Outstanding_fraction_points)
+		points, Outstanding_fraction_points, sms, sender, text = Calculate_Loyalty_Points(point_earning_rules, request, loyalty_account.Outstanding_fraction_points)
 		if !loyalty_account.Joining_Date.IsZero() {
 			now := time.Now()
 			years := now.Year() - loyalty_account.Joining_Date.Year()
@@ -7931,7 +7934,6 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 			if now.Day() < loyalty_account.Joining_Date.Day() {
 				totalMonths--
 			}
-			fmt.Println("total months", totalMonths)
 			if totalMonths >= 0 {
 				for _, lvl := range loyalty_Level.Seniority_Levels {
 					seniorityLevel_na, seniorityexist := Map_Loyalty_Seniority_Level.CheckThenGet(lvl.Loyalty_Seniority_Level_Key)
@@ -7939,23 +7941,12 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 						seniority, ok := seniorityLevel_na.(Loyalty_Seniority_Level)
 						if ok {
 							if totalMonths >= int(seniority.AON_From) && totalMonths <= int(seniority.AON_Till) {
-								// if Configuration.Operation =="SierraLeone"{
-								// 	changedPointsflt := (points + Outstanding_fraction_points) - initial_Outstanding_fraction_points
-								// 	seniorityPoints := changedPointsflt*lvl.Multiplier_Percentage / 100
-								// 	endPoints := seniorityPoints + initial_Outstanding_fraction_points
-								// 	points =  math.Floor(endPoints)
-								// 	Outstanding_fraction_points = endPoints - points
-								// }else{
-								fmt.Println("sen lvl", lvl.Multiplier_Percentage)
-								fmt.Println("sen lvl", lvl.Key)
-
 								changedPointsflt := (points + Outstanding_fraction_points) - initial_Outstanding_fraction_points
 								seniorityPoints := changedPointsflt * lvl.Multiplier_Percentage / 100
 								endPoints := seniorityPoints + changedPointsflt + initial_Outstanding_fraction_points
 								points = math.Floor(endPoints)
 								Outstanding_fraction_points = endPoints - points
 								break
-								// }
 							}
 						}
 
@@ -8094,6 +8085,8 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 			return
 		}
 	}
+	//send sms earning notification
+
 	//response.ClosureAvailablePoints = (loyalty_account.Awarded_Points + loyalty_account.Expired_Points) - loyalty_account.Redeemed_Points
 	response.Closure_Loyalty_Level_Key = loyalty_account.Loyalty_Level_Key
 	response.Closure_Loyalty_Account_Segment_Key = loyalty_account.Loyalty_Account_Segment_Key
@@ -8101,7 +8094,46 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 	response.Closure_Redeemed_Points = loyalty_account.Redeemed_Points
 	response.Closure_Available_Points = loyalty_account.Available_Points
 	response.Closure_Outstanding_fraction_points = loyalty_account.Outstanding_fraction_points
-
+	if sms {
+		EarnNotiLog := NotificationLog{
+			SourceAction:  "Earning",
+			TransactionId: "",
+			Medium:        "SMS",
+			SourceAddress: sender,
+			Destination:   loyalty_account.Key,
+			Subject:       "Loyalty Earning",
+			AddUser:       "SYSTEM",
+			AddDate:       time.Now(),
+		}
+		if text != "" {
+			text = strings.ReplaceAll(text, "{{EarnedPoints}}", fmt.Sprint(points))
+			text = strings.ReplaceAll(text, "{{LoyaltyBalance}}", fmt.Sprint(loyalty_account.Available_Points))
+			text = strings.ReplaceAll(text, "{{NewLevel}}", fmt.Sprint(loyalty_account.Loyalty_Level_Key))
+			EarnNotiLog.Payload = text
+			err := error(nil)
+			if Configuration.Operation == "Angola" {
+				err = SendSMS(sender, loyalty_account.Key, text)
+			} else {
+				err = Send_SMS(sender, loyalty_account.Key, text)
+			}
+			if err != nil {
+				EarnNotiLog.Status = "Failed"
+				EarnNotiLog.Error = err.Error()
+			} else {
+				EarnNotiLog.Status = "Successful"
+			}
+		} else {
+			EarnNotiLog.Payload = text
+			EarnNotiLog.Status = "Failed"
+			EarnNotiLog.Error = "Undefined earning notification for transaction"
+		}
+		YYYY, MM, _, _, _, _, _ := GetTimeParts(time.Now())
+		Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
+		_, err := DAO_NotificationLog.PutOneLogs(EarnNotiLog, Db, DAO_NotificationLog.Collection)
+		if err != nil {
+			log.Println("Error in Write earning Notification Logs:", err, " (", EarnNotiLog, ")")
+		}
+	}
 	//successful reply
 	response.Status = "successful"
 	response.StatusCode = http.StatusOK
@@ -8588,21 +8620,21 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 	Uc.Write_Loyalty_Status_log(*response)
 }
 
-func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request Loyalty_AccountCreditPoints_Request, current_outstanding_points float64) (points, outstanding_points float64) {
+func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request Loyalty_AccountCreditPoints_Request, current_outstanding_points float64) (points, outstanding_points float64, sms_notificatoin bool, notification_sender string, notification_text string) {
 	switch award_request.EventSource {
 	case "DWH_Import":
 		switch award_request.EventType {
 		case "NewJoining":
-			return rules.Welcome_Points, current_outstanding_points
+			return rules.Welcome_Points, current_outstanding_points, false, "", ""
 		default:
-			return 0, current_outstanding_points
+			return 0, current_outstanding_points, false, "", ""
 		}
 	case "First_Opt_In":
-		return rules.Welcome_Points, current_outstanding_points
+		return rules.Welcome_Points, current_outstanding_points, false, "", ""
 	case "IN_feed":
 		switch award_request.EventType {
 		case "NewJoining":
-			return rules.Welcome_Points, current_outstanding_points
+			return rules.Welcome_Points, current_outstanding_points, false, "", ""
 		case "SSR_3": //scratch card recharge
 			if rules.GSM_SC_Airtime_Award_Type == "Transaction" {
 				if rules.GSM_SC_Airtime_Points > 0 {
@@ -8610,7 +8642,7 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 					flt_points := rules.GSM_SC_Airtime_Points + current_outstanding_points
 					int_points := int(flt_points)
 					outstanding_points = flt_points - float64(int_points)
-					return float64(int_points), outstanding_points
+					return float64(int_points), outstanding_points, rules.GSM_SC_Notification, rules.GSM_SC_Notification_Sender, rules.GSM_SC_Notification_Text
 				}
 			} else if rules.GSM_SC_Airtime_Award_Type == "Amount" {
 				if rules.GSM_SC_Airtime_Amount > 0 && award_request.EventAmount > 0 {
@@ -8618,10 +8650,10 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 					flt_points := (flt_fractions * rules.GSM_SC_Airtime_Points) + current_outstanding_points
 					int_points := int(flt_points)
 					outstanding_points = flt_points - float64(int_points)
-					return float64(int_points), outstanding_points
+					return float64(int_points), outstanding_points, rules.GSM_SC_Notification, rules.GSM_SC_Notification_Sender, rules.GSM_SC_Notification_Text
 				}
 			}
-			return 0, current_outstanding_points
+			return 0, current_outstanding_points, false, "", ""
 		case "SSR_211": //scratch card recharge
 			if rules.GSM_EVC_Bundle_Award_Type == "Transaction" {
 				if rules.GSM_EVC_Bundle_Points > 0 {
@@ -8629,7 +8661,7 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 					flt_points := rules.GSM_EVC_Bundle_Points + current_outstanding_points
 					int_points := int(flt_points)
 					outstanding_points = flt_points - float64(int_points)
-					return float64(int_points), outstanding_points
+					return float64(int_points), outstanding_points, rules.GSM_EVC_Bundle_Notification, rules.GSM_EVC_Bundle_Notification_Sender, rules.GSM_EVC_Bundle_Notification_Text
 				}
 			} else if rules.GSM_EVC_Bundle_Award_Type == "Amount" {
 				if rules.GSM_EVC_Bundle_Amount > 0 && award_request.EventAmount > 0 {
@@ -8637,10 +8669,10 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 					flt_points := (flt_fractions * rules.GSM_EVC_Bundle_Points) + current_outstanding_points
 					int_points := int(flt_points)
 					outstanding_points = flt_points - float64(int_points)
-					return float64(int_points), outstanding_points
+					return float64(int_points), outstanding_points, rules.GSM_EVC_Bundle_Notification, rules.GSM_EVC_Bundle_Notification_Sender, rules.GSM_EVC_Bundle_Notification_Text
 				}
 			}
-			return 0, current_outstanding_points
+			return 0, current_outstanding_points, false, "", ""
 		case "SSR_97": //EVC recharge
 			if rules.GSM_EVC_Airtime_Award_Type == "Transaction" {
 				if rules.GSM_EVC_Airtime_Points > 0 {
@@ -8648,7 +8680,7 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 					flt_points := rules.GSM_EVC_Airtime_Points + current_outstanding_points
 					int_points := int(flt_points)
 					outstanding_points = flt_points - float64(int_points)
-					return float64(int_points), outstanding_points
+					return float64(int_points), outstanding_points, rules.GSM_EVC_Airtime_Notification, rules.GSM_EVC_Airtime_Notification_Sender, rules.GSM_EVC_Airtime_Notification_Text
 				}
 			} else if rules.GSM_EVC_Airtime_Award_Type == "Amount" {
 				if rules.GSM_EVC_Airtime_Amount > 0 && award_request.EventAmount > 0 {
@@ -8656,10 +8688,10 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 					flt_points := (flt_fractions * rules.GSM_EVC_Airtime_Points) + current_outstanding_points
 					int_points := int(flt_points)
 					outstanding_points = flt_points - float64(int_points)
-					return float64(int_points), outstanding_points
+					return float64(int_points), outstanding_points, rules.GSM_EVC_Airtime_Notification, rules.GSM_EVC_Airtime_Notification_Sender, rules.GSM_EVC_Airtime_Notification_Text
 				}
 			}
-			return 0, current_outstanding_points
+			return 0, current_outstanding_points, false, "", ""
 		case "MM_SSR_97": //mobile money airtime recharge
 			if rules.MM_Airtime_Award_Type == "Transaction" {
 				if rules.MM_Airtime_Points > 0 {
@@ -8667,7 +8699,7 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 					flt_points := rules.MM_Airtime_Points + current_outstanding_points
 					int_points := int(flt_points)
 					outstanding_points = flt_points - float64(int_points)
-					return float64(int_points), outstanding_points
+					return float64(int_points), outstanding_points, rules.MM_Airtime_Notification, rules.MM_Airtime_Notification_Sender, rules.MM_Airtime_Notification_Text
 				}
 			} else if rules.MM_Airtime_Award_Type == "Amount" {
 				if rules.MM_Airtime_Amount > 0 && award_request.EventAmount > 0 {
@@ -8675,10 +8707,10 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 					flt_points := (flt_fractions * rules.MM_Airtime_Points) + current_outstanding_points
 					int_points := int(flt_points)
 					outstanding_points = flt_points - float64(int_points)
-					return float64(int_points), outstanding_points
+					return float64(int_points), outstanding_points, rules.MM_Airtime_Notification, rules.MM_Airtime_Notification_Sender, rules.MM_Airtime_Notification_Text
 				}
 			}
-			return 0, current_outstanding_points
+			return 0, current_outstanding_points, false, "", ""
 		case "MM_Bundles_Recharge": //mobile money bundle recharge
 			if rules.MM_Bundle_Award_Type == "Transaction" {
 				if rules.MM_Bundle_Points > 0 {
@@ -8686,7 +8718,7 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 					flt_points := rules.MM_Bundle_Points + current_outstanding_points
 					int_points := int(flt_points)
 					outstanding_points = flt_points - float64(int_points)
-					return float64(int_points), outstanding_points
+					return float64(int_points), outstanding_points, rules.MM_Bundle_Notification, rules.MM_Bundle_Notification_Sender, rules.MM_Bundle_Notification_Text
 				}
 			} else if rules.MM_Bundle_Award_Type == "Amount" {
 				if rules.MM_Bundle_Amount > 0 && award_request.EventAmount > 0 {
@@ -8694,10 +8726,10 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 					flt_points := (flt_fractions * rules.MM_Bundle_Points) + current_outstanding_points
 					int_points := int(flt_points)
 					outstanding_points = flt_points - float64(int_points)
-					return float64(int_points), outstanding_points
+					return float64(int_points), outstanding_points, rules.MM_Bundle_Notification, rules.MM_Bundle_Notification_Sender, rules.MM_Bundle_Notification_Text
 				}
 			}
-			return 0, current_outstanding_points
+			return 0, current_outstanding_points, false, "", ""
 		default:
 			//award points on main GSM balance consumption based on amount
 			if award_request.EventAmount > 0 {
@@ -8706,18 +8738,18 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 					flt_points := (flt_fractions * rules.MainGSMBalance_Points) + current_outstanding_points
 					int_points := int(flt_points)
 					outstanding_points = flt_points - float64(int_points)
-					return float64(int_points), outstanding_points
+					return float64(int_points), outstanding_points, rules.MainGSM_Notification, rules.MainGSM_Notification_Sender, rules.MainGSM_Notification_Text
 				} else {
-					return 0, current_outstanding_points
+					return 0, current_outstanding_points, false, "", ""
 				}
 			} else { //to do: award points based transaction
-				return 0, current_outstanding_points
+				return 0, current_outstanding_points, false, "", ""
 			}
 		}
 	case "WebPortal":
 		switch award_request.EventType {
 		case "NewJoining":
-			return rules.Welcome_Points, current_outstanding_points
+			return rules.Welcome_Points, current_outstanding_points, false, "", ""
 		default:
 			//award points based amount
 			if award_request.EventAmount > 0 {
@@ -8726,12 +8758,12 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 					flt_points := (flt_fractions * rules.MainGSMBalance_Points) + current_outstanding_points
 					int_points := int(flt_points)
 					outstanding_points = flt_points - float64(int_points)
-					return float64(int_points), outstanding_points
+					return float64(int_points), outstanding_points, rules.MainGSM_Notification, rules.MainGSM_Notification_Sender, rules.MainGSM_Notification_Text
 				} else {
-					return 0, current_outstanding_points
+					return 0, current_outstanding_points, false, "", ""
 				}
 			} else { //to do: award points based transaction
-				return 0, current_outstanding_points
+				return 0, current_outstanding_points, false, "", ""
 			}
 		}
 	case "MobileMoney_feed":
@@ -8743,7 +8775,7 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 					flt_points := rules.MM_P2P_Points + current_outstanding_points
 					int_points := int(flt_points)
 					outstanding_points = flt_points - float64(int_points)
-					return float64(int_points), outstanding_points
+					return float64(int_points), outstanding_points, rules.MM_P2P_Notification, rules.MM_P2P_Notification_Sender, rules.MM_P2P_Notification_Text
 				}
 			} else if rules.MM_P2P_Award_Type == "Amount" {
 				if rules.MM_P2P_Amount > 0 && award_request.EventAmount > 0 {
@@ -8751,10 +8783,10 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 					flt_points := (flt_fractions * rules.MM_P2P_Points) + current_outstanding_points
 					int_points := int(flt_points)
 					outstanding_points = flt_points - float64(int_points)
-					return float64(int_points), outstanding_points
+					return float64(int_points), outstanding_points, rules.MM_P2P_Notification, rules.MM_P2P_Notification_Sender, rules.MM_P2P_Notification_Text
 				}
 			}
-			return 0, current_outstanding_points
+			return 0, current_outstanding_points, false, "", ""
 		case "EMISP2POUT":
 			if rules.MM_P2P_Award_Type == "Transaction" {
 				if rules.MM_P2P_Points > 0 {
@@ -8762,7 +8794,7 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 					flt_points := rules.MM_P2P_Points + current_outstanding_points
 					int_points := int(flt_points)
 					outstanding_points = flt_points - float64(int_points)
-					return float64(int_points), outstanding_points
+					return float64(int_points), outstanding_points, rules.MM_P2P_Notification, rules.MM_P2P_Notification_Sender, rules.MM_P2P_Notification_Text
 				}
 			} else if rules.MM_P2P_Award_Type == "Amount" {
 				if rules.MM_P2P_Amount > 0 && award_request.EventAmount > 0 {
@@ -8770,10 +8802,10 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 					flt_points := (flt_fractions * rules.MM_P2P_Points) + current_outstanding_points
 					int_points := int(flt_points)
 					outstanding_points = flt_points - float64(int_points)
-					return float64(int_points), outstanding_points
+					return float64(int_points), outstanding_points, rules.MM_P2P_Notification, rules.MM_P2P_Notification_Sender, rules.MM_P2P_Notification_Text
 				}
 			}
-			return 0, current_outstanding_points
+			return 0, current_outstanding_points, false, "", ""
 		case "EMISINTRA":
 			if rules.MM_P2P_Award_Type == "Transaction" {
 				if rules.MM_P2P_Points > 0 {
@@ -8781,7 +8813,7 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 					flt_points := rules.MM_P2P_Points + current_outstanding_points
 					int_points := int(flt_points)
 					outstanding_points = flt_points - float64(int_points)
-					return float64(int_points), outstanding_points
+					return float64(int_points), outstanding_points, rules.MM_P2P_Notification, rules.MM_P2P_Notification_Sender, rules.MM_P2P_Notification_Text
 				}
 			} else if rules.MM_P2P_Award_Type == "Amount" {
 				if rules.MM_P2P_Amount > 0 && award_request.EventAmount > 0 {
@@ -8789,10 +8821,10 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 					flt_points := (flt_fractions * rules.MM_P2P_Points) + current_outstanding_points
 					int_points := int(flt_points)
 					outstanding_points = flt_points - float64(int_points)
-					return float64(int_points), outstanding_points
+					return float64(int_points), outstanding_points, rules.MM_P2P_Notification, rules.MM_P2P_Notification_Sender, rules.MM_P2P_Notification_Text
 				}
 			}
-			return 0, current_outstanding_points
+			return 0, current_outstanding_points, false, "", ""
 		case "CASHIN":
 			if rules.MM_CASHIN_Award_Type == "Transaction" {
 				if rules.MM_CASHIN_Points > 0 {
@@ -8800,7 +8832,7 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 					flt_points := rules.MM_CASHIN_Points + current_outstanding_points
 					int_points := int(flt_points)
 					outstanding_points = flt_points - float64(int_points)
-					return float64(int_points), outstanding_points
+					return float64(int_points), outstanding_points, rules.MM_CASHIN_Notification, rules.MM_CASHIN_Notification_Sender, rules.MM_CASHIN_Notification_Text
 				}
 			} else if rules.MM_CASHIN_Award_Type == "Amount" {
 				if rules.MM_CASHIN_Amount > 0 && award_request.EventAmount > 0 {
@@ -8808,10 +8840,10 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 					flt_points := (flt_fractions * rules.MM_CASHIN_Points) + current_outstanding_points
 					int_points := int(flt_points)
 					outstanding_points = flt_points - float64(int_points)
-					return float64(int_points), outstanding_points
+					return float64(int_points), outstanding_points, rules.MM_CASHIN_Notification, rules.MM_CASHIN_Notification_Sender, rules.MM_CASHIN_Notification_Text
 				}
 			}
-			return 0, current_outstanding_points
+			return 0, current_outstanding_points, false, "", ""
 		case "CASHOUT":
 			if rules.MM_CASHOUT_Award_Type == "Transaction" {
 				if rules.MM_CASHOUT_Points > 0 {
@@ -8819,7 +8851,7 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 					flt_points := rules.MM_CASHOUT_Points + current_outstanding_points
 					int_points := int(flt_points)
 					outstanding_points = flt_points - float64(int_points)
-					return float64(int_points), outstanding_points
+					return float64(int_points), outstanding_points, rules.MM_CASHOUT_Notification, rules.MM_CASHOUT_Notification_Sender, rules.MM_CASHOUT_Notification_Text
 				}
 			} else if rules.MM_CASHOUT_Award_Type == "Amount" {
 				if rules.MM_CASHOUT_Amount > 0 && award_request.EventAmount > 0 {
@@ -8827,10 +8859,10 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 					flt_points := (flt_fractions * rules.MM_CASHOUT_Points) + current_outstanding_points
 					int_points := int(flt_points)
 					outstanding_points = flt_points - float64(int_points)
-					return float64(int_points), outstanding_points
+					return float64(int_points), outstanding_points, rules.MM_CASHOUT_Notification, rules.MM_CASHOUT_Notification_Sender, rules.MM_CASHOUT_Notification_Text
 				}
 			}
-			return 0, current_outstanding_points
+			return 0, current_outstanding_points, false, "", ""
 		case "MERCHPAY":
 			entry_na, exits := Map_Loyalty_Point_Earning_Rules_Overwrite.CheckThenGet(rules.Key + "|MERCHPAY|" + award_request.EventDetailCode)
 			if exits {
@@ -8842,7 +8874,7 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 							flt_points := entry.Points + current_outstanding_points
 							int_points := int(flt_points)
 							outstanding_points = flt_points - float64(int_points)
-							return float64(int_points), outstanding_points
+							return float64(int_points), outstanding_points, rules.Overwrite_MM_MERCHPAY_Notification, rules.Overwrite_MM_MERCHPAY_Notification_Sender, rules.Overwrite_MM_MERCHPAY_Notification_Text
 						}
 					} else if entry.Award_Type == "Amount" {
 						if entry.Amount > 0 && award_request.EventAmount > 0 {
@@ -8850,7 +8882,7 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 							flt_points := (flt_fractions * entry.Points) + current_outstanding_points
 							int_points := int(flt_points)
 							outstanding_points = flt_points - float64(int_points)
-							return float64(int_points), outstanding_points
+							return float64(int_points), outstanding_points, rules.Overwrite_MM_MERCHPAY_Notification, rules.Overwrite_MM_MERCHPAY_Notification_Sender, rules.Overwrite_MM_MERCHPAY_Notification_Text
 						}
 					}
 				} else {
@@ -8860,7 +8892,7 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 							flt_points := rules.MM_MERCHPAY_Points + current_outstanding_points
 							int_points := int(flt_points)
 							outstanding_points = flt_points - float64(int_points)
-							return float64(int_points), outstanding_points
+							return float64(int_points), outstanding_points, rules.MM_MERCHPAY_Notification, rules.MM_MERCHPAY_Notification_Sender, rules.MM_MERCHPAY_Notification_Text
 						}
 					} else if rules.MM_MERCHPAY_Award_Type == "Amount" {
 						if rules.MM_MERCHPAY_Amount > 0 && award_request.EventAmount > 0 {
@@ -8868,7 +8900,7 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 							flt_points := (flt_fractions * rules.MM_MERCHPAY_Points) + current_outstanding_points
 							int_points := int(flt_points)
 							outstanding_points = flt_points - float64(int_points)
-							return float64(int_points), outstanding_points
+							return float64(int_points), outstanding_points, rules.MM_MERCHPAY_Notification, rules.MM_MERCHPAY_Notification_Sender, rules.MM_MERCHPAY_Notification_Text
 						}
 					}
 				}
@@ -8879,7 +8911,7 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 						flt_points := rules.MM_MERCHPAY_Points + current_outstanding_points
 						int_points := int(flt_points)
 						outstanding_points = flt_points - float64(int_points)
-						return float64(int_points), outstanding_points
+						return float64(int_points), outstanding_points, rules.MM_MERCHPAY_Notification, rules.MM_MERCHPAY_Notification_Sender, rules.MM_MERCHPAY_Notification_Text
 					}
 				} else if rules.MM_MERCHPAY_Award_Type == "Amount" {
 					if rules.MM_MERCHPAY_Amount > 0 && award_request.EventAmount > 0 {
@@ -8887,12 +8919,12 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 						flt_points := (flt_fractions * rules.MM_MERCHPAY_Points) + current_outstanding_points
 						int_points := int(flt_points)
 						outstanding_points = flt_points - float64(int_points)
-						return float64(int_points), outstanding_points
+						return float64(int_points), outstanding_points, rules.MM_MERCHPAY_Notification, rules.MM_MERCHPAY_Notification_Sender, rules.MM_MERCHPAY_Notification_Text
 					}
 				}
 			}
 
-			return 0, current_outstanding_points
+			return 0, current_outstanding_points, false, "", ""
 		case "BILLPAY":
 			entry_na, exits := Map_Loyalty_Point_Earning_Rules_Overwrite.CheckThenGet(rules.Key + "|BILLPAY|" + award_request.EventDetailCode)
 			if exits {
@@ -8904,7 +8936,7 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 							flt_points := entry.Points + current_outstanding_points
 							int_points := int(flt_points)
 							outstanding_points = flt_points - float64(int_points)
-							return float64(int_points), outstanding_points
+							return float64(int_points), outstanding_points, rules.Overwrite_MM_BILLPAY_Notification, rules.Overwrite_MM_BILLPAY_Notification_Sender, rules.Overwrite_MM_BILLPAY_Notification_Text
 						}
 					} else if entry.Award_Type == "Amount" {
 						if entry.Amount > 0 && award_request.EventAmount > 0 {
@@ -8912,7 +8944,7 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 							flt_points := (flt_fractions * entry.Points) + current_outstanding_points
 							int_points := int(flt_points)
 							outstanding_points = flt_points - float64(int_points)
-							return float64(int_points), outstanding_points
+							return float64(int_points), outstanding_points, rules.Overwrite_MM_BILLPAY_Notification, rules.Overwrite_MM_BILLPAY_Notification_Sender, rules.Overwrite_MM_BILLPAY_Notification_Text
 						}
 					}
 				} else {
@@ -8922,7 +8954,7 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 							flt_points := rules.MM_BILLPAY_Points + current_outstanding_points
 							int_points := int(flt_points)
 							outstanding_points = flt_points - float64(int_points)
-							return float64(int_points), outstanding_points
+							return float64(int_points), outstanding_points, rules.MM_BILLPAY_Notification, rules.MM_BILLPAY_Notification_Sender, rules.MM_BILLPAY_Notification_Text
 						}
 					} else if rules.MM_BILLPAY_Award_Type == "Amount" {
 						if rules.MM_BILLPAY_Amount > 0 && award_request.EventAmount > 0 {
@@ -8930,7 +8962,7 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 							flt_points := (flt_fractions * rules.MM_BILLPAY_Points) + current_outstanding_points
 							int_points := int(flt_points)
 							outstanding_points = flt_points - float64(int_points)
-							return float64(int_points), outstanding_points
+							return float64(int_points), outstanding_points, rules.MM_BILLPAY_Notification, rules.MM_BILLPAY_Notification_Sender, rules.MM_BILLPAY_Notification_Text
 						}
 					}
 				}
@@ -8941,7 +8973,7 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 						flt_points := rules.MM_BILLPAY_Points + current_outstanding_points
 						int_points := int(flt_points)
 						outstanding_points = flt_points - float64(int_points)
-						return float64(int_points), outstanding_points
+						return float64(int_points), outstanding_points, rules.MM_BILLPAY_Notification, rules.MM_BILLPAY_Notification_Sender, rules.MM_BILLPAY_Notification_Text
 					}
 				} else if rules.MM_BILLPAY_Award_Type == "Amount" {
 					if rules.MM_BILLPAY_Amount > 0 && award_request.EventAmount > 0 {
@@ -8949,11 +8981,11 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 						flt_points := (flt_fractions * rules.MM_BILLPAY_Points) + current_outstanding_points
 						int_points := int(flt_points)
 						outstanding_points = flt_points - float64(int_points)
-						return float64(int_points), outstanding_points
+						return float64(int_points), outstanding_points, rules.MM_BILLPAY_Notification, rules.MM_BILLPAY_Notification_Sender, rules.MM_BILLPAY_Notification_Text
 					}
 				}
 			}
-			return 0, current_outstanding_points
+			return 0, current_outstanding_points, false, "", ""
 		case "RC": //self recharge
 			if CheckMMEventDetailType(award_request.EventDetail) == Configuration.LoyaltyMMBundleCode {
 				if rules.MM_RC_Bundle_Award_Type == "Transaction" {
@@ -8962,7 +8994,7 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 						flt_points := rules.MM_RC_Bundle_Points + current_outstanding_points
 						int_points := int(flt_points)
 						outstanding_points = flt_points - float64(int_points)
-						return float64(int_points), outstanding_points
+						return float64(int_points), outstanding_points, rules.MM_RC_Bundle_Notification, rules.MM_RC_Bundle_Notification_Sender, rules.MM_RC_Bundle_Notification_Text
 					}
 				} else if rules.MM_RC_Bundle_Award_Type == "Amount" {
 					if rules.MM_RC_Bundle_Amount > 0 && award_request.EventAmount > 0 {
@@ -8970,10 +9002,10 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 						flt_points := (flt_fractions * rules.MM_RC_Bundle_Points) + current_outstanding_points
 						int_points := int(flt_points)
 						outstanding_points = flt_points - float64(int_points)
-						return float64(int_points), outstanding_points
+						return float64(int_points), outstanding_points, rules.MM_RC_Bundle_Notification, rules.MM_RC_Bundle_Notification_Sender, rules.MM_RC_Bundle_Notification_Text
 					}
 				}
-				return 0, current_outstanding_points
+				return 0, current_outstanding_points, false, "", ""
 			} else {
 				if rules.MM_RC_Airtime_Award_Type == "Transaction" {
 					if rules.MM_RC_Airtime_Points > 0 {
@@ -8981,7 +9013,7 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 						flt_points := rules.MM_RC_Airtime_Points + current_outstanding_points
 						int_points := int(flt_points)
 						outstanding_points = flt_points - float64(int_points)
-						return float64(int_points), outstanding_points
+						return float64(int_points), outstanding_points, rules.MM_RC_Airtime_Notification, rules.MM_RC_Airtime_Notification_Sender, rules.MM_RC_Airtime_Notification_Text
 					}
 				} else if rules.MM_RC_Airtime_Award_Type == "Amount" {
 					if rules.MM_RC_Airtime_Amount > 0 && award_request.EventAmount > 0 {
@@ -8989,10 +9021,10 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 						flt_points := (flt_fractions * rules.MM_RC_Airtime_Points) + current_outstanding_points
 						int_points := int(flt_points)
 						outstanding_points = flt_points - float64(int_points)
-						return float64(int_points), outstanding_points
+						return float64(int_points), outstanding_points, rules.MM_RC_Airtime_Notification, rules.MM_RC_Airtime_Notification_Sender, rules.MM_RC_Airtime_Notification_Text
 					}
 				}
-				return 0, current_outstanding_points
+				return 0, current_outstanding_points, false, "", ""
 			}
 		case "CTMMOREQ": //recharge for others
 			if CheckMMEventDetailType(award_request.EventDetail) == Configuration.LoyaltyMMBundleCode {
@@ -9002,7 +9034,7 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 						flt_points := rules.MM_CTMMOREQ_Bundle_Points + current_outstanding_points
 						int_points := int(flt_points)
 						outstanding_points = flt_points - float64(int_points)
-						return float64(int_points), outstanding_points
+						return float64(int_points), outstanding_points, rules.MM_CTMMOREQ_Bundle_Notification, rules.MM_CTMMOREQ_Bundle_Notification_Sender, rules.MM_CTMMOREQ_Bundle_Notification_Text
 					}
 				} else if rules.MM_CTMMOREQ_Bundle_Award_Type == "Amount" {
 					if rules.MM_CTMMOREQ_Bundle_Amount > 0 && award_request.EventAmount > 0 {
@@ -9010,17 +9042,17 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 						flt_points := (flt_fractions * rules.MM_CTMMOREQ_Bundle_Points) + current_outstanding_points
 						int_points := int(flt_points)
 						outstanding_points = flt_points - float64(int_points)
-						return float64(int_points), outstanding_points
+						return float64(int_points), outstanding_points, rules.MM_CTMMOREQ_Bundle_Notification, rules.MM_CTMMOREQ_Bundle_Notification_Sender, rules.MM_CTMMOREQ_Bundle_Notification_Text
 					}
 				}
-				return 0, current_outstanding_points
+				return 0, current_outstanding_points, false, "", ""
 			} else {
 				if rules.MM_CTMMOREQ_Airtime_Award_Type == "Transaction" {
 					if rules.MM_CTMMOREQ_Airtime_Points > 0 {
 						flt_points := rules.MM_CTMMOREQ_Airtime_Points + current_outstanding_points
 						int_points := int(flt_points)
 						outstanding_points = flt_points - float64(int_points)
-						return float64(int_points), outstanding_points
+						return float64(int_points), outstanding_points, rules.MM_CTMMOREQ_Airtime_Notification, rules.MM_CTMMOREQ_Airtime_Notification_Sender, rules.MM_CTMMOREQ_Airtime_Notification_Text
 						// return rules.MM_CTMMOREQ_Airtime_Points, current_outstanding_points
 					}
 				} else if rules.MM_CTMMOREQ_Airtime_Award_Type == "Amount" {
@@ -9029,10 +9061,10 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 						flt_points := (flt_fractions * rules.MM_CTMMOREQ_Airtime_Points) + current_outstanding_points
 						int_points := int(flt_points)
 						outstanding_points = flt_points - float64(int_points)
-						return float64(int_points), outstanding_points
+						return float64(int_points), outstanding_points, rules.MM_CTMMOREQ_Airtime_Notification, rules.MM_CTMMOREQ_Airtime_Notification_Sender, rules.MM_CTMMOREQ_Airtime_Notification_Text
 					}
 				}
-				return 0, current_outstanding_points
+				return 0, current_outstanding_points, false, "", ""
 			}
 		case "CBWREQ": //recharge for others
 			if rules.MM_CBWREQ_Award_Type == "Transaction" {
@@ -9041,7 +9073,7 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 					flt_points := rules.MM_CBWREQ_Points + current_outstanding_points
 					int_points := int(flt_points)
 					outstanding_points = flt_points - float64(int_points)
-					return float64(int_points), outstanding_points
+					return float64(int_points), outstanding_points, rules.MM_CBWREQ_Notification, rules.MM_CBWREQ_Notification_Sender, rules.MM_CBWREQ_Notification_Text
 				}
 			} else if rules.MM_CBWREQ_Award_Type == "Amount" {
 				if rules.MM_CBWREQ_Amount > 0 && award_request.EventAmount > 0 {
@@ -9049,19 +9081,19 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 					flt_points := (flt_fractions * rules.MM_CBWREQ_Points) + current_outstanding_points
 					int_points := int(flt_points)
 					outstanding_points = flt_points - float64(int_points)
-					return float64(int_points), outstanding_points
+					return float64(int_points), outstanding_points, rules.MM_CBWREQ_Notification, rules.MM_CBWREQ_Notification_Sender, rules.MM_CBWREQ_Notification_Text
 				}
 			}
-			return 0, current_outstanding_points
+			return 0, current_outstanding_points, false, "", ""
 		default:
-			return 0, current_outstanding_points
+			return 0, current_outstanding_points, false, "", ""
 		}
 	case "MyAfricellApp":
 		switch award_request.EventType {
 		case "MobileAppDaily_Login":
-			return rules.MobileAppDaily_Login, current_outstanding_points
+			return rules.MobileAppDaily_Login, current_outstanding_points, rules.MobileAppDaily_Notification, rules.MobileAppDaily_Notification_Sender, rules.MobileAppDaily_Notification_Text
 		default:
-			return 0, current_outstanding_points
+			return 0, current_outstanding_points, false, "", ""
 		}
 	}
 	return
