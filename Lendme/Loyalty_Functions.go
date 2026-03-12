@@ -8212,7 +8212,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 	response.Closure_Redeemed_Points = loyalty_account.Redeemed_Points
 	response.Closure_Available_Points = loyalty_account.Available_Points
 	response.Closure_Outstanding_fraction_points = loyalty_account.Outstanding_fraction_points
-	if sms {
+	if sms && points > 0 {
 		EarnNotiLog := NotificationLog{
 			SourceAction:  "Earning",
 			TransactionId: "",
