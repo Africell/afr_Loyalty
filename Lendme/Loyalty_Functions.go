@@ -8223,7 +8223,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 			AddUser:       "SYSTEM",
 			AddDate:       time.Now(),
 		}
-		if text != "" {
+		if text != "" && sender != "" {
 			text = strings.ReplaceAll(text, "{{EarnedPoints}}", fmt.Sprint(points))
 			text = strings.ReplaceAll(text, "{{LoyaltyBalance}}", fmt.Sprint(loyalty_account.Available_Points))
 			text = strings.ReplaceAll(text, "{{NewLevel}}", fmt.Sprint(loyalty_account.Loyalty_Level_Key))
