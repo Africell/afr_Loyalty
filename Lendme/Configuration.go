@@ -212,7 +212,7 @@ type ConfigType struct {
 }
 
 func GetDefaultConfiguration() (err error) {
-	Configuration = setDefaultConfiguration_Dev()
+	//Configuration = setDefaultConfiguration_Dev()
 	//Configuration = setDefaultConfiguration_DRC_Live()
 	// Configuration = setDefaultConfiguration_DRC_Loyalty_UAT()
 	//	Configuration = setDefaultConfiguration_GM_Live()
@@ -222,7 +222,7 @@ func GetDefaultConfiguration() (err error) {
 	//Configuration = setDefaultConfiguration_SL_Loyalty_UAT()
 
 	// Configuration = setDefaultConfiguration_AO_Loyalty()
-	//Configuration = setDefaultConfiguration_AO_Loyalty_UAT()
+	Configuration = setDefaultConfiguration_AO_Loyalty_UAT()
 
 	// Configuration = setDefaultConfiguration_GM_Loyalty_Live()
 	// Configuration = setDefaultConfiguration_GM_Loyalty_UAT()
@@ -1946,7 +1946,7 @@ func setDefaultConfiguration_AO_Loyalty_UAT() (Configuration ConfigType) {
 
 	Configuration.Operation = "Angola"
 	Configuration.HostId = "Lendme-01"
-	Configuration.DB_Name = "Lendme_DB"
+	Configuration.DB_Name = "Lendme_DB_UAT"
 
 	Configuration.Version = "V1"
 	Configuration.Module = "Lendme"
@@ -2011,7 +2011,7 @@ func setDefaultConfiguration_AO_Loyalty_UAT() (Configuration ConfigType) {
 	Configuration.MongoDB.HostPort_4 = ""
 	////
 
-	Configuration.DB_Name_Loyalty = "Loyalty_DB"
+	Configuration.DB_Name_Loyalty = "Loyalty_DB_UAT"
 	Configuration.LoyaltyMongoDB.ReplicaSet = Configuration.MongoDB.ReplicaSet
 	Configuration.LoyaltyMongoDB.UserName = Configuration.MongoDB.UserName
 	Configuration.LoyaltyMongoDB.Password = Configuration.MongoDB.Password
