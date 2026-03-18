@@ -312,7 +312,7 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 	Configuration.MongoDB.HostPort_1 = "9001"
 	Configuration.MongoDB.HostIP_2 = "10.95.72.176" //==>secondary
 	Configuration.MongoDB.HostPort_2 = "9002"
-	Configuration.MongoDB.HostIP_3 = "10.95.32.22" //==> Aribter
+	Configuration.MongoDB.HostIP_3 = "10.95.72.95" //==> Aribter
 	Configuration.MongoDB.HostPort_3 = "9003"
 	Configuration.MongoDB.HostIP_4 = ""
 	Configuration.MongoDB.HostPort_4 = ""
