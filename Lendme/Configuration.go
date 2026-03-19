@@ -1264,6 +1264,8 @@ func setDefaultConfiguration_SL_Live() (Configuration ConfigType) {
 
 	Configuration.IsProduction = true
 	Configuration.IsLoyaltyProduction = false
+	Configuration.ISLoyaltyOptIn = true
+	Configuration.ISLoyaltyOptOutGracePeriodDays = 30
 	Configuration.Min_Allowed_Amnt = 1
 	Configuration.Service_FeePerc = 0.15
 	Configuration.Min_Allowed_AON = 3
