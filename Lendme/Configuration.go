@@ -1791,7 +1791,7 @@ func setDefaultConfiguration_AO_Loyalty() (Configuration ConfigType) {
 	Configuration.Min_Allowed_Amnt = 50
 	Configuration.Service_FeePerc = 0.12
 	Configuration.Min_Allowed_AON = 3
-	Configuration.Min_Avg3MRecharge = 200
+	Configuration.Min_Avg3MRecharge = 800
 	Configuration.Min_LastRechargePeriod = 60
 	Configuration.Min_Allowed_Balance = 0
 	Configuration.Max_Allowed_Balance = 50
@@ -1974,7 +1974,7 @@ func setDefaultConfiguration_AO_Loyalty_UAT() (Configuration ConfigType) {
 	Configuration.Min_Allowed_Amnt = 50
 	Configuration.Service_FeePerc = 0.12
 	Configuration.Min_Allowed_AON = 3
-	Configuration.Min_Avg3MRecharge = 200
+	Configuration.Min_Avg3MRecharge = 800
 	Configuration.Min_LastRechargePeriod = 60
 	Configuration.Min_Allowed_Balance = 0
 	Configuration.Max_Allowed_Balance = 50
