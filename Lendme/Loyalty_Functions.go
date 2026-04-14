@@ -1135,175 +1135,176 @@ func (Uc *UserControl) Loyalty_Status_Expiry_Daily_Process() {
 	if !Configuration.ISLoyaltyOptIn {
 		return
 	}
-	exec := 0
 	LOG_ID := "<<Loyalty Status Expiry Daily check>>"
-	for range time.Tick(time.Second * 1) {
-		_CurrentDateTime := time.Now()
-		_hr, _mi, _se := _CurrentDateTime.Clock()
-		if _hr == 14 {
-			if _mi == 00 {
-				if _se < 60 {
-					if exec == 0 {
-						exec = 1
-						log.Println(LOG_ID + " triggered")
-						graceDays := Configuration.ISLoyaltyOptOutGracePeriodDays
-						cutoffDate := time.Now().AddDate(0, 0, -graceDays)
-						pipeline := mongo.Pipeline{
-							{{Key: "$match", Value: bson.D{
-								{Key: "Opt_Status", Value: bson.D{{Key: "$eq", Value: "OptedOut"}}},
-								{Key: "Opt_Status_Date", Value: bson.D{{Key: "$lte", Value: cutoffDate}}},
-							}}},
-						}
-						MongoDB_DB_Name := "Loyalty_DB"
-						collName := "Col_Customer_Loyalty_Account"
-						// Fetch the collection
-						collection := Uc.LoyaltyMongoDB.MongoDBClient.Database(MongoDB_DB_Name).Collection(collName)
 
-						cursor, err := collection.Aggregate(context.Background(), pipeline)
-						if err != nil {
-							log.Printf("Aggregation failed for %s: %v", collName, err)
-							continue
-						}
+	for {
+		now := time.Now()
 
-						for cursor.Next(context.Background()) {
-							var doc Customer_Loyalty_Account
-							if err := cursor.Decode(&doc); err != nil {
-								log.Printf("Failed decoding result for %s: %v", collName, err)
-								continue
-							}
-							var expiry_log Loyalty_Full_Expiry_Log
-							expiry_log.ExpiryTime = time.Now()
-							expiry_log.MSISDN = doc.Key
-							expiry_log.Opening_Awarded_Points = doc.Awarded_Points
-							expiry_log.Opening_Redeemed_Points = doc.Redeemed_Points
-							expiry_log.Opening_Available_Points = doc.Available_Points
-							expiry_log.Opening_OutStanding_Points = doc.Outstanding_fraction_points
-							expiry_log.Opening_Expired_Points = doc.Expired_Points
-							expiry_log.OpeningLoyaltyLevel = doc.Loyalty_Level_Key
-							expiry_log.EndLoyaltyLevel = doc.Loyalty_Level_Key
-							expiry_log.Last_OptOut = doc.Last_Opt_Status_Date
-							expiry_log.Grace_Period_Given_Days = graceDays
-							expiry_log.ExpiryReason = "Opt out grace period reached"
-							expiry_log.ExpiryAmount = doc.Available_Points
-							var monthly_expiry_log Loyalty_Monthly_Expiry_log
-							monthly_expiry_log.OpeningLoyaltyLevel = doc.Loyalty_Level_Key
-							monthly_expiry_log.EndLoyaltyLevel = doc.Loyalty_Level_Key
-							monthly_expiry_log.Expiry_Rules_Key = "Opt Out Expiry"
-							monthly_expiry_log.MSISDN = doc.Key
-							monthly_expiry_log.ExpiryTime = time.Now()
-							for _, pointKey := range doc.Points_Detail_Keys {
-								pointsDetail, err := Uc.Customer_Loyalty_Account_Points_Details_Get(pointKey)
-								if err != nil {
-									expiry_log.ExpiryStatus = "failed"
-									expiry_log.ExpiryStatusDescription = "points expiry rules not found"
-									Uc.Write_Loyalty_Full_Expiry_log(expiry_log)
-									// <-chan_PointsExpiry_Controler
-									return
+		// Next run today at 14:00
+		nextRun := time.Date(
+			now.Year(), now.Month(), now.Day(),
+			13, 0, 0, 0,
+			now.Location(),
+		)
+
+		// If already past 14:00 → schedule for tomorrow
+		if now.After(nextRun) {
+			nextRun = nextRun.Add(24 * time.Hour)
+		}
+
+		// Sleep until next run
+		time.Sleep(time.Until(nextRun))
+		log.Println(LOG_ID + " triggered")
+		graceDays := Configuration.ISLoyaltyOptOutGracePeriodDays
+		cutoffDate := time.Now().AddDate(0, 0, -graceDays)
+		pipeline := mongo.Pipeline{
+			{{Key: "$match", Value: bson.D{
+				{Key: "Opt_Status", Value: bson.D{{Key: "$eq", Value: "OptedOut"}}},
+				{Key: "Opt_Status_Date", Value: bson.D{{Key: "$lte", Value: cutoffDate}}},
+			}}},
+		}
+		MongoDB_DB_Name := "Loyalty_DB"
+		collName := "Col_Customer_Loyalty_Account"
+		// Fetch the collection
+		collection := Uc.LoyaltyMongoDB.MongoDBClient.Database(MongoDB_DB_Name).Collection(collName)
+
+		cursor, err := collection.Aggregate(context.Background(), pipeline)
+		if err != nil {
+			log.Printf("Aggregation failed for %s: %v", collName, err)
+			continue
+		}
+
+		for cursor.Next(context.Background()) {
+			var doc Customer_Loyalty_Account
+			if err := cursor.Decode(&doc); err != nil {
+				log.Printf("Failed decoding result for %s: %v", collName, err)
+				continue
+			}
+			var expiry_log Loyalty_Full_Expiry_Log
+			expiry_log.ExpiryTime = time.Now()
+			expiry_log.MSISDN = doc.Key
+			expiry_log.Opening_Awarded_Points = doc.Awarded_Points
+			expiry_log.Opening_Redeemed_Points = doc.Redeemed_Points
+			expiry_log.Opening_Available_Points = doc.Available_Points
+			expiry_log.Opening_OutStanding_Points = doc.Outstanding_fraction_points
+			expiry_log.Opening_Expired_Points = doc.Expired_Points
+			expiry_log.OpeningLoyaltyLevel = doc.Loyalty_Level_Key
+			expiry_log.EndLoyaltyLevel = doc.Loyalty_Level_Key
+			expiry_log.Last_OptOut = doc.Last_Opt_Status_Date
+			expiry_log.Grace_Period_Given_Days = graceDays
+			expiry_log.ExpiryReason = "Opt out grace period reached"
+			expiry_log.ExpiryAmount = doc.Available_Points
+			var monthly_expiry_log Loyalty_Monthly_Expiry_log
+			monthly_expiry_log.OpeningLoyaltyLevel = doc.Loyalty_Level_Key
+			monthly_expiry_log.EndLoyaltyLevel = doc.Loyalty_Level_Key
+			monthly_expiry_log.Expiry_Rules_Key = "Opt Out Expiry"
+			monthly_expiry_log.MSISDN = doc.Key
+			monthly_expiry_log.ExpiryTime = time.Now()
+			for _, pointKey := range doc.Points_Detail_Keys {
+				pointsDetail, err := Uc.Customer_Loyalty_Account_Points_Details_Get(pointKey)
+				if err != nil {
+					expiry_log.ExpiryStatus = "failed"
+					expiry_log.ExpiryStatusDescription = "points expiry rules not found"
+					Uc.Write_Loyalty_Full_Expiry_log(expiry_log)
+					// <-chan_PointsExpiry_Controler
+					return
+				}
+				monthly_expiry_log.Year_Month = pointsDetail[0].Year_Month
+				monthly_expiry_log.Opening_Awarded_Points = pointsDetail[0].Awarded_Points
+				monthly_expiry_log.Opening_Redeemed_Points = pointsDetail[0].Redeemed_Points
+				monthly_expiry_log.Opening_Available_Points = pointsDetail[0].Available_Points
+				monthly_expiry_log.Opening_Expired_Points = pointsDetail[0].Expired_Points
+
+				pointsDetail[0].Expired_Points = pointsDetail[0].Available_Points
+				pointsDetail[0].Available_Points = 0
+				pointsDetail[0].Expiry_Date = time.Now()
+				Map_Customer_Loyalty_Account_Points_Detail.Put(pointsDetail[0].Key, pointsDetail[0])
+
+				monthly_expiry_log.End_Expired_Points = pointsDetail[0].Expired_Points
+				monthly_expiry_log.ExpiryTime = time.Now()
+				monthly_expiry_log.End_Available_Points = 0
+				monthly_expiry_log.End_Awarded_Points = pointsDetail[0].Awarded_Points
+				monthly_expiry_log.End_Redeemed_Points = pointsDetail[0].Redeemed_Points
+				//check level downgrade
+
+				monthly_expiry_log.ExpiryStatus = "successful"
+				monthly_expiry_log.ExpiryStatusDescription = ""
+				Uc.Write_Loyalty_Monthly_Expiry_log(monthly_expiry_log)
+
+				// }
+				// <-chan_PointsExpiry_Controler
+			}
+			expired_Points := doc.Available_Points
+			expiry_log.End_Expired_Points = 0
+			doc.Expired_Points = 0
+			doc.Available_Points = 0
+			doc.Awarded_Points = 0
+			doc.Redeemed_Points = 0
+			doc.Outstanding_fraction_points = 0
+			doc.Opt_Status = "OptedOutExpired"
+			//update governance expiry
+			Uc.Loyalty_Governance_Status_Expiry_Points_Credit(expired_Points)
+			//update logs
+			expiry_log.End_Awarded_Points = 0
+			expiry_log.End_Redeemed_Points = 0
+			expiry_log.End_Available_Points = 0
+			expiry_log.End_Outstanding_Points = 0
+			Map_Customer_Loyalty_Account.Put(doc.Key, doc)
+			var New_Loyalty_Level Loyalty_Level
+			loyalty_Level_na := Map_Loyalty_Level.ConvertToArray()
+			if len(loyalty_Level_na) > 0 {
+				for _, loyalty_Level_na := range loyalty_Level_na {
+					loyalty_Level, ok := loyalty_Level_na.(Loyalty_Level)
+					if !ok {
+						fmt.Println("error in type assertion")
+					} else {
+						//evaluate
+						if doc.Awarded_Points >= loyalty_Level.Min_Accumulated_Points && doc.Awarded_Points < loyalty_Level.Max_Accumulated_Points {
+							New_Loyalty_Level = loyalty_Level
+							if New_Loyalty_Level.Key == doc.Loyalty_Level_Key {
+								//===>> no level change
+								break
+							} else {
+								current_level_na, lvlexist := Map_Loyalty_Level.CheckThenGet(doc.Loyalty_Level_Key)
+								if !lvlexist {
+									fmt.Println("current level is invalid")
 								}
-								monthly_expiry_log.Year_Month = pointsDetail[0].Year_Month
-								monthly_expiry_log.Opening_Awarded_Points = pointsDetail[0].Awarded_Points
-								monthly_expiry_log.Opening_Redeemed_Points = pointsDetail[0].Redeemed_Points
-								monthly_expiry_log.Opening_Available_Points = pointsDetail[0].Available_Points
-								monthly_expiry_log.Opening_Expired_Points = pointsDetail[0].Expired_Points
+								current_level, ok := current_level_na.(Loyalty_Level)
+								if !ok {
+									fmt.Println("error in type assertion")
+								}
+								if New_Loyalty_Level.Min_Accumulated_Points < current_level.Min_Accumulated_Points &&
+									New_Loyalty_Level.Max_Accumulated_Points < current_level.Max_Accumulated_Points {
+									//Downgrade level
+									expiry_log.EndLoyaltyLevel = New_Loyalty_Level.Key
+									doc.Previous_Loyalty_Level_Key = doc.Loyalty_Level_Key
+									doc.Previous_Loyalty_Level_Date = doc.Loyalty_Level_Date
+									doc.Loyalty_Level_Key = New_Loyalty_Level.Key
+									doc.Loyalty_Level_Date = time.Now()
+									doc.Loyalty_Level_Direction = "Downgrade"
+									doc.Loyalty_Level_SetBy = "Opt Expiry Process"
+									Map_Customer_Loyalty_Account.Put(doc.Key, doc)
 
-								pointsDetail[0].Expired_Points = pointsDetail[0].Available_Points
-								pointsDetail[0].Available_Points = 0
-								pointsDetail[0].Expiry_Date = time.Now()
-								Map_Customer_Loyalty_Account_Points_Detail.Put(pointsDetail[0].Key, pointsDetail[0])
-
-								monthly_expiry_log.End_Expired_Points = pointsDetail[0].Expired_Points
-								monthly_expiry_log.ExpiryTime = time.Now()
-								monthly_expiry_log.End_Available_Points = 0
-								monthly_expiry_log.End_Awarded_Points = pointsDetail[0].Awarded_Points
-								monthly_expiry_log.End_Redeemed_Points = pointsDetail[0].Redeemed_Points
-								//check level downgrade
-
-								monthly_expiry_log.ExpiryStatus = "successful"
-								monthly_expiry_log.ExpiryStatusDescription = ""
-								Uc.Write_Loyalty_Monthly_Expiry_log(monthly_expiry_log)
-
-								// }
-								// <-chan_PointsExpiry_Controler
-							}
-							expired_Points := doc.Available_Points
-							expiry_log.End_Expired_Points = 0
-							doc.Expired_Points = 0
-							doc.Available_Points = 0
-							doc.Awarded_Points = 0
-							doc.Redeemed_Points = 0
-							doc.Outstanding_fraction_points = 0
-							doc.Opt_Status = "OptedOutExpired"
-							//update governance expiry
-							Uc.Loyalty_Governance_Status_Expiry_Points_Credit(expired_Points)
-							//update logs
-							expiry_log.End_Awarded_Points = 0
-							expiry_log.End_Redeemed_Points = 0
-							expiry_log.End_Available_Points = 0
-							expiry_log.End_Outstanding_Points = 0
-							Map_Customer_Loyalty_Account.Put(doc.Key, doc)
-							var New_Loyalty_Level Loyalty_Level
-							loyalty_Level_na := Map_Loyalty_Level.ConvertToArray()
-							if len(loyalty_Level_na) > 0 {
-								for _, loyalty_Level_na := range loyalty_Level_na {
-									loyalty_Level, ok := loyalty_Level_na.(Loyalty_Level)
-									if !ok {
-										fmt.Println("error in type assertion")
-									} else {
-										//evaluate
-										if doc.Awarded_Points >= loyalty_Level.Min_Accumulated_Points && doc.Awarded_Points < loyalty_Level.Max_Accumulated_Points {
-											New_Loyalty_Level = loyalty_Level
-											if New_Loyalty_Level.Key == doc.Loyalty_Level_Key {
-												//===>> no level change
-												break
-											} else {
-												current_level_na, lvlexist := Map_Loyalty_Level.CheckThenGet(doc.Loyalty_Level_Key)
-												if !lvlexist {
-													fmt.Println("current level is invalid")
-												}
-												current_level, ok := current_level_na.(Loyalty_Level)
-												if !ok {
-													fmt.Println("error in type assertion")
-												}
-												if New_Loyalty_Level.Min_Accumulated_Points < current_level.Min_Accumulated_Points &&
-													New_Loyalty_Level.Max_Accumulated_Points < current_level.Max_Accumulated_Points {
-													//Downgrade level
-													expiry_log.EndLoyaltyLevel = New_Loyalty_Level.Key
-													doc.Previous_Loyalty_Level_Key = doc.Loyalty_Level_Key
-													doc.Previous_Loyalty_Level_Date = doc.Loyalty_Level_Date
-													doc.Loyalty_Level_Key = New_Loyalty_Level.Key
-													doc.Loyalty_Level_Date = time.Now()
-													doc.Loyalty_Level_Direction = "Downgrade"
-													doc.Loyalty_Level_SetBy = "Opt Expiry Process"
-													Map_Customer_Loyalty_Account.Put(doc.Key, doc)
-
-												}
-											}
-										}
-									}
 								}
 							}
-							expiry_log.ExpiryStatus = "successful"
-							expiry_log.ExpiryStatusDescription = "opt expiry"
-							Uc.Write_Loyalty_Full_Expiry_log(expiry_log)
 						}
-
-						// yesterday := time.Now().AddDate(0, 0, -1)
-						// YYYY, MM, _, DD, _, _, _ := GetTimeParts(yesterday)
-						// Db := DAO_Loyalty_AccountCreditPoints_log.DB + "_" + YYYY + MM
-						// Col := DAO_Customer_Loyalty_Account.Collection + "_" + DD
-						// err := DAO_Customer_Loyalty_Account.CollectionSnapshot(Db, Col)
-						// if err != nil {
-						// 	log.Println("error while taking a snapshot from customer account collection", err)
-						// }
-						log.Println(LOG_ID + " finished")
 					}
 				}
-			} else {
-				if exec == 1 {
-					exec = 0
-				}
 			}
+			expiry_log.ExpiryStatus = "successful"
+			expiry_log.ExpiryStatusDescription = "opt expiry"
+			Uc.Write_Loyalty_Full_Expiry_log(expiry_log)
 		}
+
+		// yesterday := time.Now().AddDate(0, 0, -1)
+		// YYYY, MM, _, DD, _, _, _ := GetTimeParts(yesterday)
+		// Db := DAO_Loyalty_AccountCreditPoints_log.DB + "_" + YYYY + MM
+		// Col := DAO_Customer_Loyalty_Account.Collection + "_" + DD
+		// err := DAO_Customer_Loyalty_Account.CollectionSnapshot(Db, Col)
+		// if err != nil {
+		// 	log.Println("error while taking a snapshot from customer account collection", err)
+		// }
+		log.Println(LOG_ID + " finished")
 	}
 }
 
@@ -4920,8 +4921,10 @@ func (Uc *UserControl) Customer_Loyalty_Account_Edit(Login string, request Custo
 		var initialDate time.Time
 		if !entry.Expiry_Date.IsZero() {
 			initialDate = entry.Expiry_Date
-		} else {
+		} else if !entry.First_Opt_In_Status_Date.IsZero() {
 			initialDate = entry.First_Opt_In_Status_Date
+		} else {
+			initialDate = entry.Creation_date
 		}
 		initialexpiryDate := addValidity(initialDate, expiry_Rule.Validity_Unit, expiry_Rule.Validity_Duration)
 		finalexpiryDate := addValidity(initialexpiryDate, expiry_Rule.Grace_Validity_Unit, expiry_Rule.Grace_Validity_Duration)
@@ -5062,8 +5065,10 @@ func (Uc *UserControl) Customer_Loyalty_Account_Get(Key string) (entries []Custo
 		var initialDate time.Time
 		if !entry.Expiry_Date.IsZero() {
 			initialDate = entry.Expiry_Date
-		} else {
+		} else if !entry.First_Opt_In_Status_Date.IsZero() {
 			initialDate = entry.First_Opt_In_Status_Date
+		} else {
+			initialDate = entry.Creation_date
 		}
 		initialexpiryDate := addValidity(initialDate, expiry_Rule.Validity_Unit, expiry_Rule.Validity_Duration)
 		finalexpiryDate := addValidity(initialexpiryDate, expiry_Rule.Grace_Validity_Unit, expiry_Rule.Grace_Validity_Duration)

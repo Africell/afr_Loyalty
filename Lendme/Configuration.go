@@ -1091,7 +1091,7 @@ func setDefaultConfiguration_GM_Loyalty_UAT() (Configuration ConfigType) {
 	Configuration.IsProduction = true
 	Configuration.IsLoyaltyProduction = false
 	Configuration.ISLoyaltyOptIn = true
-	Configuration.ISLoyaltyOptOutGracePeriodDays = 30
+	Configuration.ISLoyaltyOptOutGracePeriodDays = 0
 	Configuration.Min_Allowed_Amnt = 5
 	Configuration.Service_FeePerc = 0.04
 	Configuration.Min_Allowed_AON = 3
