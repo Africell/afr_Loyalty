@@ -1143,7 +1143,7 @@ func (Uc *UserControl) Loyalty_Status_Expiry_Daily_Process() {
 		// Next run today at 14:00
 		nextRun := time.Date(
 			now.Year(), now.Month(), now.Day(),
-			14, 10, 0, 0,
+			2, 50, 0, 0,
 			now.Location(),
 		)
 
@@ -1229,7 +1229,7 @@ func (Uc *UserControl) Loyalty_Status_Expiry_Daily_Process() {
 
 				monthly_expiry_log.ExpiryStatus = "successful"
 				monthly_expiry_log.ExpiryStatusDescription = ""
-				Uc.Write_Loyalty_Monthly_Expiry_log(monthly_expiry_log)
+				// Uc.Write_Loyalty_Monthly_Expiry_log(monthly_expiry_log)
 
 				// }
 				// <-chan_PointsExpiry_Controler
