@@ -738,7 +738,7 @@ func setDefaultConfiguration_GM_Loyalty() (Configuration ConfigType) {
 	Configuration.IsProduction = true
 	Configuration.IsLoyaltyProduction = true
 	Configuration.ISLoyaltyOptIn = true
-	Configuration.ISLoyaltyOptOutGracePeriodDays = 0
+	Configuration.ISLoyaltyOptOutGracePeriodDays = 365
 	Configuration.Min_Allowed_Amnt = 5
 	Configuration.Service_FeePerc = 0.04
 	Configuration.Min_Allowed_AON = 3
@@ -915,7 +915,7 @@ func setDefaultConfiguration_GM_Loyalty_Live() (Configuration ConfigType) {
 	Configuration.IsProduction = true
 	Configuration.IsLoyaltyProduction = true
 	Configuration.ISLoyaltyOptIn = true
-	Configuration.ISLoyaltyOptOutGracePeriodDays = 0
+	Configuration.ISLoyaltyOptOutGracePeriodDays = 365
 	Configuration.Min_Allowed_Amnt = 5
 	Configuration.Service_FeePerc = 0.04
 	Configuration.Min_Allowed_AON = 3
@@ -1092,7 +1092,7 @@ func setDefaultConfiguration_GM_Loyalty_UAT() (Configuration ConfigType) {
 	Configuration.IsProduction = true
 	Configuration.IsLoyaltyProduction = false
 	Configuration.ISLoyaltyOptIn = true
-	Configuration.ISLoyaltyOptOutGracePeriodDays = 0
+	Configuration.ISLoyaltyOptOutGracePeriodDays = 365
 	Configuration.Min_Allowed_Amnt = 5
 	Configuration.Service_FeePerc = 0.04
 	Configuration.Min_Allowed_AON = 3

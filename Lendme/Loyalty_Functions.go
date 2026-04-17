@@ -1143,7 +1143,7 @@ func (Uc *UserControl) Loyalty_Status_Expiry_Daily_Process() {
 		// Next run today at 00:10
 		nextRun := time.Date(
 			now.Year(), now.Month(), now.Day(),
-			01, 13, 0, 0,
+			00, 13, 0, 0,
 			now.Location(),
 		)
 
