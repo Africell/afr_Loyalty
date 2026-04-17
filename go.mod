@@ -1,6 +1,6 @@
 module afr_lendme
 
-go 1.25.5
+go 1.25.3
 
 replace afr_auth_center => ../afr_auth_center/
 
