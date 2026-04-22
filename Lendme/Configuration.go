@@ -1267,7 +1267,7 @@ func setDefaultConfiguration_SL_Live() (Configuration ConfigType) {
 	Configuration.CountryCode = "232"
 
 	Configuration.IsProduction = true
-	Configuration.IsLoyaltyProduction = false
+	Configuration.IsLoyaltyProduction = true
 	Configuration.ISLoyaltyOptIn = true
 	Configuration.ISLoyaltyOptOutGracePeriodDays = 30
 	Configuration.Min_Allowed_Amnt = 1
@@ -1437,7 +1437,9 @@ func setDefaultConfiguration_SL_Loyalty() (Configuration ConfigType) {
 	Configuration.CountryCode = "232"
 
 	Configuration.IsProduction = true
-	Configuration.IsLoyaltyProduction = false
+	Configuration.IsLoyaltyProduction = true
+	Configuration.ISLoyaltyOptIn = true
+	Configuration.ISLoyaltyOptOutGracePeriodDays = 30
 	Configuration.Min_Allowed_Amnt = 1
 	Configuration.Service_FeePerc = 0.15
 	Configuration.Min_Allowed_AON = 3
