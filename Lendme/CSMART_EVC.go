@@ -13,6 +13,8 @@ import (
 	"github.com/google/uuid"
 )
 
+var CDS_TOKEN_EVC = "eyJhbGciOiJIUzUxMiJ9.eyJ0ZW5hbnRUeXBlIjoicGFydG5lciIsInRlbmFuY3lJZCI6Ik1WTk9fQUZSSUNFTExDTElFTlRfQU5HX0FGUlRHVyIsImVudmlyb25tZW50IjoicHJvZCIsInRva2VuVHlwZSI6ImVudlRva2VuIiwidmVyc2lvbiI6MSwiaWF0IjoxNjUzMDQzMzUxfQ.qJqT4_Nx9Q6MkFH4A060loxpIHPj_28MFtHafMMNI_s-8Ga60d6ZnJqxIF7NSgNGxVEsBHgIKTDo9KsOt3zD3w"
+
 // ----------------------------------------------------------------------------------------
 // CSMART -- EVC Get Dealer Balance
 // ----------------------------------------------------------------------------------------
@@ -56,7 +58,7 @@ func CS_EVC_GetDealerBalance(DealerName, DealerPIN, DealerNumber string) (respon
 	req.Header.Set("serviceProvider", "OCS")
 	req.Header.Set("source", "USSD")
 	req.Header.Set("destination", "OCS")
-	req.Header.Set("token", CDS_TOKEN)
+	req.Header.Set("token", CDS_TOKEN_EVC)
 
 	client := &http.Client{
 		Timeout: 4 * time.Second,
@@ -145,7 +147,7 @@ func CS_EVC_Dealer_Transfer(FromDealerID, DealerName, DealerPIN, ToDealerID, ToD
 	req.Header.Set("serviceProvider", "OCS")
 	req.Header.Set("source", "USSD")
 	req.Header.Set("destination", "OCS")
-	req.Header.Set("token", CDS_TOKEN)
+	req.Header.Set("token", CDS_TOKEN_EVC)
 
 	client := &http.Client{
 		Timeout: 4 * time.Second,
@@ -216,7 +218,7 @@ func CS_EVC_Any_Dealer_Transfer(DealerName, DealerNumber, DealerPIN, TargetDeale
 	req.Header.Set("serviceProvider", "OCS")
 	req.Header.Set("source", "USSD")
 	req.Header.Set("destination", "OCS")
-	req.Header.Set("token", CDS_TOKEN)
+	req.Header.Set("token", CDS_TOKEN_EVC)
 
 	client := &http.Client{
 		Timeout: 4 * time.Second,
@@ -303,7 +305,7 @@ func CS_EVC_Dealer_Refund(DealerID, DealerName, DealerPIN string, Amount float64
 	req.Header.Set("serviceProvider", "OCS")
 	req.Header.Set("source", "USSD")
 	req.Header.Set("destination", "OCS")
-	req.Header.Set("token", CDS_TOKEN)
+	req.Header.Set("token", CDS_TOKEN_EVC)
 
 	client := &http.Client{
 		Timeout: 4 * time.Second,
@@ -390,7 +392,7 @@ func CS_EVC_Dealer_Debit(DealerID, DealerName, DealerPIN string, Amount float64,
 	req.Header.Set("serviceProvider", "OCS")
 	req.Header.Set("source", "USSD")
 	req.Header.Set("destination", "OCS")
-	req.Header.Set("token", CDS_TOKEN)
+	req.Header.Set("token", CDS_TOKEN_EVC)
 
 	client := &http.Client{
 		Timeout: 4 * time.Second,
@@ -479,7 +481,7 @@ func CS_EVC_Dealer_Withdraw(DealerID, DealerName, DealerPIN, SubDealerName, SubD
 	req.Header.Set("serviceProvider", "OCS")
 	req.Header.Set("source", "USSD")
 	req.Header.Set("destination", "OCS")
-	req.Header.Set("token", CDS_TOKEN)
+	req.Header.Set("token", CDS_TOKEN_EVC)
 
 	client := &http.Client{
 		Timeout: 4 * time.Second,
@@ -568,7 +570,7 @@ func CS_EVC_Dealer_Changepin(DealerName, DealerNumber, DealerPIN, NewPIN string)
 	req.Header.Set("serviceProvider", "OCS")
 	req.Header.Set("source", "USSD")
 	req.Header.Set("destination", "OCS")
-	req.Header.Set("token", CDS_TOKEN)
+	req.Header.Set("token", CDS_TOKEN_EVC)
 
 	client := &http.Client{
 		Timeout: 4 * time.Second,
@@ -654,7 +656,7 @@ func CS_EVC_Dealer_Addsubdealer(DealerName, DealerNumber, DealerPIN, SubDealerNa
 	req.Header.Set("serviceProvider", "OCS")
 	req.Header.Set("source", "USSD")
 	req.Header.Set("destination", "OCS")
-	req.Header.Set("token", CDS_TOKEN)
+	req.Header.Set("token", CDS_TOKEN_EVC)
 
 	client := &http.Client{
 		Timeout: 4 * time.Second,
