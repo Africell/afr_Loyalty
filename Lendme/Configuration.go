@@ -1967,7 +1967,7 @@ func setDefaultConfiguration_AO_Loyalty_UAT() (Configuration ConfigType) {
 	Configuration.MSISDN_Short_len = 9
 	Configuration.CountryCode = "244"
 
-	Configuration.Lendme_EVC_Dealer_MSISDN = "244951010534"
+	Configuration.Lendme_EVC_Dealer_MSISDN = "244951010532"
 	Configuration.Lendme_EVC_Dealer_PIN = "8236"
 
 	Configuration.IsProduction = false
