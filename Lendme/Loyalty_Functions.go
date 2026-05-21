@@ -10357,10 +10357,10 @@ func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account
 			monthly_expiry_log.End_Expired_Points = expired_Points
 			//check level downgrade
 			new_Loyalty_level_key, errNL := Uc.EvaluateAndUpdate_CustomerLoyaltyLevel("Points_Expiry", account.Key)
-			if errNL == nil {
+			if errNL != nil {
 				fmt.Println("error", errNL)
 			}
-			if errNL != nil {
+			if errNL == nil {
 				monthly_expiry_log.EndLoyaltyLevel = new_Loyalty_level_key
 			}
 
