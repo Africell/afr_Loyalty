@@ -4,6 +4,7 @@ import (
 	SpinAndWin_client "afr_SpinAndWin_be/SpinAndWinClient"
 	APGW "afr_ao_apgw_v2/APGWClientV2"
 	AuthCenterClient "afr_auth_center/AuthCenterClient"
+	LendmeClient "afr_lendme/LendmeClient"
 	Prop "afr_propylaea/PropylaeaClient"
 	INClient "afr_sb_in"
 	UCGW_client "afr_unified_charging_gateway/Unified_charging_gateway_Client"
@@ -14,6 +15,7 @@ import (
 
 var CGWHostConfig UCGW_client.UC_GW_Client
 var SpinAndWinHostConfig SpinAndWin_client.SpinAndWin_Client
+var LendmeHostConfig LendmeClient.Lendme_Client
 
 type UserControl struct {
 	MongoDB        *daoc.MongoDB
@@ -26,6 +28,7 @@ type UserControl struct {
 	Propylaea      *Prop.Propylaea
 	SpinAndWin     *SpinAndWin_client.SpinAndWin
 	APGW           *APGW.APGW
+	Lendme         *LendmeClient.LendMe
 }
 
 func NewUserControl() *UserControl {
@@ -152,6 +155,28 @@ func NewUserControl() *UserControl {
 		Timeout:         10 * time.Second, //timeout if no reply after X seconds
 	}
 	log.Println(APGW_config)
+	LendmeAUC := AuthCenterClient.InitHostConfig(
+		Configuration.Lendme_AUC.Protocol,
+		Configuration.Lendme_AUC.Hostname,
+		Configuration.Lendme_AUC.Port,
+		Configuration.Lendme_AUC.Module,
+		Configuration.Lendme_AUC.Version,
+		"",
+		Configuration.Lendme_AUC.S2S_Username,
+		Configuration.Lendme_AUC.S2S_Password,
+		Configuration.Lendme_AUC.Timeout_After)
+	log.Println(LendmeAUC)
+	LendmeHostConfig = LendmeClient.Lendme_Client{
+		Protocol:        Configuration.Lendme.Protocol,
+		Hostname:        Configuration.Lendme.Hostname,
+		LendmePort:      Configuration.Lendme.Port,
+		LendMeModule:    Configuration.Lendme.Module,
+		LendMeVersion:   Configuration.Lendme.Version,
+		Timeout:         Configuration.Lendme.Timeout,
+		AUC_client:      AuthCenterClient.NewAUCClient(LendmeAUC).AUCClient,
+	}
+	log.Println(LendmeHostConfig)
+
 	UC := &UserControl{
 		MongoDB:        daoc.NewMongoDBClient(MongoHostConfig),
 		LoyaltyMongoDB: daoc.NewMongoDBClient(LoyaltyMongoHostConfig),
@@ -163,6 +188,7 @@ func NewUserControl() *UserControl {
 		Propylaea:      Prop.NewPropylaeaClient(propylaea_config),
 		SpinAndWin:     SpinAndWin_client.NewSpinAndWinClient(SpinAndWinHostConfig),
 		APGW:           APGW.NewAPGWClient(APGW_config),
+		Lendme:         LendmeClient.NewLendmeClient(LendmeHostConfig),
 	}
 	return UC
 }

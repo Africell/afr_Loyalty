@@ -190,10 +190,29 @@ type ConfigType struct {
 		S2S_Password  string
 		Timeout_After time.Duration
 	}
+
+	Lendme_AUC struct {
+		Protocol      string
+		Hostname      string
+		Port          string
+		Module        string
+		Version       string
+		S2S_Username  string
+		S2S_Password  string
+		Timeout_After time.Duration
+	}
+	Lendme struct {
+		Protocol string
+		Hostname string
+		Port     string
+		Module   string
+		Version  string
+		Timeout  time.Duration
+	}
 }
 
 func GetDefaultConfiguration() (err error) {
-	//Configuration = setDefaultConfiguration_Dev()
+	Configuration = setDefaultConfiguration_Dev()
 	//Configuration = setDefaultConfiguration_DRC_Live()
 	// Configuration = setDefaultConfiguration_DRC_Loyalty_UAT()
 	//	Configuration = setDefaultConfiguration_GM_Live()
@@ -203,7 +222,7 @@ func GetDefaultConfiguration() (err error) {
 	//Configuration = setDefaultConfiguration_SL_Loyalty_UAT()
 
 	// Configuration = setDefaultConfiguration_AO_Loyalty()
-	Configuration = setDefaultConfiguration_AO_Loyalty_UAT()
+	// Configuration = setDefaultConfiguration_AO_Loyalty_UAT()
 
 	// Configuration = setDefaultConfiguration_GM_Loyalty_Live()
 	// Configuration = setDefaultConfiguration_GM_Loyalty_UAT()
@@ -352,6 +371,22 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) { //lendme se
 	Configuration.Propylaea.ChannelName = "Spin And Win"
 	Configuration.Propylaea.ChannelPlan = "Normal SIM"
 	Configuration.Propylaea.ChannelVersion = "1"
+
+	Configuration.Lendme_AUC.Protocol = "http"
+	Configuration.Lendme_AUC.Hostname = "Lendme_auc"
+	Configuration.Lendme_AUC.Port = "9001"
+	Configuration.Lendme_AUC.Module = "AUC"
+	Configuration.Lendme_AUC.Version = "V1"
+	Configuration.Lendme_AUC.S2S_Username = "Lendme_Admin"
+	Configuration.Lendme_AUC.S2S_Password = "s@l$e$IrSW0$4"
+	Configuration.Lendme_AUC.Timeout_After = 5 * time.Second
+
+	Configuration.Lendme.Protocol = "http"
+	Configuration.Lendme.Hostname = "Lendme_service"
+	Configuration.Lendme.Port = "9290"
+	Configuration.Lendme.Module = "Lendme"
+	Configuration.Lendme.Version = "V1"
+	Configuration.Lendme.Timeout = 15 * time.Second
 
 	return
 }
@@ -507,6 +542,22 @@ func setDefaultConfiguration_DRC_Loyalty_UAT() (Configuration ConfigType) {
 	Configuration.SpinAndWin.Module = "SpinAndWin"
 	Configuration.SpinAndWin.Version = "V1"
 	Configuration.SpinAndWin.Timeout = 30 * time.Second
+
+	Configuration.Lendme_AUC.Protocol = "http"
+	Configuration.Lendme_AUC.Hostname = "Lendme_auc"
+	Configuration.Lendme_AUC.Port = "9293"
+	Configuration.Lendme_AUC.Module = "AUC"
+	Configuration.Lendme_AUC.Version = "V1"
+	Configuration.Lendme_AUC.S2S_Username = "Lendme_Admin"
+	Configuration.Lendme_AUC.S2S_Password = "s@l$e$IrSW0$4"
+	Configuration.Lendme_AUC.Timeout_After = 5 * time.Second
+
+	Configuration.Lendme.Protocol = "http"
+	Configuration.Lendme.Hostname = "Lendme_service"
+	Configuration.Lendme.Port = "9290"
+	Configuration.Lendme.Module = "Lendme"
+	Configuration.Lendme.Version = "V1"
+	Configuration.Lendme.Timeout = 15 * time.Second
 
 	return
 }
@@ -666,6 +717,22 @@ func setDefaultConfiguration_DRC_Loyalty_UAT_K8s() (Configuration ConfigType) { 
 	Configuration.SpinAndWin.Version = "V1"
 	Configuration.SpinAndWin.Timeout = 30 * time.Second
 
+	Configuration.Lendme_AUC.Protocol = "http"
+	Configuration.Lendme_AUC.Hostname = "afr-lendme-auc-uat-service"
+	Configuration.Lendme_AUC.Port = "9293"
+	Configuration.Lendme_AUC.Module = "AUC"
+	Configuration.Lendme_AUC.Version = "V1"
+	Configuration.Lendme_AUC.S2S_Username = "Lendme_Admin"
+	Configuration.Lendme_AUC.S2S_Password = "s@l$e$IrSW0$4"
+	Configuration.Lendme_AUC.Timeout_After = 5 * time.Second
+
+	Configuration.Lendme.Protocol = "http"
+	Configuration.Lendme.Hostname = "afr-lendme-uat-service"
+	Configuration.Lendme.Port = "9290"
+	Configuration.Lendme.Module = "Lendme"
+	Configuration.Lendme.Version = "V1"
+	Configuration.Lendme.Timeout = 15 * time.Second
+
 	return
 }
 
@@ -796,6 +863,22 @@ func setDefaultConfiguration_GM_Live() (Configuration ConfigType) { //lendme ser
 	Configuration.Propylaea.ChannelName = "Spin And Win"
 	Configuration.Propylaea.ChannelPlan = "Normal SIM"
 	Configuration.Propylaea.ChannelVersion = "1"
+
+	Configuration.Lendme_AUC.Protocol = "http"
+	Configuration.Lendme_AUC.Hostname = "Lendme_auc"
+	Configuration.Lendme_AUC.Port = "9293"
+	Configuration.Lendme_AUC.Module = "AUC"
+	Configuration.Lendme_AUC.Version = "V1"
+	Configuration.Lendme_AUC.S2S_Username = "Lendme_Admin"
+	Configuration.Lendme_AUC.S2S_Password = "s@l$e$IrSW0$4"
+	Configuration.Lendme_AUC.Timeout_After = 5 * time.Second
+
+	Configuration.Lendme.Protocol = "http"
+	Configuration.Lendme.Hostname = "Lendme_service"
+	Configuration.Lendme.Port = "9290"
+	Configuration.Lendme.Module = "Lendme"
+	Configuration.Lendme.Version = "V1"
+	Configuration.Lendme.Timeout = 15 * time.Second
 
 	return
 }
@@ -957,6 +1040,22 @@ func setDefaultConfiguration_GM_Loyalty() (Configuration ConfigType) { //lendme 
 	Configuration.SpinAndWin.Module = "SpinAndWin"
 	Configuration.SpinAndWin.Version = "V1"
 	Configuration.SpinAndWin.Timeout = 30 * time.Second
+
+	Configuration.Lendme_AUC.Protocol = "http"
+	Configuration.Lendme_AUC.Hostname = "Lendme_auc"
+	Configuration.Lendme_AUC.Port = "9293"
+	Configuration.Lendme_AUC.Module = "AUC"
+	Configuration.Lendme_AUC.Version = "V1"
+	Configuration.Lendme_AUC.S2S_Username = "Lendme_Admin"
+	Configuration.Lendme_AUC.S2S_Password = "s@l$e$IrSW0$4"
+	Configuration.Lendme_AUC.Timeout_After = 5 * time.Second
+
+	Configuration.Lendme.Protocol = "http"
+	Configuration.Lendme.Hostname = "Lendme_service"
+	Configuration.Lendme.Port = "9290"
+	Configuration.Lendme.Module = "Lendme"
+	Configuration.Lendme.Version = "V1"
+	Configuration.Lendme.Timeout = 15 * time.Second
 
 	return
 }
@@ -1120,6 +1219,22 @@ func setDefaultConfiguration_GM_Loyalty_Live() (Configuration ConfigType) { //le
 	Configuration.SpinAndWin.Module = "SpinAndWin"
 	Configuration.SpinAndWin.Version = "V1"
 	Configuration.SpinAndWin.Timeout = 30 * time.Second
+
+	Configuration.Lendme_AUC.Protocol = "http"
+	Configuration.Lendme_AUC.Hostname = "Lendme_auc"
+	Configuration.Lendme_AUC.Port = "9293"
+	Configuration.Lendme_AUC.Module = "AUC"
+	Configuration.Lendme_AUC.Version = "V1"
+	Configuration.Lendme_AUC.S2S_Username = "Lendme_Admin"
+	Configuration.Lendme_AUC.S2S_Password = "s@l$e$IrSW0$4"
+	Configuration.Lendme_AUC.Timeout_After = 5 * time.Second
+
+	Configuration.Lendme.Protocol = "http"
+	Configuration.Lendme.Hostname = "Lendme_service"
+	Configuration.Lendme.Port = "9290"
+	Configuration.Lendme.Module = "Lendme"
+	Configuration.Lendme.Version = "V1"
+	Configuration.Lendme.Timeout = 15 * time.Second
 
 	return
 }
@@ -1291,6 +1406,22 @@ func setDefaultConfiguration_GM_Loyalty_UAT() (Configuration ConfigType) { //len
 	Configuration.SpinAndWin.Version = "V1"
 	Configuration.SpinAndWin.Timeout = 30 * time.Second
 
+	Configuration.Lendme_AUC.Protocol = "http"
+	Configuration.Lendme_AUC.Hostname = "Lendme_auc"
+	Configuration.Lendme_AUC.Port = "9293"
+	Configuration.Lendme_AUC.Module = "AUC"
+	Configuration.Lendme_AUC.Version = "V1"
+	Configuration.Lendme_AUC.S2S_Username = "Lendme_Admin"
+	Configuration.Lendme_AUC.S2S_Password = "s@l$e$IrSW0$4"
+	Configuration.Lendme_AUC.Timeout_After = 5 * time.Second
+
+	Configuration.Lendme.Protocol = "http"
+	Configuration.Lendme.Hostname = "Lendme_service"
+	Configuration.Lendme.Port = "9290"
+	Configuration.Lendme.Module = "Lendme"
+	Configuration.Lendme.Version = "V1"
+	Configuration.Lendme.Timeout = 15 * time.Second
+
 	return
 }
 
@@ -1446,6 +1577,22 @@ func setDefaultConfiguration_SL_Live() (Configuration ConfigType) { //lendme ser
 	Configuration.Propylaea.S2S_Username = "Propylaea_Admin"
 	Configuration.Propylaea.S2S_Password = "uC@g$W$iRiS6$2@333dd"
 	Configuration.Propylaea.Timeout_After = 5 * time.Second
+
+	Configuration.Lendme_AUC.Protocol = "http"
+	Configuration.Lendme_AUC.Hostname = "Lendme_auc"
+	Configuration.Lendme_AUC.Port = "9293"
+	Configuration.Lendme_AUC.Module = "AUC"
+	Configuration.Lendme_AUC.Version = "V1"
+	Configuration.Lendme_AUC.S2S_Username = "Lendme_Admin"
+	Configuration.Lendme_AUC.S2S_Password = "s@l$e$IrSW0$4"
+	Configuration.Lendme_AUC.Timeout_After = 5 * time.Second
+
+	Configuration.Lendme.Protocol = "http"
+	Configuration.Lendme.Hostname = "Lendme_service"
+	Configuration.Lendme.Port = "9290"
+	Configuration.Lendme.Module = "Lendme"
+	Configuration.Lendme.Version = "V1"
+	Configuration.Lendme.Timeout = 15 * time.Second
 
 	return
 }
@@ -1617,6 +1764,22 @@ func setDefaultConfiguration_SL_Loyalty() (Configuration ConfigType) { //lendme 
 	Configuration.Propylaea.S2S_Password = "uC@g$W$iRiS6$2@333dd"
 	Configuration.Propylaea.Timeout_After = 5 * time.Second
 
+	Configuration.Lendme_AUC.Protocol = "http"
+	Configuration.Lendme_AUC.Hostname = "Lendme_auc"
+	Configuration.Lendme_AUC.Port = "9293"
+	Configuration.Lendme_AUC.Module = "AUC"
+	Configuration.Lendme_AUC.Version = "V1"
+	Configuration.Lendme_AUC.S2S_Username = "Lendme_Admin"
+	Configuration.Lendme_AUC.S2S_Password = "s@l$e$IrSW0$4"
+	Configuration.Lendme_AUC.Timeout_After = 5 * time.Second
+
+	Configuration.Lendme.Protocol = "http"
+	Configuration.Lendme.Hostname = "Lendme_service"
+	Configuration.Lendme.Port = "9290"
+	Configuration.Lendme.Module = "Lendme"
+	Configuration.Lendme.Version = "V1"
+	Configuration.Lendme.Timeout = 15 * time.Second
+
 	return
 }
 
@@ -1774,6 +1937,22 @@ func setDefaultConfiguration_SL_Loyalty_UAT() (Configuration ConfigType) { //len
 	Configuration.Propylaea.S2S_Username = "Propylaea_Admin"
 	Configuration.Propylaea.S2S_Password = "uC@g$W$iRiS6$2@333dd"
 	Configuration.Propylaea.Timeout_After = 5 * time.Second
+
+	Configuration.Lendme_AUC.Protocol = "http"
+	Configuration.Lendme_AUC.Hostname = "Lendme_auc"
+	Configuration.Lendme_AUC.Port = "9293"
+	Configuration.Lendme_AUC.Module = "AUC"
+	Configuration.Lendme_AUC.Version = "V1"
+	Configuration.Lendme_AUC.S2S_Username = "Lendme_Admin"
+	Configuration.Lendme_AUC.S2S_Password = "s@l$e$IrSW0$4"
+	Configuration.Lendme_AUC.Timeout_After = 5 * time.Second
+
+	Configuration.Lendme.Protocol = "http"
+	Configuration.Lendme.Hostname = "Lendme_service"
+	Configuration.Lendme.Port = "9290"
+	Configuration.Lendme.Module = "Lendme"
+	Configuration.Lendme.Version = "V1"
+	Configuration.Lendme.Timeout = 15 * time.Second
 
 	return
 }
@@ -1941,6 +2120,22 @@ func setDefaultConfiguration_AO_Loyalty() (Configuration ConfigType) { //lendme 
 	Configuration.SpinAndWin.Version = "V1"
 	Configuration.SpinAndWin.Timeout = 5 * time.Second
 
+	Configuration.Lendme_AUC.Protocol = "http"
+	Configuration.Lendme_AUC.Hostname = "Lendme_auc"
+	Configuration.Lendme_AUC.Port = "9293"
+	Configuration.Lendme_AUC.Module = "AUC"
+	Configuration.Lendme_AUC.Version = "V1"
+	Configuration.Lendme_AUC.S2S_Username = "Lendme_Admin"
+	Configuration.Lendme_AUC.S2S_Password = "s@l$e$IrSW0$4"
+	Configuration.Lendme_AUC.Timeout_After = 5 * time.Second
+
+	Configuration.Lendme.Protocol = "http"
+	Configuration.Lendme.Hostname = "Lendme_service"
+	Configuration.Lendme.Port = "9290"
+	Configuration.Lendme.Module = "Lendme"
+	Configuration.Lendme.Version = "V1"
+	Configuration.Lendme.Timeout = 15 * time.Second
+
 	return
 }
 
@@ -2106,6 +2301,22 @@ func setDefaultConfiguration_AO_Loyalty_UAT() (Configuration ConfigType) { //len
 	Configuration.SpinAndWin.Module = "SpinAndWin"
 	Configuration.SpinAndWin.Version = "V1"
 	Configuration.SpinAndWin.Timeout = 5 * time.Second
+
+	Configuration.Lendme_AUC.Protocol = "http"
+	Configuration.Lendme_AUC.Hostname = "Lendme_auc"
+	Configuration.Lendme_AUC.Port = "9293"
+	Configuration.Lendme_AUC.Module = "AUC"
+	Configuration.Lendme_AUC.Version = "V1"
+	Configuration.Lendme_AUC.S2S_Username = "Lendme_Admin"
+	Configuration.Lendme_AUC.S2S_Password = "s@l$e$IrSW0$4"
+	Configuration.Lendme_AUC.Timeout_After = 5 * time.Second
+
+	Configuration.Lendme.Protocol = "http"
+	Configuration.Lendme.Hostname = "Lendme_service"
+	Configuration.Lendme.Port = "9290"
+	Configuration.Lendme.Module = "Lendme"
+	Configuration.Lendme.Version = "V1"
+	Configuration.Lendme.Timeout = 15 * time.Second
 
 	return
 }
@@ -2339,6 +2550,22 @@ func setDefaultConfiguration_Dev() (Configuration ConfigType) { //lendme service
 	// Configuration.KafkaBrokerUrls = "kafka1:9092,kafka2:9092,kafka3:9092"
 	// Configuration.KafkaBrokerUrls = "kafka3:9092,kafka2:9092,kafka1:9092"
 	// Configuration.KafkaClientId = "LoyaltyLiveFeed"
+
+	Configuration.Lendme_AUC.Protocol = "http"
+	Configuration.Lendme_AUC.Hostname = "localhost"
+	Configuration.Lendme_AUC.Port = "9293"
+	Configuration.Lendme_AUC.Module = "AUC"
+	Configuration.Lendme_AUC.Version = "V1"
+	Configuration.Lendme_AUC.S2S_Username = "Lendme_Admin"
+	Configuration.Lendme_AUC.S2S_Password = "s@l$e$IrSW0$4"
+	Configuration.Lendme_AUC.Timeout_After = 5 * time.Second
+
+	Configuration.Lendme.Protocol = "http"
+	Configuration.Lendme.Hostname = "localhost"
+	Configuration.Lendme.Port = "9290"
+	Configuration.Lendme.Module = "Lendme"
+	Configuration.Lendme.Version = "V1"
+	Configuration.Lendme.Timeout = 15 * time.Second
 
 	return
 }

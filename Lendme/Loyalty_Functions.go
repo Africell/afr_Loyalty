@@ -4676,26 +4676,15 @@ func (Uc *UserControl) Customer_Loyalty_Account_Add(Login string, request Custom
 		NewEntry.Loyalty_Account_Segment_Direction = ""
 		NewEntry.Loyalty_Account_Segment_SetBy = Login
 	} else {
-		subscriber_na, subexist := Map_Subscribers.CheckThenGet(request.Key)
-		if subexist {
-			subscriber, ok := subscriber_na.(Subscriber)
-			if !ok {
-				NewEntry.Loyalty_Account_Segment_Key = Loyalty_Account_Segment_Selection(request.ARPU, request.Joining_Date)
-				NewEntry.Loyalty_Account_Segment_Date = time.Now()
-				NewEntry.Loyalty_Account_Segment_Direction = ""
-				NewEntry.Loyalty_Account_Segment_SetBy = Login
-			} else {
-				NewEntry.Loyalty_Account_Segment_Key = Loyalty_Account_Segment_Selection(subscriber.ARPU, subscriber.FirstUse_date)
-				NewEntry.Loyalty_Account_Segment_Date = time.Now()
-				NewEntry.Loyalty_Account_Segment_Direction = ""
-				NewEntry.Loyalty_Account_Segment_SetBy = Login
-			}
+		subscriber, err := Uc.Lendme.LendmeClient.Lendme_Subscriber_Get(request.Key)
+		if err == nil {
+			NewEntry.Loyalty_Account_Segment_Key = Loyalty_Account_Segment_Selection(subscriber.ARPU, subscriber.FirstUse_date)
 		} else {
 			NewEntry.Loyalty_Account_Segment_Key = Loyalty_Account_Segment_Selection(request.ARPU, request.Joining_Date)
-			NewEntry.Loyalty_Account_Segment_Date = time.Now()
-			NewEntry.Loyalty_Account_Segment_Direction = ""
-			NewEntry.Loyalty_Account_Segment_SetBy = Login
 		}
+		NewEntry.Loyalty_Account_Segment_Date = time.Now()
+		NewEntry.Loyalty_Account_Segment_Direction = ""
+		NewEntry.Loyalty_Account_Segment_SetBy = Login
 	}
 
 	//add to cache and DB
@@ -4955,34 +4944,18 @@ func (Uc *UserControl) Customer_Loyalty_Account_Edit(Login string, request Custo
 			entry.Points_To_Expire = expiryPoints
 		}
 	} else {
-		subscriber_na, subexist := Map_Subscribers.CheckThenGet(request.Key)
-		if subexist {
-			subscriber, ok := subscriber_na.(Subscriber)
-			if !ok {
-				Loyalty_Account_Segment_Key := Loyalty_Account_Segment_Selection(request.ARPU, request.Joining_Date)
-				if Loyalty_Account_Segment_Key != entry.Loyalty_Account_Segment_Key {
-					entry.Loyalty_Account_Segment_Key = Loyalty_Account_Segment_Key
-					entry.Loyalty_Account_Segment_Date = time.Now()
-					entry.Loyalty_Account_Segment_Direction = ""
-					entry.Loyalty_Account_Segment_SetBy = Login
-				}
-			} else {
-				Loyalty_Account_Segment_Key := Loyalty_Account_Segment_Selection(subscriber.ARPU, subscriber.FirstUse_date)
-				if Loyalty_Account_Segment_Key != entry.Loyalty_Account_Segment_Key {
-					entry.Loyalty_Account_Segment_Key = Loyalty_Account_Segment_Key
-					entry.Loyalty_Account_Segment_Date = time.Now()
-					entry.Loyalty_Account_Segment_Direction = ""
-					entry.Loyalty_Account_Segment_SetBy = Login
-				}
-			}
+		subscriber, err := Uc.Lendme.LendmeClient.Lendme_Subscriber_Get(request.Key)
+		var segKey string
+		if err == nil {
+			segKey = Loyalty_Account_Segment_Selection(subscriber.ARPU, subscriber.FirstUse_date)
 		} else {
-			Loyalty_Account_Segment_Key := Loyalty_Account_Segment_Selection(request.ARPU, request.Joining_Date)
-			if Loyalty_Account_Segment_Key != entry.Loyalty_Account_Segment_Key {
-				entry.Loyalty_Account_Segment_Key = Loyalty_Account_Segment_Key
-				entry.Loyalty_Account_Segment_Date = time.Now()
-				entry.Loyalty_Account_Segment_Direction = ""
-				entry.Loyalty_Account_Segment_SetBy = Login
-			}
+			segKey = Loyalty_Account_Segment_Selection(request.ARPU, request.Joining_Date)
+		}
+		if segKey != entry.Loyalty_Account_Segment_Key {
+			entry.Loyalty_Account_Segment_Key = segKey
+			entry.Loyalty_Account_Segment_Date = time.Now()
+			entry.Loyalty_Account_Segment_Direction = ""
+			entry.Loyalty_Account_Segment_SetBy = Login
 		}
 	}
 	if request.NewKey != "" {
@@ -5557,21 +5530,16 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 	}
 	response.Allow_PendingLendme_ToRedeem = redemption_Rules.Allow_PendingLendme_ToRedeem
 	if !redemption_Rules.Allow_PendingLendme_ToRedeem {
-		subscriber_na, exist := Map_Subscribers.CheckThenGet(response.MSISDN)
-		if exist {
-			subscriber, ok := subscriber_na.(Subscriber)
-			if ok {
-				if subscriber.Lendme_Outstanding_Amount > 0 {
-					response.Status = "failed"
-					response.StatusCode = http.StatusBadRequest
-					response.StatusDescription = "pending outstanding amount must be closed"
-					response.ErrorDescription = "pending outstanding amount must be closed"
-					response.StatusDate = time.Now()
-					response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
-					Uc.Write_Loyalty_Redemption_log(*response)
-					return
-				}
-			}
+		subscriber, err := Uc.Lendme.LendmeClient.Lendme_Subscriber_Get(response.MSISDN)
+		if err == nil && subscriber.Lendme_Outstanding_Amount > 0 {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "pending outstanding amount must be closed"
+			response.ErrorDescription = "pending outstanding amount must be closed"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
 		}
 	}
 
@@ -6698,21 +6666,16 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 	}
 	response.Allow_PendingLendme_ToRedeem = redemption_Rules.Allow_PendingLendme_ToRedeem
 	if !redemption_Rules.Allow_PendingLendme_ToRedeem {
-		subscriber_na, exist := Map_Subscribers.CheckThenGet(response.MSISDN)
-		if exist {
-			subscriber, ok := subscriber_na.(Subscriber)
-			if ok {
-				if subscriber.Lendme_Outstanding_Amount > 0 {
-					response.Status = "failed"
-					response.StatusCode = http.StatusBadRequest
-					response.StatusDescription = "pending outstanding amount must be closed"
-					response.ErrorDescription = "pending outstanding amount must be closed"
-					response.StatusDate = time.Now()
-					response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
-					Uc.Write_Loyalty_Redemption_log(*response)
-					return
-				}
-			}
+		subscriber, err := Uc.Lendme.LendmeClient.Lendme_Subscriber_Get(response.MSISDN)
+		if err == nil && subscriber.Lendme_Outstanding_Amount > 0 {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "pending outstanding amount must be closed"
+			response.ErrorDescription = "pending outstanding amount must be closed"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Redemption_log(*response)
+			return
 		}
 	}
 
