@@ -59,19 +59,6 @@ func (Uc *UserControl) ValidateJWEToken(h http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 		switch port {
-		case Configuration.HttpAppServicePort:
-			// sra, err := Uc.OKAPIAUC.AUCClient.ValidateToken(AuthorizationSplit[1])
-			// if err != nil {
-			// 	sr.Status = sra.Status
-			// 	sr.StatusCode = sra.StatusCode
-			// 	sr.ErrorDescription = sra.ErrorDescription
-			// 	Uc.HTTP_API_Standard_response(w, r, sr, false)
-			// 	return
-			// }
-			// r.Header.Set("Login", sra.Login)
-			// r.Header.Set("DestinationPort", port)
-			// r.Header.Set("TokenType", sra.TokenType)
-			h.ServeHTTP(w, r)
 		case Configuration.HttpAppLoyaltyServicePort:
 			sra, err := Uc.AppAUC.AUCClient.ValidateToken(AuthorizationSplit[1])
 			if err != nil {
@@ -171,32 +158,6 @@ func (Uc *UserControl) ValidateAccess_AUC(h http.HandlerFunc) http.HandlerFunc {
 		}
 
 		switch port {
-		case Configuration.HttpAppServicePort:
-			// sr_validate, err := Uc.OKAPIAUC.AUCClient.ValidateAccess(accReq)
-			// if err != nil {
-			// 	// HTTP reply
-			// 	w.WriteHeader(sr.StatusCode)
-			// 	json.NewEncoder(w).Encode(sr)
-			// 	return
-			// }
-
-			// if !sr_validate.Data.IsAccessAllowed {
-			// 	// HTTP reply
-			// 	sr.Status = "failed"
-			// 	sr.StatusCode = 400
-			// 	sr.StatusDescription = "Error: Not Allowed For this action, Please contact system Admin!"
-
-			// 	w.WriteHeader(sr.StatusCode)
-			// 	json.NewEncoder(w).Encode(sr)
-			// 	return
-			// }
-
-			// keys := make([]string, len(sr_validate.Data.AccessLevel))
-			// for k := range sr_validate.Data.AccessLevel {
-			// 	keys = append(keys, k)
-			// }
-			// r.Header.Set("AccessLevels", fmt.Sprint(keys))
-			h.ServeHTTP(w, r)
 		case Configuration.HttpAppLoyaltyServicePort:
 			h.ServeHTTP(w, r)
 		case Configuration.HttpAppLoyaltyManagementPort:

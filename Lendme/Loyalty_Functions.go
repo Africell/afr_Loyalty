@@ -3,6 +3,7 @@ package Lendme
 import (
 	"afr_ao_apgw_v2/APGWClientV2"
 	apgw "afr_ao_apgw_v2/afr_apgw"
+	"afr_auth_center/AuthCenter"
 	"context"
 	"daoc"
 	"errors"
@@ -10,6 +11,7 @@ import (
 	"log"
 	"math"
 	"net/http"
+	"net/url"
 	"reflect"
 	"sort"
 	"strconv"
@@ -30,6 +32,9 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
+
+var MapAccessEntry daoc.Cache_Synch
+var DAO_AccessEntry daoc.DAO
 
 var Map_Loyalty_AutoIncrement daoc.Cache_Synch
 var DAO_Loyalty_AutoIncrement daoc.DAO
@@ -115,6 +120,8 @@ var jobs = make(map[string]*JobStatus)
 var jobsMu sync.Mutex
 
 func (uc *UserControl) InitializeLoyaltyCache() {
+	var access_entry AuthCenter.AccessEntry
+	MapAccessEntry.Initialize("AccessEntry", "AccessEntry", reflect.TypeOf(AuthCenter.AccessEntry{}), access_entry, true, &DAO_AccessEntry, uc.CacheDir.List)
 	var AutoIncr daoc.AutoIncrement
 	Map_Loyalty_AutoIncrement.Initialize("Loyalty_AutoIncrement", "AutoIncrement", reflect.TypeOf(daoc.AutoIncrement{}), AutoIncr, true, &DAO_Loyalty_AutoIncrement, uc.CacheDir.List)
 	var loyalty_Governance Loyalty_Governance
@@ -157,6 +164,7 @@ func (uc *UserControl) InitializeLoyaltyCache() {
 }
 
 func (uc *UserControl) InitializeLoyaltyDAO() {
+	DAO_AccessEntry.Initialize("AccessEntry", uc.MongoDB.MongoDBClient, reflect.TypeOf(AuthCenter.AccessEntry{}), Configuration.DB_Name_Loyalty, "Col_AccessEntry", "")
 	DAO_Loyalty_AutoIncrement.Initialize("Loyalty_AutoIncrement", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(daoc.AutoIncrement{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_AutoIncrement", "")
 	DAO_Loyalty_Governance.Initialize("Loyalty_Governance", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Governance{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Governance", "")
 	DAO_Loyalty_Governance_log.Initialize("Loyalty_Governance_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Governance_log{}), Configuration.DB_Name_Loyalty, "Loyalty_Governance_log", "")
@@ -183,7 +191,7 @@ func (uc *UserControl) InitializeLoyaltyDAO() {
 	DAO_Loyalty_Full_Expiry_log.Initialize("Loyalty_Full_Expiry_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Full_Expiry_Log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Full_Expiry_log", "")
 	DAO_Loyalty_AccountCreditPoints_log.Initialize("Loyalty_AccountCreditPoints_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_AccountCreditPoints_log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_AccountCreditPoints_log", "")
 	DAO_Loyalty_AccountDebitPoints_log.Initialize("Loyalty_AccountDebitPoints_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_AccountDebitPoints_log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_AccountDebitPoints_log", "")
-	DAO_NotificationLog.Initialize("NotificationLog", uc.MongoDB.MongoDBClient, reflect.TypeOf(NotificationLog{}), Configuration.DB_Name, "Col_NotificationLog", "")
+	DAO_NotificationLog.Initialize("NotificationLog", uc.MongoDB.MongoDBClient, reflect.TypeOf(NotificationLog{}), Configuration.DB_Name_Loyalty, "Col_NotificationLog", "")
 	DAO_Loyalty_Campaign.Initialize("Loyalty_Campaign", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Campaign{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Campaign", "")
 	DAO_Loyalty_Campaign_Target_List.Initialize("Loyalty_Campaign_Target_List", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Campaign_Target_List{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Campaign_Target_List", "")
 	DAO_Loyalty_Campaign_Account.Initialize("Loyalty_Campaign_Account", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Campaign_Account{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Campaign_Account", "")
@@ -10805,4 +10813,40 @@ func (Uc *UserControl) Loyalty_Campaign_Delete(Login, Key string) (err error) {
 		Event_Entry_After:  entry,
 	})
 	return nil
+}
+
+// /////////////////////////////////////////////////////////////////////////////////////////////////////
+// /////SEND SMS////////////////////////////////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////////////////////////////////////////////
+func SendSMS(Sender string, target string, SMSText string) (_rErr error) {
+	log.Println("Sending SMS: Sender (" + Sender + "), Target (" + target + "), text (" + SMSText + ") ")
+	requrl := "http://" + Configuration.SMPP.IP + ":" + Configuration.SMPP.Port + "/?systemid=" + Configuration.SMPP.Login + "&password=" + url.QueryEscape(Configuration.SMPP.Password) + "&Originator=" + Sender + "&dest_addr=" + target + "&msg_text=" + url.QueryEscape(SMSText) + "&encoding=1&ston=5&snpi=0&dton=1&registered_delivery=0"
+	//-------------- Encoding used in DRC and GM Start
+	//"&ston=5&snpi=0&dton=1&dnpi=1&encoding=1"
+	//-------------- Encoding used in DRC and GM End
+	method := "GET"
+	if Configuration.Operation == "Angola" {
+		requrl = "http://" + Configuration.SMPP.IP + ":" + Configuration.SMPP.Port + "/sendsms?username=" + Configuration.SMPP.Login + "&password=" + Configuration.SMPP.Password + "&from=" + Sender + "&to=" + target + "&text=" + url.QueryEscape(SMSText) + "&coding=2"
+	}
+	req, err := http.NewRequest(method, requrl, nil)
+	if err != nil {
+		log.Println("Error sending SMS: ", err)
+		return err
+	}
+	//client := &http.Client{}
+	client := &http.Client{
+		Timeout: 15 * time.Second, //is SMSC not reachable request will time out after 15 sec
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Println("Error sending SMS: ", err)
+		return err
+	}
+	defer resp.Body.Close()
+	if Configuration.Operation == "Angola" || resp.StatusCode == 200 {
+		return nil
+	} else {
+		err := errors.New("error sending SMS: " + string(resp.StatusCode))
+		return err
+	}
 }

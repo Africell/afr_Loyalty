@@ -19,31 +19,6 @@ type destinationHost struct {
 var destinationHots []destinationHost
 
 func Init_DestinationHosts() {
-	if Configuration.MongoDB.HostIP_1 != "" {
-		host := destinationHost{
-			HostName: "Lendme MongoDB 01",
-			HostIP:   Configuration.MongoDB.HostIP_1,
-			HostPort: Configuration.MongoDB.HostPort_1,
-		}
-		destinationHots = append(destinationHots, host)
-	}
-	if Configuration.MongoDB.HostIP_2 != "" {
-		host := destinationHost{
-			HostName: "Lendme MongoDB 02",
-			HostIP:   Configuration.MongoDB.HostIP_2,
-			HostPort: Configuration.MongoDB.HostPort_2,
-		}
-		destinationHots = append(destinationHots, host)
-	}
-	if Configuration.MongoDB.HostIP_3 != "" {
-		host := destinationHost{
-			HostName: "Lendme MongoDB 03",
-			HostIP:   Configuration.MongoDB.HostIP_3,
-			HostPort: Configuration.MongoDB.HostPort_3,
-		}
-		destinationHots = append(destinationHots, host)
-	}
-
 	if Configuration.LoyaltyMongoDB.HostIP_1 != "" {
 		host := destinationHost{
 			HostName: "Loyalty MongoDB 01",

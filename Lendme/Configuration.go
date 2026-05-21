@@ -16,20 +16,14 @@ var Configuration ConfigType
 
 type ConfigType struct {
 	//HttpOKAPIServicePort string
-	HttpAppServicePort           string
 	HttpAppLoyaltyServicePort    string
 	HttpAppLoyaltyManagementPort string
 	HttpAppLoyaltyFeedPort       string
 	OKAPIAllowedOrigins          []string
+	Operation                    string
+	HostId                       string
+	DB_Name_Loyalty              string
 
-	Operation       string
-	HostId          string
-	DB_Name         string
-	DB_Name_Loyalty string
-	Version         string
-	Module          string
-
-	IsProduction                   bool
 	IsLoyaltyProduction            bool
 	ISLoyaltyOptIn                 bool // if true customer has to opt in
 	ISLoyaltyOptOutGracePeriodDays int  // if true customer has to opt in
@@ -42,22 +36,9 @@ type ConfigType struct {
 	MSISDN_Short_len int
 	CountryCode      string
 
-	//Lendme Config
-	Min_Allowed_Amnt float64
-	Service_FeePerc  float64
-
-	Min_Allowed_AON        float64
-	Min_Avg3MRecharge      float64
-	Min_LastRechargePeriod float64
-	Min_Allowed_Balance    float64
-	Max_Allowed_Balance    float64
-
 	ARPU_File_Path             string
 	ARPU_File_Prefix           string
 	ARPU_File_Column_Separator string
-
-	Lendme_EVC_Dealer_MSISDN string
-	Lendme_EVC_Dealer_PIN    string
 
 	App_AUC struct {
 		Description   string
@@ -229,9 +210,7 @@ func GetDefaultConfiguration() (err error) {
 	return nil
 }
 
-func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
-	//Configuration.HttpOKAPIServicePort = "9291"
-	Configuration.HttpAppServicePort = "9290"           //lendme services
+func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) { //lendme services
 	Configuration.HttpAppLoyaltyServicePort = "9280"    //for USSD and Mobile App
 	Configuration.HttpAppLoyaltyManagementPort = "9281" //for OKAPI
 	Configuration.HttpAppLoyaltyFeedPort = "9282"       //for IN & MM live feed
@@ -245,10 +224,6 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 
 	Configuration.Operation = "DRC"
 	Configuration.HostId = "Lendme-01"
-	Configuration.DB_Name = "Lendme_DB"
-
-	Configuration.Version = "V1"
-	Configuration.Module = "Lendme"
 
 	Configuration.LoyaltyVersion = "V1"
 	Configuration.LoyaltyModule = "Loyalty"
@@ -258,17 +233,9 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 	Configuration.MSISDN_Short_len = 9
 	Configuration.CountryCode = "243"
 
-	Configuration.IsProduction = true
 	Configuration.IsLoyaltyProduction = true
 	Configuration.ISLoyaltyOptIn = true
 	Configuration.ISLoyaltyOptOutGracePeriodDays = 30
-	Configuration.Min_Allowed_Amnt = 10
-	Configuration.Service_FeePerc = 0.1
-	Configuration.Min_Allowed_AON = 3
-	Configuration.Min_Avg3MRecharge = 50
-	Configuration.Min_LastRechargePeriod = 60
-	Configuration.Min_Allowed_Balance = 0
-	Configuration.Max_Allowed_Balance = 1000
 	Configuration.ARPU_File_Path = "/home/Subs_ARPU/"
 	Configuration.ARPU_File_Prefix = "Rgs_"
 	Configuration.ARPU_File_Column_Separator = ","
@@ -390,8 +357,6 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) {
 }
 
 func setDefaultConfiguration_DRC_Loyalty_UAT() (Configuration ConfigType) {
-	//Configuration.HttpOKAPIServicePort = "9291"
-	Configuration.HttpAppServicePort = "9290"           //lendme services
 	Configuration.HttpAppLoyaltyServicePort = "9280"    //for USSD and Mobile App
 	Configuration.HttpAppLoyaltyManagementPort = "9281" //for OKAPI
 	Configuration.HttpAppLoyaltyFeedPort = "9282"       //for IN & MM live feed
@@ -403,13 +368,6 @@ func setDefaultConfiguration_DRC_Loyalty_UAT() (Configuration ConfigType) {
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "https://okapihruat.africell.cd")
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "https://outlet.africell.cd")
 
-	Configuration.Operation = "DRC"
-	Configuration.HostId = "Lendme-01"
-	Configuration.DB_Name = "Lendme_DB"
-
-	Configuration.Version = "V1"
-	Configuration.Module = "Lendme"
-
 	Configuration.LoyaltyVersion = "V1"
 	Configuration.LoyaltyModule = "Loyalty"
 	Configuration.LoyaltyMMBundleCode = "BUNDLERECHARGE"
@@ -418,17 +376,9 @@ func setDefaultConfiguration_DRC_Loyalty_UAT() (Configuration ConfigType) {
 	Configuration.MSISDN_Short_len = 9
 	Configuration.CountryCode = "243"
 
-	Configuration.IsProduction = true
 	Configuration.IsLoyaltyProduction = false
 	Configuration.ISLoyaltyOptIn = true
 	Configuration.ISLoyaltyOptOutGracePeriodDays = 1
-	Configuration.Min_Allowed_Amnt = 10
-	Configuration.Service_FeePerc = 0.1
-	Configuration.Min_Allowed_AON = 3
-	Configuration.Min_Avg3MRecharge = 50
-	Configuration.Min_LastRechargePeriod = 60
-	Configuration.Min_Allowed_Balance = 0
-	Configuration.Max_Allowed_Balance = 1000
 	Configuration.ARPU_File_Path = "/home/Subs_ARPU/"
 	Configuration.ARPU_File_Prefix = "Rgs_"
 	Configuration.ARPU_File_Column_Separator = ","
@@ -561,9 +511,7 @@ func setDefaultConfiguration_DRC_Loyalty_UAT() (Configuration ConfigType) {
 	return
 }
 
-func setDefaultConfiguration_DRC_Loyalty_UAT_K8s() (Configuration ConfigType) {
-	//Configuration.HttpOKAPIServicePort = "9291"
-	Configuration.HttpAppServicePort = "9290"           //lendme services
+func setDefaultConfiguration_DRC_Loyalty_UAT_K8s() (Configuration ConfigType) { //lendme services
 	Configuration.HttpAppLoyaltyServicePort = "9280"    //for USSD and Mobile App
 	Configuration.HttpAppLoyaltyManagementPort = "9281" //for OKAPI
 	Configuration.HttpAppLoyaltyFeedPort = "9282"       //for IN & MM live feed
@@ -577,10 +525,6 @@ func setDefaultConfiguration_DRC_Loyalty_UAT_K8s() (Configuration ConfigType) {
 
 	Configuration.Operation = "DRC"
 	Configuration.HostId = "Lendme-01"
-	Configuration.DB_Name = "Lendme_DB"
-
-	Configuration.Version = "V1"
-	Configuration.Module = "Lendme"
 
 	Configuration.LoyaltyVersion = "V1"
 	Configuration.LoyaltyModule = "Loyalty"
@@ -590,17 +534,9 @@ func setDefaultConfiguration_DRC_Loyalty_UAT_K8s() (Configuration ConfigType) {
 	Configuration.MSISDN_Short_len = 9
 	Configuration.CountryCode = "243"
 
-	Configuration.IsProduction = false
 	Configuration.IsLoyaltyProduction = false
 	Configuration.ISLoyaltyOptIn = true
 	Configuration.ISLoyaltyOptOutGracePeriodDays = 1
-	Configuration.Min_Allowed_Amnt = 10
-	Configuration.Service_FeePerc = 0.1
-	Configuration.Min_Allowed_AON = 3
-	Configuration.Min_Avg3MRecharge = 50
-	Configuration.Min_LastRechargePeriod = 60
-	Configuration.Min_Allowed_Balance = 0
-	Configuration.Max_Allowed_Balance = 1000
 	Configuration.ARPU_File_Path = "/home/Subs_ARPU/"
 	Configuration.ARPU_File_Prefix = "Rgs_"
 	Configuration.ARPU_File_Column_Separator = ","
@@ -733,9 +669,7 @@ func setDefaultConfiguration_DRC_Loyalty_UAT_K8s() (Configuration ConfigType) {
 	return
 }
 
-func setDefaultConfiguration_GM_Live() (Configuration ConfigType) {
-	//Configuration.HttpOKAPIServicePort = "9291"
-	Configuration.HttpAppServicePort = "9290"           //lendme services
+func setDefaultConfiguration_GM_Live() (Configuration ConfigType) { //lendme services
 	Configuration.HttpAppLoyaltyServicePort = "9280"    //for USSD and Mobile App
 	Configuration.HttpAppLoyaltyManagementPort = "9281" //for OKAPI
 	Configuration.HttpAppLoyaltyFeedPort = "9282"       //for IN & MM live feed
@@ -749,26 +683,14 @@ func setDefaultConfiguration_GM_Live() (Configuration ConfigType) {
 
 	Configuration.Operation = "Gambia"
 	Configuration.HostId = "Lendme-01"
-	Configuration.DB_Name = "Lendme_DB"
-
-	Configuration.Version = "V1"
-	Configuration.Module = "Lendme"
 
 	Configuration.LoyaltyVersion = "V1"
 	Configuration.LoyaltyModule = "Loyalty"
 	Configuration.LoyaltyMMBundleCode = "AFRICELL DATA"
 
-	Configuration.IsProduction = false
 	Configuration.IsLoyaltyProduction = true
 	Configuration.ISLoyaltyOptIn = false
 	Configuration.ISLoyaltyOptOutGracePeriodDays = 0
-	Configuration.Min_Allowed_Amnt = 5
-	Configuration.Service_FeePerc = 0.04
-	Configuration.Min_Allowed_AON = 3
-	Configuration.Min_Avg3MRecharge = 5
-	Configuration.Min_LastRechargePeriod = 60
-	Configuration.Min_Allowed_Balance = 0
-	Configuration.Max_Allowed_Balance = 677
 	Configuration.ARPU_File_Path = "/home/Subs_ARPU/"
 	Configuration.ARPU_File_Prefix = "Rgs_"
 	Configuration.ARPU_File_Column_Separator = ","
@@ -878,9 +800,7 @@ func setDefaultConfiguration_GM_Live() (Configuration ConfigType) {
 	return
 }
 
-func setDefaultConfiguration_GM_Loyalty() (Configuration ConfigType) {
-	//Configuration.HttpOKAPIServicePort = "9291"
-	Configuration.HttpAppServicePort = "9290"           //lendme services
+func setDefaultConfiguration_GM_Loyalty() (Configuration ConfigType) { //lendme services
 	Configuration.HttpAppLoyaltyServicePort = "9280"    //for USSD and Mobile App
 	Configuration.HttpAppLoyaltyManagementPort = "9281" //for OKAPI
 	Configuration.HttpAppLoyaltyFeedPort = "9282"       //for IN & MM live feed
@@ -894,11 +814,6 @@ func setDefaultConfiguration_GM_Loyalty() (Configuration ConfigType) {
 
 	Configuration.Operation = "Gambia"
 	Configuration.HostId = "Lendme-01"
-	Configuration.DB_Name = "Lendme_DB"
-
-	Configuration.Version = "V1"
-	Configuration.Module = "Lendme"
-
 	Configuration.LoyaltyVersion = "V1"
 	Configuration.LoyaltyModule = "Loyalty"
 	Configuration.LoyaltyMMBundleCode = "AFRICELL DATA"
@@ -906,18 +821,9 @@ func setDefaultConfiguration_GM_Loyalty() (Configuration ConfigType) {
 	Configuration.MSISDN_Prefix = ""
 	Configuration.MSISDN_Short_len = 7
 	Configuration.CountryCode = "220"
-
-	Configuration.IsProduction = true
 	Configuration.IsLoyaltyProduction = true
 	Configuration.ISLoyaltyOptIn = true
 	Configuration.ISLoyaltyOptOutGracePeriodDays = 365
-	Configuration.Min_Allowed_Amnt = 5
-	Configuration.Service_FeePerc = 0.04
-	Configuration.Min_Allowed_AON = 3
-	Configuration.Min_Avg3MRecharge = 5
-	Configuration.Min_LastRechargePeriod = 60
-	Configuration.Min_Allowed_Balance = 0
-	Configuration.Max_Allowed_Balance = 677
 	Configuration.ARPU_File_Path = "/home/Subs_ARPU/"
 	Configuration.ARPU_File_Prefix = "Rgs_"
 	Configuration.ARPU_File_Column_Separator = ","
@@ -1055,9 +961,7 @@ func setDefaultConfiguration_GM_Loyalty() (Configuration ConfigType) {
 	return
 }
 
-func setDefaultConfiguration_GM_Loyalty_Live() (Configuration ConfigType) {
-	//Configuration.HttpOKAPIServicePort = "9291"
-	Configuration.HttpAppServicePort = "9290"           //lendme services
+func setDefaultConfiguration_GM_Loyalty_Live() (Configuration ConfigType) { //lendme services
 	Configuration.HttpAppLoyaltyServicePort = "9280"    //for USSD and Mobile App
 	Configuration.HttpAppLoyaltyManagementPort = "9281" //for OKAPI
 	Configuration.HttpAppLoyaltyFeedPort = "9282"       //for IN & MM live feed
@@ -1071,10 +975,6 @@ func setDefaultConfiguration_GM_Loyalty_Live() (Configuration ConfigType) {
 
 	Configuration.Operation = "Gambia"
 	Configuration.HostId = "Lendme-01"
-	Configuration.DB_Name = "Lendme_DB"
-
-	Configuration.Version = "V1"
-	Configuration.Module = "Lendme"
 
 	Configuration.LoyaltyVersion = "V1"
 	Configuration.LoyaltyModule = "Loyalty"
@@ -1084,17 +984,9 @@ func setDefaultConfiguration_GM_Loyalty_Live() (Configuration ConfigType) {
 	Configuration.MSISDN_Short_len = 7
 	Configuration.CountryCode = "220"
 
-	Configuration.IsProduction = true
 	Configuration.IsLoyaltyProduction = true
 	Configuration.ISLoyaltyOptIn = true
 	Configuration.ISLoyaltyOptOutGracePeriodDays = 365
-	Configuration.Min_Allowed_Amnt = 5
-	Configuration.Service_FeePerc = 0.04
-	Configuration.Min_Allowed_AON = 3
-	Configuration.Min_Avg3MRecharge = 5
-	Configuration.Min_LastRechargePeriod = 60
-	Configuration.Min_Allowed_Balance = 0
-	Configuration.Max_Allowed_Balance = 677
 	Configuration.ARPU_File_Path = "/home/Subs_ARPU/"
 	Configuration.ARPU_File_Prefix = "Rgs_"
 	Configuration.ARPU_File_Column_Separator = ","
@@ -1232,9 +1124,7 @@ func setDefaultConfiguration_GM_Loyalty_Live() (Configuration ConfigType) {
 	return
 }
 
-func setDefaultConfiguration_GM_Loyalty_UAT() (Configuration ConfigType) {
-	//Configuration.HttpOKAPIServicePort = "9291"
-	Configuration.HttpAppServicePort = "9290"           //lendme services
+func setDefaultConfiguration_GM_Loyalty_UAT() (Configuration ConfigType) { //lendme services
 	Configuration.HttpAppLoyaltyServicePort = "9280"    //for USSD and Mobile App
 	Configuration.HttpAppLoyaltyManagementPort = "9281" //for OKAPI
 	Configuration.HttpAppLoyaltyFeedPort = "9282"       //for IN & MM live feed
@@ -1248,10 +1138,6 @@ func setDefaultConfiguration_GM_Loyalty_UAT() (Configuration ConfigType) {
 
 	Configuration.Operation = "Gambia"
 	Configuration.HostId = "Lendme-01"
-	Configuration.DB_Name = "Lendme_DB"
-
-	Configuration.Version = "V1"
-	Configuration.Module = "Lendme"
 
 	Configuration.LoyaltyVersion = "V1"
 	Configuration.LoyaltyModule = "Loyalty"
@@ -1261,17 +1147,16 @@ func setDefaultConfiguration_GM_Loyalty_UAT() (Configuration ConfigType) {
 	Configuration.MSISDN_Short_len = 7
 	Configuration.CountryCode = "220"
 
-	Configuration.IsProduction = true
 	Configuration.IsLoyaltyProduction = false
 	Configuration.ISLoyaltyOptIn = true
 	Configuration.ISLoyaltyOptOutGracePeriodDays = 365
-	Configuration.Min_Allowed_Amnt = 5
-	Configuration.Service_FeePerc = 0.04
-	Configuration.Min_Allowed_AON = 3
-	Configuration.Min_Avg3MRecharge = 5
-	Configuration.Min_LastRechargePeriod = 60
-	Configuration.Min_Allowed_Balance = 0
-	Configuration.Max_Allowed_Balance = 677
+	// Configuration.Min_Allowed_Amnt = 5
+	// Configuration.Service_FeePerc = 0.04
+	// Configuration.Min_Allowed_AON = 3
+	// Configuration.Min_Avg3MRecharge = 5
+	// Configuration.Min_LastRechargePeriod = 60
+	// Configuration.Min_Allowed_Balance = 0
+	// Configuration.Max_Allowed_Balance = 677
 	Configuration.ARPU_File_Path = "/home/Subs_ARPU/"
 	Configuration.ARPU_File_Prefix = "Rgs_"
 	Configuration.ARPU_File_Column_Separator = ","
@@ -1409,9 +1294,7 @@ func setDefaultConfiguration_GM_Loyalty_UAT() (Configuration ConfigType) {
 	return
 }
 
-func setDefaultConfiguration_SL_Live() (Configuration ConfigType) {
-	//Configuration.HttpOKAPIServicePort = "9291"
-	Configuration.HttpAppServicePort = "9290"           //lendme services
+func setDefaultConfiguration_SL_Live() (Configuration ConfigType) { //lendme services
 	Configuration.HttpAppLoyaltyServicePort = "9280"    //for USSD and Mobile App
 	Configuration.HttpAppLoyaltyManagementPort = "9281" //for OKAPI
 	Configuration.HttpAppLoyaltyFeedPort = "9282"       //for IN & MM live feed
@@ -1425,10 +1308,6 @@ func setDefaultConfiguration_SL_Live() (Configuration ConfigType) {
 
 	Configuration.Operation = "SierraLeone"
 	Configuration.HostId = "Lendme-01"
-	Configuration.DB_Name = "Lendme_DB"
-
-	Configuration.Version = "V1"
-	Configuration.Module = "Lendme"
 
 	Configuration.LoyaltyVersion = "V1"
 	Configuration.LoyaltyModule = "Loyalty"
@@ -1438,17 +1317,9 @@ func setDefaultConfiguration_SL_Live() (Configuration ConfigType) {
 	Configuration.MSISDN_Short_len = 8
 	Configuration.CountryCode = "232"
 
-	Configuration.IsProduction = true
 	Configuration.IsLoyaltyProduction = true
 	Configuration.ISLoyaltyOptIn = true
 	Configuration.ISLoyaltyOptOutGracePeriodDays = 30
-	Configuration.Min_Allowed_Amnt = 1
-	Configuration.Service_FeePerc = 0.15
-	Configuration.Min_Allowed_AON = 3
-	Configuration.Min_Avg3MRecharge = 0
-	Configuration.Min_LastRechargePeriod = 60
-	Configuration.Min_Allowed_Balance = 0
-	Configuration.Max_Allowed_Balance = 225
 	Configuration.ARPU_File_Path = "/home/Subs_ARPU/"
 	Configuration.ARPU_File_Prefix = "Rgs_"
 	Configuration.ARPU_File_Column_Separator = ","
@@ -1579,9 +1450,7 @@ func setDefaultConfiguration_SL_Live() (Configuration ConfigType) {
 	return
 }
 
-func setDefaultConfiguration_SL_Loyalty() (Configuration ConfigType) {
-	//Configuration.HttpOKAPIServicePort = "9291"
-	Configuration.HttpAppServicePort = "9290"           //lendme services
+func setDefaultConfiguration_SL_Loyalty() (Configuration ConfigType) { //lendme services
 	Configuration.HttpAppLoyaltyServicePort = "9280"    //for USSD and Mobile App
 	Configuration.HttpAppLoyaltyManagementPort = "9281" //for OKAPI
 	Configuration.HttpAppLoyaltyFeedPort = "9282"       //for IN & MM live feed
@@ -1595,10 +1464,10 @@ func setDefaultConfiguration_SL_Loyalty() (Configuration ConfigType) {
 
 	Configuration.Operation = "SierraLeone"
 	Configuration.HostId = "Lendme-01"
-	Configuration.DB_Name = "Lendme_DB"
+	// Configuration.DB_Name = "Lendme_DB"
 
-	Configuration.Version = "V1"
-	Configuration.Module = "Lendme"
+	// Configuration.Version = "V1"
+	// Configuration.Module = "Lendme"
 
 	Configuration.LoyaltyVersion = "V1"
 	Configuration.LoyaltyModule = "Loyalty"
@@ -1608,17 +1477,16 @@ func setDefaultConfiguration_SL_Loyalty() (Configuration ConfigType) {
 	Configuration.MSISDN_Short_len = 8
 	Configuration.CountryCode = "232"
 
-	Configuration.IsProduction = true
 	Configuration.IsLoyaltyProduction = true
 	Configuration.ISLoyaltyOptIn = true
 	Configuration.ISLoyaltyOptOutGracePeriodDays = 30
-	Configuration.Min_Allowed_Amnt = 1
-	Configuration.Service_FeePerc = 0.15
-	Configuration.Min_Allowed_AON = 3
-	Configuration.Min_Avg3MRecharge = 0
-	Configuration.Min_LastRechargePeriod = 60
-	Configuration.Min_Allowed_Balance = 0
-	Configuration.Max_Allowed_Balance = 225
+	// Configuration.Min_Allowed_Amnt = 1
+	// Configuration.Service_FeePerc = 0.15
+	// Configuration.Min_Allowed_AON = 3
+	// Configuration.Min_Avg3MRecharge = 0
+	// Configuration.Min_LastRechargePeriod = 60
+	// Configuration.Min_Allowed_Balance = 0
+	// Configuration.Max_Allowed_Balance = 225
 	Configuration.ARPU_File_Path = "/home/Subs_ARPU/"
 	Configuration.ARPU_File_Prefix = "Rgs_"
 	Configuration.ARPU_File_Column_Separator = ","
@@ -1752,9 +1620,7 @@ func setDefaultConfiguration_SL_Loyalty() (Configuration ConfigType) {
 	return
 }
 
-func setDefaultConfiguration_SL_Loyalty_UAT() (Configuration ConfigType) {
-	// Configuration.HttpOKAPIServicePort = "9291"
-	Configuration.HttpAppServicePort = "9290"           //lendme services
+func setDefaultConfiguration_SL_Loyalty_UAT() (Configuration ConfigType) { //lendme services
 	Configuration.HttpAppLoyaltyServicePort = "9280"    //for USSD and Mobile App
 	Configuration.HttpAppLoyaltyManagementPort = "9281" //for OKAPI
 	Configuration.HttpAppLoyaltyFeedPort = "9282"       //for IN & MM live feed
@@ -1768,10 +1634,6 @@ func setDefaultConfiguration_SL_Loyalty_UAT() (Configuration ConfigType) {
 
 	Configuration.Operation = "SierraLeone"
 	Configuration.HostId = "Lendme-01"
-	Configuration.DB_Name = "Lendme_DB"
-
-	Configuration.Version = "V1"
-	Configuration.Module = "Lendme"
 
 	Configuration.LoyaltyVersion = "V1"
 	Configuration.LoyaltyModule = "Loyalty"
@@ -1781,16 +1643,8 @@ func setDefaultConfiguration_SL_Loyalty_UAT() (Configuration ConfigType) {
 	Configuration.MSISDN_Short_len = 8
 	Configuration.CountryCode = "232"
 
-	Configuration.IsProduction = true
 	Configuration.IsLoyaltyProduction = false
 	Configuration.ISLoyaltyOptIn = true
-	Configuration.Min_Allowed_Amnt = 1
-	Configuration.Service_FeePerc = 0.15
-	Configuration.Min_Allowed_AON = 3
-	Configuration.Min_Avg3MRecharge = 0
-	Configuration.Min_LastRechargePeriod = 60
-	Configuration.Min_Allowed_Balance = 0
-	Configuration.Max_Allowed_Balance = 225
 	Configuration.ARPU_File_Path = "/home/Subs_ARPU/"
 	Configuration.ARPU_File_Prefix = "Rgs_"
 	Configuration.ARPU_File_Column_Separator = ","
@@ -1924,9 +1778,7 @@ func setDefaultConfiguration_SL_Loyalty_UAT() (Configuration ConfigType) {
 	return
 }
 
-func setDefaultConfiguration_AO_Loyalty() (Configuration ConfigType) {
-	//Configuration.HttpOKAPIServicePort = "9291"
-	Configuration.HttpAppServicePort = "9290"           //lendme services
+func setDefaultConfiguration_AO_Loyalty() (Configuration ConfigType) { //lendme services
 	Configuration.HttpAppLoyaltyServicePort = "9280"    //for USSD and Mobile App
 	Configuration.HttpAppLoyaltyManagementPort = "9281" //for OKAPI
 	Configuration.HttpAppLoyaltyFeedPort = "9282"       //for IN & MM live feed
@@ -1940,10 +1792,6 @@ func setDefaultConfiguration_AO_Loyalty() (Configuration ConfigType) {
 
 	Configuration.Operation = "Angola"
 	Configuration.HostId = "Lendme-01"
-	Configuration.DB_Name = "Lendme_DB"
-
-	Configuration.Version = "V1"
-	Configuration.Module = "Lendme"
 
 	Configuration.LoyaltyVersion = "V1"
 	Configuration.LoyaltyModule = "Loyalty"
@@ -1952,24 +1800,10 @@ func setDefaultConfiguration_AO_Loyalty() (Configuration ConfigType) {
 	Configuration.MSISDN_Prefix = ""
 	Configuration.MSISDN_Short_len = 9
 	Configuration.CountryCode = "244"
-	//production evc account
-	Configuration.Lendme_EVC_Dealer_MSISDN = "244951010532"
-	Configuration.Lendme_EVC_Dealer_PIN = "8236"
-	// uat evc account
-	// Configuration.Lendme_EVC_Dealer_MSISDN = "244951010534"
-	// Configuration.Lendme_EVC_Dealer_PIN = "8236"
 
-	Configuration.IsProduction = false
 	Configuration.IsLoyaltyProduction = false
 	Configuration.ISLoyaltyOptIn = true
 	Configuration.ISLoyaltyOptOutGracePeriodDays = 30
-	Configuration.Min_Allowed_Amnt = 50
-	Configuration.Service_FeePerc = 0.12
-	Configuration.Min_Allowed_AON = 6
-	Configuration.Min_Avg3MRecharge = 800
-	Configuration.Min_LastRechargePeriod = 60
-	Configuration.Min_Allowed_Balance = 0
-	Configuration.Max_Allowed_Balance = 50
 	Configuration.ARPU_File_Path = "/home/Subs_ARPU/"
 	Configuration.ARPU_File_Prefix = "lendme_"
 	Configuration.ARPU_File_Column_Separator = ";"
@@ -2110,9 +1944,7 @@ func setDefaultConfiguration_AO_Loyalty() (Configuration ConfigType) {
 	return
 }
 
-func setDefaultConfiguration_AO_Loyalty_UAT() (Configuration ConfigType) {
-	//Configuration.HttpOKAPIServicePort = "9291"
-	Configuration.HttpAppServicePort = "9290"           //lendme services
+func setDefaultConfiguration_AO_Loyalty_UAT() (Configuration ConfigType) { //lendme services
 	Configuration.HttpAppLoyaltyServicePort = "9280"    //for USSD and Mobile App
 	Configuration.HttpAppLoyaltyManagementPort = "9281" //for OKAPI
 	Configuration.HttpAppLoyaltyFeedPort = "9282"       //for IN & MM live feed
@@ -2126,10 +1958,6 @@ func setDefaultConfiguration_AO_Loyalty_UAT() (Configuration ConfigType) {
 
 	Configuration.Operation = "Angola"
 	Configuration.HostId = "Lendme-01"
-	Configuration.DB_Name = "Lendme_DB_UAT"
-
-	Configuration.Version = "V1"
-	Configuration.Module = "Lendme"
 
 	Configuration.LoyaltyVersion = "V1"
 	Configuration.LoyaltyModule = "Loyalty"
@@ -2139,20 +1967,9 @@ func setDefaultConfiguration_AO_Loyalty_UAT() (Configuration ConfigType) {
 	Configuration.MSISDN_Short_len = 9
 	Configuration.CountryCode = "244"
 
-	Configuration.Lendme_EVC_Dealer_MSISDN = "244951010532"
-	Configuration.Lendme_EVC_Dealer_PIN = "8236"
-
-	Configuration.IsProduction = false
 	Configuration.IsLoyaltyProduction = false
 	Configuration.ISLoyaltyOptIn = true
 	Configuration.ISLoyaltyOptOutGracePeriodDays = 30
-	Configuration.Min_Allowed_Amnt = 50
-	Configuration.Service_FeePerc = 0.12
-	Configuration.Min_Allowed_AON = 6
-	Configuration.Min_Avg3MRecharge = 800
-	Configuration.Min_LastRechargePeriod = 60
-	Configuration.Min_Allowed_Balance = 0
-	Configuration.Max_Allowed_Balance = 50
 	Configuration.ARPU_File_Path = "/home/Subs_ARPU/"
 	Configuration.ARPU_File_Prefix = "lendme_"
 	Configuration.ARPU_File_Column_Separator = ";"
@@ -2356,9 +2173,7 @@ func decrypt(data []byte, passphrase string) (plaintext []byte, err error) {
 	}
 	return
 }
-func setDefaultConfiguration_Dev() (Configuration ConfigType) {
-	//Configuration.HttpOKAPIServicePort = "9291"
-	Configuration.HttpAppServicePort = "9290"           //lendme services
+func setDefaultConfiguration_Dev() (Configuration ConfigType) { //lendme services
 	Configuration.HttpAppLoyaltyServicePort = "9280"    //for USSD and Mobile App
 	Configuration.HttpAppLoyaltyManagementPort = "9281" //for OKAPI
 	Configuration.HttpAppLoyaltyFeedPort = "9282"       //for IN & MM live feed
@@ -2372,10 +2187,6 @@ func setDefaultConfiguration_Dev() (Configuration ConfigType) {
 
 	Configuration.Operation = "GM"
 	Configuration.HostId = "Lendme-01"
-	Configuration.DB_Name = "Lendme_DB"
-
-	Configuration.Version = "V1"
-	Configuration.Module = "Lendme"
 
 	Configuration.LoyaltyVersion = "V1"
 	Configuration.LoyaltyModule = "Loyalty"
@@ -2384,16 +2195,8 @@ func setDefaultConfiguration_Dev() (Configuration ConfigType) {
 	Configuration.MSISDN_Short_len = 7
 	Configuration.CountryCode = "220"
 
-	Configuration.IsProduction = false
 	Configuration.IsLoyaltyProduction = false
 	Configuration.ISLoyaltyOptIn = true
-	Configuration.Min_Allowed_Amnt = 1
-	Configuration.Service_FeePerc = 0.15
-	Configuration.Min_Allowed_AON = 3
-	Configuration.Min_Avg3MRecharge = 0
-	Configuration.Min_LastRechargePeriod = 60
-	Configuration.Min_Allowed_Balance = 0
-	Configuration.Max_Allowed_Balance = 225
 	Configuration.ARPU_File_Path = "/home/Subs_ARPU/"
 
 	Configuration.App_AUC.Description = "App AUC service"

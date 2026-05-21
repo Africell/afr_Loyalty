@@ -1,4 +1,4 @@
-module afr_lendme
+module afr_Loyalty
 
 go 1.25.3
 

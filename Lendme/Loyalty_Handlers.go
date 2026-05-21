@@ -23,6 +23,20 @@ import (
 var uploadedFiles = make(map[string]struct{}) // keep track of file names
 var uploadedFilesMu sync.Mutex
 
+func (Uc *UserControl) HTTP_API_Standard_response(w http.ResponseWriter, r *http.Request, transaction API_Standard_response, KeepDataInDB bool) {
+	//CollectPrometheusHTTPMetrics(r.URL.Path, transaction.Status, "", transaction.Elapsedtime)
+	transaction.StatusDate = time.Now()
+	transaction.Elapsedtime = (time.Since(transaction.ReceiveDate).Nanoseconds()) / 1000000
+	//Uc.Write_StandardResponse_log(transaction, "", KeepDataInDB)
+	w.Header().Set("Content-Type", "application/json")
+	if transaction.Status == "successful" {
+		w.WriteHeader(transaction.StatusCode)
+	} else if transaction.Status == "failed" {
+		w.WriteHeader(transaction.StatusCode)
+	}
+	json.NewEncoder(w).Encode(transaction)
+}
+
 func (Uc *UserControl) Validate_Headers(r *http.Request) (response Request_Header) {
 	SourceIp, _ := GetRequestIP(r)
 	response.SourceIP = SourceIp
@@ -3902,108 +3916,6 @@ func (Uc *UserControl) HTTP_INLiveFeed_NewJoining(w http.ResponseWriter, r *http
 	sr.ErrorDescription = ""
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
-}
-
-func (Uc *UserControl) HTTP_INLiveFeed_Churn(w http.ResponseWriter, r *http.Request) {
-	var sr API_Standard_response
-	//**fill response source detail
-	SourceIp, _ := GetRequestIP(r)
-	sr.SourceIP = SourceIp
-	sr.Login = r.Header.Get("Login")
-	sr.SourceApp = r.Header.Get("SourceApp")
-	sr.AccessKey = r.URL.Path
-	sr.AccessMethod = r.Method
-	sr.HostId = Configuration.HostId
-	sr.ReceiveDate = time.Now()
-
-	method := r.Method
-	switch method {
-
-	case "DELETE":
-		sr.TransactionType = "INLiveFeed Churn"
-		//parse body
-		body, err := io.ReadAll(r.Body)
-		if err != nil {
-			sr.Status = "failed"
-			sr.StatusCode = http.StatusBadRequest
-			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to read request body"
-			sr.ErrorDescription = err.Error()
-			Uc.HTTP_API_Standard_response(w, r, sr, false)
-			return
-		}
-		var request Customer_Loyalty_Account_DeleteRequest
-		err = json.Unmarshal(body, &request)
-		if err != nil {
-			sr.Status = "failed"
-			sr.StatusCode = http.StatusBadRequest
-			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to Unmarshal body"
-			sr.ErrorDescription = err.Error()
-			Uc.HTTP_API_Standard_response(w, r, sr, false)
-			return
-		}
-		key := request.Key
-		// Check existence
-		_, subExists := Map_Subscribers.CheckThenGet(key)
-		loyaltyEntry, loyaltyExists := Map_Customer_Loyalty_Account.CheckThenGet(key)
-		if !subExists && !loyaltyExists {
-			sr.Status = "failed"
-			sr.StatusCode = http.StatusBadRequest
-			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": user does not exist in lendme or loyalty"
-			sr.ErrorDescription = " user does not exist in lendme or loyalty"
-			Uc.HTTP_API_Standard_response(w, r, sr, false)
-			return
-		}
-
-		// Delete from subscriber system if exists
-		if subExists {
-			if err := Uc.Subscriber_Delete(key); err != nil {
-				fmt.Println("Error deleting subscriber:", err)
-			}
-			_, exits := Map_Lendme_Customer_Exclusion.CheckThenGet(key)
-			if exits {
-				Map_Lendme_Customer_Exclusion.Delete(key)
-			}
-		}
-		// Delete from loyalty system if exists
-		if loyaltyExists {
-			entry, ok := loyaltyEntry.(Customer_Loyalty_Account)
-			if !ok {
-				sr.Status = "failed"
-				sr.StatusCode = http.StatusBadRequest
-				sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to delete"
-				sr.ErrorDescription = "failed to cast entry to Customer_Loyalty_Account"
-				Uc.HTTP_API_Standard_response(w, r, sr, false)
-				return
-			}
-			// Add his points to the available points pool
-			Uc.Loyalty_Governance_Redeem_Points_Debit(entry.Available_Points, true)
-			//delete loyalty points monthly wallets
-			for _, pointDetailKey := range entry.Points_Detail_Keys {
-				Map_Customer_Loyalty_Account_Points_Detail.Delete(pointDetailKey)
-			}
-			err = Uc.Customer_Loyalty_Account_Delete(sr.Login, key)
-			if err != nil {
-				sr.Status = "failed"
-				sr.StatusCode = http.StatusBadRequest
-				sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to delete"
-				sr.ErrorDescription = err.Error()
-				Uc.HTTP_API_Standard_response(w, r, sr, false)
-				return
-			}
-			_, exits := Map_Customer_Exclusion.CheckThenGet(key)
-			if exits {
-				Map_Customer_Exclusion.Delete(key)
-			}
-			Uc.Write_Loyalty_Account_Churned_log(entry)
-		}
-		LiveFeedCounters.With(prometheus.Labels{"Stream": request.EventSource, "Type": "Chrun", "Description": "Chrun"}).Inc()
-	}
-	//successful response
-	sr.Status = "successful"
-	sr.StatusCode = http.StatusOK
-	sr.StatusDescription = ""
-	sr.ErrorDescription = ""
-	Uc.HTTP_API_Standard_response(w, r, sr, true)
 }
 
 func (Uc *UserControl) HTTP_INLiveFeed_Consuption(w http.ResponseWriter, r *http.Request) {

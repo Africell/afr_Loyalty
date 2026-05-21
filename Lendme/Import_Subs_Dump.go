@@ -171,74 +171,26 @@ func (Uc *UserControl) Subscriber_Update(request Sub_Update_Request) {
 	if request.ARPU_Amount < 0 {
 		request.ARPU_Amount = 0
 	}
-	//check if key already used
-	var subscriber Subscriber
-	subscriber_na, exits := Map_Subscribers.CheckThenGet(request.MSISDN)
-	if exits {
-		var ok bool
-		subscriber, ok = subscriber_na.(Subscriber)
-		if !ok {
-			<-chan_SubQueueExecution_controler
-			return
-		}
-	} else {
-		subscriber.Subscriber_Id = Map_AutoIncrement.GetNextAI("Subscriber-Id")
-		subscriber.Key = request.MSISDN
-		subscriber.Add_Date = time.Now()
-	}
-	subscriber.Last_ProfileUpdate_date = time.Now()
-
-	subscriber.COS = request.COS
-	subscriber.FirstUse_date = request.First_Used
-	subscriber.Last_Credit = request.Last_Credit
-	subscriber.IN_Loyalty_Status = request.Loyalty_Status
-	subscriber.IN_Credit_Limit = request.Credit_Limit
-	subscriber.ARPU = request.ARPU_Amount
-	subscriber.Recharge = request.Recharge
-	subscriber.Last_Recharge_Date = request.Last_Recharge_Date
-	subscriber.Dealer_Bundle_Purchase = request.Dealer_Bundle_Purchase
-	subscriber.Last_Dealer_Bundle_Purchase_Date = request.Last_Dealer_Bundle_Purchase_Date
-
-	LastRechargeDate := request.Last_Recharge_Date
-	if LastRechargeDate.Before(request.Last_Dealer_Bundle_Purchase_Date) {
-		LastRechargeDate = request.Last_Dealer_Bundle_Purchase_Date
-	}
-	subscriber.Credit_Limit_Scheme, subscriber.NotElligibleReason = Uc.Credit_Limit_Scheme_Selection((request.Recharge + request.Dealer_Bundle_Purchase), request.First_Used, LastRechargeDate)
-	if subscriber.Credit_Limit_Scheme != "" {
-		subscriber.IsLendmeEligible = true
-	} else {
-		subscriber.IsLendmeEligible = false
-	}
-	_, exits = Map_Lendme_Customer_COS_Exclusion.CheckThenGet(subscriber.COS)
-	if exits {
-		subscriber.IsLendmeEligible = false
-	}
-	_, exits = Map_Lendme_Customer_Exclusion.CheckThenGet(subscriber.Key)
-	if exits {
-		subscriber.IsLendmeEligible = false
-	}
-	//add to cache and DB
-	Map_Subscribers.Put(subscriber.Key, subscriber)
 	//*******************************
 	//Update loyalty profile
 	//*******************************
-	subscriber.Key = Normalize_International_MSISDN(subscriber.Key)
-	if subscriber.Key == "" {
+	Key := Normalize_International_MSISDN(request.MSISDN)
+	if Key == "" {
 		<-chan_SubQueueExecution_controler
 		return
 	}
-	loyalty_account_na, cl_exits := Map_Customer_Loyalty_Account.CheckThenGet(subscriber.Key)
+	loyalty_account_na, cl_exits := Map_Customer_Loyalty_Account.CheckThenGet(Key)
 	if !cl_exits {
 		_, errAdd := Uc.Customer_Loyalty_Account_Add("DWH_Import", Customer_Loyalty_Account_AddRequest{
-			Key:          subscriber.Key,
+			Key:          Key,
 			EventSource:  "DWH_Import",
-			COS:          subscriber.COS,
-			ARPU:         subscriber.ARPU,
-			Joining_Date: subscriber.FirstUse_date,
+			COS:          request.COS,
+			ARPU:         request.ARPU_Amount,
+			Joining_Date: request.First_Used,
 		})
 		if errAdd != nil {
 			log.Println("DWH_Import Customer_Loyalty_Account_Add error: ", errAdd)
-			log.Println("DWH_Import Customer_Loyalty_Account_Add error: ", subscriber)
+			log.Println("DWH_Import Customer_Loyalty_Account_Add error: ", request)
 		}
 	} else {
 		loyalty_account, ok := loyalty_account_na.(Customer_Loyalty_Account)
@@ -246,7 +198,7 @@ func (Uc *UserControl) Subscriber_Update(request Sub_Update_Request) {
 			<-chan_SubQueueExecution_controler
 			return
 		}
-		if subscriber.COS == loyalty_account.COS && subscriber.ARPU == loyalty_account.ARPU && !loyalty_account.Coming_Expiry_Date.IsZero() {
+		if request.COS == loyalty_account.COS && request.ARPU_Amount == loyalty_account.ARPU && !loyalty_account.Coming_Expiry_Date.IsZero() {
 			<-chan_SubQueueExecution_controler
 			return
 		} else {
@@ -254,13 +206,13 @@ func (Uc *UserControl) Subscriber_Update(request Sub_Update_Request) {
 				Key:               loyalty_account.Key,
 				Customer_Id:       loyalty_account.Customer_Id,
 				Loyalty_Level_Key: loyalty_account.Loyalty_Level_Key,
-				COS:               subscriber.COS,
-				ARPU:              subscriber.ARPU,
-				Joining_Date:      subscriber.FirstUse_date,
+				COS:               request.COS,
+				ARPU:              request.ARPU_Amount,
+				Joining_Date:      request.First_Used,
 			})
 			if errEdit != nil {
 				log.Println("DWH_Import Customer_Loyalty_Account_Edit error: ", errEdit)
-				log.Println("DWH_Import Customer_Loyalty_Account_Add error: ", subscriber)
+				log.Println("DWH_Import Customer_Loyalty_Account_Add error: ", request)
 			}
 		}
 	}

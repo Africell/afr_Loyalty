@@ -31,36 +31,6 @@ var (
 		[]string{"IsElligble", "Reason", "Scheme"},
 	)
 
-	LendMeRequestsCount = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "LendMeRequestsCount",
-			Help: "LendMeRequestsCount",
-		},
-		[]string{"Status", "Reason", "Scheme"},
-	)
-	LendMeRequestsAmount = prometheus.NewGaugeVec(
-		prometheus.GaugeOpts{
-			Name: "LendMeRequestsAmount",
-			Help: "LendMeRequestsAmount",
-		},
-		[]string{"Status", "Reason", "Scheme"},
-	)
-
-	LendMePayBackCount = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "LendMePayBackCount",
-			Help: "LendMePayBackCount",
-		},
-		[]string{"Status", "Reason", "Description"},
-	)
-	LendMePayBackAmount = prometheus.NewGaugeVec(
-		prometheus.GaugeOpts{
-			Name: "LendMePayBackAmount",
-			Help: "LendMePayBackAmount",
-		},
-		[]string{"Status", "Reason", "Description"},
-	)
-
 	SubsDumpFile = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "SubsDumpFile",
@@ -75,14 +45,6 @@ var (
 			Help: "SubsDumpFileImportTime",
 		},
 		[]string{"TimeInMinutes"},
-	)
-
-	LendMeOutstandingSummary = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "LendMeOutstandingSummary",
-			Help: "LendMeOutstandingSummary",
-		},
-		[]string{"Field"},
 	)
 
 	HTTPPostToKafka = prometheus.NewCounterVec(
@@ -228,13 +190,8 @@ func Init_Prometheus_Metrics() {
 	//Lendme Metrics
 	//*************************
 	PrometheusRegistry.Register(DailyImportSubsStats)
-	PrometheusRegistry.Register(LendMeRequestsCount)
-	PrometheusRegistry.Register(LendMeRequestsAmount)
-	PrometheusRegistry.Register(LendMePayBackCount)
-	PrometheusRegistry.Register(LendMePayBackAmount)
 	PrometheusRegistry.Register(SubsDumpFile)
 	PrometheusRegistry.Register(SubsDumpFileImportTime)
-	PrometheusRegistry.Register(LendMeOutstandingSummary)
 	PrometheusRegistry.Register(HTTPPostToKafka)
 	//*************************
 	//Loaylty Metrics
@@ -272,10 +229,6 @@ func Reset_Prometheus_Metrics() {
 						//Lendme Metrics
 						//*************************
 						DailyImportSubsStats.Reset()
-						LendMeRequestsCount.Reset()
-						LendMeRequestsAmount.Reset()
-						LendMePayBackCount.Reset()
-						LendMePayBackAmount.Reset()
 						HTTPPostToKafka.Reset()
 						//LendMeOutstandingSummary.Reset()
 						//SubsDumpFile.Reset()

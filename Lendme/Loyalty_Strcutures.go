@@ -5,6 +5,39 @@ import (
 	"time"
 )
 
+type API_Standard_response struct {
+	//response source detail
+	SourceIP        string    `bson:"SourceIP" json:"-"`
+	Login           string    `bson:"Login" json:"-"`
+	SourceApp       string    `bson:"SourceApp" json:"-"`
+	AccessKey       string    `bson:"AccessKey" json:"-"`
+	AccessMethod    string    `bson:"AccessMethod" json:"-"`
+	HostId          string    `bson:"HostId" json:"-"`
+	ReceiveDate     time.Time `bson:"ReceiveDate" json:"-"`
+	TransactionType string    `bson:"TransactionType" json:"-"`
+	//response detail
+	Data interface{}
+	//response result
+	Status            string    `bson:"Status" json:"Status"` //successful, failed
+	StatusCode        int       `bson:"StatusCode" json:"StatusCode"`
+	StatusDescription string    `bson:"StatusDescription" json:"StatusDescription"` //error description if there is an error
+	ErrorDescription  string    `bson:"ErrorDescription" json:"ErrorDescription"`
+	StatusDate        time.Time `bson:"StatusDate" json:"-"`
+	Elapsedtime       int64     `bson:"Elapsedtime" json:"-"`
+}
+type Sub_Update_Request struct {
+	MSISDN                           string    `bson:"MSISDN" json:"MSISDN"`
+	COS                              string    `bson:"COS" json:"COS"`
+	First_Used                       time.Time `bson:"First_Used" json:"First_Used"`
+	Last_Credit                      time.Time `bson:"Last_Credit" json:"Last_Credit"`
+	Loyalty_Status                   string    `bson:"Loyalty_Status" json:"Loyalty_Status"`
+	Credit_Limit                     float64   `bson:"Credit_Limit" json:"Credit_Limit"`
+	ARPU_Amount                      float64   `bson:"ARPU_Amount" json:"ARPU_Amount"`
+	Recharge                         float64   `bson:"Recharge" json:"Recharge"`
+	Last_Recharge_Date               time.Time `bson:"Last_Recharge_Date" json:"Last_Recharge_Date"`
+	Dealer_Bundle_Purchase           float64   `bson:"Dealer_Bundle_Purchase" json:"Dealer_Bundle_Purchase"`
+	Last_Dealer_Bundle_Purchase_Date time.Time `bson:"Last_Dealer_Bundle_Purchase_Date" json:"Last_Dealer_Bundle_Purchase_Date"`
+}
 type Loyalty_Event_Log struct {
 	Event_User         string      `bson:"Event_User" json:"Event_User"`
 	Event_Time         time.Time   `bson:"Event_Time" json:"Event_Time"`

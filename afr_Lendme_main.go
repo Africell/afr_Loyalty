@@ -1,8 +1,7 @@
 package main
 
 import (
-	lendme "afr_lendme/Lendme"
-	sysadmin "daoc/SysAdmin"
+	lendme "afr_Loyalty/Lendme"
 	"log"
 	"net/http"
 
@@ -39,10 +38,6 @@ func (p *program) run() {
 	}
 	log.Println("Establishing connections...")
 	UserControl := lendme.NewUserControl()
-	UserControl.InitializeDAO()
-	UserControl.InitializeCache()
-	UserControl.IndexesMaintenanceProcess()
-	UserControl.LoadDefaultValues()
 
 	//UserControl.Init_Notification_Profiles()
 
@@ -52,8 +47,6 @@ func (p *program) run() {
 	go lendme.PortlinkInquiry()
 	go lendme.Reset_Prometheus_Metrics()
 	go lendme.Reset_Prometheus_Metrics_Latency()
-
-	go sysadmin.SysAdminInit(UserControl.CacheDir, "3"+lendme.Configuration.HttpAppServicePort)
 
 	corsOpts := cors.New(cors.Options{
 		AllowedOrigins: lendme.Configuration.OKAPIAllowedOrigins, //you service is available and allowed for this base url
@@ -115,17 +108,11 @@ func (p *program) run() {
 
 	go UserControl.SubQueueExecution()
 	go UserControl.Auto_Import_Subscribers_Dump()
-	go UserControl.Auto_GetOutstandingSummary()
-	go UserControl.Lendme_Subscriber_Daily_Snapshot()
 
 	//**Lendme web services
 	log.Println("Add App routers to the web service")
 	App_router := mux.NewRouter().StrictSlash(true)
 	UserControl.AddToAppRouter(App_router, UserControl)
-	HttpAppServicePort := lendme.Configuration.HttpAppServicePort
-	log.Println("App HTTP listen and serve on port: " + HttpAppServicePort) //auc.Configuration.HttpServicePort
-	//go http.ListenAndServe(":"+HttpAppServicePort, corsOpts.Handler(App_router))
-	log.Fatal(http.ListenAndServe(":"+HttpAppServicePort, corsOpts.Handler(App_router)))
 	// //**OKAPI web Service
 	// log.Println("Add Lendme routers to the web service")
 	// OKAPI_router := mux.NewRouter().StrictSlash(true)
