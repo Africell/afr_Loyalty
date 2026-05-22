@@ -203,6 +203,33 @@ Avoid unused imports. Run `go fmt` and fix compile errors.
 
 Add Mongo and Redis configuration to the project configuration struct. Use the pattern that best matches the current project.
 
+### Redis `Mode` is required — no default, omitting it crashes the service
+
+`redisx.New` validates the `Mode` field at startup. A zero-value `redisx.Config{}` — or any config where `Mode` is not explicitly set — causes `redisx.New` to return an error such as `"unknown redis mode:"`, which will crash the service before it binds to any port.
+
+**Every environment config function that calls `redisx.New` must set `Mode` explicitly.** There is no safe default.
+
+**Responsibility split:**
+
+- The **dev** config function (e.g., `setDefaultConfiguration_Dev`) in `Configuration.go` **must** set all Redis fields in code, because developers run the service locally without external config injection.
+- **UAT, staging, and production** Redis config is the responsibility of **DevOps** — values are injected via environment variables, secrets managers, or config files at deploy time. Do not hardcode non-dev credentials in source code.
+
+### Dev config — set all Redis fields in code
+
+In the dev config function, always set every Redis field explicitly:
+
+```go
+Configuration.Redis.Mode     = redisx.ModeSingle
+Configuration.Redis.Addr     = "127.0.0.1:6379"
+Configuration.Redis.Username = "dev_user"
+Configuration.Redis.Password = "dev_password"
+Configuration.Redis.DB       = 0
+Configuration.Redis.KeyPrefix = "appname:dev:"
+Configuration.Redis.DefaultTTL = -1 // See TTL note below.
+```
+
+Adapt `Addr`, `Username`, `Password`, and `KeyPrefix` to the actual dev Redis instance for this project. Use `redisx.ModeSentinel` or `redisx.ModeCluster` if the dev instance requires it.
+
 ### Option A — Direct package config structs
 
 Use this if the project can store `mongox.Config` and `redisx.Config` directly:
@@ -231,49 +258,130 @@ Configuration.Mongo = mongox.Config{
 
 Configuration.Redis = redisx.Config{
     Mode:       redisx.ModeSingle,
-    Addr:       "localhost:6379",
-    Username:   "",
-    Password:   "",
+    Addr:       "127.0.0.1:6379",
+    Username:   "dev_user",
+    Password:   "dev_password",
     DB:         0,
-    KeyPrefix:  "",
+    KeyPrefix:  "appname:dev:",
     DefaultTTL: -1, // See TTL note below.
 }
 ```
 
-### Option B — Existing custom Mongo fields + Redis config
+### Option B — Rename old custom Mongo struct fields, keep individual fields
 
-Use this if the old project already has custom Mongo fields such as host, port, username, password, and replica set:
+Use this when the old project had a custom MongoDB struct (host, port, username, password, replica set) and DevOps manages the per-environment credentials directly in the config functions.
 
-```go
-Configuration.MongoDB.ReplicaSet
-Configuration.MongoDB.UserName
-Configuration.MongoDB.Password
-Configuration.MongoDB.HostIP_1
-Configuration.MongoDB.HostPort_1
-```
+**Do NOT convert the individual-field environment configs to URI format. Only modify the dev config function.**
 
-Keep those fields and add Redis as `redisx.Config`:
+In `ConfigType`, rename the old structs from `MongoDB`/`LoyaltyMongoDB` to `Mongo`/`LoyaltyMongo`, keeping the old struct definitions commented out for reference:
 
 ```go
 import "redisx"
 
 type ConfigType struct {
+    Mongo struct {
+        ReplicaSet string
+        UserName   string
+        Password   string
+        HostIP_1   string
+        HostPort_1 string
+        HostIP_2   string
+        HostPort_2 string
+        HostIP_3   string
+        HostPort_3 string
+        HostIP_4   string
+        HostPort_4 string
+    }
+    LoyaltyMongo struct {
+        ReplicaSet string
+        UserName   string
+        Password   string
+        HostIP_1   string
+        HostPort_1 string
+        HostIP_2   string
+        HostPort_2 string
+        HostIP_3   string
+        HostPort_3 string
+        HostIP_4   string
+        HostPort_4 string
+    }
+    // MongoDB struct { ... old fields ... }
+    // LoyaltyMongoDB struct { ... old fields ... }
     Redis redisx.Config
-    // keep existing MongoDB struct fields
 }
 ```
 
-Set Redis fields explicitly per environment:
+Update `buildMongoURI` and `buildLoyaltyMongoURI` helpers to reference `cfg.Mongo` and `cfg.LoyaltyMongo` instead of `cfg.MongoDB` and `cfg.LoyaltyMongoDB`. These helpers are still needed in `UserControl.go`:
 
 ```go
-Configuration.Redis.Mode = redisx.ModeSingle
-Configuration.Redis.Addr = "localhost:6379"
-Configuration.Redis.Username = ""
-Configuration.Redis.Password = ""
-Configuration.Redis.DB = 0
-Configuration.Redis.KeyPrefix = ""
-Configuration.Redis.DefaultTTL = -1 // See TTL note below.
+func buildMongoURI(cfg ConfigType) string {
+    c := cfg.Mongo
+    // ... same logic as before, using c.ReplicaSet, c.UserName, etc.
+}
+
+func buildLoyaltyMongoURI(cfg ConfigType) string {
+    c := cfg.LoyaltyMongo
+    // ... same logic
+}
 ```
+
+In `UserControl.go` (or equivalent container init), keep using the helpers and add a `Ping` after each connect to verify reachability:
+
+```go
+mongoClient, err := mongox.Connect(ctx, mongox.Config{
+    URI:     buildMongoURI(Configuration),
+    AppName: "appname",
+})
+if err != nil {
+    log.Fatal("mongox.Connect (MongoDB):", err)
+}
+if err := mongoClient.Ping(ctx); err != nil {
+    log.Fatal("Mongo not reachable:", err)
+}
+
+loyaltyMongoClient, err := mongox.Connect(ctx, mongox.Config{
+    URI:     buildLoyaltyMongoURI(Configuration),
+    AppName: "appname",
+})
+if err != nil {
+    log.Fatal("mongox.Connect (LoyaltyMongoDB):", err)
+}
+if err := loyaltyMongoClient.Ping(ctx); err != nil {
+    log.Fatal("LoyaltyMongo not reachable:", err)
+}
+```
+
+> **Note on Ping:** `mongox.Connect` already validates connectivity internally via Ping before returning. The explicit `Ping` call above is a required pattern for clarity and explicit startup fail-fast behaviour. It is not redundant for operational reasons.
+
+#### Only modify the Dev config function
+
+**Do not touch any UAT, staging, or Live config functions.** Those are managed by DevOps and should keep their existing individual-field assignments. Only `setDefaultConfiguration_Dev` (or equivalent) needs to be updated to use the new field names (`Mongo.` instead of `MongoDB.`) and to set all Redis fields for local development:
+
+```go
+// setDefaultConfiguration_Dev — only this function is modified during migration
+Configuration.Mongo.ReplicaSet = ""
+Configuration.Mongo.UserName   = ""
+Configuration.Mongo.Password   = ""
+Configuration.Mongo.HostIP_1   = "localhost"
+Configuration.Mongo.HostPort_1 = "27017"
+Configuration.Mongo.HostIP_2   = ""
+Configuration.Mongo.HostPort_2 = ""
+Configuration.Mongo.HostIP_3   = ""
+Configuration.Mongo.HostPort_3 = ""
+Configuration.Mongo.HostIP_4   = ""
+Configuration.Mongo.HostPort_4 = ""
+Configuration.LoyaltyMongo = Configuration.Mongo
+
+Configuration.Redis.Mode       = redisx.ModeSingle  // always use the constant, not the string "single"
+Configuration.Redis.Addr       = "localhost:6379"
+Configuration.Redis.Username   = ""
+Configuration.Redis.Password   = ""
+Configuration.Redis.DB         = 0
+Configuration.Redis.KeyPrefix  = "appname:dev:"     // replace appname with the service name
+Configuration.Redis.DefaultTTL = -1                 // -1 = no expiry; 0 would be overridden to 5 min by redisx defaults
+```
+
+All other environment config functions need only a field-name rename (`MongoDB.` → `Mongo.`, `LoyaltyMongoDB.` → `LoyaltyMongo.`) — their credential values stay untouched.
 
 ### Redis TTL note
 
@@ -286,51 +394,6 @@ Preserve the old cache expiry behavior.
 - Note: `redisx.SetJSON` uses the config `DefaultTTL`; `redisx.SetJSONWithTTL` takes an explicit duration. Use the one that matches the required expiry behavior.
 
 Do not assume one TTL policy fits all projects.
-
-### Mongo URI helper for legacy custom Mongo fields
-
-If the project keeps legacy Mongo host fields, create a helper like this and adapt it to the actual config struct:
-
-```go
-func buildMongoURI(cfg ConfigType) string {
-    if cfg.MongoDB.ReplicaSet != "" {
-        hosts := cfg.MongoDB.HostIP_1 + ":" + cfg.MongoDB.HostPort_1
-        if cfg.MongoDB.HostIP_2 != "" {
-            hosts += "," + cfg.MongoDB.HostIP_2 + ":" + cfg.MongoDB.HostPort_2
-        }
-        if cfg.MongoDB.HostIP_3 != "" {
-            hosts += "," + cfg.MongoDB.HostIP_3 + ":" + cfg.MongoDB.HostPort_3
-        }
-        if cfg.MongoDB.HostIP_4 != "" {
-            hosts += "," + cfg.MongoDB.HostIP_4 + ":" + cfg.MongoDB.HostPort_4
-        }
-
-        if cfg.MongoDB.UserName != "" {
-            return fmt.Sprintf(
-                "mongodb://%s:%s@%s/?replicaSet=%s&authSource=admin",
-                cfg.MongoDB.UserName,
-                cfg.MongoDB.Password,
-                hosts,
-                cfg.MongoDB.ReplicaSet,
-            )
-        }
-
-        return fmt.Sprintf("mongodb://%s/?replicaSet=%s&authSource=admin", hosts, cfg.MongoDB.ReplicaSet)
-    }
-
-    if cfg.MongoDB.UserName != "" {
-        return fmt.Sprintf(
-            "mongodb://%s:%s@%s:%s",
-            cfg.MongoDB.UserName,
-            cfg.MongoDB.Password,
-            cfg.MongoDB.HostIP_1,
-            cfg.MongoDB.HostPort_1,
-        )
-    }
-
-    return fmt.Sprintf("mongodb://%s:%s", cfg.MongoDB.HostIP_1, cfg.MongoDB.HostPort_1)
-}
-```
 
 ---
 
@@ -356,7 +419,7 @@ type ProjectContainer struct {
 }
 ```
 
-Example using direct `mongox.Config` and `redisx.Config`:
+Example using direct `mongox.Config` pass-through (single Mongo database):
 
 ```go
 func NewProjectContainer() *ProjectContainer {
@@ -368,10 +431,6 @@ func NewProjectContainer() *ProjectContainer {
         log.Fatal("mongox.Connect:", err)
     }
 
-    if err := mongoClient.Ping(ctx); err != nil {
-        log.Fatal("mongo ping:", err)
-    }
-
     redisClient, err := redisx.New(Configuration.Redis)
     if err != nil {
         log.Fatal("redisx.New:", err)
@@ -384,16 +443,21 @@ func NewProjectContainer() *ProjectContainer {
 }
 ```
 
-Example using legacy Mongo fields and `buildMongoURI`:
+Example with two Mongo clients (primary + secondary database on the same cluster):
 
 ```go
 func NewProjectContainer() *ProjectContainer {
-    mongoClient, err := mongox.Connect(context.Background(), mongox.Config{
-        URI:     buildMongoURI(Configuration),
-        AppName: Configuration.Module,
-    })
+    ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+    defer cancel()
+
+    mongoClient, err := mongox.Connect(ctx, Configuration.Mongo)
     if err != nil {
-        log.Fatal("mongox.Connect:", err)
+        log.Fatal("mongox.Connect (primary):", err)
+    }
+
+    secondaryMongoClient, err := mongox.Connect(ctx, Configuration.LoyaltyMongo)
+    if err != nil {
+        log.Fatal("mongox.Connect (secondary):", err)
     }
 
     redisClient, err := redisx.New(Configuration.Redis)
@@ -402,11 +466,14 @@ func NewProjectContainer() *ProjectContainer {
     }
 
     return &ProjectContainer{
-        MongoClient: mongoClient,
-        Redis:       redisClient,
+        MongoClient:          mongoClient,
+        SecondaryMongoClient: secondaryMongoClient,
+        Redis:                redisClient,
     }
 }
 ```
+
+Pass `Configuration.Mongo` (or `Configuration.LoyaltyMongo`) directly — do not build URIs by hand or use a `buildMongoURI` helper. The URI is already set in each environment config function.
 
 Keep existing project-specific fields in the project container if they are still needed. If the project uses package-level globals instead of a container struct, add the clients using that existing style.
 
@@ -1009,7 +1076,7 @@ for _, acc := range accessEntries.Data {
 
 Then pass `existingEntries` to the router setup loop and to creation helpers.
 
-Creation helper (create in external service, then upsert to local MongoDB):
+Creation helper (create in external service, then upsert to local MongoDB and write to Redis):
 
 ```go
 func (Uc *UserControl) AddToExternalServiceAndMongo(existing map[string]AuthCenter.AccessEntry, accessEntry AuthCenter.AccessEntry) {
@@ -1027,23 +1094,19 @@ func (Uc *UserControl) AddToExternalServiceAndMongo(existing map[string]AuthCent
 
     _, err := Uc.ExternalService.CreateEntry(accessEntry)
     if err != nil {
-        log.Fatalln("Error creating entry in external service:", err)
+        log.Println("Error creating entry in external service:", err)
         return
     }
 
-    ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-    defer cancel()
+    ctx := context.Background()
 
-    _, err = Mdb_AccessEntry.UpdateOne(
+    Mdb_AccessEntry.UpdateOne(
         ctx,
         bson.M{"Key": accessEntry.Key},
         bson.M{"$set": accessEntry},
         options.UpdateOne().SetUpsert(true),
     )
-    if err != nil {
-        log.Println("Mdb_AccessEntry upsert error:", err)
-        return
-    }
+    redisx.SetJSON(ctx, Uc.Redis, accessEntry.RedisKey(), accessEntry)
     log.Println("Created Access Entry:", accessEntry.Key)
 }
 ```
@@ -1052,8 +1115,8 @@ Rules:
 
 - Do **not** use a global `sync.Map` as a dedup cache for access entries. Use a local `map[string]T` populated once per router setup call.
 - Always read existing entries from the external service first, build the local map, then call the creation helper.
-- After creating in the external service, upsert to local MongoDB with `options.UpdateOne().SetUpsert(true)` so the operation is idempotent (safe to re-run on restart).
-- Use a 5-second timeout for a single MongoDB upsert during startup.
+- After creating in the external service, upsert to MongoDB with `options.UpdateOne().SetUpsert(true)` (idempotent — safe to re-run on restart), then write to Redis with `redisx.SetJSON`.
+- Use `context.Background()` for the MongoDB upsert and Redis write during startup; no per-operation timeout is needed since these are fire-and-forget persistence writes after the external service call already succeeded.
 - The old `MapAccessEntry.Clear()` + `MapAccessEntry.Put()` + `MapAccessEntry.Check()` pattern is fully replaced by a plain local `map[string]T`.
 
 ---
@@ -1615,17 +1678,23 @@ After printing this report, prompt the human owner with the following checklist 
 ```text
 Before testing — action required:
 
-1. Redis ACL
-   The app connects to Redis using the credentials in redisx.Config (default: no username/password = "default" user).
+1. Redis config in dev
+   Confirm that the dev config function (e.g., setDefaultConfiguration_Dev in Configuration.go)
+   sets all redisx.Config fields: Mode, Addr, Username, Password, DB, KeyPrefix, DefaultTTL.
+   An empty or partially-set redisx.Config causes redisx.New to fail with "unknown redis mode:"
+   and the service will exit before binding to any port.
+   UAT and production Redis config is the responsibility of DevOps — do not hardcode those values.
+
+2. Redis ACL
+   The app connects to Redis using the credentials in redisx.Config.
    If your Redis instance has ACL users configured, verify that the user has key access:
      redis-cli ACL WHOAMI
      redis-cli ACL LIST
-   If the default user has no key pattern (~*), either:
-     - DEV: redis-cli ACL SETUSER default ~* +@all nopass
-     - Or set Username/Password in redisx.Config to a user with the correct key permissions.
-   A successful PING at startup does NOT mean key access works.
+   If the user has no key pattern (~*), grant it:
+     redis-cli ACL SETUSER <username> ~* +@all
+   A successful PING at startup does NOT mean key access works — key reads/writes may still fail.
 
-2. Auto-increment key names
+3. Auto-increment key names
    The key strings passed to NextAutoIncrementID must match the existing Key values in the
    AutoIncrement MongoDB collection. Mismatched names re-start counters from 1.
    Check the collection and adjust code key strings if needed:
@@ -1771,10 +1840,18 @@ Use this section only when preparing the guide for a specific project. Keep proj
 ## Startup-only dedup maps
 - Old MapX → local map in [function]
 
-## Environment-specific Redis addresses
-- DEV: localhost:6379
-- UAT: [address]
-- LIVE: [address]
+## Dev Redis config (set in code — setDefaultConfiguration_Dev or equivalent)
+- Mode:       redisx.ModeSingle
+- Addr:       [dev Redis host:port]
+- Username:   [dev Redis username]
+- Password:   [dev Redis password]
+- DB:         [dev Redis DB index]
+- KeyPrefix:  [appname:dev:]
+- DefaultTTL: -1
+
+## UAT / LIVE Redis config
+- Managed by DevOps via environment variables or external config injection.
+- Do not hardcode UAT or production credentials in source code.
 
 ## Special notes
 - [Any deviations from the generic guide]

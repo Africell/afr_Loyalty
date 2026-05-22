@@ -37,21 +37,21 @@ func NewUserControl() *UserControl {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	mongoClient, err := mongox.Connect(ctx, mongox.Config{
-		URI:     buildMongoURI(Configuration),
-		AppName: "afr_Loyalty",
-	})
+	mongoClient, err := mongox.Connect(ctx, Configuration.Mongo)
 	if err != nil {
 		log.Fatal("mongox.Connect (MongoDB):", err)
 	}
+	if err := mongoClient.Ping(ctx); err != nil {
+		log.Fatal("Mongo not reachable:", err)
+	}
 	log.Println("MongoDB connected")
 
-	loyaltyMongoClient, err := mongox.Connect(ctx, mongox.Config{
-		URI:     buildLoyaltyMongoURI(Configuration),
-		AppName: "afr_Loyalty",
-	})
+	loyaltyMongoClient, err := mongox.Connect(ctx, Configuration.LoyaltyMongo)
 	if err != nil {
 		log.Fatal("mongox.Connect (LoyaltyMongoDB):", err)
+	}
+	if err := loyaltyMongoClient.Ping(ctx); err != nil {
+		log.Fatal("LoyaltyMongo not reachable:", err)
 	}
 	log.Println("LoyaltyMongoDB connected")
 

@@ -70,18 +70,6 @@ var Mdb_Loyalty_Campaign_Account *mongox.Repository
 // redisx client (shared)
 var RedisClient *redisx.Client
 
-// MapAccessEntry is a thread-safe in-memory cache for AuthCenter.AccessEntry lookups.
-// AuthCenter.AccessEntry is an external type without a RedisKey(), so this replaces
-// the former daoc.Cache_Synch with a native sync.Map-backed store.
-type localSyncCache struct{ m sync.Map }
-
-func (c *localSyncCache) Clear() {
-	c.m.Range(func(k, v interface{}) bool { c.m.Delete(k); return true })
-}
-func (c *localSyncCache) Put(key string, value interface{}) { c.m.Store(key, value) }
-func (c *localSyncCache) Check(key string) bool             { _, ok := c.m.Load(key); return ok }
-
-var MapAccessEntry = &localSyncCache{}
 
 func (e Loyalty_Governance) RedisKey() string {
 	return "Loyalty_Governance:" + e.Key

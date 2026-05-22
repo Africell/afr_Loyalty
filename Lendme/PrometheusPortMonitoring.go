@@ -4,6 +4,8 @@ import (
 	"log"
 	"net"
 	"time"
+	"strings"
+	"fmt"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -19,29 +21,53 @@ type destinationHost struct {
 var destinationHots []destinationHost
 
 func Init_DestinationHosts() {
-	if Configuration.LoyaltyMongoDB.HostIP_1 != "" {
-		host := destinationHost{
-			HostName: "Loyalty MongoDB 01",
-			HostIP:   Configuration.LoyaltyMongoDB.HostIP_1,
-			HostPort: Configuration.LoyaltyMongoDB.HostPort_1,
-		}
-		destinationHots = append(destinationHots, host)
+	// if Configuration.LoyaltyMongoDB.HostIP_1 != "" {
+	// 	host := destinationHost{
+	// 		HostName: "Loyalty MongoDB 01",
+	// 		HostIP:   Configuration.LoyaltyMongoDB.HostIP_1,
+	// 		HostPort: Configuration.LoyaltyMongoDB.HostPort_1,
+	// 	}
+	// 	destinationHots = append(destinationHots, host)
+	// }
+	// if Configuration.LoyaltyMongoDB.HostIP_2 != "" {
+	// 	host := destinationHost{
+	// 		HostName: "Loyalty MongoDB 02",
+	// 		HostIP:   Configuration.LoyaltyMongoDB.HostIP_2,
+	// 		HostPort: Configuration.LoyaltyMongoDB.HostPort_2,
+	// 	}
+	// 	destinationHots = append(destinationHots, host)
+	// }
+	// if Configuration.LoyaltyMongoDB.HostIP_3 != "" {
+	// 	host := destinationHost{
+	// 		HostName: "Loyalty MongoDB 03",
+	// 		HostIP:   Configuration.LoyaltyMongoDB.HostIP_3,
+	// 		HostPort: Configuration.LoyaltyMongoDB.HostPort_3,
+	// 	}
+	// 	destinationHots = append(destinationHots, host)
+	// }
+	uri := Configuration.LoyaltyMongo.URI
+	uri = strings.TrimPrefix(uri, "mongodb+srv://")
+	uri = strings.TrimPrefix(uri, "mongodb://")
+	if i := strings.Index(uri, "/"); i >= 0 {
+		uri = uri[:i]
 	}
-	if Configuration.LoyaltyMongoDB.HostIP_2 != "" {
-		host := destinationHost{
-			HostName: "Loyalty MongoDB 02",
-			HostIP:   Configuration.LoyaltyMongoDB.HostIP_2,
-			HostPort: Configuration.LoyaltyMongoDB.HostPort_2,
-		}
-		destinationHots = append(destinationHots, host)
+	if i := strings.Index(uri, "?"); i >= 0 {
+		uri = uri[:i]
 	}
-	if Configuration.LoyaltyMongoDB.HostIP_3 != "" {
-		host := destinationHost{
-			HostName: "Loyalty MongoDB 03",
-			HostIP:   Configuration.LoyaltyMongoDB.HostIP_3,
-			HostPort: Configuration.LoyaltyMongoDB.HostPort_3,
+	for idx, hp := range strings.Split(uri, ",") {
+		hp = strings.TrimSpace(hp)
+		if hp == "" {
+			continue
 		}
-		destinationHots = append(destinationHots, host)
+		host, port, err := net.SplitHostPort(hp)
+		if err != nil {
+			continue
+		}
+		destinationHots = append(destinationHots, destinationHost{
+			HostName: fmt.Sprintf("Loyalty MongoDB %02d", idx+1),
+			HostIP:   host,
+			HostPort: port,
+		})
 	}
 
 	if Configuration.App_AUC.Hostname != "" {

@@ -2,15 +2,19 @@ package Lendme
 
 import (
 	"afr_auth_center/AuthCenter"
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"redisx"
 	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 type Route struct {
@@ -62,14 +66,10 @@ func (Uc *UserControl) AddToAppRouter(router *mux.Router, UC *UserControl) {
 	// to the former and vice versa
 	routes := CreateRoutes(UC)
 
-	accessEntries, err := Uc.AppAUC.AUCClient.ReadAccessEntries("")
-	if err != nil {
-		log.Println("Warning: Error Reading Existing Access Entries from AUC (AUC may not be running)")
-	}
-	log.Println("Read existing routes: #", len(accessEntries.Data))
-	MapAccessEntry.Clear()
-	for _, acc := range accessEntries.Data {
-		MapAccessEntry.Put(acc.Key, acc)
+	sr, _ := Uc.AppAUC.AUCClient.ReadAccessEntries("")
+	existingEntries := make(map[string]AuthCenter.AccessEntry)
+	for _, entry := range sr.Data {
+		existingEntries[entry.Key] = entry
 	}
 
 	for _, route := range routes {
@@ -85,8 +85,7 @@ func (Uc *UserControl) AddToAppRouter(router *mux.Router, UC *UserControl) {
 
 			//add to OKAPI AUC
 			if route.AddToAccessEntry {
-				ok := MapAccessEntry.Check(route.Name + "|" + route.Method)
-				if !ok {
+				if _, exists := existingEntries[route.Name+"|"+route.Method]; !exists {
 					var accessEntry AuthCenter.AccessEntry
 					accessEntry.AddUser = "Auto Add"
 					accessEntry.AddDate = time.Now().UTC()
@@ -124,15 +123,10 @@ func (Uc *UserControl) AddToAppRouter(router *mux.Router, UC *UserControl) {
 
 	}
 
-	accessEntries_okapi, err := Uc.OKAPIAUC.AUCClient.ReadAccessEntries("")
-	if err != nil {
-		log.Println("Warning: Error Reading Existing Access Entries from AUC (AUC may not be running)")
-	}
-
-	log.Println("Read existing routes: #", len(accessEntries.Data))
-	MapAccessEntry.Clear()
-	for _, acc := range accessEntries_okapi.Data {
-		MapAccessEntry.Put(acc.Key, acc)
+	sr2, _ := Uc.OKAPIAUC.AUCClient.ReadAccessEntries("")
+	existingEntries = make(map[string]AuthCenter.AccessEntry)
+	for _, entry := range sr2.Data {
+		existingEntries[entry.Key] = entry
 	}
 
 	for _, route := range routes {
@@ -148,8 +142,7 @@ func (Uc *UserControl) AddToAppRouter(router *mux.Router, UC *UserControl) {
 
 			//add to OKAPI AUC
 			if route.AddToAccessEntry {
-				ok := MapAccessEntry.Check(route.Name + "|" + route.Method)
-				if !ok {
+				if _, exists := existingEntries[route.Name+"|"+route.Method]; !exists {
 					var accessEntry AuthCenter.AccessEntry
 					accessEntry.AddUser = "Auto Add"
 					accessEntry.AddDate = time.Now().UTC()
@@ -198,15 +191,10 @@ func (Uc *UserControl) AddToLoyaltyServiceRouter(router *mux.Router, UC *UserCon
 
 	Uc.Add_LoyaltyServiceRoutes(&routes)
 
-	accessEntries, err := Uc.AppAUC.AUCClient.ReadAccessEntries("")
-	if err != nil {
-		log.Println("Warning: Error Reading Existing Access Entries from AUC (AUC may not be running)")
-	}
-	MapAccessEntry.Clear()
-	log.Println("Read existing routes: #", len(accessEntries.Data))
-
-	for _, acc := range accessEntries.Data {
-		MapAccessEntry.Put(acc.Key, acc)
+	sr, _ := Uc.AppAUC.AUCClient.ReadAccessEntries("")
+	existingEntries := make(map[string]AuthCenter.AccessEntry)
+	for _, entry := range sr.Data {
+		existingEntries[entry.Key] = entry
 	}
 
 	for _, route := range routes {
@@ -222,8 +210,7 @@ func (Uc *UserControl) AddToLoyaltyServiceRouter(router *mux.Router, UC *UserCon
 
 			//add to OKAPI AUC
 			if route.AddToAccessEntry {
-				ok := MapAccessEntry.Check(route.Name + "|" + route.Method)
-				if !ok {
+				if _, exists := existingEntries[route.Name+"|"+route.Method]; !exists {
 					var accessEntry AuthCenter.AccessEntry
 					accessEntry.AddUser = "Auto Add"
 					accessEntry.AddDate = time.Now().UTC()
@@ -272,17 +259,10 @@ func (Uc *UserControl) AddToLoyaltyManagementRouter(router *mux.Router, UC *User
 
 	Uc.Add_LoyaltyManagementRoutes(&routes)
 
-	accessEntries, err := Uc.OKAPIAUC.AUCClient.ReadAccessEntries("")
-	if err != nil {
-		log.Println("Warning: Error Reading Existing Access Entries from AUC (AUC may not be running)")
-	}
-	MapAccessEntry.Clear()
-
-	fmt.Println("Read existing routes: #", len(accessEntries.Data))
-	var existingEntries = make(map[string]AuthCenter.AccessEntry)
-
-	for _, acc := range accessEntries.Data {
-		MapAccessEntry.Put(acc.Key, acc)
+	sr, _ := Uc.OKAPIAUC.AUCClient.ReadAccessEntries("")
+	existingEntries := make(map[string]AuthCenter.AccessEntry)
+	for _, entry := range sr.Data {
+		existingEntries[entry.Key] = entry
 	}
 
 	for _, route := range routes {
@@ -298,8 +278,7 @@ func (Uc *UserControl) AddToLoyaltyManagementRouter(router *mux.Router, UC *User
 
 			//add to OKAPI AUC
 			if route.AddToAccessEntry {
-				ok := MapAccessEntry.Check(route.Name + "|" + route.Method)
-				if !ok {
+				if _, exists := existingEntries[route.Name+"|"+route.Method]; !exists {
 					var accessEntry AuthCenter.AccessEntry
 					accessEntry.AddUser = "Auto Add"
 					accessEntry.AddDate = time.Now().UTC()
@@ -496,20 +475,21 @@ func (Uc *UserControl) AddToLoyaltyFeedRouter(router *mux.Router, UC *UserContro
 
 func (Uc *UserControl) AddToOKAPIAccessEntry(existing map[string]AuthCenter.AccessEntry, accessEntry AuthCenter.AccessEntry) {
 	accessEntry.Key = accessEntry.AccessKey + "|" + accessEntry.AccessMethod
-	_, ok := existing[accessEntry.Key]
-
-	if !ok {
-		json.NewEncoder(os.Stdout).Encode(accessEntry)
+	if _, ok := existing[accessEntry.Key]; !ok {
 		accessEntry.Id = 0
 		accessEntry.Status = ""
 		accessEntry.AddUser = "Auto Add"
 		accessEntry.AddDate = time.Now().UTC()
 		accessEntry.LastModifyUser = "Auto Add"
 		accessEntry.LastModifyDate = time.Now().UTC()
-		//Insert into Cache
 		_, err := Uc.OKAPIAUC.AUCClient.CreateAccessEntries(accessEntry)
 		if err == nil {
-			MapAccessEntry.Put(accessEntry.AccessKey+"|"+accessEntry.AccessMethod, accessEntry)
+			ctx := context.Background()
+			Mdb_AccessEntry.UpdateOne(ctx,
+				bson.M{"Key": accessEntry.Key},
+				bson.M{"$set": accessEntry},
+				options.UpdateOne().SetUpsert(true))
+			redisx.SetJSON(ctx, Uc.Redis, accessEntry.RedisKey(), accessEntry)
 			fmt.Println("Created Access Entry: ", accessEntry.Key)
 		} else {
 			json.NewEncoder(os.Stdout).Encode(accessEntry)

@@ -7,6 +7,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"io"
+	"mongox"
 	"redisx"
 	"time"
 )
@@ -65,32 +66,9 @@ type ConfigType struct {
 		Timeout_After time.Duration
 	}
 
-	MongoDB struct {
-		ReplicaSet string
 		UserName   string
-		Password   string
-		HostIP_1   string
-		HostPort_1 string
-		HostIP_2   string
-		HostPort_2 string
-		HostIP_3   string
-		HostPort_3 string
-		HostIP_4   string
-		HostPort_4 string
-	}
-	LoyaltyMongoDB struct {
-		ReplicaSet string
-		UserName   string
-		Password   string
-		HostIP_1   string
-		HostPort_1 string
-		HostIP_2   string
-		HostPort_2 string
-		HostIP_3   string
-		HostPort_3 string
-		HostIP_4   string
-		HostPort_4 string
-	}
+	Mongo        mongox.Config
+	LoyaltyMongo mongox.Config
 
 	Redis redisx.Config
 
@@ -282,43 +260,14 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) { //lendme se
 	Configuration.OKAPI_AUC.S2S_Password = "s@le$P@s$W0$3"
 	Configuration.OKAPI_AUC.Timeout_After = 5 * time.Second
 
-	//mongoDB
-	// Configuration.MongoDB.ReplicaSet = ""
-	// Configuration.MongoDB.UserName = "db_root"
-	// Configuration.MongoDB.Password = "B3202T@soSo0612w6"
-	// Configuration.MongoDB.HostIP_1 = "LendMe_mongodb"
-	// Configuration.MongoDB.HostPort_1 = "27017"
-	// Configuration.MongoDB.HostIP_2 = ""
-	// Configuration.MongoDB.HostPort_2 = ""
-	// Configuration.MongoDB.HostIP_3 = ""
-	// Configuration.MongoDB.HostPort_3 = ""
-	// Configuration.MongoDB.HostIP_4 = ""
-	// Configuration.MongoDB.HostPort_4 = ""
-	Configuration.MongoDB.ReplicaSet = "reps1"
-	Configuration.MongoDB.UserName = "db_root"
-	Configuration.MongoDB.Password = "B3202T@soSo0612w6"
-	Configuration.MongoDB.HostIP_1 = "10.95.72.177" //==> Primary
-	Configuration.MongoDB.HostPort_1 = "9001"
-	Configuration.MongoDB.HostIP_2 = "10.95.72.176" //==>secondary
-	Configuration.MongoDB.HostPort_2 = "9002"
-	Configuration.MongoDB.HostIP_3 = "10.95.72.95" //==> Aribter
-	Configuration.MongoDB.HostPort_3 = "9003"
-	Configuration.MongoDB.HostIP_4 = ""
-	Configuration.MongoDB.HostPort_4 = ""
-
+	Configuration.Mongo.URI = "mongodb://10.95.72.177:9001,10.95.72.176:9002,10.95.72.95:9003/?replicaSet=reps1"
+	Configuration.Mongo.Username = "db_root"
+	Configuration.Mongo.Password = "B3202T@soSo0612w6"
+	Configuration.Mongo.AuthSource = "admin"
+	Configuration.Mongo.AppName = "afr_Loyalty"
 	Configuration.DB_Name_Loyalty = "Loyalty_DB"
 	Configuration.LoyaltyProgramName = "Loyalty"
-	Configuration.LoyaltyMongoDB.ReplicaSet = Configuration.MongoDB.ReplicaSet
-	Configuration.LoyaltyMongoDB.UserName = Configuration.MongoDB.UserName
-	Configuration.LoyaltyMongoDB.Password = Configuration.MongoDB.Password
-	Configuration.LoyaltyMongoDB.HostIP_1 = Configuration.MongoDB.HostIP_1
-	Configuration.LoyaltyMongoDB.HostPort_1 = Configuration.MongoDB.HostPort_1
-	Configuration.LoyaltyMongoDB.HostIP_2 = Configuration.MongoDB.HostIP_2
-	Configuration.LoyaltyMongoDB.HostPort_2 = Configuration.MongoDB.HostPort_2
-	Configuration.LoyaltyMongoDB.HostIP_3 = Configuration.MongoDB.HostIP_3
-	Configuration.LoyaltyMongoDB.HostPort_3 = Configuration.MongoDB.HostPort_3
-	Configuration.LoyaltyMongoDB.HostIP_4 = Configuration.MongoDB.HostIP_4
-	Configuration.LoyaltyMongoDB.HostPort_4 = Configuration.MongoDB.HostPort_4
+	Configuration.LoyaltyMongo = Configuration.Mongo
 
 	Configuration.IN.IP = "10.95.73.12" //"10.70.1.59"
 	Configuration.IN.Port = "8444"
@@ -441,35 +390,13 @@ func setDefaultConfiguration_DRC_Loyalty_UAT() (Configuration ConfigType) {
 	Configuration.OKAPI_AUC.S2S_Password = "]W8#x3D1USKUyH@p]s&D_"
 	Configuration.OKAPI_AUC.Timeout_After = 5 * time.Second
 
-	//mongoDB
-	// Configuration.MongoDB.ReplicaSet = ""
-	// Configuration.MongoDB.UserName = "db_root"
-	// Configuration.MongoDB.Password = "B3202T@soSo0612w6"
-	// Configuration.MongoDB.HostIP_1 = "LendMe_mongodb"
-	// Configuration.MongoDB.HostPort_1 = "27017"
-	// Configuration.MongoDB.HostIP_2 = ""
-	// Configuration.MongoDB.HostPort_2 = ""
-	// Configuration.MongoDB.HostIP_3 = ""
-	// Configuration.MongoDB.HostPort_3 = ""
-	// Configuration.MongoDB.HostIP_4 = ""
-	// Configuration.MongoDB.HostPort_4 = ""
-	Configuration.MongoDB.UserName = "db_root"
-	Configuration.MongoDB.Password = "P@s54D0Brdara_r@75S"
-	Configuration.MongoDB.HostIP_1 = "mongodb" //"host.docker.internal"
-	Configuration.MongoDB.HostPort_1 = "27017" //"27017"
-
+	Configuration.Mongo.URI = "mongodb://mongodb:27017"
+	Configuration.Mongo.Username = "db_root"
+	Configuration.Mongo.Password = "P@s54D0Brdara_r@75S"
+	Configuration.Mongo.AuthSource = "admin"
+	Configuration.Mongo.AppName = "afr_Loyalty"
 	Configuration.DB_Name_Loyalty = "Loyalty_DB"
-	Configuration.LoyaltyMongoDB.ReplicaSet = Configuration.MongoDB.ReplicaSet
-	Configuration.LoyaltyMongoDB.UserName = Configuration.MongoDB.UserName
-	Configuration.LoyaltyMongoDB.Password = Configuration.MongoDB.Password
-	Configuration.LoyaltyMongoDB.HostIP_1 = Configuration.MongoDB.HostIP_1
-	Configuration.LoyaltyMongoDB.HostPort_1 = Configuration.MongoDB.HostPort_1
-	Configuration.LoyaltyMongoDB.HostIP_2 = Configuration.MongoDB.HostIP_2
-	Configuration.LoyaltyMongoDB.HostPort_2 = Configuration.MongoDB.HostPort_2
-	Configuration.LoyaltyMongoDB.HostIP_3 = Configuration.MongoDB.HostIP_3
-	Configuration.LoyaltyMongoDB.HostPort_3 = Configuration.MongoDB.HostPort_3
-	Configuration.LoyaltyMongoDB.HostIP_4 = Configuration.MongoDB.HostIP_4
-	Configuration.LoyaltyMongoDB.HostPort_4 = Configuration.MongoDB.HostPort_4
+	Configuration.LoyaltyMongo = Configuration.Mongo
 
 	Configuration.IN.IP = "10.95.73.12" //"10.70.1.59"
 	Configuration.IN.Port = "8444"
@@ -615,35 +542,13 @@ func setDefaultConfiguration_DRC_Loyalty_UAT_K8s() (Configuration ConfigType) { 
 	Configuration.OKAPI_AUC.S2S_Password = "]W8#x3D1USKUyH@p]s&D_"
 	Configuration.OKAPI_AUC.Timeout_After = 5 * time.Second
 
-	//mongoDB
-	// Configuration.MongoDB.ReplicaSet = ""
-	// Configuration.MongoDB.UserName = "db_root"
-	// Configuration.MongoDB.Password = "B3202T@soSo0612w6"
-	// Configuration.MongoDB.HostIP_1 = "LendMe_mongodb"
-	// Configuration.MongoDB.HostPort_1 = "27017"
-	// Configuration.MongoDB.HostIP_2 = ""
-	// Configuration.MongoDB.HostPort_2 = ""
-	// Configuration.MongoDB.HostIP_3 = ""
-	// Configuration.MongoDB.HostPort_3 = ""
-	// Configuration.MongoDB.HostIP_4 = ""
-	// Configuration.MongoDB.HostPort_4 = ""
-	Configuration.MongoDB.UserName = "mongo_root"
-	Configuration.MongoDB.Password = "Speci@LUu@AtM0nG0P@ssw0rd_DRC"
-	Configuration.MongoDB.HostIP_1 = "mongo-uat-service" //==>Primary
-	Configuration.MongoDB.HostPort_1 = "27017"           //"27017"
-
+	Configuration.Mongo.URI = "mongodb://mongo-uat-service:27017"
+	Configuration.Mongo.Username = "mongo_root"
+	Configuration.Mongo.Password = "Speci@LUu@AtM0nG0P@ssw0rd_DRC"
+	Configuration.Mongo.AuthSource = "admin"
+	Configuration.Mongo.AppName = "afr_Loyalty"
 	Configuration.DB_Name_Loyalty = "Loyalty_DB"
-	Configuration.LoyaltyMongoDB.ReplicaSet = Configuration.MongoDB.ReplicaSet
-	Configuration.LoyaltyMongoDB.UserName = Configuration.MongoDB.UserName
-	Configuration.LoyaltyMongoDB.Password = Configuration.MongoDB.Password
-	Configuration.LoyaltyMongoDB.HostIP_1 = Configuration.MongoDB.HostIP_1
-	Configuration.LoyaltyMongoDB.HostPort_1 = Configuration.MongoDB.HostPort_1
-	Configuration.LoyaltyMongoDB.HostIP_2 = Configuration.MongoDB.HostIP_2
-	Configuration.LoyaltyMongoDB.HostPort_2 = Configuration.MongoDB.HostPort_2
-	Configuration.LoyaltyMongoDB.HostIP_3 = Configuration.MongoDB.HostIP_3
-	Configuration.LoyaltyMongoDB.HostPort_3 = Configuration.MongoDB.HostPort_3
-	Configuration.LoyaltyMongoDB.HostIP_4 = Configuration.MongoDB.HostIP_4
-	Configuration.LoyaltyMongoDB.HostPort_4 = Configuration.MongoDB.HostPort_4
+	Configuration.LoyaltyMongo = Configuration.Mongo
 
 	Configuration.IN.IP = "10.95.73.12" //"10.70.1.59"
 	Configuration.IN.Port = "8444"
@@ -785,31 +690,13 @@ func setDefaultConfiguration_GM_Live() (Configuration ConfigType) { //lendme ser
 	Configuration.OKAPI_AUC.S2S_Password = "s@le$P@s$W0$3"
 	Configuration.OKAPI_AUC.Timeout_After = 5 * time.Second
 
-	//mongoDB
-	Configuration.MongoDB.ReplicaSet = "reps01"
-	Configuration.MongoDB.UserName = "mongo-root"
-	Configuration.MongoDB.Password = "Speci@LM0nG0P@ssw0rd_F0r_G@mB!A"
-	Configuration.MongoDB.HostIP_1 = "10.64.33.49" //==>Primary
-	Configuration.MongoDB.HostPort_1 = "9001"
-	Configuration.MongoDB.HostIP_2 = "10.64.33.48" //==>Secondary
-	Configuration.MongoDB.HostPort_2 = "9002"
-	Configuration.MongoDB.HostIP_3 = "10.64.33.101" //==> Aribter
-	Configuration.MongoDB.HostPort_3 = "9003"
-	Configuration.MongoDB.HostIP_4 = ""
-	Configuration.MongoDB.HostPort_4 = ""
-
+	Configuration.Mongo.URI = "mongodb://10.64.33.49:9001,10.64.33.48:9002,10.64.33.101:9003/?replicaSet=reps01"
+	Configuration.Mongo.Username = "mongo-root"
+	Configuration.Mongo.Password = "Speci@LM0nG0P@ssw0rd_F0r_G@mB!A"
+	Configuration.Mongo.AuthSource = "admin"
+	Configuration.Mongo.AppName = "afr_Loyalty"
 	Configuration.DB_Name_Loyalty = "Loyalty_DB"
-	Configuration.LoyaltyMongoDB.ReplicaSet = Configuration.MongoDB.ReplicaSet
-	Configuration.LoyaltyMongoDB.UserName = Configuration.MongoDB.UserName
-	Configuration.LoyaltyMongoDB.Password = Configuration.MongoDB.Password
-	Configuration.LoyaltyMongoDB.HostIP_1 = Configuration.MongoDB.HostIP_1
-	Configuration.LoyaltyMongoDB.HostPort_1 = Configuration.MongoDB.HostPort_1
-	Configuration.LoyaltyMongoDB.HostIP_2 = Configuration.MongoDB.HostIP_2
-	Configuration.LoyaltyMongoDB.HostPort_2 = Configuration.MongoDB.HostPort_2
-	Configuration.LoyaltyMongoDB.HostIP_3 = Configuration.MongoDB.HostIP_3
-	Configuration.LoyaltyMongoDB.HostPort_3 = Configuration.MongoDB.HostPort_3
-	Configuration.LoyaltyMongoDB.HostIP_4 = Configuration.MongoDB.HostIP_4
-	Configuration.LoyaltyMongoDB.HostPort_4 = Configuration.MongoDB.HostPort_4
+	Configuration.LoyaltyMongo = Configuration.Mongo
 
 	Configuration.IN.IP = "192.168.0.232"
 	Configuration.IN.Port = "8080"
@@ -935,37 +822,13 @@ func setDefaultConfiguration_GM_Loyalty() (Configuration ConfigType) { //lendme 
 	Configuration.OKAPI_AUC.S2S_Password = "s@le$P@s$W0$3"
 	Configuration.OKAPI_AUC.Timeout_After = 5 * time.Second
 
-	// //mongoDB
-	// Configuration.MongoDB.ReplicaSet = "reps01"
-	// Configuration.MongoDB.UserName = "mongo-root"
-	// Configuration.MongoDB.Password = "Speci@LM0nG0P@ssw0rd_F0r_G@mB!A"
-	// Configuration.MongoDB.HostIP_1 = "10.64.33.49" //==>Primary
-	// Configuration.MongoDB.HostPort_1 = "9001"
-	// Configuration.MongoDB.HostIP_2 = "10.64.33.48" //==>Secondary
-	// Configuration.MongoDB.HostPort_2 = "9002"
-	// Configuration.MongoDB.HostIP_3 = "10.64.33.101" //==> Aribter
-	// Configuration.MongoDB.HostPort_3 = "9003"
-	// Configuration.MongoDB.HostIP_4 = ""
-	// Configuration.MongoDB.HostPort_4 = ""
-
-	Configuration.MongoDB.ReplicaSet = ""
-	Configuration.MongoDB.UserName = "db_root"
-	Configuration.MongoDB.Password = "P@s54D0Brdara_r@75S"
-	Configuration.MongoDB.HostIP_1 = "10.30.0.151" //==>Primary
-	Configuration.MongoDB.HostPort_1 = "9510"
-
+	Configuration.Mongo.URI = "mongodb://10.30.0.151:9510"
+	Configuration.Mongo.Username = "db_root"
+	Configuration.Mongo.Password = "P@s54D0Brdara_r@75S"
+	Configuration.Mongo.AuthSource = "admin"
+	Configuration.Mongo.AppName = "afr_Loyalty"
 	Configuration.DB_Name_Loyalty = "Loyalty_DB"
-	Configuration.LoyaltyMongoDB.ReplicaSet = Configuration.MongoDB.ReplicaSet
-	Configuration.LoyaltyMongoDB.UserName = Configuration.MongoDB.UserName
-	Configuration.LoyaltyMongoDB.Password = Configuration.MongoDB.Password
-	Configuration.LoyaltyMongoDB.HostIP_1 = Configuration.MongoDB.HostIP_1
-	Configuration.LoyaltyMongoDB.HostPort_1 = Configuration.MongoDB.HostPort_1
-	Configuration.LoyaltyMongoDB.HostIP_2 = Configuration.MongoDB.HostIP_2
-	Configuration.LoyaltyMongoDB.HostPort_2 = Configuration.MongoDB.HostPort_2
-	Configuration.LoyaltyMongoDB.HostIP_3 = Configuration.MongoDB.HostIP_3
-	Configuration.LoyaltyMongoDB.HostPort_3 = Configuration.MongoDB.HostPort_3
-	Configuration.LoyaltyMongoDB.HostIP_4 = Configuration.MongoDB.HostIP_4
-	Configuration.LoyaltyMongoDB.HostPort_4 = Configuration.MongoDB.HostPort_4
+	Configuration.LoyaltyMongo = Configuration.Mongo
 
 	Configuration.IN.IP = "192.168.0.232"
 	Configuration.IN.Port = "8080"
@@ -1114,37 +977,13 @@ func setDefaultConfiguration_GM_Loyalty_Live() (Configuration ConfigType) { //le
 	Configuration.OKAPI_AUC.S2S_Password = "s@le$P@s$W0$3"
 	Configuration.OKAPI_AUC.Timeout_After = 5 * time.Second
 
-	//mongoDB
-	Configuration.MongoDB.ReplicaSet = "reps01"
-	Configuration.MongoDB.UserName = "mongo-root"
-	Configuration.MongoDB.Password = "Speci@LM0nG0P@ssw0rd_F0r_G@mB!A"
-	Configuration.MongoDB.HostIP_1 = "10.64.33.49" //==>Primary
-	Configuration.MongoDB.HostPort_1 = "9001"
-	Configuration.MongoDB.HostIP_2 = "10.64.33.48" //==>Secondary
-	Configuration.MongoDB.HostPort_2 = "9002"
-	Configuration.MongoDB.HostIP_3 = "10.64.33.101" //==> Aribter
-	Configuration.MongoDB.HostPort_3 = "9003"
-	Configuration.MongoDB.HostIP_4 = ""
-	Configuration.MongoDB.HostPort_4 = ""
-
-	// Configuration.MongoDB.ReplicaSet = ""
-	// Configuration.MongoDB.UserName = "db_root"
-	// Configuration.MongoDB.Password = "P@s54D0Brdara_r@75S"
-	// Configuration.MongoDB.HostIP_1 = "10.30.0.151" //==>Primary
-	// Configuration.MongoDB.HostPort_1 = "9510"
-
+	Configuration.Mongo.URI = "mongodb://10.64.33.49:9001,10.64.33.48:9002,10.64.33.101:9003/?replicaSet=reps01"
+	Configuration.Mongo.Username = "mongo-root"
+	Configuration.Mongo.Password = "Speci@LM0nG0P@ssw0rd_F0r_G@mB!A"
+	Configuration.Mongo.AuthSource = "admin"
+	Configuration.Mongo.AppName = "afr_Loyalty"
 	Configuration.DB_Name_Loyalty = "Loyalty_DB"
-	Configuration.LoyaltyMongoDB.ReplicaSet = Configuration.MongoDB.ReplicaSet
-	Configuration.LoyaltyMongoDB.UserName = Configuration.MongoDB.UserName
-	Configuration.LoyaltyMongoDB.Password = Configuration.MongoDB.Password
-	Configuration.LoyaltyMongoDB.HostIP_1 = Configuration.MongoDB.HostIP_1
-	Configuration.LoyaltyMongoDB.HostPort_1 = Configuration.MongoDB.HostPort_1
-	Configuration.LoyaltyMongoDB.HostIP_2 = Configuration.MongoDB.HostIP_2
-	Configuration.LoyaltyMongoDB.HostPort_2 = Configuration.MongoDB.HostPort_2
-	Configuration.LoyaltyMongoDB.HostIP_3 = Configuration.MongoDB.HostIP_3
-	Configuration.LoyaltyMongoDB.HostPort_3 = Configuration.MongoDB.HostPort_3
-	Configuration.LoyaltyMongoDB.HostIP_4 = Configuration.MongoDB.HostIP_4
-	Configuration.LoyaltyMongoDB.HostPort_4 = Configuration.MongoDB.HostPort_4
+	Configuration.LoyaltyMongo = Configuration.Mongo
 
 	Configuration.IN.IP = "192.168.0.232"
 	Configuration.IN.Port = "8080"
@@ -1300,37 +1139,13 @@ func setDefaultConfiguration_GM_Loyalty_UAT() (Configuration ConfigType) { //len
 	Configuration.OKAPI_AUC.S2S_Password = "s@le$P@s$W0$3"
 	Configuration.OKAPI_AUC.Timeout_After = 5 * time.Second
 
-	//mongoDB
-	// Configuration.MongoDB.ReplicaSet = "reps01"
-	// Configuration.MongoDB.UserName = "mongo-root"
-	// Configuration.MongoDB.Password = "Speci@LM0nG0P@ssw0rd_F0r_G@mB!A"
-	// Configuration.MongoDB.HostIP_1 = "10.64.33.49" //==>Primary
-	// Configuration.MongoDB.HostPort_1 = "9001"
-	// Configuration.MongoDB.HostIP_2 = "10.64.33.48" //==>Secondary
-	// Configuration.MongoDB.HostPort_2 = "9002"
-	// Configuration.MongoDB.HostIP_3 = "10.64.33.101" //==> Aribter
-	// Configuration.MongoDB.HostPort_3 = "9003"
-	// Configuration.MongoDB.HostIP_4 = ""
-	// Configuration.MongoDB.HostPort_4 = ""
-
-	Configuration.MongoDB.ReplicaSet = ""
-	Configuration.MongoDB.UserName = "db_root"
-	Configuration.MongoDB.Password = "P@s54D0Brdara_r@75S"
-	Configuration.MongoDB.HostIP_1 = "10.30.0.151" //==>Primary
-	Configuration.MongoDB.HostPort_1 = "9510"
-
+	Configuration.Mongo.URI = "mongodb://10.30.0.151:9510"
+	Configuration.Mongo.Username = "db_root"
+	Configuration.Mongo.Password = "P@s54D0Brdara_r@75S"
+	Configuration.Mongo.AuthSource = "admin"
+	Configuration.Mongo.AppName = "afr_Loyalty"
 	Configuration.DB_Name_Loyalty = "Loyalty_DB"
-	Configuration.LoyaltyMongoDB.ReplicaSet = Configuration.MongoDB.ReplicaSet
-	Configuration.LoyaltyMongoDB.UserName = Configuration.MongoDB.UserName
-	Configuration.LoyaltyMongoDB.Password = Configuration.MongoDB.Password
-	Configuration.LoyaltyMongoDB.HostIP_1 = Configuration.MongoDB.HostIP_1
-	Configuration.LoyaltyMongoDB.HostPort_1 = Configuration.MongoDB.HostPort_1
-	Configuration.LoyaltyMongoDB.HostIP_2 = Configuration.MongoDB.HostIP_2
-	Configuration.LoyaltyMongoDB.HostPort_2 = Configuration.MongoDB.HostPort_2
-	Configuration.LoyaltyMongoDB.HostIP_3 = Configuration.MongoDB.HostIP_3
-	Configuration.LoyaltyMongoDB.HostPort_3 = Configuration.MongoDB.HostPort_3
-	Configuration.LoyaltyMongoDB.HostIP_4 = Configuration.MongoDB.HostIP_4
-	Configuration.LoyaltyMongoDB.HostPort_4 = Configuration.MongoDB.HostPort_4
+	Configuration.LoyaltyMongo = Configuration.Mongo
 
 	Configuration.IN.IP = "192.168.0.232"
 	Configuration.IN.Port = "8080"
@@ -1478,50 +1293,13 @@ func setDefaultConfiguration_SL_Live() (Configuration ConfigType) { //lendme ser
 	Configuration.OKAPI_AUC.S2S_Password = "]W8#x3D1USKUyH@p]s&D_"
 	Configuration.OKAPI_AUC.Timeout_After = 5 * time.Second
 
-	// //mongoDB
-	Configuration.MongoDB.ReplicaSet = "reps0"
-	Configuration.MongoDB.UserName = "LendMeApp"
-	Configuration.MongoDB.Password = "LendMeApp_@@!!"
-	Configuration.MongoDB.HostIP_1 = "10.10.247.21" //==>Primary
-	Configuration.MongoDB.HostPort_1 = "9771"
-	Configuration.MongoDB.HostIP_2 = "10.10.247.22" //==>Secondary
-	Configuration.MongoDB.HostPort_2 = "9772"
-	Configuration.MongoDB.HostIP_3 = "10.10.247.20" //==> Aribter
-	Configuration.MongoDB.HostPort_3 = "9773"
-	Configuration.MongoDB.HostIP_4 = ""
-	Configuration.MongoDB.HostPort_4 = ""
-	////
-	// Configuration.MongoDB.ReplicaSet = ""
-	// Configuration.MongoDB.UserName = "mongo-root"
-	// Configuration.MongoDB.Password = "Speci@LM0nG0P@ssw0rd_F0r_LeNdM#SL"
-	// Configuration.MongoDB.HostIP_1 = "10.10.247.21" //==>Primary
-	// Configuration.MongoDB.HostPort_1 = "9001"
-	// Configuration.MongoDB.HostIP_2 = "" //==>Secondary
-	// Configuration.MongoDB.HostPort_2 = ""
-	// Configuration.MongoDB.HostIP_3 = "" //==> Aribter
-	// Configuration.MongoDB.HostPort_3 = ""
-	// Configuration.MongoDB.HostIP_4 = ""
-	// Configuration.MongoDB.HostPort_4 = ""
-
-	//mongoDB
-	// Configuration.MongoDB.UserName = "db_root"
-	// Configuration.MongoDB.Password = "P@s54D0Brdara_r@75S"
-	// Configuration.MongoDB.HostIP_1 = "LendMe_db" //"host.docker.internal"
-	// Configuration.MongoDB.HostPort_1 = "27017"   //"27017"
-	///////////////////////////////////////MONGO DOCKER ///////////////////////////
-
+	Configuration.Mongo.URI = "mongodb://10.10.247.21:9771,10.10.247.22:9772,10.10.247.20:9773/?replicaSet=reps0"
+	Configuration.Mongo.Username = "LendMeApp"
+	Configuration.Mongo.Password = "LendMeApp_@@!!"
+	Configuration.Mongo.AuthSource = "admin"
+	Configuration.Mongo.AppName = "afr_Loyalty"
 	Configuration.DB_Name_Loyalty = "Loyalty_DB"
-	Configuration.LoyaltyMongoDB.ReplicaSet = Configuration.MongoDB.ReplicaSet
-	Configuration.LoyaltyMongoDB.UserName = Configuration.MongoDB.UserName
-	Configuration.LoyaltyMongoDB.Password = Configuration.MongoDB.Password
-	Configuration.LoyaltyMongoDB.HostIP_1 = Configuration.MongoDB.HostIP_1
-	Configuration.LoyaltyMongoDB.HostPort_1 = Configuration.MongoDB.HostPort_1
-	Configuration.LoyaltyMongoDB.HostIP_2 = Configuration.MongoDB.HostIP_2
-	Configuration.LoyaltyMongoDB.HostPort_2 = Configuration.MongoDB.HostPort_2
-	Configuration.LoyaltyMongoDB.HostIP_3 = Configuration.MongoDB.HostIP_3
-	Configuration.LoyaltyMongoDB.HostPort_3 = Configuration.MongoDB.HostPort_3
-	Configuration.LoyaltyMongoDB.HostIP_4 = Configuration.MongoDB.HostIP_4
-	Configuration.LoyaltyMongoDB.HostPort_4 = Configuration.MongoDB.HostPort_4
+	Configuration.LoyaltyMongo = Configuration.Mongo
 
 	Configuration.IN.IP = "10.10.51.51"
 	Configuration.IN.Port = "8080"
@@ -1661,50 +1439,13 @@ func setDefaultConfiguration_SL_Loyalty() (Configuration ConfigType) { //lendme 
 	Configuration.OKAPI_AUC.S2S_Password = "]W8#x3D1USKUyH@p]s&D_"
 	Configuration.OKAPI_AUC.Timeout_After = 5 * time.Second
 
-	// //mongoDB
-	Configuration.MongoDB.ReplicaSet = "reps0"
-	Configuration.MongoDB.UserName = "LendMeApp"
-	Configuration.MongoDB.Password = "LendMeApp_@@!!"
-	Configuration.MongoDB.HostIP_1 = "10.10.247.21" //==>Primary
-	Configuration.MongoDB.HostPort_1 = "9771"
-	Configuration.MongoDB.HostIP_2 = "10.10.247.22" //==>Secondary
-	Configuration.MongoDB.HostPort_2 = "9772"
-	Configuration.MongoDB.HostIP_3 = "10.10.231.20" //==> Aribter
-	Configuration.MongoDB.HostPort_3 = "9773"
-	Configuration.MongoDB.HostIP_4 = ""
-	Configuration.MongoDB.HostPort_4 = ""
-	////
-	// Configuration.MongoDB.ReplicaSet = ""
-	// Configuration.MongoDB.UserName = "mongo-root"
-	// Configuration.MongoDB.Password = "Speci@LM0nG0P@ssw0rd_F0r_LeNdM#SL"
-	// Configuration.MongoDB.HostIP_1 = "10.10.247.21" //==>Primary
-	// Configuration.MongoDB.HostPort_1 = "9001"
-	// Configuration.MongoDB.HostIP_2 = "" //==>Secondary
-	// Configuration.MongoDB.HostPort_2 = ""
-	// Configuration.MongoDB.HostIP_3 = "" //==> Aribter
-	// Configuration.MongoDB.HostPort_3 = ""
-	// Configuration.MongoDB.HostIP_4 = ""
-	// Configuration.MongoDB.HostPort_4 = ""
-
-	// //mongoDB
-	// Configuration.MongoDB.UserName = "db_root"
-	// Configuration.MongoDB.Password = "P@s54D0Brdara_r@75S"
-	// Configuration.MongoDB.HostIP_1 = "LendMe_db" //"host.docker.internal"
-	// Configuration.MongoDB.HostPort_1 = "27017"   //"27017"
-	///////////////////////////////////////MONGO DOCKER ///////////////////////////
-
+	Configuration.Mongo.URI = "mongodb://10.10.247.21:9771,10.10.247.22:9772,10.10.231.20:9773/?replicaSet=reps0"
+	Configuration.Mongo.Username = "LendMeApp"
+	Configuration.Mongo.Password = "LendMeApp_@@!!"
+	Configuration.Mongo.AuthSource = "admin"
+	Configuration.Mongo.AppName = "afr_Loyalty"
 	Configuration.DB_Name_Loyalty = "Loyalty_DB"
-	Configuration.LoyaltyMongoDB.ReplicaSet = Configuration.MongoDB.ReplicaSet
-	Configuration.LoyaltyMongoDB.UserName = Configuration.MongoDB.UserName
-	Configuration.LoyaltyMongoDB.Password = Configuration.MongoDB.Password
-	Configuration.LoyaltyMongoDB.HostIP_1 = Configuration.MongoDB.HostIP_1
-	Configuration.LoyaltyMongoDB.HostPort_1 = Configuration.MongoDB.HostPort_1
-	Configuration.LoyaltyMongoDB.HostIP_2 = Configuration.MongoDB.HostIP_2
-	Configuration.LoyaltyMongoDB.HostPort_2 = Configuration.MongoDB.HostPort_2
-	Configuration.LoyaltyMongoDB.HostIP_3 = Configuration.MongoDB.HostIP_3
-	Configuration.LoyaltyMongoDB.HostPort_3 = Configuration.MongoDB.HostPort_3
-	Configuration.LoyaltyMongoDB.HostIP_4 = Configuration.MongoDB.HostIP_4
-	Configuration.LoyaltyMongoDB.HostPort_4 = Configuration.MongoDB.HostPort_4
+	Configuration.LoyaltyMongo = Configuration.Mongo
 
 	Configuration.IN.IP = "10.10.51.51"
 	Configuration.IN.Port = "8080"
@@ -1860,25 +1601,14 @@ func setDefaultConfiguration_SL_Loyalty_UAT() (Configuration ConfigType) { //len
 	// Configuration.MongoDB.HostIP_4 = ""
 	// Configuration.MongoDB.HostPort_4 = ""
 
-	//mongoDB
-	Configuration.MongoDB.UserName = "db_root"
-	Configuration.MongoDB.Password = "P@s54D0Brdara_r@75S"
-	Configuration.MongoDB.HostIP_1 = "mongodb" //"host.docker.internal"
-	Configuration.MongoDB.HostPort_1 = "27017" //"27017"
-	/////////////////////////////////////MONGO DOCKER ///////////////////////////
+	Configuration.Mongo.URI = "mongodb://mongodb:27017"
+	Configuration.Mongo.Username = "db_root"
+	Configuration.Mongo.Password = "P@s54D0Brdara_r@75S"
+	Configuration.Mongo.AuthSource = "admin"
+	Configuration.Mongo.AppName = "afr_Loyalty"
 
 	Configuration.DB_Name_Loyalty = "Loyalty_DB"
-	Configuration.LoyaltyMongoDB.ReplicaSet = Configuration.MongoDB.ReplicaSet
-	Configuration.LoyaltyMongoDB.UserName = Configuration.MongoDB.UserName
-	Configuration.LoyaltyMongoDB.Password = Configuration.MongoDB.Password
-	Configuration.LoyaltyMongoDB.HostIP_1 = Configuration.MongoDB.HostIP_1
-	Configuration.LoyaltyMongoDB.HostPort_1 = Configuration.MongoDB.HostPort_1
-	Configuration.LoyaltyMongoDB.HostIP_2 = Configuration.MongoDB.HostIP_2
-	Configuration.LoyaltyMongoDB.HostPort_2 = Configuration.MongoDB.HostPort_2
-	Configuration.LoyaltyMongoDB.HostIP_3 = Configuration.MongoDB.HostIP_3
-	Configuration.LoyaltyMongoDB.HostPort_3 = Configuration.MongoDB.HostPort_3
-	Configuration.LoyaltyMongoDB.HostIP_4 = Configuration.MongoDB.HostIP_4
-	Configuration.LoyaltyMongoDB.HostPort_4 = Configuration.MongoDB.HostPort_4
+	Configuration.LoyaltyMongo = Configuration.Mongo
 
 	Configuration.IN.IP = "10.10.51.51"
 	Configuration.IN.Port = "8080"
@@ -2010,32 +1740,14 @@ func setDefaultConfiguration_AO_Loyalty() (Configuration ConfigType) { //lendme 
 	Configuration.OKAPI_AUC.S2S_Password = "]W8#x3D1USKUyH@p]s&D_"
 	Configuration.OKAPI_AUC.Timeout_After = 5 * time.Second
 
-	// //mongoDB
-	Configuration.MongoDB.ReplicaSet = "reps0"
-	Configuration.MongoDB.UserName = "mongo-root"
-	Configuration.MongoDB.Password = "Speci@LM0nG0P@ssw0rd_F0r_@ng0l@LenMeRepl##$$"
-	Configuration.MongoDB.HostIP_1 = "10.250.1.198" //==>Primary
-	Configuration.MongoDB.HostPort_1 = "9001"
-	Configuration.MongoDB.HostIP_2 = "10.250.1.199" //==>Secondary
-	Configuration.MongoDB.HostPort_2 = "9002"
-	Configuration.MongoDB.HostIP_3 = "10.250.1.197" //==> Aribter
-	Configuration.MongoDB.HostPort_3 = "9003"
-	Configuration.MongoDB.HostIP_4 = ""
-	Configuration.MongoDB.HostPort_4 = ""
-	////
+	Configuration.Mongo.URI = "mongodb://10.250.1.198:9001,10.250.1.199:9002,10.250.1.197:9003/?replicaSet=reps0"
+	Configuration.Mongo.Username = "mongo-root"
+	Configuration.Mongo.Password = "Speci@LM0nG0P@ssw0rd_F0r_@ng0l@LenMeRepl##$$"
+	Configuration.Mongo.AuthSource = "admin"
+	Configuration.Mongo.AppName = "afr_Loyalty"
 
 	Configuration.DB_Name_Loyalty = "Loyalty_DB"
-	Configuration.LoyaltyMongoDB.ReplicaSet = Configuration.MongoDB.ReplicaSet
-	Configuration.LoyaltyMongoDB.UserName = Configuration.MongoDB.UserName
-	Configuration.LoyaltyMongoDB.Password = Configuration.MongoDB.Password
-	Configuration.LoyaltyMongoDB.HostIP_1 = Configuration.MongoDB.HostIP_1
-	Configuration.LoyaltyMongoDB.HostPort_1 = Configuration.MongoDB.HostPort_1
-	Configuration.LoyaltyMongoDB.HostIP_2 = Configuration.MongoDB.HostIP_2
-	Configuration.LoyaltyMongoDB.HostPort_2 = Configuration.MongoDB.HostPort_2
-	Configuration.LoyaltyMongoDB.HostIP_3 = Configuration.MongoDB.HostIP_3
-	Configuration.LoyaltyMongoDB.HostPort_3 = Configuration.MongoDB.HostPort_3
-	Configuration.LoyaltyMongoDB.HostIP_4 = Configuration.MongoDB.HostIP_4
-	Configuration.LoyaltyMongoDB.HostPort_4 = Configuration.MongoDB.HostPort_4
+	Configuration.LoyaltyMongo = Configuration.Mongo
 
 	Configuration.IN.IP = "" // "10.10.51.51"
 	Configuration.IN.Port = "8080"
@@ -2192,32 +1904,14 @@ func setDefaultConfiguration_AO_Loyalty_UAT() (Configuration ConfigType) { //len
 	Configuration.OKAPI_AUC.S2S_Password = "]W8#x3D1USKUyH@p]s&D_"
 	Configuration.OKAPI_AUC.Timeout_After = 5 * time.Second
 
-	// //mongoDB
-	Configuration.MongoDB.ReplicaSet = "reps0"
-	Configuration.MongoDB.UserName = "mongo-root"
-	Configuration.MongoDB.Password = "Speci@LM0nG0P@ssw0rd_F0r_@ng0l@LenMeRepl##$$"
-	Configuration.MongoDB.HostIP_1 = "10.250.1.198" //==>Primary
-	Configuration.MongoDB.HostPort_1 = "9001"
-	Configuration.MongoDB.HostIP_2 = "10.250.1.199" //==>Secondary
-	Configuration.MongoDB.HostPort_2 = "9002"
-	Configuration.MongoDB.HostIP_3 = "10.250.1.197" //==> Aribter
-	Configuration.MongoDB.HostPort_3 = "9003"
-	Configuration.MongoDB.HostIP_4 = ""
-	Configuration.MongoDB.HostPort_4 = ""
-	////
+	Configuration.Mongo.URI = "mongodb://10.250.1.198:9001,10.250.1.199:9002,10.250.1.197:9003/?replicaSet=reps0"
+	Configuration.Mongo.Username = "mongo-root"
+	Configuration.Mongo.Password = "Speci@LM0nG0P@ssw0rd_F0r_@ng0l@LenMeRepl##$$"
+	Configuration.Mongo.AuthSource = "admin"
+	Configuration.Mongo.AppName = "afr_Loyalty"
 
 	Configuration.DB_Name_Loyalty = "Loyalty_DB_UAT"
-	Configuration.LoyaltyMongoDB.ReplicaSet = Configuration.MongoDB.ReplicaSet
-	Configuration.LoyaltyMongoDB.UserName = Configuration.MongoDB.UserName
-	Configuration.LoyaltyMongoDB.Password = Configuration.MongoDB.Password
-	Configuration.LoyaltyMongoDB.HostIP_1 = Configuration.MongoDB.HostIP_1
-	Configuration.LoyaltyMongoDB.HostPort_1 = Configuration.MongoDB.HostPort_1
-	Configuration.LoyaltyMongoDB.HostIP_2 = Configuration.MongoDB.HostIP_2
-	Configuration.LoyaltyMongoDB.HostPort_2 = Configuration.MongoDB.HostPort_2
-	Configuration.LoyaltyMongoDB.HostIP_3 = Configuration.MongoDB.HostIP_3
-	Configuration.LoyaltyMongoDB.HostPort_3 = Configuration.MongoDB.HostPort_3
-	Configuration.LoyaltyMongoDB.HostIP_4 = Configuration.MongoDB.HostIP_4
-	Configuration.LoyaltyMongoDB.HostPort_4 = Configuration.MongoDB.HostPort_4
+	Configuration.LoyaltyMongo = Configuration.Mongo
 
 	Configuration.IN.IP = "" // "10.10.51.51"
 	Configuration.IN.Port = "8080"
@@ -2458,28 +2152,19 @@ func setDefaultConfiguration_Dev() (Configuration ConfigType) { //lendme service
 	// Configuration.MongoDB.HostIP_4 = ""
 	// Configuration.MongoDB.HostPort_4 = ""
 
-	//mongoDB
-	Configuration.MongoDB.UserName = ""
-	Configuration.MongoDB.Password = ""
-	Configuration.MongoDB.HostIP_1 = "localhost" //"host.docker.internal"
-	Configuration.MongoDB.HostPort_1 = "27017"   //"27017"
-	///////////////////////////////////////MONGO DOCKER ///////////////////////////
+	Configuration.Mongo.URI = "mongodb://localhost:27017"
+	Configuration.Mongo.AppName = "afr_Loyalty"
 
-	Configuration.Redis.Mode = "single"
+	Configuration.Redis.Mode = redisx.ModeSingle
 	Configuration.Redis.Addr = "localhost:6379"
+	Configuration.Redis.Username = ""
+	Configuration.Redis.Password = ""
+	Configuration.Redis.DB = 0
+	Configuration.Redis.KeyPrefix = "lendme:dev:"
+	Configuration.Redis.DefaultTTL = -1
 
 	Configuration.DB_Name_Loyalty = "Loyalty_DB"
-	Configuration.LoyaltyMongoDB.ReplicaSet = Configuration.MongoDB.ReplicaSet
-	Configuration.LoyaltyMongoDB.UserName = Configuration.MongoDB.UserName
-	Configuration.LoyaltyMongoDB.Password = Configuration.MongoDB.Password
-	Configuration.LoyaltyMongoDB.HostIP_1 = Configuration.MongoDB.HostIP_1
-	Configuration.LoyaltyMongoDB.HostPort_1 = Configuration.MongoDB.HostPort_1
-	Configuration.LoyaltyMongoDB.HostIP_2 = Configuration.MongoDB.HostIP_2
-	Configuration.LoyaltyMongoDB.HostPort_2 = Configuration.MongoDB.HostPort_2
-	Configuration.LoyaltyMongoDB.HostIP_3 = Configuration.MongoDB.HostIP_3
-	Configuration.LoyaltyMongoDB.HostPort_3 = Configuration.MongoDB.HostPort_3
-	Configuration.LoyaltyMongoDB.HostIP_4 = Configuration.MongoDB.HostIP_4
-	Configuration.LoyaltyMongoDB.HostPort_4 = Configuration.MongoDB.HostPort_4
+	Configuration.LoyaltyMongo = Configuration.Mongo
 
 	Configuration.IN.IP = "10.95.73.12" //"10.70.1.59"
 	Configuration.IN.Port = "8444"
@@ -2574,52 +2259,4 @@ func setDefaultConfiguration_Dev() (Configuration ConfigType) { //lendme service
 	Configuration.Lendme.Timeout = 15 * time.Second
 
 	return
-}
-
-func buildMongoURI(cfg ConfigType) string {
-	c := cfg.MongoDB
-	if c.ReplicaSet != "" {
-		hosts := c.HostIP_1 + ":" + c.HostPort_1
-		if c.HostIP_2 != "" {
-			hosts += "," + c.HostIP_2 + ":" + c.HostPort_2
-		}
-		if c.HostIP_3 != "" {
-			hosts += "," + c.HostIP_3 + ":" + c.HostPort_3
-		}
-		if c.HostIP_4 != "" {
-			hosts += "," + c.HostIP_4 + ":" + c.HostPort_4
-		}
-		if c.UserName != "" {
-			return "mongodb://" + c.UserName + ":" + c.Password + "@" + hosts + "/?replicaSet=" + c.ReplicaSet + "&authSource=admin"
-		}
-		return "mongodb://" + hosts + "/?replicaSet=" + c.ReplicaSet + "&authSource=admin"
-	}
-	if c.UserName != "" {
-		return "mongodb://" + c.UserName + ":" + c.Password + "@" + c.HostIP_1 + ":" + c.HostPort_1
-	}
-	return "mongodb://" + c.HostIP_1 + ":" + c.HostPort_1
-}
-
-func buildLoyaltyMongoURI(cfg ConfigType) string {
-	c := cfg.LoyaltyMongoDB
-	if c.ReplicaSet != "" {
-		hosts := c.HostIP_1 + ":" + c.HostPort_1
-		if c.HostIP_2 != "" {
-			hosts += "," + c.HostIP_2 + ":" + c.HostPort_2
-		}
-		if c.HostIP_3 != "" {
-			hosts += "," + c.HostIP_3 + ":" + c.HostPort_3
-		}
-		if c.HostIP_4 != "" {
-			hosts += "," + c.HostIP_4 + ":" + c.HostPort_4
-		}
-		if c.UserName != "" {
-			return "mongodb://" + c.UserName + ":" + c.Password + "@" + hosts + "/?replicaSet=" + c.ReplicaSet + "&authSource=admin"
-		}
-		return "mongodb://" + hosts + "/?replicaSet=" + c.ReplicaSet + "&authSource=admin"
-	}
-	if c.UserName != "" {
-		return "mongodb://" + c.UserName + ":" + c.Password + "@" + c.HostIP_1 + ":" + c.HostPort_1
-	}
-	return "mongodb://" + c.HostIP_1 + ":" + c.HostPort_1
 }
