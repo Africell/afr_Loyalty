@@ -1,9 +1,14 @@
 package Lendme
 
 import (
-	"daoc"
 	"time"
 )
+
+// Location is a GeoJSON Point struct
+type Location struct {
+	Type        string    `json:"type" bson:"type"`
+	Coordinates []float64 `json:"coordinates" bson:"coordinates"`
+}
 
 type API_Standard_response struct {
 	//response source detail
@@ -49,16 +54,16 @@ type Loyalty_Event_Log struct {
 }
 
 type Request_Header struct {
-	SourceIP              string        `bson:"SourceIP" json:"SourceIP"`
-	SourceApp             string        `bson:"SourceApp" json:"SourceApp"`
-	AppLogin              string        `bson:"AppLogin" json:"AppLogin"`
-	HostId                string        `bson:"HostId" json:"HostId"`
-	AppVersion            string        `bson:"AppVersion" json:"AppVersion"`
-	GPSLocation           daoc.Location `bson:"GPSLocation" json:"GPSLocation"`
-	GSMLocation           string        `bson:"GSMLocation" json:"GSMLocation"`
-	Authorization         string        `bson:"Authorization" json:"Authorization"`
-	IsValid               bool          `bson:"IsValid" json:"IsValid"`
-	ValidationDescription string        `bson:"ValidationDescription" json:"ValidationDescription"`
+	SourceIP              string   `bson:"SourceIP" json:"SourceIP"`
+	SourceApp             string   `bson:"SourceApp" json:"SourceApp"`
+	AppLogin              string   `bson:"AppLogin" json:"AppLogin"`
+	HostId                string   `bson:"HostId" json:"HostId"`
+	AppVersion            string   `bson:"AppVersion" json:"AppVersion"`
+	GPSLocation           Location `bson:"GPSLocation" json:"GPSLocation"`
+	GSMLocation           string   `bson:"GSMLocation" json:"GSMLocation"`
+	Authorization         string   `bson:"Authorization" json:"Authorization"`
+	IsValid               bool     `bson:"IsValid" json:"IsValid"`
+	ValidationDescription string   `bson:"ValidationDescription" json:"ValidationDescription"`
 }
 
 type Loyalty_Governance struct {
@@ -995,12 +1000,12 @@ type Loyalty_Logs struct {
 
 type Loyalty_AccountCreditPoints_log struct {
 	//request Header info
-	SourceIP    string        `bson:"SourceIP" json:"-"`
-	SourceApp   string        `bson:"SourceApp" json:"-"`
-	AppLogin    string        `bson:"AppLogin" json:"-"`
-	AppVersion  string        `bson:"AppVersion" json:"-"`
-	GPSLocation daoc.Location `bson:"GPSLocation" json:"-"`
-	GSMLocation string        `bson:"GSMLocation" json:"-"`
+	SourceIP    string   `bson:"SourceIP" json:"-"`
+	SourceApp   string   `bson:"SourceApp" json:"-"`
+	AppLogin    string   `bson:"AppLogin" json:"-"`
+	AppVersion  string   `bson:"AppVersion" json:"-"`
+	GPSLocation Location `bson:"GPSLocation" json:"-"`
+	GSMLocation string   `bson:"GSMLocation" json:"-"`
 
 	//request detail
 	MSISDN           string  `bson:"MSISDN" json:"MSISDN"`                   //MSISDN
@@ -1224,12 +1229,12 @@ type Loyalty_Redemption_Request struct {
 
 type Loyalty_Redemption_log struct {
 	//request Header info
-	SourceIP    string        `bson:"SourceIP" json:"-"`
-	SourceApp   string        `bson:"SourceApp" json:"-"`
-	AppLogin    string        `bson:"AppLogin" json:"-"`
-	AppVersion  string        `bson:"AppVersion" json:"-"`
-	GPSLocation daoc.Location `bson:"GPSLocation" json:"-"`
-	GSMLocation string        `bson:"GSMLocation" json:"-"`
+	SourceIP    string   `bson:"SourceIP" json:"-"`
+	SourceApp   string   `bson:"SourceApp" json:"-"`
+	AppLogin    string   `bson:"AppLogin" json:"-"`
+	AppVersion  string   `bson:"AppVersion" json:"-"`
+	GPSLocation Location `bson:"GPSLocation" json:"-"`
+	GSMLocation string   `bson:"GSMLocation" json:"-"`
 
 	//request detail
 	MSISDN               string    `bson:"MSISDN" json:"MSISDN"` //MSISDN
@@ -1285,12 +1290,12 @@ type Loyalty_AccountDebitPoints_Request struct {
 
 type Loyalty_AccountDebitPoints_log struct {
 	//request Header info
-	SourceIP    string        `bson:"SourceIP" json:"-"`
-	SourceApp   string        `bson:"SourceApp" json:"-"`
-	AppLogin    string        `bson:"AppLogin" json:"-"`
-	AppVersion  string        `bson:"AppVersion" json:"-"`
-	GPSLocation daoc.Location `bson:"GPSLocation" json:"-"`
-	GSMLocation string        `bson:"GSMLocation" json:"-"`
+	SourceIP    string   `bson:"SourceIP" json:"-"`
+	SourceApp   string   `bson:"SourceApp" json:"-"`
+	AppLogin    string   `bson:"AppLogin" json:"-"`
+	AppVersion  string   `bson:"AppVersion" json:"-"`
+	GPSLocation Location `bson:"GPSLocation" json:"-"`
+	GSMLocation string   `bson:"GSMLocation" json:"-"`
 
 	//request detail
 	MSISDN               string  `bson:"MSISDN" json:"MSISDN"` //MSISDN

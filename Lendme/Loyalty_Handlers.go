@@ -1,12 +1,14 @@
 package Lendme
 
 import (
+	"context"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"mime/multipart"
+	"redisx"
 	"regexp"
 	"sync"
 
@@ -18,6 +20,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 var uploadedFiles = make(map[string]struct{}) // keep track of file names
@@ -3155,15 +3159,14 @@ func (Uc *UserControl) HTTP_Bulk_Loyalty_Points_Deduction(w http.ResponseWriter,
 
 				if loyalty_AccountDebitPoints_log.Status == "failed" {
 					if loyalty_AccountDebitPoints_log.StatusDescription == "no enough points" {
-						entry_na, exits := Map_Customer_Loyalty_Account.CheckThenGet(loyalty_AccountDebitPoints_log.MSISDN)
-						if !exits {
+						entry, entryErr := redisx.GetJSON[Customer_Loyalty_Account](context.Background(), RedisClient, Customer_Loyalty_Account{Key: loyalty_AccountDebitPoints_log.MSISDN}.RedisKey())
+						if redisx.IsNil(entryErr) {
 							jobsMu.Lock()
 							jobs[jobID].Result["Failed"] = append(jobs[jobID].Result["Failed"], loyalty_AccountDebitPoints_log.MSISDN+" key does not exist")
 							jobsMu.Unlock()
 							continue
 						}
-						entry, ok := entry_na.(Customer_Loyalty_Account)
-						if !ok {
+						if entryErr != nil {
 							jobsMu.Lock()
 							jobs[jobID].Result["Failed"] = append(jobs[jobID].Result["Failed"], loyalty_AccountDebitPoints_log.MSISDN+" error in type assertion")
 							jobsMu.Unlock()
@@ -3172,7 +3175,16 @@ func (Uc *UserControl) HTTP_Bulk_Loyalty_Points_Deduction(w http.ResponseWriter,
 						if entry.Available_Points > 0 {
 							if entry.Outstanding_fraction_points > 0 {
 								entry.Outstanding_fraction_points = 0
-								Map_Customer_Loyalty_Account.Put(entry.Key, entry)
+								{
+									putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+									if _, putErr := Mdb_Customer_Loyalty_Account.Coll.UpdateOne(putCtx, bson.M{"Key": entry.Key}, bson.M{"$set": entry}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+										log.Println("Mdb_Customer_Loyalty_Account upsert error:", putErr)
+									}
+									if putSetErr := redisx.SetJSON(putCtx, RedisClient, entry.RedisKey(), entry); putSetErr != nil {
+										log.Println("redisx.SetJSON Customer_Loyalty_Account error:", putSetErr)
+									}
+									putCancel()
+								}
 							}
 							debit_Request.Debit_Amount = float64(int(entry.Available_Points))
 							Uc.Loyalty_AccountDebitPoints(&validated_Headers, debit_Request, &loyalty_AccountDebitPoints_log, true)

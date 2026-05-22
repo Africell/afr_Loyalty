@@ -8,8 +8,10 @@ import (
 	Prop "afr_propylaea/PropylaeaClient"
 	INClient "afr_sb_in"
 	UCGW_client "afr_unified_charging_gateway/Unified_charging_gateway_Client"
-	"daoc"
+	"context"
 	"log"
+	"mongox"
+	"redisx"
 	"time"
 )
 
@@ -18,46 +20,47 @@ var SpinAndWinHostConfig SpinAndWin_client.SpinAndWin_Client
 var LendmeHostConfig LendmeClient.Lendme_Client
 
 type UserControl struct {
-	MongoDB        *daoc.MongoDB
-	LoyaltyMongoDB *daoc.MongoDB
-	CacheDir       *daoc.CacheRegistry
-	AppAUC         *AuthCenterClient.AUC
-	OKAPIAUC       *AuthCenterClient.AUC
-	IN             *INClient.IN
-	CGW            *UCGW_client.UC_GW
-	Propylaea      *Prop.Propylaea
-	SpinAndWin     *SpinAndWin_client.SpinAndWin
-	APGW           *APGW.APGW
-	Lendme         *LendmeClient.LendMe
+	MongoClient        *mongox.Client
+	LoyaltyMongoClient *mongox.Client
+	Redis              *redisx.Client
+	AppAUC             *AuthCenterClient.AUC
+	OKAPIAUC           *AuthCenterClient.AUC
+	IN                 *INClient.IN
+	CGW                *UCGW_client.UC_GW
+	Propylaea          *Prop.Propylaea
+	SpinAndWin         *SpinAndWin_client.SpinAndWin
+	APGW               *APGW.APGW
+	Lendme             *LendmeClient.LendMe
 }
 
 func NewUserControl() *UserControl {
-	MongoHostConfig := daoc.InitMongoHost(Configuration.MongoDB.ReplicaSet,
-		Configuration.MongoDB.UserName,
-		Configuration.MongoDB.Password,
-		Configuration.MongoDB.HostIP_1,
-		Configuration.MongoDB.HostPort_1,
-		Configuration.MongoDB.HostIP_2,
-		Configuration.MongoDB.HostPort_2,
-		Configuration.MongoDB.HostIP_3,
-		Configuration.MongoDB.HostPort_3,
-		Configuration.MongoDB.HostIP_4,
-		Configuration.MongoDB.HostPort_4,
-	)
-	log.Println(MongoHostConfig)
-	LoyaltyMongoHostConfig := daoc.InitMongoHost(Configuration.LoyaltyMongoDB.ReplicaSet,
-		Configuration.LoyaltyMongoDB.UserName,
-		Configuration.LoyaltyMongoDB.Password,
-		Configuration.LoyaltyMongoDB.HostIP_1,
-		Configuration.LoyaltyMongoDB.HostPort_1,
-		Configuration.LoyaltyMongoDB.HostIP_2,
-		Configuration.LoyaltyMongoDB.HostPort_2,
-		Configuration.LoyaltyMongoDB.HostIP_3,
-		Configuration.LoyaltyMongoDB.HostPort_3,
-		Configuration.LoyaltyMongoDB.HostIP_4,
-		Configuration.LoyaltyMongoDB.HostPort_4,
-	)
-	log.Println(LoyaltyMongoHostConfig)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	mongoClient, err := mongox.Connect(ctx, mongox.Config{
+		URI:     buildMongoURI(Configuration),
+		AppName: "afr_Loyalty",
+	})
+	if err != nil {
+		log.Fatal("mongox.Connect (MongoDB):", err)
+	}
+	log.Println("MongoDB connected")
+
+	loyaltyMongoClient, err := mongox.Connect(ctx, mongox.Config{
+		URI:     buildLoyaltyMongoURI(Configuration),
+		AppName: "afr_Loyalty",
+	})
+	if err != nil {
+		log.Fatal("mongox.Connect (LoyaltyMongoDB):", err)
+	}
+	log.Println("LoyaltyMongoDB connected")
+
+	redisClient, err := redisx.New(Configuration.Redis)
+	if err != nil {
+		log.Fatal("redisx.New:", err)
+	}
+	log.Println("Redis connected")
+
 	App_AUCHostConfig := AuthCenterClient.InitHostConfig(Configuration.App_AUC.Protocol,
 		Configuration.App_AUC.Hostname,
 		Configuration.App_AUC.Port,
@@ -115,13 +118,13 @@ func NewUserControl() *UserControl {
 	}
 	log.Println(CGWHostConfig)
 	propylaea_config := Prop.Propylaea_Client{
-		Protocol:        Configuration.Propylaea.Protocol, // or https
+		Protocol:        Configuration.Propylaea.Protocol,
 		Hostname:        Configuration.Propylaea.Hostname,
 		Port:            Configuration.Propylaea.Port,
 		Module:          Configuration.Propylaea.Module,
 		Version:         Configuration.Propylaea.Version,
 		S2S_AccessToken: Configuration.Propylaea.S2S_AccessToken,
-		Timeout:         10 * Configuration.Propylaea.Timeout_After, //timeout if no reply after X seconds
+		Timeout:         10 * Configuration.Propylaea.Timeout_After,
 		AUC_client:      AuthCenterClient.NewAUCClient(OKAPI_AUCHostConfig).AUCClient,
 	}
 	log.Println(propylaea_config)
@@ -146,13 +149,13 @@ func NewUserControl() *UserControl {
 	}
 	log.Println(SpinAndWinHostConfig)
 	APGW_config := APGW.APGW_Client{
-		Protocol:        Configuration.APGW.Protocol, // or https
+		Protocol:        Configuration.APGW.Protocol,
 		Hostname:        Configuration.APGW.Hostname,
 		Port:            Configuration.APGW.Port,
 		S2S_Username:    Configuration.APGW.S2S_Username,
 		S2S_Password:    Configuration.APGW.S2S_Password,
 		S2S_AccessToken: "",
-		Timeout:         10 * time.Second, //timeout if no reply after X seconds
+		Timeout:         10 * time.Second,
 	}
 	log.Println(APGW_config)
 	LendmeAUC := AuthCenterClient.InitHostConfig(
@@ -167,28 +170,28 @@ func NewUserControl() *UserControl {
 		Configuration.Lendme_AUC.Timeout_After)
 	log.Println(LendmeAUC)
 	LendmeHostConfig = LendmeClient.Lendme_Client{
-		Protocol:        Configuration.Lendme.Protocol,
-		Hostname:        Configuration.Lendme.Hostname,
-		LendmePort:      Configuration.Lendme.Port,
-		LendMeModule:    Configuration.Lendme.Module,
-		LendMeVersion:   Configuration.Lendme.Version,
-		Timeout:         Configuration.Lendme.Timeout,
-		AUC_client:      AuthCenterClient.NewAUCClient(LendmeAUC).AUCClient,
+		Protocol:      Configuration.Lendme.Protocol,
+		Hostname:      Configuration.Lendme.Hostname,
+		LendmePort:    Configuration.Lendme.Port,
+		LendMeModule:  Configuration.Lendme.Module,
+		LendMeVersion: Configuration.Lendme.Version,
+		Timeout:       Configuration.Lendme.Timeout,
+		AUC_client:    AuthCenterClient.NewAUCClient(LendmeAUC).AUCClient,
 	}
 	log.Println(LendmeHostConfig)
 
 	UC := &UserControl{
-		MongoDB:        daoc.NewMongoDBClient(MongoHostConfig),
-		LoyaltyMongoDB: daoc.NewMongoDBClient(LoyaltyMongoHostConfig),
-		AppAUC:         AuthCenterClient.NewAUCClient(App_AUCHostConfig),
-		OKAPIAUC:       AuthCenterClient.NewAUCClient(OKAPI_AUCHostConfig),
-		CacheDir:       daoc.NewCacheRegistry(),
-		IN:             INClient.NewINClient(INHostConfig),
-		CGW:            UCGW_client.NewUC_GWClient(CGWHostConfig),
-		Propylaea:      Prop.NewPropylaeaClient(propylaea_config),
-		SpinAndWin:     SpinAndWin_client.NewSpinAndWinClient(SpinAndWinHostConfig),
-		APGW:           APGW.NewAPGWClient(APGW_config),
-		Lendme:         LendmeClient.NewLendmeClient(LendmeHostConfig),
+		MongoClient:        mongoClient,
+		LoyaltyMongoClient: loyaltyMongoClient,
+		Redis:              redisClient,
+		AppAUC:             AuthCenterClient.NewAUCClient(App_AUCHostConfig),
+		OKAPIAUC:           AuthCenterClient.NewAUCClient(OKAPI_AUCHostConfig),
+		IN:                 INClient.NewINClient(INHostConfig),
+		CGW:                UCGW_client.NewUC_GWClient(CGWHostConfig),
+		Propylaea:          Prop.NewPropylaeaClient(propylaea_config),
+		SpinAndWin:         SpinAndWin_client.NewSpinAndWinClient(SpinAndWinHostConfig),
+		APGW:               APGW.NewAPGWClient(APGW_config),
+		Lendme:             LendmeClient.NewLendmeClient(LendmeHostConfig),
 	}
 	return UC
 }

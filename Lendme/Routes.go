@@ -64,7 +64,7 @@ func (Uc *UserControl) AddToAppRouter(router *mux.Router, UC *UserControl) {
 
 	accessEntries, err := Uc.AppAUC.AUCClient.ReadAccessEntries("")
 	if err != nil {
-		log.Fatalln("Error Reading Existing Access Entries from AUC !!!")
+		log.Println("Warning: Error Reading Existing Access Entries from AUC (AUC may not be running)")
 	}
 	log.Println("Read existing routes: #", len(accessEntries.Data))
 	MapAccessEntry.Clear()
@@ -126,7 +126,7 @@ func (Uc *UserControl) AddToAppRouter(router *mux.Router, UC *UserControl) {
 
 	accessEntries_okapi, err := Uc.OKAPIAUC.AUCClient.ReadAccessEntries("")
 	if err != nil {
-		log.Fatalln("Error Reading Existing Access Entries from AUC !!!")
+		log.Println("Warning: Error Reading Existing Access Entries from AUC (AUC may not be running)")
 	}
 
 	log.Println("Read existing routes: #", len(accessEntries.Data))
@@ -200,7 +200,7 @@ func (Uc *UserControl) AddToLoyaltyServiceRouter(router *mux.Router, UC *UserCon
 
 	accessEntries, err := Uc.AppAUC.AUCClient.ReadAccessEntries("")
 	if err != nil {
-		log.Fatalln("Error Reading Existing Access Entries from AUC !!!")
+		log.Println("Warning: Error Reading Existing Access Entries from AUC (AUC may not be running)")
 	}
 	MapAccessEntry.Clear()
 	log.Println("Read existing routes: #", len(accessEntries.Data))
@@ -274,7 +274,7 @@ func (Uc *UserControl) AddToLoyaltyManagementRouter(router *mux.Router, UC *User
 
 	accessEntries, err := Uc.OKAPIAUC.AUCClient.ReadAccessEntries("")
 	if err != nil {
-		log.Fatalln("Error Reading Existing Access Entries from AUC !!!")
+		log.Println("Warning: Error Reading Existing Access Entries from AUC (AUC may not be running)")
 	}
 	MapAccessEntry.Clear()
 

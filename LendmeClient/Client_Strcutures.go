@@ -1,10 +1,15 @@
 package LendmeClient
 
 import (
-	"daoc"
 	"net/http"
 	"time"
 )
+
+// Location is a GeoJSON Point struct
+type Location struct {
+	Type        string    `json:"type" bson:"type"`
+	Coordinates []float64 `json:"coordinates" bson:"coordinates"`
+}
 
 // **********************************************************************************************
 // Loyalty structures
@@ -96,12 +101,12 @@ type Loyalty_AccountDebitPoints_Request struct {
 
 type Loyalty_AccountDebitPoints_log struct {
 	//request Header info
-	SourceIP    string        `bson:"SourceIP" json:"-"`
-	SourceApp   string        `bson:"SourceApp" json:"-"`
-	AppLogin    string        `bson:"AppLogin" json:"-"`
-	AppVersion  string        `bson:"AppVersion" json:"-"`
-	GPSLocation daoc.Location `bson:"GPSLocation" json:"-"`
-	GSMLocation string        `bson:"GSMLocation" json:"-"`
+	SourceIP    string   `bson:"SourceIP" json:"-"`
+	SourceApp   string   `bson:"SourceApp" json:"-"`
+	AppLogin    string   `bson:"AppLogin" json:"-"`
+	AppVersion  string   `bson:"AppVersion" json:"-"`
+	GPSLocation Location `bson:"GPSLocation" json:"-"`
+	GSMLocation string   `bson:"GSMLocation" json:"-"`
 
 	//request detail
 	MSISDN               string  `bson:"MSISDN" json:"MSISDN"` //MSISDN

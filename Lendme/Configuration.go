@@ -7,6 +7,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"io"
+	"redisx"
 	"time"
 )
 
@@ -90,6 +91,8 @@ type ConfigType struct {
 		HostIP_4   string
 		HostPort_4 string
 	}
+
+	Redis redisx.Config
 
 	IN struct {
 		IP                    string
@@ -2462,6 +2465,9 @@ func setDefaultConfiguration_Dev() (Configuration ConfigType) { //lendme service
 	Configuration.MongoDB.HostPort_1 = "27017"   //"27017"
 	///////////////////////////////////////MONGO DOCKER ///////////////////////////
 
+	Configuration.Redis.Mode = "single"
+	Configuration.Redis.Addr = "localhost:6379"
+
 	Configuration.DB_Name_Loyalty = "Loyalty_DB"
 	Configuration.LoyaltyMongoDB.ReplicaSet = Configuration.MongoDB.ReplicaSet
 	Configuration.LoyaltyMongoDB.UserName = Configuration.MongoDB.UserName
@@ -2568,4 +2574,52 @@ func setDefaultConfiguration_Dev() (Configuration ConfigType) { //lendme service
 	Configuration.Lendme.Timeout = 15 * time.Second
 
 	return
+}
+
+func buildMongoURI(cfg ConfigType) string {
+	c := cfg.MongoDB
+	if c.ReplicaSet != "" {
+		hosts := c.HostIP_1 + ":" + c.HostPort_1
+		if c.HostIP_2 != "" {
+			hosts += "," + c.HostIP_2 + ":" + c.HostPort_2
+		}
+		if c.HostIP_3 != "" {
+			hosts += "," + c.HostIP_3 + ":" + c.HostPort_3
+		}
+		if c.HostIP_4 != "" {
+			hosts += "," + c.HostIP_4 + ":" + c.HostPort_4
+		}
+		if c.UserName != "" {
+			return "mongodb://" + c.UserName + ":" + c.Password + "@" + hosts + "/?replicaSet=" + c.ReplicaSet + "&authSource=admin"
+		}
+		return "mongodb://" + hosts + "/?replicaSet=" + c.ReplicaSet + "&authSource=admin"
+	}
+	if c.UserName != "" {
+		return "mongodb://" + c.UserName + ":" + c.Password + "@" + c.HostIP_1 + ":" + c.HostPort_1
+	}
+	return "mongodb://" + c.HostIP_1 + ":" + c.HostPort_1
+}
+
+func buildLoyaltyMongoURI(cfg ConfigType) string {
+	c := cfg.LoyaltyMongoDB
+	if c.ReplicaSet != "" {
+		hosts := c.HostIP_1 + ":" + c.HostPort_1
+		if c.HostIP_2 != "" {
+			hosts += "," + c.HostIP_2 + ":" + c.HostPort_2
+		}
+		if c.HostIP_3 != "" {
+			hosts += "," + c.HostIP_3 + ":" + c.HostPort_3
+		}
+		if c.HostIP_4 != "" {
+			hosts += "," + c.HostIP_4 + ":" + c.HostPort_4
+		}
+		if c.UserName != "" {
+			return "mongodb://" + c.UserName + ":" + c.Password + "@" + hosts + "/?replicaSet=" + c.ReplicaSet + "&authSource=admin"
+		}
+		return "mongodb://" + hosts + "/?replicaSet=" + c.ReplicaSet + "&authSource=admin"
+	}
+	if c.UserName != "" {
+		return "mongodb://" + c.UserName + ":" + c.Password + "@" + c.HostIP_1 + ":" + c.HostPort_1
+	}
+	return "mongodb://" + c.HostIP_1 + ":" + c.HostPort_1
 }

@@ -2,10 +2,12 @@ package Lendme
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"io"
 	"log"
 	"os"
+	"redisx"
 	"strconv"
 	"strings"
 	"time"
@@ -179,8 +181,8 @@ func (Uc *UserControl) Subscriber_Update(request Sub_Update_Request) {
 		<-chan_SubQueueExecution_controler
 		return
 	}
-	loyalty_account_na, cl_exits := Map_Customer_Loyalty_Account.CheckThenGet(Key)
-	if !cl_exits {
+	loyalty_account, cl_err := redisx.GetJSON[Customer_Loyalty_Account](context.Background(), RedisClient, Customer_Loyalty_Account{Key: Key}.RedisKey())
+	if redisx.IsNil(cl_err) {
 		_, errAdd := Uc.Customer_Loyalty_Account_Add("DWH_Import", Customer_Loyalty_Account_AddRequest{
 			Key:          Key,
 			EventSource:  "DWH_Import",
@@ -193,8 +195,7 @@ func (Uc *UserControl) Subscriber_Update(request Sub_Update_Request) {
 			log.Println("DWH_Import Customer_Loyalty_Account_Add error: ", request)
 		}
 	} else {
-		loyalty_account, ok := loyalty_account_na.(Customer_Loyalty_Account)
-		if !ok {
+		if cl_err != nil {
 			<-chan_SubQueueExecution_controler
 			return
 		}

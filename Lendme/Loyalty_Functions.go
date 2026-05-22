@@ -3,16 +3,15 @@ package Lendme
 import (
 	"afr_ao_apgw_v2/APGWClientV2"
 	apgw "afr_ao_apgw_v2/afr_apgw"
-	"afr_auth_center/AuthCenter"
 	"context"
-	"daoc"
 	"errors"
 	"fmt"
 	"log"
 	"math"
+	"mongox"
 	"net/http"
 	"net/url"
-	"reflect"
+	"redisx"
 	"sort"
 	"strconv"
 	"strings"
@@ -28,84 +27,116 @@ import (
 
 	"github.com/jinzhu/copier"
 	"github.com/prometheus/client_golang/prometheus"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
-var MapAccessEntry daoc.Cache_Synch
-var DAO_AccessEntry daoc.DAO
+// mongox repositories â€” main MongoDB (for AccessEntry and NotificationLog)
+var Mdb_AccessEntry *mongox.Repository
 
-var Map_Loyalty_AutoIncrement daoc.Cache_Synch
-var DAO_Loyalty_AutoIncrement daoc.DAO
+// mongox repositories â€” loyalty MongoDB
+var Mdb_Loyalty_AutoIncrement *mongox.Repository
+var Mdb_Loyalty_Governance *mongox.Repository
+var Mdb_Loyalty_Governance_log *mongox.Repository
+var Mdb_Loyalty_Level *mongox.Repository
+var Mdb_Loyalty_Level_Change_log *mongox.Repository
+var Mdb_Loyalty_Seniority_Level *mongox.Repository
+var Mdb_Loyalty_Account_Segment *mongox.Repository
+var Mdb_Loyalty_Point_Earning_Rules *mongox.Repository
+var Mdb_Loyalty_Point_Earning_Rules_Overwrite *mongox.Repository
+var Mdb_Loyalty_Point_Expiry_Rules *mongox.Repository
+var Mdb_Loyalty_Point_Redemption_Rules *mongox.Repository
+var Mdb_Loyalty_Plan *mongox.Repository
+var Mdb_Customer_Loyalty_Account *mongox.Repository
+var Mdb_Churned_Customer_Loyalty_Account *mongox.Repository
+var Mdb_Customer_Loyalty_Account_Points_Detail *mongox.Repository
+var Mdb_Customer_DND *mongox.Repository
+var Mdb_Customer_Exclusion *mongox.Repository
+var Mdb_Customer_COS_Exclusion *mongox.Repository
+var Mdb_Customer_UAT *mongox.Repository
+var Mdb_Loyalty_Event_Log *mongox.Repository
+var Mdb_Loyalty_Expiry_log *mongox.Repository
+var Mdb_Loyalty_Full_Expiry_log *mongox.Repository
+var Mdb_Loyalty_Redemption_log *mongox.Repository
+var Mdb_Loyalty_Status_log *mongox.Repository
+var Mdb_Loyalty_AccountCreditPoints_log *mongox.Repository
+var Mdb_Loyalty_AccountDebitPoints_log *mongox.Repository
+var Mdb_NotificationLog *mongox.Repository
+var Mdb_Loyalty_Campaign *mongox.Repository
+var Mdb_Loyalty_Campaign_Target_List *mongox.Repository
+var Mdb_Loyalty_Campaign_Account *mongox.Repository
 
-var Map_Loyalty_Governance daoc.Cache_Synch
-var DAO_Loyalty_Governance daoc.DAO
-var DAO_Loyalty_Governance_log daoc.DAO
+// redisx client (shared)
+var RedisClient *redisx.Client
 
-var Map_Loyalty_Level daoc.Cache_Synch
-var DAO_Loyalty_Level daoc.DAO
-var DAO_Loyalty_Level_Change_log daoc.DAO
+// MapAccessEntry is a thread-safe in-memory cache for AuthCenter.AccessEntry lookups.
+// AuthCenter.AccessEntry is an external type without a RedisKey(), so this replaces
+// the former daoc.Cache_Synch with a native sync.Map-backed store.
+type localSyncCache struct{ m sync.Map }
 
-var Map_Loyalty_Seniority_Level daoc.Cache_Synch
-var DAO_Loyalty_Seniority_Level daoc.DAO
+func (c *localSyncCache) Clear() {
+	c.m.Range(func(k, v interface{}) bool { c.m.Delete(k); return true })
+}
+func (c *localSyncCache) Put(key string, value interface{}) { c.m.Store(key, value) }
+func (c *localSyncCache) Check(key string) bool             { _, ok := c.m.Load(key); return ok }
 
-var Map_Loyalty_Account_Segment daoc.Cache_Synch
-var DAO_Loyalty_Account_Segment daoc.DAO
+var MapAccessEntry = &localSyncCache{}
 
-var Map_Loyalty_Point_Earning_Rules daoc.Cache_Synch
-var DAO_Loyalty_Point_Earning_Rules daoc.DAO
-
-var Map_Loyalty_Point_Earning_Rules_Overwrite daoc.Cache_Synch
-var DAO_Loyalty_Point_Earning_Rules_Overwrite daoc.DAO
-
-var Map_Loyalty_Point_Expiry_Rules daoc.Cache_Synch
-var DAO_Loyalty_Point_Expiry_Rules daoc.DAO
-
-var Map_Loyalty_Point_Redemption_Rules daoc.Cache_Synch
-var DAO_Loyalty_Point_Redemption_Rules daoc.DAO
-
-var Map_Loyalty_Plan daoc.Cache_Synch
-var DAO_Loyalty_Plan daoc.DAO
-
-var Map_Customer_Loyalty_Account daoc.Cache_Synch
-var DAO_Customer_Loyalty_Account daoc.DAO
-
-var Map_Customer_Loyalty_Account_Points_Detail daoc.Cache_Synch
-var DAO_Customer_Loyalty_Account_Points_Detail daoc.DAO
-
-var Map_Customer_DND daoc.Cache_Synch
-var DAO_Customer_DND daoc.DAO
-
-var Map_Customer_Exclusion daoc.Cache_Synch
-var DAO_Customer_Exclusion daoc.DAO
-
-var Map_Customer_COS_Exclusion daoc.Cache_Synch
-var DAO_Customer_COS_Exclusion daoc.DAO
-
-var Map_Customer_UAT daoc.Cache_Synch
-var DAO_Customer_UAT daoc.DAO
-
-var DAO_Churned_Customer_Loyalty_Account daoc.DAO
-
-var DAO_Loyalty_Event_Log daoc.DAO
-
-var DAO_Loyalty_Expiry_log daoc.DAO
-var DAO_Loyalty_Full_Expiry_log daoc.DAO
-var DAO_Loyalty_Redemption_log daoc.DAO
-var DAO_Loyalty_Status_log daoc.DAO
-
-var DAO_Loyalty_AccountCreditPoints_log daoc.DAO
-var DAO_Loyalty_AccountDebitPoints_log daoc.DAO
-
-var DAO_NotificationLog daoc.DAO
-
-var Map_Loyalty_Campaign daoc.Cache_Synch
-var DAO_Loyalty_Campaign daoc.DAO
-var Map_Loyalty_Campaign_Target_List daoc.Cache_Synch
-var DAO_Loyalty_Campaign_Target_List daoc.DAO
-var Map_Loyalty_Campaign_Account daoc.Cache_Synch
-var DAO_Loyalty_Campaign_Account daoc.DAO
+func (e Loyalty_Governance) RedisKey() string {
+	return "Loyalty_Governance:" + e.Key
+}
+func (e Loyalty_Level) RedisKey() string {
+	return "Loyalty_Level:" + e.Key
+}
+func (e Loyalty_Seniority_Level) RedisKey() string {
+	return "Loyalty_Seniority_Level:" + e.Key
+}
+func (e Loyalty_Account_Segment) RedisKey() string {
+	return "Loyalty_Account_Segment:" + e.Key
+}
+func (e Loyalty_Point_Earning_Rules) RedisKey() string {
+	return "Loyalty_Point_Earning_Rules:" + e.Key
+}
+func (e Loyalty_Point_Earning_Rules_Overwrite) RedisKey() string {
+	return "Loyalty_Point_Earning_Rules_Overwrite:" + e.Key
+}
+func (e Loyalty_Point_Expiry_Rules) RedisKey() string {
+	return "Loyalty_Point_Expiry_Rules:" + e.Key
+}
+func (e Loyalty_Point_Redemption_Rules) RedisKey() string {
+	return "Loyalty_Point_Redemption_Rules:" + e.Key
+}
+func (e Loyalty_Plan) RedisKey() string {
+	return "Loyalty_Plan:" + e.Key
+}
+func (e Customer_Loyalty_Account) RedisKey() string {
+	return "Customer_Loyalty_Account:" + e.Key
+}
+func (e Customer_Loyalty_Account_Points_Detail) RedisKey() string {
+	return "Customer_Loyalty_Account_Points_Detail:" + e.Key
+}
+func (e Customer_DND) RedisKey() string {
+	return "Customer_DND:" + e.Key
+}
+func (e Customer_Exclusion) RedisKey() string {
+	return "Customer_Exclusion:" + e.Key
+}
+func (e Customer_COS_Exclusion) RedisKey() string {
+	return "Customer_COS_Exclusion:" + e.Key
+}
+func (e Customer_UAT) RedisKey() string {
+	return "Customer_UAT:" + e.Key
+}
+func (e Loyalty_Campaign) RedisKey() string {
+	return "Loyalty_Campaign:" + e.Key
+}
+func (e Loyalty_Campaign_Target_List) RedisKey() string {
+	return "Loyalty_Campaign_Target_List:" + e.Key
+}
+func (e Loyalty_Campaign_Account) RedisKey() string {
+	return "Loyalty_Campaign_Account:" + e.Key
+}
 
 var chan_LoyaltyGovernance_Controler = make(chan int, 1)
 
@@ -119,294 +150,338 @@ var processedMu sync.Mutex
 var jobs = make(map[string]*JobStatus)
 var jobsMu sync.Mutex
 
-func (uc *UserControl) InitializeLoyaltyCache() {
-	var access_entry AuthCenter.AccessEntry
-	MapAccessEntry.Initialize("AccessEntry", "AccessEntry", reflect.TypeOf(AuthCenter.AccessEntry{}), access_entry, true, &DAO_AccessEntry, uc.CacheDir.List)
-	var AutoIncr daoc.AutoIncrement
-	Map_Loyalty_AutoIncrement.Initialize("Loyalty_AutoIncrement", "AutoIncrement", reflect.TypeOf(daoc.AutoIncrement{}), AutoIncr, true, &DAO_Loyalty_AutoIncrement, uc.CacheDir.List)
-	var loyalty_Governance Loyalty_Governance
-	Map_Loyalty_Governance.Initialize("Loyalty_Governance", "Loyalty_Governance", reflect.TypeOf(Loyalty_Governance{}), loyalty_Governance, true, &DAO_Loyalty_Governance, uc.CacheDir.List)
-	var loyalty_Level Loyalty_Level
-	Map_Loyalty_Level.Initialize("Loyalty_Level", "Loyalty_Level", reflect.TypeOf(Loyalty_Level{}), loyalty_Level, true, &DAO_Loyalty_Level, uc.CacheDir.List)
-	var loyalty_Seniority_Level Loyalty_Seniority_Level
-	Map_Loyalty_Seniority_Level.Initialize("Loyalty_Seniority_Level", "Loyalty_Seniority_Level", reflect.TypeOf(Loyalty_Seniority_Level{}), loyalty_Seniority_Level, true, &DAO_Loyalty_Seniority_Level, uc.CacheDir.List)
-	var loyalty_Account_Segment Loyalty_Account_Segment
-	Map_Loyalty_Account_Segment.Initialize("Loyalty_Account_Segment", "Loyalty_Account_Segment", reflect.TypeOf(Loyalty_Account_Segment{}), loyalty_Account_Segment, true, &DAO_Loyalty_Account_Segment, uc.CacheDir.List)
-	var loyalty_Point_Earning_Rules Loyalty_Point_Earning_Rules
-	Map_Loyalty_Point_Earning_Rules.Initialize("Loyalty_Point_Earning_Rules", "Loyalty_Point_Earning_Rules", reflect.TypeOf(Loyalty_Point_Earning_Rules{}), loyalty_Point_Earning_Rules, true, &DAO_Loyalty_Point_Earning_Rules, uc.CacheDir.List)
-	var loyalty_Point_Earning_Rules_Overwrite Loyalty_Point_Earning_Rules_Overwrite
-	Map_Loyalty_Point_Earning_Rules_Overwrite.Initialize("Loyalty_Point_Earning_Rules_Overwrite", "Loyalty_Point_Earning_Rules_Overwrite", reflect.TypeOf(Loyalty_Point_Earning_Rules_Overwrite{}), loyalty_Point_Earning_Rules_Overwrite, true, &DAO_Loyalty_Point_Earning_Rules_Overwrite, uc.CacheDir.List)
-	var loyalty_Point_Expiry_Rules Loyalty_Point_Expiry_Rules
-	Map_Loyalty_Point_Expiry_Rules.Initialize("Loyalty_Point_Expiry_Rules", "Loyalty_Point_Expiry_Rules", reflect.TypeOf(Loyalty_Point_Expiry_Rules{}), loyalty_Point_Expiry_Rules, true, &DAO_Loyalty_Point_Expiry_Rules, uc.CacheDir.List)
-	var loyalty_Point_Redemption_Rules Loyalty_Point_Redemption_Rules
-	Map_Loyalty_Point_Redemption_Rules.Initialize("Loyalty_Point_Redemption_Rules", "Loyalty_Point_Redemption_Rules", reflect.TypeOf(Loyalty_Point_Redemption_Rules{}), loyalty_Point_Redemption_Rules, true, &DAO_Loyalty_Point_Redemption_Rules, uc.CacheDir.List)
-	var loyalty_Plan Loyalty_Plan
-	Map_Loyalty_Plan.Initialize("Loyalty_Plan", "Loyalty_Plan", reflect.TypeOf(Loyalty_Plan{}), loyalty_Plan, true, &DAO_Loyalty_Plan, uc.CacheDir.List)
-	var customer_Loyalty_Account Customer_Loyalty_Account
-	Map_Customer_Loyalty_Account.Initialize("Customer_Loyalty_Account", "Customer_Loyalty_Account", reflect.TypeOf(Customer_Loyalty_Account{}), customer_Loyalty_Account, true, &DAO_Customer_Loyalty_Account, uc.CacheDir.List)
-	var customer_Loyalty_Account_Points_Detail Customer_Loyalty_Account_Points_Detail
-	Map_Customer_Loyalty_Account_Points_Detail.Initialize("Customer_Loyalty_Account_Points_Detail", "Customer_Loyalty_Account_Points_Detail", reflect.TypeOf(Customer_Loyalty_Account_Points_Detail{}), customer_Loyalty_Account_Points_Detail, true, &DAO_Customer_Loyalty_Account_Points_Detail, uc.CacheDir.List)
-	var customer_DND Customer_DND
-	Map_Customer_DND.Initialize("Customer_DND", "Customer_DND", reflect.TypeOf(Customer_DND{}), customer_DND, true, &DAO_Customer_DND, uc.CacheDir.List)
-	var customer_Exclusion Customer_Exclusion
-	Map_Customer_Exclusion.Initialize("Customer_Exclusion", "Customer_Exclusion", reflect.TypeOf(Customer_Exclusion{}), customer_Exclusion, true, &DAO_Customer_Exclusion, uc.CacheDir.List)
-	var customer_COS_Exclusion Customer_COS_Exclusion
-	Map_Customer_COS_Exclusion.Initialize("Customer_COS_Exclusion", "Customer_COS_Exclusion", reflect.TypeOf(Customer_COS_Exclusion{}), customer_COS_Exclusion, true, &DAO_Customer_COS_Exclusion, uc.CacheDir.List)
-	var customer_UAT Customer_UAT
-	Map_Customer_UAT.Initialize("Customer_UAT", "Customer_UAT", reflect.TypeOf(Customer_UAT{}), customer_UAT, true, &DAO_Customer_UAT, uc.CacheDir.List)
-	var loyalty_Campaign Loyalty_Campaign
-	Map_Loyalty_Campaign.Initialize("Loyalty_Campaign", "Loyalty_Campaign", reflect.TypeOf(Loyalty_Campaign{}), loyalty_Campaign, true, &DAO_Loyalty_Campaign, uc.CacheDir.List)
-	var loyalty_Campaign_Target_List Loyalty_Campaign_Target_List
-	Map_Loyalty_Campaign_Target_List.Initialize("Loyalty_Campaign_Target_List", "Loyalty_Campaign_Target_List", reflect.TypeOf(Loyalty_Campaign_Target_List{}), loyalty_Campaign_Target_List, true, &DAO_Loyalty_Campaign_Target_List, uc.CacheDir.List)
-	var loyalty_Campaign_Account Loyalty_Campaign_Account
-	Map_Loyalty_Campaign_Account.Initialize("Loyalty_Campaign_Account", "Loyalty_Campaign_Account", reflect.TypeOf(Loyalty_Campaign_Account{}), loyalty_Campaign_Account, true, &DAO_Loyalty_Campaign_Account, uc.CacheDir.List)
+func (uc *UserControl) InitializeMongoxRepositories() error {
+	// main MongoDB (for AccessEntry and NotificationLog)
+	mainDB, err := mongox.NewDB(uc.MongoClient.Mongo, Configuration.DB_Name_Loyalty, 10*time.Second)
+	if err != nil {
+		return fmt.Errorf("mongox.NewDB (main): %w", err)
+	}
+	Mdb_AccessEntry, err = mongox.NewRepository(mainDB, "Col_AccessEntry")
+	if err != nil {
+		return fmt.Errorf("Col_AccessEntry: %w", err)
+	}
+	Mdb_NotificationLog, err = mongox.NewRepository(mainDB, "Col_NotificationLog")
+	if err != nil {
+		return fmt.Errorf("Col_NotificationLog: %w", err)
+	}
 
+	// loyalty MongoDB
+	loyaltyDB, err := mongox.NewDB(uc.LoyaltyMongoClient.Mongo, Configuration.DB_Name_Loyalty, 10*time.Second)
+	if err != nil {
+		return fmt.Errorf("mongox.NewDB (loyalty): %w", err)
+	}
+	Mdb_Loyalty_AutoIncrement, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_AutoIncrement")
+	if err != nil {
+		return fmt.Errorf("Col_Loyalty_AutoIncrement: %w", err)
+	}
+	Mdb_Loyalty_Governance, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Governance")
+	if err != nil {
+		return fmt.Errorf("Col_Loyalty_Governance: %w", err)
+	}
+	Mdb_Loyalty_Governance_log, err = mongox.NewRepository(loyaltyDB, "Loyalty_Governance_log")
+	if err != nil {
+		return fmt.Errorf("Loyalty_Governance_log: %w", err)
+	}
+	Mdb_Loyalty_Level, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Level")
+	if err != nil {
+		return fmt.Errorf("Col_Loyalty_Level: %w", err)
+	}
+	Mdb_Loyalty_Level_Change_log, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Level_Change_log")
+	if err != nil {
+		return fmt.Errorf("Col_Loyalty_Level_Change_log: %w", err)
+	}
+	Mdb_Loyalty_Seniority_Level, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Seniority_Level")
+	if err != nil {
+		return fmt.Errorf("Col_Loyalty_Seniority_Level: %w", err)
+	}
+	Mdb_Loyalty_Account_Segment, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Account_Segment")
+	if err != nil {
+		return fmt.Errorf("Col_Loyalty_Account_Segment: %w", err)
+	}
+	Mdb_Loyalty_Point_Earning_Rules, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Point_Earning_Rules")
+	if err != nil {
+		return fmt.Errorf("Col_Loyalty_Point_Earning_Rules: %w", err)
+	}
+	Mdb_Loyalty_Point_Earning_Rules_Overwrite, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Point_Earning_Rules_Overwrite")
+	if err != nil {
+		return fmt.Errorf("Col_Loyalty_Point_Earning_Rules_Overwrite: %w", err)
+	}
+	Mdb_Loyalty_Point_Expiry_Rules, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Point_Expiry_Rules")
+	if err != nil {
+		return fmt.Errorf("Col_Loyalty_Point_Expiry_Rules: %w", err)
+	}
+	Mdb_Loyalty_Point_Redemption_Rules, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Point_Redemption_Rules")
+	if err != nil {
+		return fmt.Errorf("Col_Loyalty_Point_Redemption_Rules: %w", err)
+	}
+	Mdb_Loyalty_Plan, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Plan")
+	if err != nil {
+		return fmt.Errorf("Col_Loyalty_Plan: %w", err)
+	}
+	Mdb_Customer_Loyalty_Account, err = mongox.NewRepository(loyaltyDB, "Col_Customer_Loyalty_Account")
+	if err != nil {
+		return fmt.Errorf("Col_Customer_Loyalty_Account: %w", err)
+	}
+	Mdb_Churned_Customer_Loyalty_Account, err = mongox.NewRepository(loyaltyDB, "Col_Churned_Customer_Loyalty_Account")
+	if err != nil {
+		return fmt.Errorf("Col_Churned_Customer_Loyalty_Account: %w", err)
+	}
+	Mdb_Customer_Loyalty_Account_Points_Detail, err = mongox.NewRepository(loyaltyDB, "Col_Customer_Loyalty_Account_Points_Detail")
+	if err != nil {
+		return fmt.Errorf("Col_Customer_Loyalty_Account_Points_Detail: %w", err)
+	}
+	Mdb_Customer_DND, err = mongox.NewRepository(loyaltyDB, "Col_Customer_DND")
+	if err != nil {
+		return fmt.Errorf("Col_Customer_DND: %w", err)
+	}
+	Mdb_Customer_Exclusion, err = mongox.NewRepository(loyaltyDB, "Col_Customer_Exclusion")
+	if err != nil {
+		return fmt.Errorf("Col_Customer_Exclusion: %w", err)
+	}
+	Mdb_Customer_COS_Exclusion, err = mongox.NewRepository(loyaltyDB, "Col_Customer_COS_Exclusion")
+	if err != nil {
+		return fmt.Errorf("Col_Customer_COS_Exclusion: %w", err)
+	}
+	Mdb_Customer_UAT, err = mongox.NewRepository(loyaltyDB, "Col_Customer_UAT")
+	if err != nil {
+		return fmt.Errorf("Col_Customer_UAT: %w", err)
+	}
+	Mdb_Loyalty_Event_Log, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Event_Log")
+	if err != nil {
+		return fmt.Errorf("Col_Loyalty_Event_Log: %w", err)
+	}
+	Mdb_Loyalty_Expiry_log, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Expiry_log")
+	if err != nil {
+		return fmt.Errorf("Col_Loyalty_Expiry_log: %w", err)
+	}
+	Mdb_Loyalty_Full_Expiry_log, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Full_Expiry_log")
+	if err != nil {
+		return fmt.Errorf("Col_Loyalty_Full_Expiry_log: %w", err)
+	}
+	Mdb_Loyalty_Redemption_log, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Redemption_log")
+	if err != nil {
+		return fmt.Errorf("Col_Loyalty_Redemption_log: %w", err)
+	}
+	Mdb_Loyalty_Status_log, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Status_log")
+	if err != nil {
+		return fmt.Errorf("Col_Loyalty_Status_log: %w", err)
+	}
+	Mdb_Loyalty_AccountCreditPoints_log, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_AccountCreditPoints_log")
+	if err != nil {
+		return fmt.Errorf("Col_Loyalty_AccountCreditPoints_log: %w", err)
+	}
+	Mdb_Loyalty_AccountDebitPoints_log, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_AccountDebitPoints_log")
+	if err != nil {
+		return fmt.Errorf("Col_Loyalty_AccountDebitPoints_log: %w", err)
+	}
+	Mdb_Loyalty_Campaign, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Campaign")
+	if err != nil {
+		return fmt.Errorf("Col_Loyalty_Campaign: %w", err)
+	}
+	Mdb_Loyalty_Campaign_Target_List, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Campaign_Target_List")
+	if err != nil {
+		return fmt.Errorf("Col_Loyalty_Campaign_Target_List: %w", err)
+	}
+	Mdb_Loyalty_Campaign_Account, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Campaign_Account")
+	if err != nil {
+		return fmt.Errorf("Col_Loyalty_Campaign_Account: %w", err)
+	}
+
+	RedisClient = uc.Redis
+	return nil
 }
 
-func (uc *UserControl) InitializeLoyaltyDAO() {
-	DAO_AccessEntry.Initialize("AccessEntry", uc.MongoDB.MongoDBClient, reflect.TypeOf(AuthCenter.AccessEntry{}), Configuration.DB_Name_Loyalty, "Col_AccessEntry", "")
-	DAO_Loyalty_AutoIncrement.Initialize("Loyalty_AutoIncrement", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(daoc.AutoIncrement{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_AutoIncrement", "")
-	DAO_Loyalty_Governance.Initialize("Loyalty_Governance", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Governance{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Governance", "")
-	DAO_Loyalty_Governance_log.Initialize("Loyalty_Governance_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Governance_log{}), Configuration.DB_Name_Loyalty, "Loyalty_Governance_log", "")
-	DAO_Loyalty_Level.Initialize("Loyalty_Level", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Level{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Level", "")
-	DAO_Loyalty_Level_Change_log.Initialize("Loyalty_Level_Change_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Level_Change_log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Level_Change_log", "")
-	DAO_Loyalty_Seniority_Level.Initialize("Loyalty_Seniority_Level", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Seniority_Level{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Seniority_Level", "")
-	DAO_Loyalty_Account_Segment.Initialize("Loyalty_Account_Segment", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Account_Segment{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Account_Segment", "")
-	DAO_Loyalty_Point_Earning_Rules.Initialize("Loyalty_Point_Earning_Rules", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Point_Earning_Rules{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Point_Earning_Rules", "")
-	DAO_Loyalty_Point_Earning_Rules_Overwrite.Initialize("Loyalty_Point_Earning_Rules_Overwrite", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Point_Earning_Rules_Overwrite{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Point_Earning_Rules_Overwrite", "")
-	DAO_Loyalty_Point_Expiry_Rules.Initialize("Loyalty_Point_Expiry_Rules", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Point_Expiry_Rules{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Point_Expiry_Rules", "")
-	DAO_Loyalty_Point_Redemption_Rules.Initialize("Loyalty_Point_Redemption_Rules", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Point_Redemption_Rules{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Point_Redemption_Rules", "")
-	DAO_Loyalty_Plan.Initialize("Loyalty_Plan", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Plan{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Plan", "")
-	DAO_Customer_Loyalty_Account.Initialize("Customer_Loyalty_Account", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Customer_Loyalty_Account{}), Configuration.DB_Name_Loyalty, "Col_Customer_Loyalty_Account", "")
-	DAO_Churned_Customer_Loyalty_Account.Initialize("Churned_Customer_Loyalty_Account", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Customer_Loyalty_Account{}), Configuration.DB_Name_Loyalty, "Col_Churned_Customer_Loyalty_Account", "")
-	DAO_Customer_Loyalty_Account_Points_Detail.Initialize("Customer_Loyalty_Account_Points_Detail", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Customer_Loyalty_Account_Points_Detail{}), Configuration.DB_Name_Loyalty, "Col_Customer_Loyalty_Account_Points_Detail", "")
-	DAO_Loyalty_Event_Log.Initialize("Loyalty_Event_Log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Event_Log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Event_Log", "")
-	DAO_Customer_DND.Initialize("Customer_DND", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Customer_DND{}), Configuration.DB_Name_Loyalty, "Col_Customer_DND", "")
-	DAO_Customer_Exclusion.Initialize("Customer_Exclusion", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Customer_Exclusion{}), Configuration.DB_Name_Loyalty, "Col_Customer_Exclusion", "")
-	DAO_Customer_COS_Exclusion.Initialize("Customer_COS_Exclusion", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Customer_COS_Exclusion{}), Configuration.DB_Name_Loyalty, "Col_Customer_COS_Exclusion", "")
-	DAO_Customer_UAT.Initialize("Customer_UAT", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Customer_UAT{}), Configuration.DB_Name_Loyalty, "Col_Customer_UAT", "")
-	DAO_Loyalty_Expiry_log.Initialize("Loyalty_Expiry_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Monthly_Expiry_log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Expiry_log", "")
-	DAO_Loyalty_Redemption_log.Initialize("Loyalty_Redemption_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Redemption_log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Redemption_log", "")
-	DAO_Loyalty_Status_log.Initialize("Loyalty_Status_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Status_log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Status_log", "")
-	DAO_Loyalty_Full_Expiry_log.Initialize("Loyalty_Full_Expiry_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Full_Expiry_Log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Full_Expiry_log", "")
-	DAO_Loyalty_AccountCreditPoints_log.Initialize("Loyalty_AccountCreditPoints_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_AccountCreditPoints_log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_AccountCreditPoints_log", "")
-	DAO_Loyalty_AccountDebitPoints_log.Initialize("Loyalty_AccountDebitPoints_log", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_AccountDebitPoints_log{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_AccountDebitPoints_log", "")
-	DAO_NotificationLog.Initialize("NotificationLog", uc.MongoDB.MongoDBClient, reflect.TypeOf(NotificationLog{}), Configuration.DB_Name_Loyalty, "Col_NotificationLog", "")
-	DAO_Loyalty_Campaign.Initialize("Loyalty_Campaign", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Campaign{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Campaign", "")
-	DAO_Loyalty_Campaign_Target_List.Initialize("Loyalty_Campaign_Target_List", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Campaign_Target_List{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Campaign_Target_List", "")
-	DAO_Loyalty_Campaign_Account.Initialize("Loyalty_Campaign_Account", uc.LoyaltyMongoDB.MongoDBClient, reflect.TypeOf(Loyalty_Campaign_Account{}), Configuration.DB_Name_Loyalty, "Col_Loyalty_Campaign_Account", "")
+func (uc *UserControl) RedisDataLoader() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
+	if _, _, err := redisx.LoadMongoToRedis[Loyalty_Governance](ctx, RedisClient, Mdb_Loyalty_Governance.Coll, redisx.MongoLoadOptions{
+		BatchSize: 2000, FlushBeforeLoad: true, FlushPattern: "Loyalty_Governance:*", UseUnlink: true,
+	}); err != nil {
+		return fmt.Errorf("load Loyalty_Governance: %w", err)
+	}
+	if _, _, err := redisx.LoadMongoToRedis[Loyalty_Level](ctx, RedisClient, Mdb_Loyalty_Level.Coll, redisx.MongoLoadOptions{
+		BatchSize: 2000, FlushBeforeLoad: true, FlushPattern: "Loyalty_Level:*", UseUnlink: true,
+	}); err != nil {
+		return fmt.Errorf("load Loyalty_Level: %w", err)
+	}
+	if _, _, err := redisx.LoadMongoToRedis[Loyalty_Seniority_Level](ctx, RedisClient, Mdb_Loyalty_Seniority_Level.Coll, redisx.MongoLoadOptions{
+		BatchSize: 2000, FlushBeforeLoad: true, FlushPattern: "Loyalty_Seniority_Level:*", UseUnlink: true,
+	}); err != nil {
+		return fmt.Errorf("load Loyalty_Seniority_Level: %w", err)
+	}
+	if _, _, err := redisx.LoadMongoToRedis[Loyalty_Account_Segment](ctx, RedisClient, Mdb_Loyalty_Account_Segment.Coll, redisx.MongoLoadOptions{
+		BatchSize: 2000, FlushBeforeLoad: true, FlushPattern: "Loyalty_Account_Segment:*", UseUnlink: true,
+	}); err != nil {
+		return fmt.Errorf("load Loyalty_Account_Segment: %w", err)
+	}
+	if _, _, err := redisx.LoadMongoToRedis[Loyalty_Point_Earning_Rules](ctx, RedisClient, Mdb_Loyalty_Point_Earning_Rules.Coll, redisx.MongoLoadOptions{
+		BatchSize: 2000, FlushBeforeLoad: true, FlushPattern: "Loyalty_Point_Earning_Rules:*", UseUnlink: true,
+	}); err != nil {
+		return fmt.Errorf("load Loyalty_Point_Earning_Rules: %w", err)
+	}
+	if _, _, err := redisx.LoadMongoToRedis[Loyalty_Point_Earning_Rules_Overwrite](ctx, RedisClient, Mdb_Loyalty_Point_Earning_Rules_Overwrite.Coll, redisx.MongoLoadOptions{
+		BatchSize: 2000, FlushBeforeLoad: true, FlushPattern: "Loyalty_Point_Earning_Rules_Overwrite:*", UseUnlink: true,
+	}); err != nil {
+		return fmt.Errorf("load Loyalty_Point_Earning_Rules_Overwrite: %w", err)
+	}
+	if _, _, err := redisx.LoadMongoToRedis[Loyalty_Point_Expiry_Rules](ctx, RedisClient, Mdb_Loyalty_Point_Expiry_Rules.Coll, redisx.MongoLoadOptions{
+		BatchSize: 2000, FlushBeforeLoad: true, FlushPattern: "Loyalty_Point_Expiry_Rules:*", UseUnlink: true,
+	}); err != nil {
+		return fmt.Errorf("load Loyalty_Point_Expiry_Rules: %w", err)
+	}
+	if _, _, err := redisx.LoadMongoToRedis[Loyalty_Point_Redemption_Rules](ctx, RedisClient, Mdb_Loyalty_Point_Redemption_Rules.Coll, redisx.MongoLoadOptions{
+		BatchSize: 2000, FlushBeforeLoad: true, FlushPattern: "Loyalty_Point_Redemption_Rules:*", UseUnlink: true,
+	}); err != nil {
+		return fmt.Errorf("load Loyalty_Point_Redemption_Rules: %w", err)
+	}
+	if _, _, err := redisx.LoadMongoToRedis[Loyalty_Plan](ctx, RedisClient, Mdb_Loyalty_Plan.Coll, redisx.MongoLoadOptions{
+		BatchSize: 2000, FlushBeforeLoad: true, FlushPattern: "Loyalty_Plan:*", UseUnlink: true,
+	}); err != nil {
+		return fmt.Errorf("load Loyalty_Plan: %w", err)
+	}
+	if _, _, err := redisx.LoadMongoToRedis[Customer_Loyalty_Account](ctx, RedisClient, Mdb_Customer_Loyalty_Account.Coll, redisx.MongoLoadOptions{
+		BatchSize: 2000, FlushBeforeLoad: true, FlushPattern: "Customer_Loyalty_Account:*", UseUnlink: true,
+	}); err != nil {
+		return fmt.Errorf("load Customer_Loyalty_Account: %w", err)
+	}
+	if _, _, err := redisx.LoadMongoToRedis[Customer_Loyalty_Account_Points_Detail](ctx, RedisClient, Mdb_Customer_Loyalty_Account_Points_Detail.Coll, redisx.MongoLoadOptions{
+		BatchSize: 2000, FlushBeforeLoad: true, FlushPattern: "Customer_Loyalty_Account_Points_Detail:*", UseUnlink: true,
+	}); err != nil {
+		return fmt.Errorf("load Customer_Loyalty_Account_Points_Detail: %w", err)
+	}
+	if _, _, err := redisx.LoadMongoToRedis[Customer_DND](ctx, RedisClient, Mdb_Customer_DND.Coll, redisx.MongoLoadOptions{
+		BatchSize: 2000, FlushBeforeLoad: true, FlushPattern: "Customer_DND:*", UseUnlink: true,
+	}); err != nil {
+		return fmt.Errorf("load Customer_DND: %w", err)
+	}
+	if _, _, err := redisx.LoadMongoToRedis[Customer_Exclusion](ctx, RedisClient, Mdb_Customer_Exclusion.Coll, redisx.MongoLoadOptions{
+		BatchSize: 2000, FlushBeforeLoad: true, FlushPattern: "Customer_Exclusion:*", UseUnlink: true,
+	}); err != nil {
+		return fmt.Errorf("load Customer_Exclusion: %w", err)
+	}
+	if _, _, err := redisx.LoadMongoToRedis[Customer_COS_Exclusion](ctx, RedisClient, Mdb_Customer_COS_Exclusion.Coll, redisx.MongoLoadOptions{
+		BatchSize: 2000, FlushBeforeLoad: true, FlushPattern: "Customer_COS_Exclusion:*", UseUnlink: true,
+	}); err != nil {
+		return fmt.Errorf("load Customer_COS_Exclusion: %w", err)
+	}
+	if _, _, err := redisx.LoadMongoToRedis[Customer_UAT](ctx, RedisClient, Mdb_Customer_UAT.Coll, redisx.MongoLoadOptions{
+		BatchSize: 2000, FlushBeforeLoad: true, FlushPattern: "Customer_UAT:*", UseUnlink: true,
+	}); err != nil {
+		return fmt.Errorf("load Customer_UAT: %w", err)
+	}
+	if _, _, err := redisx.LoadMongoToRedis[Loyalty_Campaign](ctx, RedisClient, Mdb_Loyalty_Campaign.Coll, redisx.MongoLoadOptions{
+		BatchSize: 2000, FlushBeforeLoad: true, FlushPattern: "Loyalty_Campaign:*", UseUnlink: true,
+	}); err != nil {
+		return fmt.Errorf("load Loyalty_Campaign: %w", err)
+	}
+	if _, _, err := redisx.LoadMongoToRedis[Loyalty_Campaign_Target_List](ctx, RedisClient, Mdb_Loyalty_Campaign_Target_List.Coll, redisx.MongoLoadOptions{
+		BatchSize: 2000, FlushBeforeLoad: true, FlushPattern: "Loyalty_Campaign_Target_List:*", UseUnlink: true,
+	}); err != nil {
+		return fmt.Errorf("load Loyalty_Campaign_Target_List: %w", err)
+	}
+	if _, _, err := redisx.LoadMongoToRedis[Loyalty_Campaign_Account](ctx, RedisClient, Mdb_Loyalty_Campaign_Account.Coll, redisx.MongoLoadOptions{
+		BatchSize: 2000, FlushBeforeLoad: true, FlushPattern: "Loyalty_Campaign_Account:*", UseUnlink: true,
+	}); err != nil {
+		return fmt.Errorf("load Loyalty_Campaign_Account: %w", err)
+	}
+
+	return nil
 }
 
 func (uc *UserControl) LoyaltyIndexesMaintenanceProcess() {
-	log.Println("Loyalty DB index manintenance process started...")
-	exists, err := DAO_Loyalty_AutoIncrement.CheckAndCreateIndex("Idx_LoyaltyAutoIncrement_Key", []string{"Key"}, true)
-	if err != nil {
-		log.Println("Error checking and creating index Idx_LoyaltyAutoIncrement_Key: ", err)
-	} else {
-		if !exists {
-			log.Println("Index Idx_LoyaltyAutoIncrement_Key created")
-		}
+	log.Println("Loyalty DB index maintenance process started...")
+
+	ctx := context.Background()
+	keyIdx, keyOpt := mongox.UniqueIndex("Key", true)
+	msisdnIdx, msisdnOpt := mongox.UniqueIndex("MSISDN", true)
+
+	if _, err := mongox.CreateIndex(ctx, Mdb_Loyalty_AutoIncrement.Coll, keyIdx, keyOpt); err != nil {
+		log.Println("CreateIndex Loyalty_AutoIncrement/Key:", err)
+	}
+	if _, err := mongox.CreateIndex(ctx, Mdb_Loyalty_Governance.Coll, keyIdx, keyOpt); err != nil {
+		log.Println("CreateIndex Loyalty_Governance/Key:", err)
+	}
+	if _, err := mongox.CreateIndex(ctx, Mdb_Loyalty_Level.Coll, keyIdx, keyOpt); err != nil {
+		log.Println("CreateIndex Loyalty_Level/Key:", err)
+	}
+	if _, err := mongox.CreateIndex(ctx, Mdb_Loyalty_Account_Segment.Coll, keyIdx, keyOpt); err != nil {
+		log.Println("CreateIndex Loyalty_Account_Segment/Key:", err)
+	}
+	if _, err := mongox.CreateIndex(ctx, Mdb_Loyalty_Point_Earning_Rules.Coll, keyIdx, keyOpt); err != nil {
+		log.Println("CreateIndex Loyalty_Point_Earning_Rules/Key:", err)
+	}
+	if _, err := mongox.CreateIndex(ctx, Mdb_Loyalty_Point_Expiry_Rules.Coll, keyIdx, keyOpt); err != nil {
+		log.Println("CreateIndex Loyalty_Point_Expiry_Rules/Key:", err)
+	}
+	if _, err := mongox.CreateIndex(ctx, Mdb_Loyalty_Point_Redemption_Rules.Coll, keyIdx, keyOpt); err != nil {
+		log.Println("CreateIndex Loyalty_Point_Redemption_Rules/Key:", err)
+	}
+	if _, err := mongox.CreateIndex(ctx, Mdb_Loyalty_Plan.Coll, keyIdx, keyOpt); err != nil {
+		log.Println("CreateIndex Loyalty_Plan/Key:", err)
+	}
+	if _, err := mongox.CreateIndex(ctx, Mdb_Customer_Loyalty_Account.Coll, keyIdx, keyOpt); err != nil {
+		log.Println("CreateIndex Customer_Loyalty_Account/Key:", err)
+	}
+	if _, err := mongox.CreateIndex(ctx, Mdb_Customer_Loyalty_Account_Points_Detail.Coll, keyIdx, keyOpt); err != nil {
+		log.Println("CreateIndex Customer_Loyalty_Account_Points_Detail/Key:", err)
+	}
+	if _, err := mongox.CreateIndex(ctx, Mdb_Customer_DND.Coll, keyIdx, keyOpt); err != nil {
+		log.Println("CreateIndex Customer_DND/Key:", err)
+	}
+	if _, err := mongox.CreateIndex(ctx, Mdb_Customer_Exclusion.Coll, keyIdx, keyOpt); err != nil {
+		log.Println("CreateIndex Customer_Exclusion/Key:", err)
+	}
+	if _, err := mongox.CreateIndex(ctx, Mdb_Customer_COS_Exclusion.Coll, keyIdx, keyOpt); err != nil {
+		log.Println("CreateIndex Customer_COS_Exclusion/Key:", err)
+	}
+	if _, err := mongox.CreateIndex(ctx, Mdb_Customer_UAT.Coll, keyIdx, keyOpt); err != nil {
+		log.Println("CreateIndex Customer_UAT/Key:", err)
+	}
+	if _, err := mongox.CreateIndex(ctx, Mdb_Loyalty_Campaign.Coll, keyIdx, keyOpt); err != nil {
+		log.Println("CreateIndex Loyalty_Campaign/Key:", err)
+	}
+	if _, err := mongox.CreateIndex(ctx, Mdb_Loyalty_Campaign_Target_List.Coll, keyIdx, keyOpt); err != nil {
+		log.Println("CreateIndex Loyalty_Campaign_Target_List/Key:", err)
+	}
+	if _, err := mongox.CreateIndex(ctx, Mdb_Loyalty_Campaign_Account.Coll, keyIdx, keyOpt); err != nil {
+		log.Println("CreateIndex Loyalty_Campaign_Account/Key:", err)
+	}
+	if _, err := mongox.CreateIndex(ctx, Mdb_Loyalty_AccountCreditPoints_log.Coll, msisdnIdx, msisdnOpt); err != nil {
+		log.Println("CreateIndex Loyalty_AccountCreditPoints_log/MSISDN:", err)
+	}
+	if _, err := mongox.CreateIndex(ctx, Mdb_Loyalty_AccountDebitPoints_log.Coll, msisdnIdx, msisdnOpt); err != nil {
+		log.Println("CreateIndex Loyalty_AccountDebitPoints_log/MSISDN:", err)
+	}
+	if _, err := mongox.CreateIndex(ctx, Mdb_Loyalty_Point_Redemption_Rules.Coll, msisdnIdx, msisdnOpt); err != nil {
+		log.Println("CreateIndex Loyalty_Point_Redemption_Rules/MSISDN:", err)
+	}
+	if _, err := mongox.CreateIndex(ctx, Mdb_Loyalty_Status_log.Coll, msisdnIdx, msisdnOpt); err != nil {
+		log.Println("CreateIndex Loyalty_Status_log/MSISDN:", err)
 	}
 
-	exists, err = DAO_Loyalty_Governance.CheckAndCreateIndex("Idx_Loyalty_Governance_Key", []string{"Key"}, true)
-	if err != nil {
-		log.Println("Error creating index Idx_Loyalty_Governance_Key: ", err)
-	} else {
-		if !exists {
-			log.Println("Index Idx_Loyalty_Governance_Key created")
-		}
-	}
-
-	exists, err = DAO_Loyalty_Level.CheckAndCreateIndex("Idx_Loyalty_Level_Key", []string{"Key"}, true)
-	if err != nil {
-		log.Println("Error creating index Idx_Loyalty_Level_Key: ", err)
-	} else {
-		if !exists {
-			log.Println("Index Idx_Loyalty_Level_Key created")
-		}
-	}
-
-	exists, err = DAO_Loyalty_Account_Segment.CheckAndCreateIndex("Idx_Loyalty_Account_Segment_Key", []string{"Key"}, true)
-	if err != nil {
-		log.Println("Error creating index Idx_Loyalty_Account_Segment_Key: ", err)
-	} else {
-		if !exists {
-			log.Println("Index Idx_Loyalty_Account_Segment_Key created")
-		}
-	}
-
-	exists, err = DAO_Loyalty_Point_Earning_Rules.CheckAndCreateIndex("Idx_Loyalty_Point_Earning_Rules_Key", []string{"Key"}, true)
-	if err != nil {
-		log.Println("Error creating index Idx_Loyalty_Point_Earning_Rules_Key: ", err)
-	} else {
-		if !exists {
-			log.Println("Index Idx_Loyalty_Point_Earning_Rules_Key created")
-		}
-	}
-
-	exists, err = DAO_Loyalty_Point_Expiry_Rules.CheckAndCreateIndex("Idx_Loyalty_Point_Expiry_Rules_Key", []string{"Key"}, true)
-	if err != nil {
-		log.Println("Error creating index Idx_Loyalty_Point_Expiry_Rules_Key: ", err)
-	} else {
-		if !exists {
-			log.Println("Index Idx_Loyalty_Point_Expiry_Rules_Key created")
-		}
-	}
-
-	exists, err = DAO_Loyalty_Point_Redemption_Rules.CheckAndCreateIndex("Idx_Loyalty_Point_Redemption_Rules_Key", []string{"Key"}, true)
-	if err != nil {
-		log.Println("Error creating index Idx_Loyalty_Point_Redemption_Rules_Key: ", err)
-	} else {
-		if !exists {
-			log.Println("Index Idx_Loyalty_Point_Redemption_Rules_Key created")
-		}
-	}
-
-	exists, err = DAO_Loyalty_Plan.CheckAndCreateIndex("Idx_Loyalty_Plan_Key", []string{"Key"}, true)
-	if err != nil {
-		log.Println("Error creating index Idx_Loyalty_Plan_Key: ", err)
-	} else {
-		if !exists {
-			log.Println("Index Idx_Loyalty_Plan_Key created")
-		}
-	}
-
-	exists, err = DAO_Customer_Loyalty_Account.CheckAndCreateIndex("Idx_Customer_Loyalty_Account_Key", []string{"Key"}, true)
-	if err != nil {
-		log.Println("Error creating index Idx_Customer_Loyalty_Account_Key: ", err)
-	} else {
-		if !exists {
-			log.Println("Index Idx_Customer_Loyalty_Account_Key created")
-		}
-	}
-
-	exists, err = DAO_Customer_Loyalty_Account_Points_Detail.CheckAndCreateIndex("Idx_Customer_Loyalty_Account_Points_Detail", []string{"Key"}, true)
-	if err != nil {
-		log.Println("Error creating index Idx_Customer_Loyalty_Account_Points_Detail: ", err)
-	} else {
-		if !exists {
-			log.Println("Index Idx_Customer_Loyalty_Account_Points_Detail created")
-		}
-	}
-
-	exists, err = DAO_Customer_DND.CheckAndCreateIndex("Idx_Customer_DND_Key", []string{"Key"}, true)
-	if err != nil {
-		log.Println("Error creating index Idx_Customer_DND_Key: ", err)
-	} else {
-		if !exists {
-			log.Println("Index Idx_Customer_DND_Key created")
-		}
-	}
-
-	exists, err = DAO_Customer_Exclusion.CheckAndCreateIndex("Idx_Customer_Exclusion_Key", []string{"Key"}, true)
-	if err != nil {
-		log.Println("Error creating index Idx_Customer_Exclusion_Key: ", err)
-	} else {
-		if !exists {
-			log.Println("Index Idx_Customer_Exclusion_Key created")
-		}
-	}
-
-	exists, err = DAO_Customer_COS_Exclusion.CheckAndCreateIndex("Idx_Customer_COS_Exclusion_Key", []string{"Key"}, true)
-	if err != nil {
-		log.Println("Error creating index Idx_Customer_COS_Exclusion_Key: ", err)
-	} else {
-		if !exists {
-			log.Println("Index Idx_Customer_COS_Exclusion_Key created")
-		}
-	}
-
-	exists, err = DAO_Customer_UAT.CheckAndCreateIndex("Idx_Customer_UAT_Key", []string{"Key"}, true)
-	if err != nil {
-		log.Println("Error creating index Idx_Customer_UAT_Key: ", err)
-	} else {
-		if !exists {
-			log.Println("Index Idx_Customer_UAT_Key created")
-		}
-	}
-
-	exists, err = DAO_Loyalty_Campaign.CheckAndCreateIndex("Idx_Loyalty_Campaign_Key", []string{"Key"}, true)
-	if err != nil {
-		log.Println("Error creating index Idx_Loyalty_Campaign_Key: ", err)
-	} else {
-		if !exists {
-			log.Println("Index Idx_Loyalty_Campaign_Key created")
-		}
-	}
-
-	exists, err = DAO_Loyalty_Campaign_Target_List.CheckAndCreateIndex("Idx_Loyalty_Campaign_Target_List_Key", []string{"Key"}, true)
-	if err != nil {
-		log.Println("Error creating index Idx_Loyalty_Campaign_Target_List_Key: ", err)
-	} else {
-		if !exists {
-			log.Println("Index Idx_Loyalty_Campaign_Target_List_Key created")
-		}
-	}
-
-	exists, err = DAO_Loyalty_Campaign_Account.CheckAndCreateIndex("Idx_Loyalty_Campaign_Account_Key", []string{"Key"}, true)
-	if err != nil {
-		log.Println("Error creating index Idx_Loyalty_Campaign_Account_Key: ", err)
-	} else {
-		if !exists {
-			log.Println("Index Idx_Loyalty_Campaign_Account_Key created")
-		}
-	}
-
-	exists, err = DAO_Loyalty_AccountCreditPoints_log.CheckAndCreateIndex("Idx_LoyaltyAutoIncrement_MSISDN", []string{"MSISDN"}, true)
-	if err != nil {
-		log.Println("Error checking and creating index Idx_LoyaltyAutoIncrement_MSISDN: ", err)
-	} else {
-		if !exists {
-			log.Println("Index Idx_LoyaltyAutoIncrement_MSISDN created")
-		}
-	}
-
-	exists, err = DAO_Loyalty_AccountDebitPoints_log.CheckAndCreateIndex("Idx_LoyaltyAutoIncrement_MSISDN", []string{"MSISDN"}, true)
-	if err != nil {
-		log.Println("Error checking and creating index Idx_LoyaltyAutoIncrement_MSISDN: ", err)
-	} else {
-		if !exists {
-			log.Println("Index Idx_LoyaltyAutoIncrement_MSISDN created")
-		}
-	}
-
-	exists, err = DAO_Loyalty_Point_Redemption_Rules.CheckAndCreateIndex("Idx_LoyaltyAutoIncrement_MSISDN", []string{"MSISDN"}, true)
-	if err != nil {
-		log.Println("Error checking and creating index Idx_LoyaltyAutoIncrement_MSISDN: ", err)
-	} else {
-		if !exists {
-			log.Println("Index Idx_LoyaltyAutoIncrement_MSISDN created")
-		}
-	}
-
-	exists, err = DAO_Loyalty_Status_log.CheckAndCreateIndex("Idx_LoyaltyAutoIncrement_MSISDN", []string{"MSISDN"}, true)
-	if err != nil {
-		log.Println("Error checking and creating index Idx_LoyaltyAutoIncrement_MSISDN: ", err)
-	} else {
-		if !exists {
-			log.Println("Index Idx_LoyaltyAutoIncrement_MSISDN created")
-		}
-	}
+	log.Println("Loyalty DB index maintenance process completed")
 }
-
 func (Uc *UserControl) Write_Loyalty_Event_Log(record Loyalty_Event_Log) {
 	YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.Event_Time)
-	Db := DAO_Loyalty_Event_Log.DB + "_" + YYYY + MM
-	Col := DAO_Loyalty_Event_Log.Collection + "_" + DD
-	_, err := DAO_Loyalty_Event_Log.PutOneLogs(record, Db, Col)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	col := Uc.LoyaltyMongoClient.Mongo.Database(Configuration.DB_Name_Loyalty + "_" + YYYY + MM).Collection("Col_Loyalty_Event_Log_" + DD)
+	_, err := col.InsertOne(ctx, record)
 	if err != nil {
-		log.Println("Error in Write_Lendme_log:", err, " (", record, ")")
+		log.Println("Error in Write_Loyalty_Event_Log:", err, " (", record, ")")
 		return
 	}
 }
 
 func (Uc *UserControl) Write_Loyalty_Level_Change_log(record Loyalty_Level_Change_log) {
 	YYYY, MM, _, _, _, _, _ := GetTimeParts(record.Level_Change_Date)
-	Db := DAO_Loyalty_Level_Change_log.DB + "_" + YYYY + MM
-	Col := DAO_Loyalty_Level_Change_log.Collection //+ "_" + DD
-	_, err := DAO_Loyalty_Level_Change_log.PutOneLogs(record, Db, Col)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	col := Uc.LoyaltyMongoClient.Mongo.Database(Configuration.DB_Name_Loyalty + "_" + YYYY + MM).Collection("Col_Loyalty_Level_Change_log")
+	_, err := col.InsertOne(ctx, record)
 	if err != nil {
-		log.Println("Error in Write_Lendme_log:", err, " (", record, ")")
+		log.Println("Error in Write_Loyalty_Level_Change_log:", err, " (", record, ")")
 		return
 	}
 
@@ -452,8 +527,10 @@ func (Uc *UserControl) Write_Loyalty_Level_Change_log(record Loyalty_Level_Chang
 			LevelChangeNotiLog.Error = "Undefined level change notification for transaction"
 		}
 		YYYY, MM, _, _, _, _, _ = GetTimeParts(record.Level_Change_Date)
-		Db = Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
-		_, err = DAO_NotificationLog.PutOneLogs(LevelChangeNotiLog, Db, DAO_NotificationLog.Collection)
+		notiCtx, notiCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer notiCancel()
+		notiCol := Uc.MongoClient.Mongo.Database(Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM).Collection("Col_NotificationLog")
+		_, err = notiCol.InsertOne(notiCtx, LevelChangeNotiLog)
 		if err != nil {
 			log.Println("Error in Write level change Notification Logs:", err, " (", LevelChangeNotiLog, ")")
 		}
@@ -463,9 +540,10 @@ func (Uc *UserControl) Write_Loyalty_Level_Change_log(record Loyalty_Level_Chang
 
 func (Uc *UserControl) Write_Loyalty_AccountCreditPoints_log(record Loyalty_AccountCreditPoints_log) {
 	YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.ReceiveDate)
-	Db := DAO_Loyalty_AccountCreditPoints_log.DB + "_" + YYYY + MM
-	Col := DAO_Loyalty_AccountCreditPoints_log.Collection + "_" + DD
-	_, err := DAO_Loyalty_AccountCreditPoints_log.PutOneLogs(record, Db, Col)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	col := Uc.LoyaltyMongoClient.Mongo.Database(Configuration.DB_Name_Loyalty + "_" + YYYY + MM).Collection("Col_Loyalty_AccountCreditPoints_log_" + DD)
+	_, err := col.InsertOne(ctx, record)
 	if err != nil {
 		log.Println("Error in Write_Loyalty_AccountCreditPoints_log:", err, " (", record, ")")
 		return
@@ -474,20 +552,22 @@ func (Uc *UserControl) Write_Loyalty_AccountCreditPoints_log(record Loyalty_Acco
 
 func (Uc *UserControl) Write_Loyalty_Monthly_Expiry_log(record Loyalty_Monthly_Expiry_log) {
 	YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.ExpiryTime)
-	Db := DAO_Loyalty_Expiry_log.DB + "_" + YYYY + MM
-	Col := DAO_Loyalty_Expiry_log.Collection + "_" + DD
-	_, err := DAO_Loyalty_Expiry_log.PutOneLogs(record, Db, Col)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	col := Uc.LoyaltyMongoClient.Mongo.Database(Configuration.DB_Name_Loyalty + "_" + YYYY + MM).Collection("Col_Loyalty_Expiry_log_" + DD)
+	_, err := col.InsertOne(ctx, record)
 	if err != nil {
-		log.Println("Error in Write_Loyalty_Expiry_log:", err, " (", record, ")")
+		log.Println("Error in Write_Loyalty_Monthly_Expiry_log:", err, " (", record, ")")
 		return
 	}
 }
 
 func (Uc *UserControl) Write_Loyalty_Full_Expiry_log(record Loyalty_Full_Expiry_Log) {
 	YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.ExpiryTime)
-	Db := DAO_Loyalty_Full_Expiry_log.DB + "_" + YYYY + MM
-	Col := DAO_Loyalty_Full_Expiry_log.Collection + "_" + DD
-	_, err := DAO_Loyalty_Full_Expiry_log.PutOneLogs(record, Db, Col)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	col := Uc.LoyaltyMongoClient.Mongo.Database(Configuration.DB_Name_Loyalty + "_" + YYYY + MM).Collection("Col_Loyalty_Full_Expiry_log_" + DD)
+	_, err := col.InsertOne(ctx, record)
 	if err != nil {
 		log.Println("Error in Write_Full_Loyalty_Expiry_log:", err, " (", record, ")")
 		return
@@ -496,9 +576,10 @@ func (Uc *UserControl) Write_Loyalty_Full_Expiry_log(record Loyalty_Full_Expiry_
 
 func (Uc *UserControl) Write_Loyalty_Redemption_log(record Loyalty_Redemption_log) {
 	YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.ReceiveDate)
-	Db := DAO_Loyalty_Redemption_log.DB + "_" + YYYY + MM
-	Col := DAO_Loyalty_Redemption_log.Collection + "_" + DD
-	_, err := DAO_Loyalty_Redemption_log.PutOneLogs(record, Db, Col)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	col := Uc.LoyaltyMongoClient.Mongo.Database(Configuration.DB_Name_Loyalty + "_" + YYYY + MM).Collection("Col_Loyalty_Redemption_log_" + DD)
+	_, err := col.InsertOne(ctx, record)
 	if err != nil {
 		log.Println("Error in Write_Loyalty_Redemption_log:", err, " (", record, ")")
 		return
@@ -507,9 +588,10 @@ func (Uc *UserControl) Write_Loyalty_Redemption_log(record Loyalty_Redemption_lo
 
 func (Uc *UserControl) Write_Loyalty_Account_Churned_log(record Customer_Loyalty_Account) {
 	YYYY, MM, _, DD, _, _, _ := GetTimeParts(time.Now())
-	Db := DAO_Churned_Customer_Loyalty_Account.DB + "_" + YYYY + MM
-	Col := DAO_Churned_Customer_Loyalty_Account.Collection + "_" + DD
-	_, err := DAO_Churned_Customer_Loyalty_Account.PutOneLogs(record, Db, Col)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	col := Uc.LoyaltyMongoClient.Mongo.Database(Configuration.DB_Name_Loyalty + "_" + YYYY + MM).Collection("Col_Churned_Customer_Loyalty_Account_" + DD)
+	_, err := col.InsertOne(ctx, record)
 	if err != nil {
 		log.Println("Error in Write_Loyalty_Account_Churned_log:", err, " (", record, ")")
 		return
@@ -518,9 +600,10 @@ func (Uc *UserControl) Write_Loyalty_Account_Churned_log(record Customer_Loyalty
 
 func (Uc *UserControl) Write_Loyalty_Status_log(record Loyalty_Status_log) {
 	YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.StatusDate)
-	Db := DAO_Loyalty_Status_log.DB + "_" + YYYY + MM
-	Col := DAO_Loyalty_Status_log.Collection + "_" + DD
-	_, err := DAO_Loyalty_Status_log.PutOneLogs(record, Db, Col)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	col := Uc.LoyaltyMongoClient.Mongo.Database(Configuration.DB_Name_Loyalty + "_" + YYYY + MM).Collection("Col_Loyalty_Status_log_" + DD)
+	_, err := col.InsertOne(ctx, record)
 	if err != nil {
 		log.Println("Error in Write_Loyalty_Status_log:", err, " (", record, ")")
 		return
@@ -529,9 +612,10 @@ func (Uc *UserControl) Write_Loyalty_Status_log(record Loyalty_Status_log) {
 
 func (Uc *UserControl) Write_Loyalty_AccountDebitPoints_log(record Loyalty_AccountDebitPoints_log) {
 	YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.ReceiveDate)
-	Db := DAO_Loyalty_AccountDebitPoints_log.DB + "_" + YYYY + MM
-	Col := DAO_Loyalty_AccountDebitPoints_log.Collection + "_" + DD
-	_, err := DAO_Loyalty_AccountDebitPoints_log.PutOneLogs(record, Db, Col)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	col := Uc.LoyaltyMongoClient.Mongo.Database(Configuration.DB_Name_Loyalty + "_" + YYYY + MM).Collection("Col_Loyalty_AccountDebitPoints_log_" + DD)
+	_, err := col.InsertOne(ctx, record)
 	if err != nil {
 		log.Println("Error in Write_Loyalty_AccountDebitPoints_log:", err, " (", record, ")")
 		return
@@ -539,10 +623,9 @@ func (Uc *UserControl) Write_Loyalty_AccountDebitPoints_log(record Loyalty_Accou
 }
 
 func (Uc *UserControl) Write_Loyalty_Governance_log(record Loyalty_Governance_log) {
-	//YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.ReceiveDate)
-	Db := DAO_Loyalty_Governance_log.DB          //+ "_" + YYYY + MM
-	Col := DAO_Loyalty_Governance_log.Collection //+ "_" + DD
-	_, err := DAO_Loyalty_Governance_log.PutOneLogs(record, Db, Col)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	_, err := Mdb_Loyalty_Governance_log.Coll.InsertOne(ctx, record)
 	if err != nil {
 		log.Println("Error in Write_Loyalty_Governance_log:", err, " (", record, ")")
 		return
@@ -714,16 +797,29 @@ func (Uc *UserControl) Loyalty_Governance_Add(Login string, request Loyalty_Gove
 		return Id, err
 	}
 	//check if key already used
-	exits := Map_Loyalty_Governance.Check(request.Key)
-	if exits {
-		err = errors.New("key already exist")
-		return Id, err
+	{
+		chkCtx, chkCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		_, chkErr := redisx.GetJSON[Loyalty_Governance](chkCtx, RedisClient, Loyalty_Governance{Key: request.Key}.RedisKey())
+		chkCancel()
+		if chkErr == nil {
+			err = errors.New("key already exist")
+			return Id, err
+		}
 	}
 
 	//Prepare new entry
 	var NewEntry Loyalty_Governance
-	NewEntry.Governance_Id = Map_Loyalty_AutoIncrement.GetNextAI("Loyalty_Governance-Id")
-	Id = NewEntry.Governance_Id
+	{
+		aiCtx, aiCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		NewEntry.Governance_Id, err = redisx.NextAutoIncrementID(aiCtx, RedisClient, Mdb_Loyalty_AutoIncrement.Coll, "Loyalty_Governance-Id", redisx.NextIDOptions{
+			RedisBase: "AutoIncrement", MongoRetries: 3, RetryBackoff: 500 * time.Millisecond,
+		})
+		aiCancel()
+		if err != nil {
+			return Id, err
+		}
+		Id = NewEntry.Governance_Id
+	}
 	NewEntry.Key = request.Key
 	NewEntry.Available_Points_Pool = request.Available_Points_Pool
 	NewEntry.Distributed_Points_Pool = request.Distributed_Points_Pool
@@ -732,7 +828,18 @@ func (Uc *UserControl) Loyalty_Governance_Add(Login string, request Loyalty_Gove
 	NewEntry.MaxSubsAwardedPoints_PerMonth = request.MaxSubsAwardedPoints_PerMonth
 	NewEntry.MaxSubsAwardedPoints = request.MaxSubsAwardedPoints
 	//add to cache and DB
-	Map_Loyalty_Governance.Put(NewEntry.Key, NewEntry)
+	{
+		putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, putErr := Mdb_Loyalty_Governance.Coll.UpdateOne(putCtx, bson.M{"Key": NewEntry.Key}, bson.M{"$set": NewEntry}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+			putCancel()
+			err = putErr
+			return Id, err
+		}
+		if putSetErr := redisx.SetJSON(putCtx, RedisClient, NewEntry.RedisKey(), NewEntry); putSetErr != nil {
+			log.Println("redisx.SetJSON Loyalty_Governance error:", putSetErr)
+		}
+		putCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -752,14 +859,13 @@ func (Uc *UserControl) Loyalty_Governance_Edit(Login string, request Loyalty_Gov
 		err = errors.New("key cannot be empty")
 		return Id, err
 	}
-	entry_na, exits := Map_Loyalty_Governance.CheckThenGet(request.Key)
-	if !exits {
+	entry, entryErr := redisx.GetJSON[Loyalty_Governance](context.Background(), RedisClient, Loyalty_Governance{Key: request.Key}.RedisKey())
+	if redisx.IsNil(entryErr) {
 		err = errors.New("key is not created")
 		return Id, err
 	}
-	entry, ok := entry_na.(Loyalty_Governance)
-	if !ok {
-		return Id, errors.New("error in type assertion")
+	if entryErr != nil {
+		return Id, entryErr
 	}
 	if entry.Governance_Id != request.Governance_Id {
 		return Id, errors.New("id is not matching")
@@ -778,13 +884,33 @@ func (Uc *UserControl) Loyalty_Governance_Edit(Login string, request Loyalty_Gov
 	if request.NewKey != "" {
 		if request.NewKey != request.Key {
 			//delete old
-			Map_Loyalty_Governance.Delete(request.Key)
+			{
+				delCtx, delCancel := context.WithTimeout(context.Background(), 10*time.Second)
+				if _, delErr := Mdb_Loyalty_Governance.Coll.DeleteOne(delCtx, bson.M{"Key": request.Key}); delErr != nil {
+					log.Println("Mdb_Loyalty_Governance DeleteOne error:", delErr)
+				}
+				if _, delRedisErr := redisx.DelJSON(delCtx, RedisClient, Loyalty_Governance{Key: request.Key}.RedisKey()); delRedisErr != nil {
+					log.Println("redisx.DelJSON Loyalty_Governance error:", delRedisErr)
+				}
+				delCancel()
+			}
 			//update key
 			entry.Key = request.NewKey
 		}
 	}
 	//add to cache and DB
-	Map_Loyalty_Governance.Put(entry.Key, entry)
+	{
+		putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, putErr := Mdb_Loyalty_Governance.Coll.UpdateOne(putCtx, bson.M{"Key": entry.Key}, bson.M{"$set": entry}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+			putCancel()
+			err = putErr
+			return Id, err
+		}
+		if putSetErr := redisx.SetJSON(putCtx, RedisClient, entry.RedisKey(), entry); putSetErr != nil {
+			log.Println("redisx.SetJSON Loyalty_Governance error:", putSetErr)
+		}
+		putCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -800,74 +926,63 @@ func (Uc *UserControl) Loyalty_Governance_Edit(Login string, request Loyalty_Gov
 
 func (Uc *UserControl) Loyalty_Governance_Get(Key string) (entries []Loyalty_Governance, err error) {
 	if Key == "" {
-		entries_na := Map_Loyalty_Governance.ConvertToArray()
-		if len(entries_na) > 0 {
-			for _, entry_na := range entries_na {
-				entry, ok := entry_na.(Loyalty_Governance)
-				if !ok {
-					err = errors.New("error in type assertion")
-					return entries, err
-				}
-				if Configuration.Operation != "Angola" {
-					redemption_na := Map_Loyalty_Point_Redemption_Rules.ConvertToArray()
-					if len(redemption_na) > 0 {
-						for _, redemptionRules := range redemption_na {
-							redemption, ok := redemptionRules.(Loyalty_Point_Redemption_Rules)
-							if !ok {
-								err = errors.New("error in type assertion")
-								return entries, err
-							} else {
-								var Airtime_EVC_PIN = ""
-								if redemption.Airtime_EVC_PIN != "" {
-									Airtime_EVC_PIN, err = DecryptHexString(redemption.Airtime_EVC_PIN)
-									if err != nil {
-										fmt.Println("error in decrypting artime evc pin", err.Error())
-									}
-								}
-								res, err := Uc.CGW.UC_GWClient.GetERDealerBalance(redemption.Airtime_EVC_Account, Airtime_EVC_PIN)
-								if err == nil {
-									entry.EVC_Account_Balance = float64(res.Balance)
-								}
-							}
+		entries, err = redisx.GetAllJSONByPattern[Loyalty_Governance](context.Background(), RedisClient, redisx.ScanJSONOptions{
+			Pattern: "Loyalty_Governance:*", ScanCount: 500, PipelineSize: 250,
+		})
+		if err != nil {
+			return entries, err
+		}
+		if Configuration.Operation != "Angola" {
+			redemptions, redemErr := redisx.GetAllJSONByPattern[Loyalty_Point_Redemption_Rules](context.Background(), RedisClient, redisx.ScanJSONOptions{
+				Pattern: "Loyalty_Point_Redemption_Rules:*", ScanCount: 500, PipelineSize: 250,
+			})
+			if redemErr != nil {
+				return entries, redemErr
+			}
+			for i := range entries {
+				for _, redemption := range redemptions {
+					var Airtime_EVC_PIN = ""
+					if redemption.Airtime_EVC_PIN != "" {
+						Airtime_EVC_PIN, err = DecryptHexString(redemption.Airtime_EVC_PIN)
+						if err != nil {
+							fmt.Println("error in decrypting artime evc pin", err.Error())
 						}
 					}
+					res, err := Uc.CGW.UC_GWClient.GetERDealerBalance(redemption.Airtime_EVC_Account, Airtime_EVC_PIN)
+					if err == nil {
+						entries[i].EVC_Account_Balance = float64(res.Balance)
+					}
 				}
-				entries = append(entries, entry)
 			}
 		}
 		return entries, nil
 	} else {
-		entry_na, exits := Map_Loyalty_Governance.CheckThenGet(Key)
-		if !exits {
+		entry, entryErr := redisx.GetJSON[Loyalty_Governance](context.Background(), RedisClient, Loyalty_Governance{Key: Key}.RedisKey())
+		if redisx.IsNil(entryErr) {
 			err = errors.New("key does not exist")
 			return entries, err
 		}
-		entry, ok := entry_na.(Loyalty_Governance)
-		if !ok {
-			err = errors.New("error in type assertion")
-			return entries, err
+		if entryErr != nil {
+			return entries, entryErr
 		}
 		if Configuration.Operation != "Angola" {
-			redemption_na := Map_Loyalty_Point_Redemption_Rules.ConvertToArray()
-			if len(redemption_na) > 0 {
-				for _, redemptionRules := range redemption_na {
-					redemption, ok := redemptionRules.(Loyalty_Point_Redemption_Rule)
-					if !ok {
-						err = errors.New("error in type assertion")
-						return entries, err
-					} else {
-						var Airtime_EVC_PIN = ""
-						if redemption.Airtime_EVC_PIN != "" {
-							Airtime_EVC_PIN, err = DecryptHexString(redemption.Airtime_EVC_PIN)
-							if err != nil {
-								fmt.Println("error in decrypting artime evc pin", err.Error())
-							}
-						}
-						res, err := Uc.CGW.UC_GWClient.GetERDealerBalance(redemption.Airtime_EVC_Account, Airtime_EVC_PIN)
-						if err == nil {
-							entry.EVC_Account_Balance = float64(res.Balance)
-						}
+			redemptions, redemErr := redisx.GetAllJSONByPattern[Loyalty_Point_Redemption_Rules](context.Background(), RedisClient, redisx.ScanJSONOptions{
+				Pattern: "Loyalty_Point_Redemption_Rules:*", ScanCount: 500, PipelineSize: 250,
+			})
+			if redemErr != nil {
+				return entries, redemErr
+			}
+			for _, redemption := range redemptions {
+				var Airtime_EVC_PIN = ""
+				if redemption.Airtime_EVC_PIN != "" {
+					Airtime_EVC_PIN, err = DecryptHexString(redemption.Airtime_EVC_PIN)
+					if err != nil {
+						fmt.Println("error in decrypting artime evc pin", err.Error())
 					}
+				}
+				res, err := Uc.CGW.UC_GWClient.GetERDealerBalance(redemption.Airtime_EVC_Account, Airtime_EVC_PIN)
+				if err == nil {
+					entry.EVC_Account_Balance = float64(res.Balance)
 				}
 			}
 		}
@@ -885,7 +1000,6 @@ func (Uc *UserControl) Loyalty_Governance_GetPaginated(Page, Limit int64) (entri
 		return entries, errors.New("invalid limit (accept value between 1 and 50000)")
 	}
 
-	var findparams daoc.DAOFindParams
 	//var array []daoc.DAOFindCriteria
 	// if Outlet_Key != "" {
 	// 	//restrict access for records that belong to this user
@@ -908,19 +1022,15 @@ func (Uc *UserControl) Loyalty_Governance_GetPaginated(Page, Limit int64) (entri
 	// if len(array) > 0 {
 	// 	findparams.FindCriteria = array
 	// }
-	var paginationparams daoc.DAOPaginate
-	paginationparams.Limit = Limit
-	paginationparams.Page = Page
-	findResult, err := DAO_Loyalty_Governance.FindPaginate(findparams, paginationparams)
+	pgCtx, pgCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer pgCancel()
+	result, err := mongox.FindPage[Loyalty_Governance](pgCtx, Mdb_Loyalty_Governance.Coll, bson.M{}, mongox.PageRequest{
+		Page: Page, PageSize: Limit, MaxPageSize: 50000,
+	})
 	if err != nil {
 		return entries, err
 	}
-	if len(findResult) > 0 {
-		for _, findres := range findResult {
-			InterfaceValue := reflect.ValueOf(findres).Elem().Interface().(Loyalty_Governance)
-			entries = append(entries, InterfaceValue)
-		}
-	}
+	entries = result.Items
 	return entries, nil
 
 }
@@ -930,17 +1040,24 @@ func (Uc *UserControl) Loyalty_Governance_Delete(Login, Key string) (err error) 
 		err = errors.New("key cannot be empty")
 		return err
 	}
-	entry_na, exits := Map_Loyalty_Governance.CheckThenGet(Key)
-	if !exits {
+	entry, entryErr := redisx.GetJSON[Loyalty_Governance](context.Background(), RedisClient, Loyalty_Governance{Key: Key}.RedisKey())
+	if redisx.IsNil(entryErr) {
 		err = errors.New("entry does not exist")
 		return err
 	}
-	entry, ok := entry_na.(Loyalty_Governance)
-	if !ok {
-		err = errors.New("error in type assertion")
-		return err
+	if entryErr != nil {
+		return entryErr
 	}
-	Map_Loyalty_Governance.Delete(Key)
+	{
+		delCtx, delCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, delErr := Mdb_Loyalty_Governance.Coll.DeleteOne(delCtx, bson.M{"Key": Key}); delErr != nil {
+			log.Println("Mdb_Loyalty_Governance DeleteOne error:", delErr)
+		}
+		if _, delRedisErr := redisx.DelJSON(delCtx, RedisClient, Loyalty_Governance{Key: Key}.RedisKey()); delRedisErr != nil {
+			log.Println("redisx.DelJSON Loyalty_Governance error:", delRedisErr)
+		}
+		delCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -956,15 +1073,10 @@ func (Uc *UserControl) Loyalty_Governance_Delete(Login, Key string) (err error) 
 
 func (Uc *UserControl) Loyalty_Governance_Available_Points_Debit(points float64, refund ...bool) (err error) {
 	chan_LoyaltyGovernance_Controler <- 1
-	loyalty_governance_na, exist := Map_Loyalty_Governance.CheckThenGet(LOYALTY_GOVERNANCE_KEY)
-	if !exist {
+	loyalty_governance, loyaltyErr := redisx.GetJSON[Loyalty_Governance](context.Background(), RedisClient, Loyalty_Governance{Key: LOYALTY_GOVERNANCE_KEY}.RedisKey())
+	if loyaltyErr != nil {
 		<-chan_LoyaltyGovernance_Controler
 		return errors.New("loyalty governance entry not found")
-	}
-	loyalty_governance, ok := loyalty_governance_na.(Loyalty_Governance)
-	if !ok {
-		<-chan_LoyaltyGovernance_Controler
-		return errors.New("loyalty governance type assertion issue")
 	}
 	if (loyalty_governance.Available_Points_Pool - (loyalty_governance.Distributed_Points_Pool + loyalty_governance.Expired_Points_Pool + loyalty_governance.Redeemed_Points_Pool)) > points {
 		refundValue := false
@@ -975,7 +1087,16 @@ func (Uc *UserControl) Loyalty_Governance_Available_Points_Debit(points float64,
 		if refundValue {
 			loyalty_governance.Redeemed_Points_Pool = loyalty_governance.Redeemed_Points_Pool - points
 		}
-		Map_Loyalty_Governance.Put(loyalty_governance.Key, loyalty_governance)
+		{
+			putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+			if _, putErr := Mdb_Loyalty_Governance.Coll.UpdateOne(putCtx, bson.M{"Key": loyalty_governance.Key}, bson.M{"$set": loyalty_governance}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+				log.Println("Mdb_Loyalty_Governance upsert error:", putErr)
+			}
+			if putSetErr := redisx.SetJSON(putCtx, RedisClient, loyalty_governance.RedisKey(), loyalty_governance); putSetErr != nil {
+				log.Println("redisx.SetJSON Loyalty_Governance error:", putSetErr)
+			}
+			putCancel()
+		}
 		<-chan_LoyaltyGovernance_Controler
 		return
 	} else {
@@ -986,15 +1107,10 @@ func (Uc *UserControl) Loyalty_Governance_Available_Points_Debit(points float64,
 
 func (Uc *UserControl) Loyalty_Governance_Redeem_Points_Debit(points float64, notRedemption ...bool) (err error) {
 	chan_LoyaltyGovernance_Controler <- 1
-	loyalty_governance_na, exist := Map_Loyalty_Governance.CheckThenGet(LOYALTY_GOVERNANCE_KEY)
-	if !exist {
+	loyalty_governance, loyaltyErr := redisx.GetJSON[Loyalty_Governance](context.Background(), RedisClient, Loyalty_Governance{Key: LOYALTY_GOVERNANCE_KEY}.RedisKey())
+	if loyaltyErr != nil {
 		<-chan_LoyaltyGovernance_Controler
 		return errors.New("loyalty governance entry not found")
-	}
-	loyalty_governance, ok := loyalty_governance_na.(Loyalty_Governance)
-	if !ok {
-		<-chan_LoyaltyGovernance_Controler
-		return errors.New("loyalty governance type assertion issue")
 	}
 	notRedemptionValue := false
 	if len(notRedemption) > 0 {
@@ -1004,44 +1120,61 @@ func (Uc *UserControl) Loyalty_Governance_Redeem_Points_Debit(points float64, no
 		loyalty_governance.Redeemed_Points_Pool = loyalty_governance.Redeemed_Points_Pool + points
 	}
 	loyalty_governance.Distributed_Points_Pool = loyalty_governance.Distributed_Points_Pool - points
-	Map_Loyalty_Governance.Put(loyalty_governance.Key, loyalty_governance)
+	{
+		putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, putErr := Mdb_Loyalty_Governance.Coll.UpdateOne(putCtx, bson.M{"Key": loyalty_governance.Key}, bson.M{"$set": loyalty_governance}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+			log.Println("Mdb_Loyalty_Governance upsert error:", putErr)
+		}
+		if putSetErr := redisx.SetJSON(putCtx, RedisClient, loyalty_governance.RedisKey(), loyalty_governance); putSetErr != nil {
+			log.Println("redisx.SetJSON Loyalty_Governance error:", putSetErr)
+		}
+		putCancel()
+	}
 	<-chan_LoyaltyGovernance_Controler
 	return
 }
 
 func (Uc *UserControl) Loyalty_Governance_Expiry_Points_Credit(points float64) (err error) {
 	chan_LoyaltyGovernance_Controler <- 1
-	loyalty_governance_na, exist := Map_Loyalty_Governance.CheckThenGet(LOYALTY_GOVERNANCE_KEY)
-	if !exist {
+	loyalty_governance, loyaltyErr := redisx.GetJSON[Loyalty_Governance](context.Background(), RedisClient, Loyalty_Governance{Key: LOYALTY_GOVERNANCE_KEY}.RedisKey())
+	if loyaltyErr != nil {
 		<-chan_LoyaltyGovernance_Controler
 		return errors.New("loyalty governance entry not found")
 	}
-	loyalty_governance, ok := loyalty_governance_na.(Loyalty_Governance)
-	if !ok {
-		<-chan_LoyaltyGovernance_Controler
-		return errors.New("loyalty governance type assertion issue")
-	}
 	loyalty_governance.Expired_Points_Pool = loyalty_governance.Expired_Points_Pool + points
 	loyalty_governance.Distributed_Points_Pool = loyalty_governance.Distributed_Points_Pool - points
-	Map_Loyalty_Governance.Put(loyalty_governance.Key, loyalty_governance)
+	{
+		putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, putErr := Mdb_Loyalty_Governance.Coll.UpdateOne(putCtx, bson.M{"Key": loyalty_governance.Key}, bson.M{"$set": loyalty_governance}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+			log.Println("Mdb_Loyalty_Governance upsert error:", putErr)
+		}
+		if putSetErr := redisx.SetJSON(putCtx, RedisClient, loyalty_governance.RedisKey(), loyalty_governance); putSetErr != nil {
+			log.Println("redisx.SetJSON Loyalty_Governance error:", putSetErr)
+		}
+		putCancel()
+	}
 	<-chan_LoyaltyGovernance_Controler
 	return
 }
 
 func (Uc *UserControl) Loyalty_Governance_Status_Expiry_Points_Credit(points float64) (err error) {
 	chan_LoyaltyGovernance_Controler <- 1
-	loyalty_governance_na, exist := Map_Loyalty_Governance.CheckThenGet(LOYALTY_GOVERNANCE_KEY)
-	if !exist {
+	loyalty_governance, loyaltyErr := redisx.GetJSON[Loyalty_Governance](context.Background(), RedisClient, Loyalty_Governance{Key: LOYALTY_GOVERNANCE_KEY}.RedisKey())
+	if loyaltyErr != nil {
 		<-chan_LoyaltyGovernance_Controler
 		return errors.New("loyalty governance entry not found")
 	}
-	loyalty_governance, ok := loyalty_governance_na.(Loyalty_Governance)
-	if !ok {
-		<-chan_LoyaltyGovernance_Controler
-		return errors.New("loyalty governance type assertion issue")
-	}
 	loyalty_governance.Distributed_Points_Pool = loyalty_governance.Distributed_Points_Pool - points
-	Map_Loyalty_Governance.Put(loyalty_governance.Key, loyalty_governance)
+	{
+		putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, putErr := Mdb_Loyalty_Governance.Coll.UpdateOne(putCtx, bson.M{"Key": loyalty_governance.Key}, bson.M{"$set": loyalty_governance}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+			log.Println("Mdb_Loyalty_Governance upsert error:", putErr)
+		}
+		if putSetErr := redisx.SetJSON(putCtx, RedisClient, loyalty_governance.RedisKey(), loyalty_governance); putSetErr != nil {
+			log.Println("redisx.SetJSON Loyalty_Governance error:", putSetErr)
+		}
+		putCancel()
+	}
 	<-chan_LoyaltyGovernance_Controler
 	return
 }
@@ -1058,42 +1191,38 @@ func (Uc *UserControl) Loyalty_Governance_DailyLog_Process() {
 					if exec == 0 {
 						exec = 1
 						log.Println(LOG_ID + " triggered")
-						loyalty_governance_na, exist := Map_Loyalty_Governance.CheckThenGet(LOYALTY_GOVERNANCE_KEY)
-						if exist {
-							loyalty_governance, ok := loyalty_governance_na.(Loyalty_Governance)
-							if ok {
-								var log_entry Loyalty_Governance_log
-								log_entry.Log_Date = time.Now()
-								log_entry.Available_Points_Pool = loyalty_governance.Available_Points_Pool
-								log_entry.Distributed_Points_Pool = loyalty_governance.Distributed_Points_Pool
-								log_entry.Redeemed_Points_Pool = loyalty_governance.Redeemed_Points_Pool
-								log_entry.Expired_Points_Pool = loyalty_governance.Expired_Points_Pool
-								if Configuration.Operation != "Angola" {
-									redemption_na := Map_Loyalty_Point_Redemption_Rules.ConvertToArray()
-									if len(redemption_na) > 0 {
-										for _, redemptionRules := range redemption_na {
-											redemption, ok := redemptionRules.(Loyalty_Point_Redemption_Rules)
-											if !ok {
-												fmt.Println("error in type assertion")
-											} else {
-												var Airtime_EVC_PIN = ""
-												var err error
-												if redemption.Airtime_EVC_PIN != "" {
-													Airtime_EVC_PIN, err = DecryptHexString(redemption.Airtime_EVC_PIN)
-													if err != nil {
-														fmt.Println("error in decrypting artime evc pin", err.Error())
-													}
-												}
-												res, err := Uc.CGW.UC_GWClient.GetERDealerBalance(redemption.Airtime_EVC_Account, Airtime_EVC_PIN)
-												if err == nil {
-													log_entry.EVC_Account_Balance = float64(res.Balance)
-												}
+						loyalty_governance, loyaltyErr := redisx.GetJSON[Loyalty_Governance](context.Background(), RedisClient, Loyalty_Governance{Key: LOYALTY_GOVERNANCE_KEY}.RedisKey())
+						if loyaltyErr == nil {
+							var log_entry Loyalty_Governance_log
+							log_entry.Log_Date = time.Now()
+							log_entry.Available_Points_Pool = loyalty_governance.Available_Points_Pool
+							log_entry.Distributed_Points_Pool = loyalty_governance.Distributed_Points_Pool
+							log_entry.Redeemed_Points_Pool = loyalty_governance.Redeemed_Points_Pool
+							log_entry.Expired_Points_Pool = loyalty_governance.Expired_Points_Pool
+							if Configuration.Operation != "Angola" {
+								redemptions, redemErr := redisx.GetAllJSONByPattern[Loyalty_Point_Redemption_Rules](context.Background(), RedisClient, redisx.ScanJSONOptions{
+									Pattern: "Loyalty_Point_Redemption_Rules:*", ScanCount: 500, PipelineSize: 250,
+								})
+								if redemErr != nil {
+									fmt.Println("error fetching redemption rules:", redemErr)
+								} else {
+									for _, redemption := range redemptions {
+										var Airtime_EVC_PIN = ""
+										var err error
+										if redemption.Airtime_EVC_PIN != "" {
+											Airtime_EVC_PIN, err = DecryptHexString(redemption.Airtime_EVC_PIN)
+											if err != nil {
+												fmt.Println("error in decrypting artime evc pin", err.Error())
 											}
+										}
+										res, err := Uc.CGW.UC_GWClient.GetERDealerBalance(redemption.Airtime_EVC_Account, Airtime_EVC_PIN)
+										if err == nil {
+											log_entry.EVC_Account_Balance = float64(res.Balance)
 										}
 									}
 								}
-								Uc.Write_Loyalty_Governance_log(log_entry)
 							}
+							Uc.Write_Loyalty_Governance_log(log_entry)
 						}
 						log.Println(LOG_ID + " finished")
 					}
@@ -1119,14 +1248,9 @@ func (Uc *UserControl) Loyalty_Customer_Account_Daily_Snapshot() {
 					if exec == 0 {
 						exec = 1
 						log.Println(LOG_ID + " triggered")
-						yesterday := time.Now().AddDate(0, 0, -1)
-						YYYY, MM, _, DD, _, _, _ := GetTimeParts(yesterday)
-						Db := DAO_Loyalty_AccountCreditPoints_log.DB + "_" + YYYY + MM
-						Col := DAO_Customer_Loyalty_Account.Collection + "_" + DD
-						err := DAO_Customer_Loyalty_Account.CollectionSnapshot(Db, Col)
-						if err != nil {
-							log.Println("error while taking a snapshot from customer account collection", err)
-						}
+						// TODO: CollectionSnapshot not yet implemented in mongox migration.
+						// Original: snapshot Col_Customer_Loyalty_Account to dynamic DB+collection by date.
+						log.Println(LOG_ID + " snapshot skipped (pending mongox implementation)")
 						log.Println(LOG_ID + " finished")
 					}
 				}
@@ -1155,7 +1279,7 @@ func (Uc *UserControl) Loyalty_Status_Expiry_Daily_Process() {
 			now.Location(),
 		)
 
-		// If already past 00:10 → schedule for tomorrow
+		// If already past 00:10 â†’ schedule for tomorrow
 		if now.After(nextRun) {
 			nextRun = nextRun.Add(24 * time.Hour)
 		}
@@ -1165,16 +1289,16 @@ func (Uc *UserControl) Loyalty_Status_Expiry_Daily_Process() {
 		log.Println(LOG_ID + " triggered")
 		graceDays := Configuration.ISLoyaltyOptOutGracePeriodDays
 		cutoffDate := time.Now().AddDate(0, 0, -graceDays)
-		pipeline := mongo.Pipeline{
-			{{Key: "$match", Value: bson.D{
+		pipeline := bson.A{bson.D{
+			{Key: "$match", Value: bson.D{
 				{Key: "Opt_Status", Value: bson.D{{Key: "$eq", Value: "OptedOut"}}},
 				{Key: "Opt_Status_Date", Value: bson.D{{Key: "$lte", Value: cutoffDate}}},
-			}}},
-		}
+			}},
+		}}
 		MongoDB_DB_Name := "Loyalty_DB"
 		collName := "Col_Customer_Loyalty_Account"
 		// Fetch the collection
-		collection := Uc.LoyaltyMongoDB.MongoDBClient.Database(MongoDB_DB_Name).Collection(collName)
+		collection := Uc.LoyaltyMongoClient.Mongo.Database(MongoDB_DB_Name).Collection(collName)
 
 		cursor, err := collection.Aggregate(context.Background(), pipeline)
 		if err != nil {
@@ -1226,7 +1350,16 @@ func (Uc *UserControl) Loyalty_Status_Expiry_Daily_Process() {
 				pointsDetail[0].Expired_Points = pointsDetail[0].Available_Points
 				pointsDetail[0].Available_Points = 0
 				pointsDetail[0].Expiry_Date = time.Now()
-				Map_Customer_Loyalty_Account_Points_Detail.Put(pointsDetail[0].Key, pointsDetail[0])
+				{
+					putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+					if _, putErr := Mdb_Customer_Loyalty_Account_Points_Detail.Coll.UpdateOne(putCtx, bson.M{"Key": pointsDetail[0].Key}, bson.M{"$set": pointsDetail[0]}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+						log.Println("Mdb_Customer_Loyalty_Account_Points_Detail upsert error:", putErr)
+					}
+					if putSetErr := redisx.SetJSON(putCtx, RedisClient, pointsDetail[0].RedisKey(), pointsDetail[0]); putSetErr != nil {
+						log.Println("redisx.SetJSON Customer_Loyalty_Account_Points_Detail error:", putSetErr)
+					}
+					putCancel()
+				}
 
 				monthly_expiry_log.End_Expired_Points = pointsDetail[0].Expired_Points
 				monthly_expiry_log.ExpiryTime = time.Now()
@@ -1257,42 +1390,54 @@ func (Uc *UserControl) Loyalty_Status_Expiry_Daily_Process() {
 			expiry_log.End_Redeemed_Points = 0
 			expiry_log.End_Available_Points = 0
 			expiry_log.End_Outstanding_Points = 0
-			Map_Customer_Loyalty_Account.Put(doc.Key, doc)
+			{
+				putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+				if _, putErr := Mdb_Customer_Loyalty_Account.Coll.UpdateOne(putCtx, bson.M{"Key": doc.Key}, bson.M{"$set": doc}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+					log.Println("Mdb_Customer_Loyalty_Account upsert error:", putErr)
+				}
+				if putSetErr := redisx.SetJSON(putCtx, RedisClient, doc.RedisKey(), doc); putSetErr != nil {
+					log.Println("redisx.SetJSON Customer_Loyalty_Account error:", putSetErr)
+				}
+				putCancel()
+			}
 			var New_Loyalty_Level Loyalty_Level
-			loyalty_Level_na := Map_Loyalty_Level.ConvertToArray()
-			if len(loyalty_Level_na) > 0 {
-				for _, loyalty_Level_na := range loyalty_Level_na {
-					loyalty_Level, ok := loyalty_Level_na.(Loyalty_Level)
-					if !ok {
-						fmt.Println("error in type assertion")
-					} else {
-						//evaluate
-						if doc.Awarded_Points >= loyalty_Level.Min_Accumulated_Points && doc.Awarded_Points < loyalty_Level.Max_Accumulated_Points {
-							New_Loyalty_Level = loyalty_Level
-							if New_Loyalty_Level.Key == doc.Loyalty_Level_Key {
-								//===>> no level change
-								break
-							} else {
-								current_level_na, lvlexist := Map_Loyalty_Level.CheckThenGet(doc.Loyalty_Level_Key)
-								if !lvlexist {
-									fmt.Println("current level is invalid")
-								}
-								current_level, ok := current_level_na.(Loyalty_Level)
-								if !ok {
-									fmt.Println("error in type assertion")
-								}
-								if New_Loyalty_Level.Min_Accumulated_Points < current_level.Min_Accumulated_Points &&
-									New_Loyalty_Level.Max_Accumulated_Points < current_level.Max_Accumulated_Points {
-									//Downgrade level
-									expiry_log.EndLoyaltyLevel = New_Loyalty_Level.Key
-									doc.Previous_Loyalty_Level_Key = doc.Loyalty_Level_Key
-									doc.Previous_Loyalty_Level_Date = doc.Loyalty_Level_Date
-									doc.Loyalty_Level_Key = New_Loyalty_Level.Key
-									doc.Loyalty_Level_Date = time.Now()
-									doc.Loyalty_Level_Direction = "Downgrade"
-									doc.Loyalty_Level_SetBy = "Opt Expiry Process"
-									Map_Customer_Loyalty_Account.Put(doc.Key, doc)
-
+			loyaltyLevels, levelsErr := redisx.GetAllJSONByPattern[Loyalty_Level](context.Background(), RedisClient, redisx.ScanJSONOptions{
+				Pattern: "Loyalty_Level:*", ScanCount: 500, PipelineSize: 250,
+			})
+			if levelsErr != nil {
+				fmt.Println("error fetching loyalty levels:", levelsErr)
+			} else {
+				for _, loyalty_Level := range loyaltyLevels {
+					//evaluate
+					if doc.Awarded_Points >= loyalty_Level.Min_Accumulated_Points && doc.Awarded_Points < loyalty_Level.Max_Accumulated_Points {
+						New_Loyalty_Level = loyalty_Level
+						if New_Loyalty_Level.Key == doc.Loyalty_Level_Key {
+							//===>> no level change
+							break
+						} else {
+							current_level, lvlErr := redisx.GetJSON[Loyalty_Level](context.Background(), RedisClient, Loyalty_Level{Key: doc.Loyalty_Level_Key}.RedisKey())
+							if lvlErr != nil {
+								fmt.Println("current level is invalid")
+							}
+							if New_Loyalty_Level.Min_Accumulated_Points < current_level.Min_Accumulated_Points &&
+								New_Loyalty_Level.Max_Accumulated_Points < current_level.Max_Accumulated_Points {
+								//Downgrade level
+								expiry_log.EndLoyaltyLevel = New_Loyalty_Level.Key
+								doc.Previous_Loyalty_Level_Key = doc.Loyalty_Level_Key
+								doc.Previous_Loyalty_Level_Date = doc.Loyalty_Level_Date
+								doc.Loyalty_Level_Key = New_Loyalty_Level.Key
+								doc.Loyalty_Level_Date = time.Now()
+								doc.Loyalty_Level_Direction = "Downgrade"
+								doc.Loyalty_Level_SetBy = "Opt Expiry Process"
+								{
+									putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+									if _, putErr := Mdb_Customer_Loyalty_Account.Coll.UpdateOne(putCtx, bson.M{"Key": doc.Key}, bson.M{"$set": doc}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+										log.Println("Mdb_Customer_Loyalty_Account upsert error:", putErr)
+									}
+									if putSetErr := redisx.SetJSON(putCtx, RedisClient, doc.RedisKey(), doc); putSetErr != nil {
+										log.Println("redisx.SetJSON Customer_Loyalty_Account error:", putSetErr)
+									}
+									putCancel()
 								}
 							}
 						}
@@ -1326,31 +1471,41 @@ func (Uc *UserControl) Loyalty_Level_Add(Login string, request Loyalty_Level_Add
 		return Id, err
 	}
 	//check if key already used
-	exits := Map_Loyalty_Level.Check(request.Key)
-	if exits {
-		err = errors.New("key already exist")
-		return Id, err
+	{
+		chkCtx, chkCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		_, chkErr := redisx.GetJSON[Loyalty_Level](chkCtx, RedisClient, Loyalty_Level{Key: request.Key}.RedisKey())
+		chkCancel()
+		if chkErr == nil {
+			err = errors.New("key already exist")
+			return Id, err
+		}
 	}
-	entries_na := Map_Loyalty_Level.ConvertToArray()
-	if len(entries_na) > 0 {
-		for _, entry_na := range entries_na {
-			entry, ok := entry_na.(Loyalty_Level)
-			if !ok {
-				err = errors.New("error in type assertion")
+	loyaltyLevels, levelsErr := redisx.GetAllJSONByPattern[Loyalty_Level](context.Background(), RedisClient, redisx.ScanJSONOptions{
+		Pattern: "Loyalty_Level:*", ScanCount: 500, PipelineSize: 250,
+	})
+	if levelsErr != nil {
+		fmt.Println("error fetching loyalty levels:", levelsErr)
+	} else {
+		for _, entry := range loyaltyLevels {
+			if request.Min_Accumulated_Points <= entry.Max_Accumulated_Points && request.Max_Accumulated_Points >= entry.Min_Accumulated_Points {
+				err = errors.New("Points intersect with " + entry.Key + " level")
 				return Id, err
-			} else {
-				if request.Min_Accumulated_Points <= entry.Max_Accumulated_Points && request.Max_Accumulated_Points >= entry.Min_Accumulated_Points {
-					err = errors.New("Points intersect with " + entry.Key + " level")
-					return Id, err
-				}
-
 			}
 		}
 	}
 	//Prepare new entry
 	var NewEntry Loyalty_Level
-	NewEntry.Level_Id = Map_Loyalty_AutoIncrement.GetNextAI("Loyalty_Level-Id")
-	Id = NewEntry.Level_Id
+	{
+		aiCtx, aiCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		NewEntry.Level_Id, err = redisx.NextAutoIncrementID(aiCtx, RedisClient, Mdb_Loyalty_AutoIncrement.Coll, "Loyalty_Level-Id", redisx.NextIDOptions{
+			RedisBase: "AutoIncrement", MongoRetries: 3, RetryBackoff: 500 * time.Millisecond,
+		})
+		aiCancel()
+		if err != nil {
+			return Id, err
+		}
+		Id = NewEntry.Level_Id
+	}
 	NewEntry.Key = request.Key
 	NewEntry.Description = request.Description
 	NewEntry.Min_Accumulated_Points = request.Min_Accumulated_Points
@@ -1359,7 +1514,18 @@ func (Uc *UserControl) Loyalty_Level_Add(Login string, request Loyalty_Level_Add
 	NewEntry.DowngradeToLevel_Key = request.DowngradeToLevel_Key
 	NewEntry.Seniority_Levels = request.Seniority_Levels
 	//add to cache and DB
-	Map_Loyalty_Level.Put(NewEntry.Key, NewEntry)
+	{
+		putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, putErr := Mdb_Loyalty_Level.Coll.UpdateOne(putCtx, bson.M{"Key": NewEntry.Key}, bson.M{"$set": NewEntry}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+			putCancel()
+			err = putErr
+			return Id, err
+		}
+		if putSetErr := redisx.SetJSON(putCtx, RedisClient, NewEntry.RedisKey(), NewEntry); putSetErr != nil {
+			log.Println("redisx.SetJSON Loyalty_Level error:", putSetErr)
+		}
+		putCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -1379,32 +1545,28 @@ func (Uc *UserControl) Loyalty_Level_Edit(Login string, request Loyalty_Level_Ed
 		err = errors.New("key cannot be empty")
 		return Id, err
 	}
-	entry_na, exits := Map_Loyalty_Level.CheckThenGet(request.Key)
-	if !exits {
+	entry, entryErr := redisx.GetJSON[Loyalty_Level](context.Background(), RedisClient, Loyalty_Level{Key: request.Key}.RedisKey())
+	if redisx.IsNil(entryErr) {
 		err = errors.New("key is not created")
 		return Id, err
 	}
-	entry, ok := entry_na.(Loyalty_Level)
-	if !ok {
-		return Id, errors.New("error in type assertion")
+	if entryErr != nil {
+		return Id, entryErr
 	}
 	if entry.Level_Id != request.Level_Id {
 		return Id, errors.New("id is not matching")
 	}
 	Current_Entry := entry
-	entries_na := Map_Loyalty_Level.ConvertToArray()
-	if len(entries_na) > 0 {
-		for _, entry_na := range entries_na {
-			entry, ok := entry_na.(Loyalty_Level)
-			if !ok {
-				err = errors.New("error in type assertion")
+	loyaltyLevels, levelsErr := redisx.GetAllJSONByPattern[Loyalty_Level](context.Background(), RedisClient, redisx.ScanJSONOptions{
+		Pattern: "Loyalty_Level:*", ScanCount: 500, PipelineSize: 250,
+	})
+	if levelsErr != nil {
+		fmt.Println("error fetching loyalty levels:", levelsErr)
+	} else {
+		for _, lvl := range loyaltyLevels {
+			if request.Key != lvl.Key && request.Min_Accumulated_Points <= lvl.Max_Accumulated_Points && request.Max_Accumulated_Points >= lvl.Min_Accumulated_Points {
+				err = errors.New("Points intersect with " + lvl.Key + " level")
 				return Id, err
-			} else {
-				if request.Key != entry.Key && request.Min_Accumulated_Points <= entry.Max_Accumulated_Points && request.Max_Accumulated_Points >= entry.Min_Accumulated_Points {
-					err = errors.New("Points intersect with " + entry.Key + " level")
-					return Id, err
-				}
-
 			}
 		}
 	}
@@ -1419,13 +1581,33 @@ func (Uc *UserControl) Loyalty_Level_Edit(Login string, request Loyalty_Level_Ed
 	if request.NewKey != "" {
 		if request.NewKey != request.Key {
 			//delete old
-			Map_Loyalty_Level.Delete(request.Key)
+			{
+				delCtx, delCancel := context.WithTimeout(context.Background(), 10*time.Second)
+				if _, delErr := Mdb_Loyalty_Level.Coll.DeleteOne(delCtx, bson.M{"Key": request.Key}); delErr != nil {
+					log.Println("Mdb_Loyalty_Level DeleteOne error:", delErr)
+				}
+				if _, delRedisErr := redisx.DelJSON(delCtx, RedisClient, Loyalty_Level{Key: request.Key}.RedisKey()); delRedisErr != nil {
+					log.Println("redisx.DelJSON Loyalty_Level error:", delRedisErr)
+				}
+				delCancel()
+			}
 			//update key
 			entry.Key = request.NewKey
 		}
 	}
 	//add to cache and DB
-	Map_Loyalty_Level.Put(entry.Key, entry)
+	{
+		putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, putErr := Mdb_Loyalty_Level.Coll.UpdateOne(putCtx, bson.M{"Key": entry.Key}, bson.M{"$set": entry}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+			putCancel()
+			err = putErr
+			return Id, err
+		}
+		if putSetErr := redisx.SetJSON(putCtx, RedisClient, entry.RedisKey(), entry); putSetErr != nil {
+			log.Println("redisx.SetJSON Loyalty_Level error:", putSetErr)
+		}
+		putCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -1441,29 +1623,21 @@ func (Uc *UserControl) Loyalty_Level_Edit(Login string, request Loyalty_Level_Ed
 
 func (Uc *UserControl) Loyalty_Level_Get(Key string) (entries []Loyalty_Level, err error) {
 	if Key == "" {
-		entries_na := Map_Loyalty_Level.ConvertToArray()
-		if len(entries_na) > 0 {
-			for _, entry_na := range entries_na {
-				entry, ok := entry_na.(Loyalty_Level)
-				if !ok {
-					err = errors.New("error in type assertion")
-					return entries, err
-				} else {
-					entries = append(entries, entry)
-				}
-			}
+		entries, err = redisx.GetAllJSONByPattern[Loyalty_Level](context.Background(), RedisClient, redisx.ScanJSONOptions{
+			Pattern: "Loyalty_Level:*", ScanCount: 500, PipelineSize: 250,
+		})
+		if err != nil {
+			return entries, err
 		}
 		return entries, nil
 	} else {
-		entry_na, exits := Map_Loyalty_Level.CheckThenGet(Key)
-		if !exits {
+		entry, entryErr := redisx.GetJSON[Loyalty_Level](context.Background(), RedisClient, Loyalty_Level{Key: Key}.RedisKey())
+		if redisx.IsNil(entryErr) {
 			err = errors.New("key does not exist")
 			return entries, err
 		}
-		entry, ok := entry_na.(Loyalty_Level)
-		if !ok {
-			err = errors.New("error in type assertion")
-			return entries, err
+		if entryErr != nil {
+			return entries, entryErr
 		}
 		entries = append(entries, entry)
 		return entries, nil
@@ -1478,42 +1652,15 @@ func (Uc *UserControl) Loyalty_Level_GetPaginated(Page, Limit int64) (entries []
 		return entries, errors.New("invalid limit (accept value between 1 and 50000)")
 	}
 
-	var findparams daoc.DAOFindParams
-	//var array []daoc.DAOFindCriteria
-	// if Outlet_Key != "" {
-	// 	//restrict access for records that belong to this user
-	// 	var criteria daoc.DAOFindCriteria = daoc.DAOFindCriteria{
-	// 		Field:    "Outlet_Key",
-	// 		Value:    Outlet_Key,
-	// 		Operator: "EQUAL",
-	// 	}
-	// 	array = append(array, criteria)
-	// }
-	// if Agent_Key != "" {
-	// 	//restrict access for records that belong to this user
-	// 	var criteria daoc.DAOFindCriteria = daoc.DAOFindCriteria{
-	// 		Field:    "Agent_Key",
-	// 		Value:    Agent_Key,
-	// 		Operator: "EQUAL",
-	// 	}
-	// 	array = append(array, criteria)
-	// }
-	// if len(array) > 0 {
-	// 	findparams.FindCriteria = array
-	// }
-	var paginationparams daoc.DAOPaginate
-	paginationparams.Limit = Limit
-	paginationparams.Page = Page
-	findResult, err := DAO_Loyalty_Level.FindPaginate(findparams, paginationparams)
+	pgCtx, pgCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer pgCancel()
+	result, err := mongox.FindPage[Loyalty_Level](pgCtx, Mdb_Loyalty_Level.Coll, bson.M{}, mongox.PageRequest{
+		Page: Page, PageSize: Limit, MaxPageSize: 50000,
+	})
 	if err != nil {
 		return entries, err
 	}
-	if len(findResult) > 0 {
-		for _, findres := range findResult {
-			InterfaceValue := reflect.ValueOf(findres).Elem().Interface().(Loyalty_Level)
-			entries = append(entries, InterfaceValue)
-		}
-	}
+	entries = result.Items
 	return entries, nil
 
 }
@@ -1523,17 +1670,24 @@ func (Uc *UserControl) Loyalty_Level_Delete(Login, Key string) (err error) {
 		err = errors.New("key cannot be empty")
 		return err
 	}
-	entry_na, exits := Map_Loyalty_Level.CheckThenGet(Key)
-	if !exits {
+	entry, entryErr := redisx.GetJSON[Loyalty_Level](context.Background(), RedisClient, Loyalty_Level{Key: Key}.RedisKey())
+	if redisx.IsNil(entryErr) {
 		err = errors.New("entry does not exist")
 		return err
 	}
-	entry, ok := entry_na.(Loyalty_Level)
-	if !ok {
-		err = errors.New("error in type assertion")
-		return err
+	if entryErr != nil {
+		return entryErr
 	}
-	Map_Loyalty_Level.Delete(Key)
+	{
+		delCtx, delCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, delErr := Mdb_Loyalty_Level.Coll.DeleteOne(delCtx, bson.M{"Key": Key}); delErr != nil {
+			log.Println("Mdb_Loyalty_Level DeleteOne error:", delErr)
+		}
+		if _, delRedisErr := redisx.DelJSON(delCtx, RedisClient, Loyalty_Level{Key: Key}.RedisKey()); delRedisErr != nil {
+			log.Println("redisx.DelJSON Loyalty_Level error:", delRedisErr)
+		}
+		delCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -1557,35 +1711,45 @@ func (Uc *UserControl) Loyalty_Seniority_Level_Add(Login string, request Loyalty
 		return Id, err
 	}
 	//check if key already used
-	exits := Map_Loyalty_Seniority_Level.Check(request.Key)
-	if exits {
-		err = errors.New("key already exist")
-		return Id, err
+	{
+		chkCtx, chkCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		_, chkErr := redisx.GetJSON[Loyalty_Seniority_Level](chkCtx, RedisClient, Loyalty_Seniority_Level{Key: request.Key}.RedisKey())
+		chkCancel()
+		if chkErr == nil {
+			err = errors.New("key already exist")
+			return Id, err
+		}
 	}
 	if request.AON_From > request.AON_Till {
 		err = errors.New("invalid AON values")
 		return Id, err
 	}
-	entries_na := Map_Loyalty_Seniority_Level.ConvertToArray()
-	if len(entries_na) > 0 {
-		for _, entry_na := range entries_na {
-			entry, ok := entry_na.(Loyalty_Seniority_Level)
-			if !ok {
-				err = errors.New("error in type assertion")
+	seniorityLevels, seniorityErr := redisx.GetAllJSONByPattern[Loyalty_Seniority_Level](context.Background(), RedisClient, redisx.ScanJSONOptions{
+		Pattern: "Loyalty_Seniority_Level:*", ScanCount: 500, PipelineSize: 250,
+	})
+	if seniorityErr != nil {
+		fmt.Println("error fetching seniority levels:", seniorityErr)
+	} else {
+		for _, entry := range seniorityLevels {
+			if request.AON_From <= entry.AON_Till && request.AON_Till >= entry.AON_From {
+				err = errors.New("AON intersect with " + entry.Key + " AON")
 				return Id, err
-			} else {
-				if request.AON_From <= entry.AON_Till && request.AON_Till >= entry.AON_From {
-					err = errors.New("AON intersect with " + entry.Key + " AON")
-					return Id, err
-				}
-
 			}
 		}
 	}
 	//Prepare new entry
 	var NewEntry Loyalty_Seniority_Level
-	NewEntry.Seniority_Id = Map_Loyalty_AutoIncrement.GetNextAI("Loyalty_Seniority_Level-Id")
-	Id = NewEntry.Seniority_Id
+	{
+		aiCtx, aiCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		NewEntry.Seniority_Id, err = redisx.NextAutoIncrementID(aiCtx, RedisClient, Mdb_Loyalty_AutoIncrement.Coll, "Loyalty_Seniority_Level-Id", redisx.NextIDOptions{
+			RedisBase: "AutoIncrement", MongoRetries: 3, RetryBackoff: 500 * time.Millisecond,
+		})
+		aiCancel()
+		if err != nil {
+			return Id, err
+		}
+		Id = NewEntry.Seniority_Id
+	}
 	convertedId := strconv.FormatInt(Id, 10)
 	NewEntry.Key = convertedId
 	NewEntry.Name = request.Name
@@ -1594,7 +1758,18 @@ func (Uc *UserControl) Loyalty_Seniority_Level_Add(Login string, request Loyalty
 	NewEntry.AON_Till = request.AON_Till
 
 	//add to cache and DB
-	Map_Loyalty_Seniority_Level.Put(NewEntry.Key, NewEntry)
+	{
+		putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, putErr := Mdb_Loyalty_Seniority_Level.Coll.UpdateOne(putCtx, bson.M{"Key": NewEntry.Key}, bson.M{"$set": NewEntry}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+			putCancel()
+			err = putErr
+			return Id, err
+		}
+		if putSetErr := redisx.SetJSON(putCtx, RedisClient, NewEntry.RedisKey(), NewEntry); putSetErr != nil {
+			log.Println("redisx.SetJSON Loyalty_Seniority_Level error:", putSetErr)
+		}
+		putCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -1614,14 +1789,13 @@ func (Uc *UserControl) Loyalty_Seniority_Level_Edit(Login string, request Loyalt
 		err = errors.New("key cannot be empty")
 		return Id, err
 	}
-	entry_na, exits := Map_Loyalty_Seniority_Level.CheckThenGet(request.Key)
-	if !exits {
+	entry, entryErr := redisx.GetJSON[Loyalty_Seniority_Level](context.Background(), RedisClient, Loyalty_Seniority_Level{Key: request.Key}.RedisKey())
+	if redisx.IsNil(entryErr) {
 		err = errors.New("key is not created")
 		return Id, err
 	}
-	entry, ok := entry_na.(Loyalty_Seniority_Level)
-	if !ok {
-		return Id, errors.New("error in type assertion")
+	if entryErr != nil {
+		return Id, entryErr
 	}
 	if entry.Seniority_Id != request.Seniority_Id {
 		return Id, errors.New("id is not matching")
@@ -1631,19 +1805,16 @@ func (Uc *UserControl) Loyalty_Seniority_Level_Edit(Login string, request Loyalt
 		return Id, err
 	}
 	Current_Entry := entry
-	entries_na := Map_Loyalty_Seniority_Level.ConvertToArray()
-	if len(entries_na) > 0 {
-		for _, entry_na := range entries_na {
-			entry, ok := entry_na.(Loyalty_Seniority_Level)
-			if !ok {
-				err = errors.New("error in type assertion")
+	seniorityLevels, seniorityErr := redisx.GetAllJSONByPattern[Loyalty_Seniority_Level](context.Background(), RedisClient, redisx.ScanJSONOptions{
+		Pattern: "Loyalty_Seniority_Level:*", ScanCount: 500, PipelineSize: 250,
+	})
+	if seniorityErr != nil {
+		fmt.Println("error fetching seniority levels:", seniorityErr)
+	} else {
+		for _, lvl := range seniorityLevels {
+			if request.Key != lvl.Key && request.AON_From <= lvl.AON_Till && request.AON_Till >= lvl.AON_From {
+				err = errors.New("AON intersect with " + lvl.Key + " AON")
 				return Id, err
-			} else {
-				if request.Key != entry.Key && request.AON_From <= entry.AON_Till && request.AON_Till >= entry.AON_From {
-					err = errors.New("AON intersect with " + entry.Key + " AON")
-					return Id, err
-				}
-
 			}
 		}
 	}
@@ -1654,7 +1825,18 @@ func (Uc *UserControl) Loyalty_Seniority_Level_Edit(Login string, request Loyalt
 	entry.AON_Till = request.AON_Till
 
 	//add to cache and DB
-	Map_Loyalty_Seniority_Level.Put(entry.Key, entry)
+	{
+		putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, putErr := Mdb_Loyalty_Seniority_Level.Coll.UpdateOne(putCtx, bson.M{"Key": entry.Key}, bson.M{"$set": entry}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+			putCancel()
+			err = putErr
+			return Id, err
+		}
+		if putSetErr := redisx.SetJSON(putCtx, RedisClient, entry.RedisKey(), entry); putSetErr != nil {
+			log.Println("redisx.SetJSON Loyalty_Seniority_Level error:", putSetErr)
+		}
+		putCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -1670,29 +1852,21 @@ func (Uc *UserControl) Loyalty_Seniority_Level_Edit(Login string, request Loyalt
 
 func (Uc *UserControl) Loyalty_Seniority_Level_Get(Key string) (entries []Loyalty_Seniority_Level, err error) {
 	if Key == "" {
-		entries_na := Map_Loyalty_Seniority_Level.ConvertToArray()
-		if len(entries_na) > 0 {
-			for _, entry_na := range entries_na {
-				entry, ok := entry_na.(Loyalty_Seniority_Level)
-				if !ok {
-					err = errors.New("error in type assertion")
-					return entries, err
-				} else {
-					entries = append(entries, entry)
-				}
-			}
+		entries, err = redisx.GetAllJSONByPattern[Loyalty_Seniority_Level](context.Background(), RedisClient, redisx.ScanJSONOptions{
+			Pattern: "Loyalty_Seniority_Level:*", ScanCount: 500, PipelineSize: 250,
+		})
+		if err != nil {
+			return entries, err
 		}
 		return entries, nil
 	} else {
-		entry_na, exits := Map_Loyalty_Seniority_Level.CheckThenGet(Key)
-		if !exits {
+		entry, entryErr := redisx.GetJSON[Loyalty_Seniority_Level](context.Background(), RedisClient, Loyalty_Seniority_Level{Key: Key}.RedisKey())
+		if redisx.IsNil(entryErr) {
 			err = errors.New("key does not exist")
 			return entries, err
 		}
-		entry, ok := entry_na.(Loyalty_Seniority_Level)
-		if !ok {
-			err = errors.New("error in type assertion")
-			return entries, err
+		if entryErr != nil {
+			return entries, entryErr
 		}
 		entries = append(entries, entry)
 		return entries, nil
@@ -1707,20 +1881,15 @@ func (Uc *UserControl) Loyalty_Seniority_Level_GetPaginated(Page, Limit int64) (
 		return entries, errors.New("invalid limit (accept value between 1 and 50000)")
 	}
 
-	var findparams daoc.DAOFindParams
-	var paginationparams daoc.DAOPaginate
-	paginationparams.Limit = Limit
-	paginationparams.Page = Page
-	findResult, err := DAO_Loyalty_Seniority_Level.FindPaginate(findparams, paginationparams)
+	pgCtx, pgCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer pgCancel()
+	result, err := mongox.FindPage[Loyalty_Seniority_Level](pgCtx, Mdb_Loyalty_Seniority_Level.Coll, bson.M{}, mongox.PageRequest{
+		Page: Page, PageSize: Limit, MaxPageSize: 50000,
+	})
 	if err != nil {
 		return entries, err
 	}
-	if len(findResult) > 0 {
-		for _, findres := range findResult {
-			InterfaceValue := reflect.ValueOf(findres).Elem().Interface().(Loyalty_Seniority_Level)
-			entries = append(entries, InterfaceValue)
-		}
-	}
+	entries = result.Items
 	return entries, nil
 
 }
@@ -1730,17 +1899,24 @@ func (Uc *UserControl) Loyalty_Seniority_Level_Delete(Login, Key string) (err er
 		err = errors.New("key cannot be empty")
 		return err
 	}
-	entry_na, exits := Map_Loyalty_Seniority_Level.CheckThenGet(Key)
-	if !exits {
+	entry, entryErr := redisx.GetJSON[Loyalty_Seniority_Level](context.Background(), RedisClient, Loyalty_Seniority_Level{Key: Key}.RedisKey())
+	if redisx.IsNil(entryErr) {
 		err = errors.New("entry does not exist")
 		return err
 	}
-	entry, ok := entry_na.(Loyalty_Seniority_Level)
-	if !ok {
-		err = errors.New("error in type assertion")
-		return err
+	if entryErr != nil {
+		return entryErr
 	}
-	Map_Loyalty_Seniority_Level.Delete(Key)
+	{
+		delCtx, delCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, delErr := Mdb_Loyalty_Seniority_Level.Coll.DeleteOne(delCtx, bson.M{"Key": Key}); delErr != nil {
+			log.Println("Mdb_Loyalty_Seniority_Level DeleteOne error:", delErr)
+		}
+		if _, delRedisErr := redisx.DelJSON(delCtx, RedisClient, Loyalty_Seniority_Level{Key: Key}.RedisKey()); delRedisErr != nil {
+			log.Println("redisx.DelJSON Loyalty_Seniority_Level error:", delRedisErr)
+		}
+		delCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -1764,16 +1940,29 @@ func (Uc *UserControl) Loyalty_Account_Segment_Add(Login string, request Loyalty
 		return Id, err
 	}
 	//check if key already used
-	exits := Map_Loyalty_Account_Segment.Check(request.Key)
-	if exits {
-		err = errors.New("key already exist")
-		return Id, err
+	{
+		chkCtx, chkCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		_, chkErr := redisx.GetJSON[Loyalty_Account_Segment](chkCtx, RedisClient, Loyalty_Account_Segment{Key: request.Key}.RedisKey())
+		chkCancel()
+		if chkErr == nil {
+			err = errors.New("key already exist")
+			return Id, err
+		}
 	}
 
 	//Prepare new entry
 	var NewEntry Loyalty_Account_Segment
-	NewEntry.Segment_Id = Map_Loyalty_AutoIncrement.GetNextAI("Loyalty_Account_Segment-Id")
-	Id = NewEntry.Segment_Id
+	{
+		aiCtx, aiCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		NewEntry.Segment_Id, err = redisx.NextAutoIncrementID(aiCtx, RedisClient, Mdb_Loyalty_AutoIncrement.Coll, "Loyalty_Account_Segment-Id", redisx.NextIDOptions{
+			RedisBase: "AutoIncrement", MongoRetries: 3, RetryBackoff: 500 * time.Millisecond,
+		})
+		aiCancel()
+		if err != nil {
+			return Id, err
+		}
+		Id = NewEntry.Segment_Id
+	}
 	NewEntry.Key = request.Key
 	NewEntry.Description = request.Description
 	NewEntry.Amount_From = request.Amount_From
@@ -1782,7 +1971,18 @@ func (Uc *UserControl) Loyalty_Account_Segment_Add(Login string, request Loyalty
 	NewEntry.AON_Till = request.AON_Till
 
 	//add to cache and DB
-	Map_Loyalty_Account_Segment.Put(NewEntry.Key, NewEntry)
+	{
+		putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, putErr := Mdb_Loyalty_Account_Segment.Coll.UpdateOne(putCtx, bson.M{"Key": NewEntry.Key}, bson.M{"$set": NewEntry}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+			putCancel()
+			err = putErr
+			return Id, err
+		}
+		if putSetErr := redisx.SetJSON(putCtx, RedisClient, NewEntry.RedisKey(), NewEntry); putSetErr != nil {
+			log.Println("redisx.SetJSON Loyalty_Account_Segment error:", putSetErr)
+		}
+		putCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -1802,14 +2002,13 @@ func (Uc *UserControl) Loyalty_Account_Segment_Edit(Login string, request Loyalt
 		err = errors.New("key cannot be empty")
 		return Id, err
 	}
-	entry_na, exits := Map_Loyalty_Account_Segment.CheckThenGet(request.Key)
-	if !exits {
+	entry, entryErr := redisx.GetJSON[Loyalty_Account_Segment](context.Background(), RedisClient, Loyalty_Account_Segment{Key: request.Key}.RedisKey())
+	if redisx.IsNil(entryErr) {
 		err = errors.New("key is not created")
 		return Id, err
 	}
-	entry, ok := entry_na.(Loyalty_Account_Segment)
-	if !ok {
-		return Id, errors.New("error in type assertion")
+	if entryErr != nil {
+		return Id, entryErr
 	}
 	if entry.Segment_Id != request.Segment_Id {
 		return Id, errors.New("id is not matching")
@@ -1825,13 +2024,33 @@ func (Uc *UserControl) Loyalty_Account_Segment_Edit(Login string, request Loyalt
 	if request.NewKey != "" {
 		if request.NewKey != request.Key {
 			//delete old
-			Map_Loyalty_Account_Segment.Delete(request.Key)
+			{
+				delCtx, delCancel := context.WithTimeout(context.Background(), 10*time.Second)
+				if _, delErr := Mdb_Loyalty_Account_Segment.Coll.DeleteOne(delCtx, bson.M{"Key": request.Key}); delErr != nil {
+					log.Println("Mdb_Loyalty_Account_Segment DeleteOne error:", delErr)
+				}
+				if _, delRedisErr := redisx.DelJSON(delCtx, RedisClient, Loyalty_Account_Segment{Key: request.Key}.RedisKey()); delRedisErr != nil {
+					log.Println("redisx.DelJSON Loyalty_Account_Segment error:", delRedisErr)
+				}
+				delCancel()
+			}
 			//update key
 			entry.Key = request.NewKey
 		}
 	}
 	//add to cache and DB
-	Map_Loyalty_Account_Segment.Put(entry.Key, entry)
+	{
+		putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, putErr := Mdb_Loyalty_Account_Segment.Coll.UpdateOne(putCtx, bson.M{"Key": entry.Key}, bson.M{"$set": entry}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+			putCancel()
+			err = putErr
+			return Id, err
+		}
+		if putSetErr := redisx.SetJSON(putCtx, RedisClient, entry.RedisKey(), entry); putSetErr != nil {
+			log.Println("redisx.SetJSON Loyalty_Account_Segment error:", putSetErr)
+		}
+		putCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -1847,29 +2066,21 @@ func (Uc *UserControl) Loyalty_Account_Segment_Edit(Login string, request Loyalt
 
 func (Uc *UserControl) Loyalty_Account_Segment_Get(Key string) (entries []Loyalty_Account_Segment, err error) {
 	if Key == "" {
-		entries_na := Map_Loyalty_Account_Segment.ConvertToArray()
-		if len(entries_na) > 0 {
-			for _, entry_na := range entries_na {
-				entry, ok := entry_na.(Loyalty_Account_Segment)
-				if !ok {
-					err = errors.New("error in type assertion")
-					return entries, err
-				} else {
-					entries = append(entries, entry)
-				}
-			}
+		entries, err = redisx.GetAllJSONByPattern[Loyalty_Account_Segment](context.Background(), RedisClient, redisx.ScanJSONOptions{
+			Pattern: "Loyalty_Account_Segment:*", ScanCount: 500, PipelineSize: 250,
+		})
+		if err != nil {
+			return entries, err
 		}
 		return entries, nil
 	} else {
-		entry_na, exits := Map_Loyalty_Account_Segment.CheckThenGet(Key)
-		if !exits {
+		entry, entryErr := redisx.GetJSON[Loyalty_Account_Segment](context.Background(), RedisClient, Loyalty_Account_Segment{Key: Key}.RedisKey())
+		if redisx.IsNil(entryErr) {
 			err = errors.New("key does not exist")
 			return entries, err
 		}
-		entry, ok := entry_na.(Loyalty_Account_Segment)
-		if !ok {
-			err = errors.New("error in type assertion")
-			return entries, err
+		if entryErr != nil {
+			return entries, entryErr
 		}
 		entries = append(entries, entry)
 		return entries, nil
@@ -1884,42 +2095,15 @@ func (Uc *UserControl) Loyalty_Account_Segment_GetPaginated(Page, Limit int64) (
 		return entries, errors.New("invalid limit (accept value between 1 and 50000)")
 	}
 
-	var findparams daoc.DAOFindParams
-	//var array []daoc.DAOFindCriteria
-	// if Outlet_Key != "" {
-	// 	//restrict access for records that belong to this user
-	// 	var criteria daoc.DAOFindCriteria = daoc.DAOFindCriteria{
-	// 		Field:    "Outlet_Key",
-	// 		Value:    Outlet_Key,
-	// 		Operator: "EQUAL",
-	// 	}
-	// 	array = append(array, criteria)
-	// }
-	// if Agent_Key != "" {
-	// 	//restrict access for records that belong to this user
-	// 	var criteria daoc.DAOFindCriteria = daoc.DAOFindCriteria{
-	// 		Field:    "Agent_Key",
-	// 		Value:    Agent_Key,
-	// 		Operator: "EQUAL",
-	// 	}
-	// 	array = append(array, criteria)
-	// }
-	// if len(array) > 0 {
-	// 	findparams.FindCriteria = array
-	// }
-	var paginationparams daoc.DAOPaginate
-	paginationparams.Limit = Limit
-	paginationparams.Page = Page
-	findResult, err := DAO_Loyalty_Account_Segment.FindPaginate(findparams, paginationparams)
+	pgCtx, pgCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer pgCancel()
+	result, err := mongox.FindPage[Loyalty_Account_Segment](pgCtx, Mdb_Loyalty_Account_Segment.Coll, bson.M{}, mongox.PageRequest{
+		Page: Page, PageSize: Limit, MaxPageSize: 50000,
+	})
 	if err != nil {
 		return entries, err
 	}
-	if len(findResult) > 0 {
-		for _, findres := range findResult {
-			InterfaceValue := reflect.ValueOf(findres).Elem().Interface().(Loyalty_Account_Segment)
-			entries = append(entries, InterfaceValue)
-		}
-	}
+	entries = result.Items
 	return entries, nil
 
 }
@@ -1929,17 +2113,24 @@ func (Uc *UserControl) Loyalty_Account_Segment_Delete(Login, Key string) (err er
 		err = errors.New("key cannot be empty")
 		return err
 	}
-	entry_na, exits := Map_Loyalty_Account_Segment.CheckThenGet(Key)
-	if !exits {
+	entry, entryErr := redisx.GetJSON[Loyalty_Account_Segment](context.Background(), RedisClient, Loyalty_Account_Segment{Key: Key}.RedisKey())
+	if redisx.IsNil(entryErr) {
 		err = errors.New("entry does not exist")
 		return err
 	}
-	entry, ok := entry_na.(Loyalty_Account_Segment)
-	if !ok {
-		err = errors.New("error in type assertion")
-		return err
+	if entryErr != nil {
+		return entryErr
 	}
-	Map_Loyalty_Account_Segment.Delete(Key)
+	{
+		delCtx, delCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, delErr := Mdb_Loyalty_Account_Segment.Coll.DeleteOne(delCtx, bson.M{"Key": Key}); delErr != nil {
+			log.Println("Mdb_Loyalty_Account_Segment DeleteOne error:", delErr)
+		}
+		if _, delRedisErr := redisx.DelJSON(delCtx, RedisClient, Loyalty_Account_Segment{Key: Key}.RedisKey()); delRedisErr != nil {
+			log.Println("redisx.DelJSON Loyalty_Account_Segment error:", delRedisErr)
+		}
+		delCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -1963,10 +2154,14 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Add(Login string, request Loy
 		return Id, err
 	}
 	//check if key already used
-	exits := Map_Loyalty_Point_Earning_Rules.Check(request.Key)
-	if exits {
-		err = errors.New("key already exist")
-		return Id, err
+	{
+		chkCtx, chkCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		_, chkErr := redisx.GetJSON[Loyalty_Point_Earning_Rules](chkCtx, RedisClient, Loyalty_Point_Earning_Rules{Key: request.Key}.RedisKey())
+		chkCancel()
+		if chkErr == nil {
+			err = errors.New("key already exist")
+			return Id, err
+		}
 	}
 	//check values
 	if request.MainGSMBalance_Amount > 0 && request.MainGSMBalance_Amount < 1 {
@@ -2139,29 +2334,31 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Add(Login string, request Loy
 	// 	request.MM_Bundle_Amount = 0
 	// }
 
-	var entries []Loyalty_Governance
-	entries_na := Map_Loyalty_Governance.ConvertToArray()
-	if len(entries_na) > 0 {
-		for _, entry_na := range entries_na {
-			entry, ok := entry_na.(Loyalty_Governance)
-			if !ok {
-				err = errors.New("error in type assertion")
-				return Id, err
-			} else {
-				entries = append(entries, entry)
-			}
-		}
+	governanceEntries, governanceErr := redisx.GetAllJSONByPattern[Loyalty_Governance](context.Background(), RedisClient, redisx.ScanJSONOptions{
+		Pattern: "Loyalty_Governance:*", ScanCount: 500, PipelineSize: 250,
+	})
+	if governanceErr != nil {
+		fmt.Println("error fetching loyalty governance:", governanceErr)
 	}
-	if len(entries) > 0 {
-		if entries[0].MaxAllowedPoints_PerTransaction < request.MM_BILLPAY_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_CASHIN_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_CASHOUT_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_CBWREQ_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_CTMMOREQ_Bundle_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_CTMMOREQ_Airtime_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_MERCHPAY_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_P2P_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_RC_Bundle_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_RC_Airtime_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MainGSMBalance_Points {
+	if len(governanceEntries) > 0 {
+		if governanceEntries[0].MaxAllowedPoints_PerTransaction < request.MM_BILLPAY_Points || governanceEntries[0].MaxAllowedPoints_PerTransaction < request.MM_CASHIN_Points || governanceEntries[0].MaxAllowedPoints_PerTransaction < request.MM_CASHOUT_Points || governanceEntries[0].MaxAllowedPoints_PerTransaction < request.MM_CBWREQ_Points || governanceEntries[0].MaxAllowedPoints_PerTransaction < request.MM_CTMMOREQ_Bundle_Points || governanceEntries[0].MaxAllowedPoints_PerTransaction < request.MM_CTMMOREQ_Airtime_Points || governanceEntries[0].MaxAllowedPoints_PerTransaction < request.MM_MERCHPAY_Points || governanceEntries[0].MaxAllowedPoints_PerTransaction < request.MM_P2P_Points || governanceEntries[0].MaxAllowedPoints_PerTransaction < request.MM_RC_Bundle_Points || governanceEntries[0].MaxAllowedPoints_PerTransaction < request.MM_RC_Airtime_Points || governanceEntries[0].MaxAllowedPoints_PerTransaction < request.MainGSMBalance_Points {
 			err = errors.New("points can not exceed the maximum allowed points per transaction")
 			return Id, err
 		}
 	}
 	//Prepare new entry
 	var NewEntry Loyalty_Point_Earning_Rules
-	NewEntry.Earning_Rules_Id = Map_Loyalty_AutoIncrement.GetNextAI("Loyalty_Point_Earning_Rules-Id")
-	Id = NewEntry.Earning_Rules_Id
+	{
+		aiCtx, aiCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		NewEntry.Earning_Rules_Id, err = redisx.NextAutoIncrementID(aiCtx, RedisClient, Mdb_Loyalty_AutoIncrement.Coll, "Loyalty_Point_Earning_Rules-Id", redisx.NextIDOptions{
+			RedisBase: "AutoIncrement", MongoRetries: 3, RetryBackoff: 500 * time.Millisecond,
+		})
+		aiCancel()
+		if err != nil {
+			return Id, err
+		}
+		Id = NewEntry.Earning_Rules_Id
+	}
 	NewEntry.Key = request.Key
 	NewEntry.Description = request.Description
 	NewEntry.Welcome_Points = request.Welcome_Points
@@ -2280,7 +2477,18 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Add(Login string, request Loy
 	NewEntry.MM_Bundle_Points = request.MM_Bundle_Points
 
 	//add to cache and DB
-	Map_Loyalty_Point_Earning_Rules.Put(NewEntry.Key, NewEntry)
+	{
+		putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, putErr := Mdb_Loyalty_Point_Earning_Rules.Coll.UpdateOne(putCtx, bson.M{"Key": NewEntry.Key}, bson.M{"$set": NewEntry}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+			putCancel()
+			err = putErr
+			return Id, err
+		}
+		if putSetErr := redisx.SetJSON(putCtx, RedisClient, NewEntry.RedisKey(), NewEntry); putSetErr != nil {
+			log.Println("redisx.SetJSON Loyalty_Point_Earning_Rules error:", putSetErr)
+		}
+		putCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -2470,33 +2678,25 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Edit(Login string, request Lo
 	// } else {
 	// 	request.MM_Bundle_Amount = 0
 	// }
-	entry_na, exits := Map_Loyalty_Point_Earning_Rules.CheckThenGet(request.Key)
-	if !exits {
+	entry, entryErr := redisx.GetJSON[Loyalty_Point_Earning_Rules](context.Background(), RedisClient, Loyalty_Point_Earning_Rules{Key: request.Key}.RedisKey())
+	if redisx.IsNil(entryErr) {
 		err = errors.New("key is not created")
 		return Id, err
 	}
-	entry, ok := entry_na.(Loyalty_Point_Earning_Rules)
-	if !ok {
-		return Id, errors.New("error in type assertion")
+	if entryErr != nil {
+		return Id, entryErr
 	}
 	if entry.Earning_Rules_Id != request.Earning_Rules_Id {
 		return Id, errors.New("id is not matching")
 	}
-	var entries []Loyalty_Governance
-	entries_na := Map_Loyalty_Governance.ConvertToArray()
-	if len(entries_na) > 0 {
-		for _, entry_na := range entries_na {
-			entry, ok := entry_na.(Loyalty_Governance)
-			if !ok {
-				err = errors.New("error in type assertion")
-				return Id, err
-			} else {
-				entries = append(entries, entry)
-			}
-		}
+	governanceEntries, governanceErr := redisx.GetAllJSONByPattern[Loyalty_Governance](context.Background(), RedisClient, redisx.ScanJSONOptions{
+		Pattern: "Loyalty_Governance:*", ScanCount: 500, PipelineSize: 250,
+	})
+	if governanceErr != nil {
+		fmt.Println("error fetching loyalty governance:", governanceErr)
 	}
-	if len(entries) > 0 {
-		if entries[0].MaxAllowedPoints_PerTransaction < request.MM_BILLPAY_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_CASHIN_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_CASHOUT_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_CBWREQ_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_CTMMOREQ_Bundle_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_CTMMOREQ_Airtime_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_MERCHPAY_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_P2P_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_RC_Bundle_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MM_RC_Airtime_Points || entries[0].MaxAllowedPoints_PerTransaction < request.MainGSMBalance_Points {
+	if len(governanceEntries) > 0 {
+		if governanceEntries[0].MaxAllowedPoints_PerTransaction < request.MM_BILLPAY_Points || governanceEntries[0].MaxAllowedPoints_PerTransaction < request.MM_CASHIN_Points || governanceEntries[0].MaxAllowedPoints_PerTransaction < request.MM_CASHOUT_Points || governanceEntries[0].MaxAllowedPoints_PerTransaction < request.MM_CBWREQ_Points || governanceEntries[0].MaxAllowedPoints_PerTransaction < request.MM_CTMMOREQ_Bundle_Points || governanceEntries[0].MaxAllowedPoints_PerTransaction < request.MM_CTMMOREQ_Airtime_Points || governanceEntries[0].MaxAllowedPoints_PerTransaction < request.MM_MERCHPAY_Points || governanceEntries[0].MaxAllowedPoints_PerTransaction < request.MM_P2P_Points || governanceEntries[0].MaxAllowedPoints_PerTransaction < request.MM_RC_Bundle_Points || governanceEntries[0].MaxAllowedPoints_PerTransaction < request.MM_RC_Airtime_Points || governanceEntries[0].MaxAllowedPoints_PerTransaction < request.MainGSMBalance_Points {
 			err = errors.New("points can not exceed the maximum allowed points per transaction")
 			return Id, err
 		}
@@ -2623,13 +2823,33 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Edit(Login string, request Lo
 	if request.NewKey != "" {
 		if request.NewKey != request.Key {
 			//delete old
-			Map_Loyalty_Point_Earning_Rules.Delete(request.Key)
+			{
+				delCtx, delCancel := context.WithTimeout(context.Background(), 10*time.Second)
+				if _, delErr := Mdb_Loyalty_Point_Earning_Rules.Coll.DeleteOne(delCtx, bson.M{"Key": request.Key}); delErr != nil {
+					log.Println("Mdb_Loyalty_Point_Earning_Rules DeleteOne error:", delErr)
+				}
+				if _, delRedisErr := redisx.DelJSON(delCtx, RedisClient, Loyalty_Point_Earning_Rules{Key: request.Key}.RedisKey()); delRedisErr != nil {
+					log.Println("redisx.DelJSON Loyalty_Point_Earning_Rules error:", delRedisErr)
+				}
+				delCancel()
+			}
 			//update key
 			entry.Key = request.NewKey
 		}
 	}
 	//add to cache and DB
-	Map_Loyalty_Point_Earning_Rules.Put(entry.Key, entry)
+	{
+		putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, putErr := Mdb_Loyalty_Point_Earning_Rules.Coll.UpdateOne(putCtx, bson.M{"Key": entry.Key}, bson.M{"$set": entry}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+			putCancel()
+			err = putErr
+			return Id, err
+		}
+		if putSetErr := redisx.SetJSON(putCtx, RedisClient, entry.RedisKey(), entry); putSetErr != nil {
+			log.Println("redisx.SetJSON Loyalty_Point_Earning_Rules error:", putSetErr)
+		}
+		putCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -2645,29 +2865,21 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Edit(Login string, request Lo
 
 func (Uc *UserControl) Loyalty_Point_Earning_Rules_Get(Key string) (entries []Loyalty_Point_Earning_Rules, err error) {
 	if Key == "" {
-		entries_na := Map_Loyalty_Point_Earning_Rules.ConvertToArray()
-		if len(entries_na) > 0 {
-			for _, entry_na := range entries_na {
-				entry, ok := entry_na.(Loyalty_Point_Earning_Rules)
-				if !ok {
-					err = errors.New("error in type assertion")
-					return entries, err
-				} else {
-					entries = append(entries, entry)
-				}
-			}
+		entries, err = redisx.GetAllJSONByPattern[Loyalty_Point_Earning_Rules](context.Background(), RedisClient, redisx.ScanJSONOptions{
+			Pattern: "Loyalty_Point_Earning_Rules:*", ScanCount: 500, PipelineSize: 250,
+		})
+		if err != nil {
+			return entries, err
 		}
 		return entries, nil
 	} else {
-		entry_na, exits := Map_Loyalty_Point_Earning_Rules.CheckThenGet(Key)
-		if !exits {
+		entry, entryErr := redisx.GetJSON[Loyalty_Point_Earning_Rules](context.Background(), RedisClient, Loyalty_Point_Earning_Rules{Key: Key}.RedisKey())
+		if redisx.IsNil(entryErr) {
 			err = errors.New("key does not exist")
 			return entries, err
 		}
-		entry, ok := entry_na.(Loyalty_Point_Earning_Rules)
-		if !ok {
-			err = errors.New("error in type assertion")
-			return entries, err
+		if entryErr != nil {
+			return entries, entryErr
 		}
 		entries = append(entries, entry)
 		return entries, nil
@@ -2682,42 +2894,15 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_GetPaginated(Page, Limit int6
 		return entries, errors.New("invalid limit (accept value between 1 and 50000)")
 	}
 
-	var findparams daoc.DAOFindParams
-	//var array []daoc.DAOFindCriteria
-	// if Outlet_Key != "" {
-	// 	//restrict access for records that belong to this user
-	// 	var criteria daoc.DAOFindCriteria = daoc.DAOFindCriteria{
-	// 		Field:    "Outlet_Key",
-	// 		Value:    Outlet_Key,
-	// 		Operator: "EQUAL",
-	// 	}
-	// 	array = append(array, criteria)
-	// }
-	// if Agent_Key != "" {
-	// 	//restrict access for records that belong to this user
-	// 	var criteria daoc.DAOFindCriteria = daoc.DAOFindCriteria{
-	// 		Field:    "Agent_Key",
-	// 		Value:    Agent_Key,
-	// 		Operator: "EQUAL",
-	// 	}
-	// 	array = append(array, criteria)
-	// }
-	// if len(array) > 0 {
-	// 	findparams.FindCriteria = array
-	// }
-	var paginationparams daoc.DAOPaginate
-	paginationparams.Limit = Limit
-	paginationparams.Page = Page
-	findResult, err := DAO_Loyalty_Point_Earning_Rules.FindPaginate(findparams, paginationparams)
+	pgCtx, pgCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer pgCancel()
+	result, err := mongox.FindPage[Loyalty_Point_Earning_Rules](pgCtx, Mdb_Loyalty_Point_Earning_Rules.Coll, bson.M{}, mongox.PageRequest{
+		Page: Page, PageSize: Limit, MaxPageSize: 50000,
+	})
 	if err != nil {
 		return entries, err
 	}
-	if len(findResult) > 0 {
-		for _, findres := range findResult {
-			InterfaceValue := reflect.ValueOf(findres).Elem().Interface().(Loyalty_Point_Earning_Rules)
-			entries = append(entries, InterfaceValue)
-		}
-	}
+	entries = result.Items
 	return entries, nil
 
 }
@@ -2727,17 +2912,24 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Delete(Login, Key string) (er
 		err = errors.New("key cannot be empty")
 		return err
 	}
-	entry_na, exits := Map_Loyalty_Point_Earning_Rules.CheckThenGet(Key)
-	if !exits {
+	entry, entryErr := redisx.GetJSON[Loyalty_Point_Earning_Rules](context.Background(), RedisClient, Loyalty_Point_Earning_Rules{Key: Key}.RedisKey())
+	if redisx.IsNil(entryErr) {
 		err = errors.New("entry does not exist")
 		return err
 	}
-	entry, ok := entry_na.(Loyalty_Point_Earning_Rules)
-	if !ok {
-		err = errors.New("error in type assertion")
-		return err
+	if entryErr != nil {
+		return entryErr
 	}
-	Map_Loyalty_Point_Earning_Rules.Delete(Key)
+	{
+		delCtx, delCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, delErr := Mdb_Loyalty_Point_Earning_Rules.Coll.DeleteOne(delCtx, bson.M{"Key": Key}); delErr != nil {
+			log.Println("Mdb_Loyalty_Point_Earning_Rules DeleteOne error:", delErr)
+		}
+		if _, delRedisErr := redisx.DelJSON(delCtx, RedisClient, Loyalty_Point_Earning_Rules{Key: Key}.RedisKey()); delRedisErr != nil {
+			log.Println("redisx.DelJSON Loyalty_Point_Earning_Rules error:", delRedisErr)
+		}
+		delCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -2768,10 +2960,14 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Overwrite_Add(Login string, r
 		return Id, err
 	}
 	//check if key already used
-	exits := Map_Loyalty_Point_Earning_Rules_Overwrite.Check(request.Earning_Rule_Key + "|" + request.MM_Transaction_Type + "|" + request.AgentCode)
-	if exits {
-		err = errors.New("key already exist")
-		return Id, err
+	{
+		chkCtx, chkCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		_, chkErr := redisx.GetJSON[Loyalty_Point_Earning_Rules_Overwrite](chkCtx, RedisClient, Loyalty_Point_Earning_Rules_Overwrite{Key: request.Earning_Rule_Key + "|" + request.MM_Transaction_Type + "|" + request.AgentCode}.RedisKey())
+		chkCancel()
+		if chkErr == nil {
+			err = errors.New("key already exist")
+			return Id, err
+		}
 	}
 	//check values
 	if request.Award_Type == "Amount" {
@@ -2787,17 +2983,12 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Overwrite_Add(Login string, r
 	}
 
 	var entries []Loyalty_Governance
-	entries_na := Map_Loyalty_Governance.ConvertToArray()
-	if len(entries_na) > 0 {
-		for _, entry_na := range entries_na {
-			entry, ok := entry_na.(Loyalty_Governance)
-			if !ok {
-				err = errors.New("error in type assertion")
-				return Id, err
-			} else {
-				entries = append(entries, entry)
-			}
-		}
+	entries, redisGovErr := redisx.GetAllJSONByPattern[Loyalty_Governance](context.Background(), RedisClient, redisx.ScanJSONOptions{
+		Pattern: "Loyalty_Governance:*", ScanCount: 500, PipelineSize: 250,
+	})
+	if redisGovErr != nil {
+		err = redisGovErr
+		return Id, err
 	}
 	if len(entries) > 0 {
 		if entries[0].MaxAllowedPoints_PerTransaction < request.Points {
@@ -2807,8 +2998,17 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Overwrite_Add(Login string, r
 	}
 	//Prepare new entry
 	var NewEntry Loyalty_Point_Earning_Rules_Overwrite
-	NewEntry.Earning_Rules_Overwrite_Id = Map_Loyalty_AutoIncrement.GetNextAI("Loyalty_Point_Earning_Rules_Overwrite-Id")
-	Id = NewEntry.Earning_Rules_Overwrite_Id
+	{
+		aiCtx, aiCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		NewEntry.Earning_Rules_Overwrite_Id, err = redisx.NextAutoIncrementID(aiCtx, RedisClient, Mdb_Loyalty_AutoIncrement.Coll, "Loyalty_Point_Earning_Rules_Overwrite-Id", redisx.NextIDOptions{
+			RedisBase: "AutoIncrement", MongoRetries: 3, RetryBackoff: 500 * time.Millisecond,
+		})
+		aiCancel()
+		if err != nil {
+			return Id, err
+		}
+		Id = NewEntry.Earning_Rules_Overwrite_Id
+	}
 	NewEntry.Key = request.Earning_Rule_Key + "|" + request.MM_Transaction_Type + "|" + request.AgentCode
 	NewEntry.Description = request.Description
 	NewEntry.Earning_Rule_Key = request.Earning_Rule_Key
@@ -2820,15 +3020,13 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Overwrite_Add(Login string, r
 	NewEntry.Points = request.Points
 
 	//update earning rules
-	entry_na, exits := Map_Loyalty_Point_Earning_Rules.CheckThenGet(request.Earning_Rule_Key)
-	if !exits {
+	entry, entryEarningErr := redisx.GetJSON[Loyalty_Point_Earning_Rules](context.Background(), RedisClient, Loyalty_Point_Earning_Rules{Key: request.Earning_Rule_Key}.RedisKey())
+	if redisx.IsNil(entryEarningErr) {
 		err = errors.New("earning rule does not exist")
 		return Id, err
 	}
-	entry, ok := entry_na.(Loyalty_Point_Earning_Rules)
-	if !ok {
-		err = errors.New("error in type assertion")
-		return Id, err
+	if entryEarningErr != nil {
+		return Id, entryEarningErr
 	}
 	if request.MM_Transaction_Type == "MERCHPAY" {
 		entry.Earning_Rules_Overwrite_MM_MERCHPAY_Keys = append(entry.Earning_Rules_Overwrite_MM_MERCHPAY_Keys, NewEntry.Key)
@@ -2836,8 +3034,26 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Overwrite_Add(Login string, r
 		entry.Earning_Rules_Overwrite_MM_BILLPAY_Keys = append(entry.Earning_Rules_Overwrite_MM_BILLPAY_Keys, NewEntry.Key)
 	}
 	//add to cache and DB
-	Map_Loyalty_Point_Earning_Rules.Put(entry.Key, entry)
-	Map_Loyalty_Point_Earning_Rules_Overwrite.Put(NewEntry.Key, NewEntry)
+	{
+		putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, putErr := Mdb_Loyalty_Point_Earning_Rules.Coll.UpdateOne(putCtx, bson.M{"Key": entry.Key}, bson.M{"$set": entry}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+			log.Println("Mdb_Loyalty_Point_Earning_Rules upsert error:", putErr)
+		}
+		if putSetErr := redisx.SetJSON(putCtx, RedisClient, entry.RedisKey(), entry); putSetErr != nil {
+			log.Println("redisx.SetJSON Loyalty_Point_Earning_Rules error:", putSetErr)
+		}
+		putCancel()
+	}
+	{
+		putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, putErr := Mdb_Loyalty_Point_Earning_Rules_Overwrite.Coll.UpdateOne(putCtx, bson.M{"Key": NewEntry.Key}, bson.M{"$set": NewEntry}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+			log.Println("Mdb_Loyalty_Point_Earning_Rules_Overwrite upsert error:", putErr)
+		}
+		if putSetErr := redisx.SetJSON(putCtx, RedisClient, NewEntry.RedisKey(), NewEntry); putSetErr != nil {
+			log.Println("redisx.SetJSON Loyalty_Point_Earning_Rules_Overwrite error:", putSetErr)
+		}
+		putCancel()
+	}
 
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
@@ -2883,30 +3099,24 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Overwrite_Edit(Login string, 
 		request.Amount = 0
 	}
 
-	entry_na, exits := Map_Loyalty_Point_Earning_Rules_Overwrite.CheckThenGet(request.Key)
-	if !exits {
+	entry, entryErr := redisx.GetJSON[Loyalty_Point_Earning_Rules_Overwrite](context.Background(), RedisClient, Loyalty_Point_Earning_Rules_Overwrite{Key: request.Key}.RedisKey())
+	if redisx.IsNil(entryErr) {
 		err = errors.New("key is not created")
 		return Id, err
 	}
-	entry, ok := entry_na.(Loyalty_Point_Earning_Rules_Overwrite)
-	if !ok {
-		return Id, errors.New("error in type assertion")
+	if entryErr != nil {
+		return Id, entryErr
 	}
 	if entry.Earning_Rules_Overwrite_Id != request.Earning_Rules_Overwrite_Id {
 		return Id, errors.New("id is not matching")
 	}
 	var entries []Loyalty_Governance
-	entries_na := Map_Loyalty_Governance.ConvertToArray()
-	if len(entries_na) > 0 {
-		for _, entry_gov_na := range entries_na {
-			entry_gov, ok := entry_gov_na.(Loyalty_Governance)
-			if !ok {
-				err = errors.New("error in type assertion")
-				return Id, err
-			} else {
-				entries = append(entries, entry_gov)
-			}
-		}
+	entries, redisGovErr2 := redisx.GetAllJSONByPattern[Loyalty_Governance](context.Background(), RedisClient, redisx.ScanJSONOptions{
+		Pattern: "Loyalty_Governance:*", ScanCount: 500, PipelineSize: 250,
+	})
+	if redisGovErr2 != nil {
+		err = redisGovErr2
+		return Id, err
 	}
 	if len(entries) > 0 {
 		if entries[0].MaxAllowedPoints_PerTransaction < request.Points {
@@ -2920,20 +3130,27 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Overwrite_Edit(Login string, 
 	//add to cache and DB
 	if request.AgentCode != entry.AgentCode {
 		//delete old
-		Map_Loyalty_Point_Earning_Rules_Overwrite.Delete(request.Key)
+		{
+			delCtx, delCancel := context.WithTimeout(context.Background(), 10*time.Second)
+			if _, delErr := Mdb_Loyalty_Point_Earning_Rules_Overwrite.Coll.DeleteOne(delCtx, bson.M{"Key": request.Key}); delErr != nil {
+				log.Println("Mdb_Loyalty_Point_Earning_Rules_Overwrite DeleteOne error:", delErr)
+			}
+			if _, delRedisErr := redisx.DelJSON(delCtx, RedisClient, Loyalty_Point_Earning_Rules_Overwrite{Key: request.Key}.RedisKey()); delRedisErr != nil {
+				log.Println("redisx.DelJSON Loyalty_Point_Earning_Rules_Overwrite error:", delRedisErr)
+			}
+			delCancel()
+		}
 		//update key
 		entry.Key = request.Earning_Rule_Key + "|" + request.MM_Transaction_Type + "|" + request.AgentCode
 
 		//update earning rules
-		earning_na, exits := Map_Loyalty_Point_Earning_Rules.CheckThenGet(request.Earning_Rule_Key)
-		if !exits {
+		earning, earningErr := redisx.GetJSON[Loyalty_Point_Earning_Rules](context.Background(), RedisClient, Loyalty_Point_Earning_Rules{Key: request.Earning_Rule_Key}.RedisKey())
+		if redisx.IsNil(earningErr) {
 			err = errors.New("earning rule does not exist")
 			return Id, err
 		}
-		earning, ok := earning_na.(Loyalty_Point_Earning_Rules)
-		if !ok {
-			err = errors.New("error in type assertion")
-			return Id, err
+		if earningErr != nil {
+			return Id, earningErr
 		}
 		var newKeys []string
 
@@ -2948,7 +3165,16 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Overwrite_Edit(Login string, 
 		} else if request.MM_Transaction_Type == "BILLPAY" {
 			earning.Earning_Rules_Overwrite_MM_BILLPAY_Keys = newKeys
 		}
-		Map_Loyalty_Point_Earning_Rules.Put(entry.Earning_Rule_Key, earning)
+		{
+			putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+			if _, putErr := Mdb_Loyalty_Point_Earning_Rules.Coll.UpdateOne(putCtx, bson.M{"Key": entry.Earning_Rule_Key}, bson.M{"$set": earning}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+				log.Println("Mdb_Loyalty_Point_Earning_Rules upsert error:", putErr)
+			}
+			if putSetErr := redisx.SetJSON(putCtx, RedisClient, earning.RedisKey(), earning); putSetErr != nil {
+				log.Println("redisx.SetJSON Loyalty_Point_Earning_Rules error:", putSetErr)
+			}
+			putCancel()
+		}
 	}
 	entry.Description = request.Description
 	entry.Amount = request.Amount
@@ -2960,7 +3186,16 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Overwrite_Edit(Login string, 
 	entry.Points = request.Points
 
 	//add to cache and DB
-	Map_Loyalty_Point_Earning_Rules_Overwrite.Put(entry.Key, entry)
+	{
+		putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, putErr := Mdb_Loyalty_Point_Earning_Rules_Overwrite.Coll.UpdateOne(putCtx, bson.M{"Key": entry.Key}, bson.M{"$set": entry}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+			log.Println("Mdb_Loyalty_Point_Earning_Rules_Overwrite upsert error:", putErr)
+		}
+		if putSetErr := redisx.SetJSON(putCtx, RedisClient, entry.RedisKey(), entry); putSetErr != nil {
+			log.Println("redisx.SetJSON Loyalty_Point_Earning_Rules_Overwrite error:", putSetErr)
+		}
+		putCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -2976,29 +3211,21 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Overwrite_Edit(Login string, 
 
 func (Uc *UserControl) Loyalty_Point_Earning_Rules_Overwrite_Get(Key string) (entries []Loyalty_Point_Earning_Rules_Overwrite, err error) {
 	if Key == "" {
-		entries_na := Map_Loyalty_Point_Earning_Rules_Overwrite.ConvertToArray()
-		if len(entries_na) > 0 {
-			for _, entry_na := range entries_na {
-				entry, ok := entry_na.(Loyalty_Point_Earning_Rules_Overwrite)
-				if !ok {
-					err = errors.New("error in type assertion")
-					return entries, err
-				} else {
-					entries = append(entries, entry)
-				}
-			}
+		entries, err = redisx.GetAllJSONByPattern[Loyalty_Point_Earning_Rules_Overwrite](context.Background(), RedisClient, redisx.ScanJSONOptions{
+			Pattern: "Loyalty_Point_Earning_Rules_Overwrite:*", ScanCount: 500, PipelineSize: 250,
+		})
+		if err != nil {
+			return entries, err
 		}
 		return entries, nil
 	} else {
-		entry_na, exits := Map_Loyalty_Point_Earning_Rules_Overwrite.CheckThenGet(Key)
-		if !exits {
+		entry, entryErr := redisx.GetJSON[Loyalty_Point_Earning_Rules_Overwrite](context.Background(), RedisClient, Loyalty_Point_Earning_Rules_Overwrite{Key: Key}.RedisKey())
+		if redisx.IsNil(entryErr) {
 			err = errors.New("key does not exist")
 			return entries, err
 		}
-		entry, ok := entry_na.(Loyalty_Point_Earning_Rules_Overwrite)
-		if !ok {
-			err = errors.New("error in type assertion")
-			return entries, err
+		if entryErr != nil {
+			return entries, entryErr
 		}
 		entries = append(entries, entry)
 		return entries, nil
@@ -3013,21 +3240,15 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Overwrite_GetPaginated(Page, 
 		return entries, errors.New("invalid limit (accept value between 1 and 50000)")
 	}
 
-	var findparams daoc.DAOFindParams
-
-	var paginationparams daoc.DAOPaginate
-	paginationparams.Limit = Limit
-	paginationparams.Page = Page
-	findResult, err := DAO_Loyalty_Point_Earning_Rules.FindPaginate(findparams, paginationparams)
+	pgCtx, pgCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer pgCancel()
+	result, err := mongox.FindPage[Loyalty_Point_Earning_Rules_Overwrite](pgCtx, Mdb_Loyalty_Point_Earning_Rules_Overwrite.Coll, bson.M{}, mongox.PageRequest{
+		Page: Page, PageSize: Limit, MaxPageSize: 50000,
+	})
 	if err != nil {
 		return entries, err
 	}
-	if len(findResult) > 0 {
-		for _, findres := range findResult {
-			InterfaceValue := reflect.ValueOf(findres).Elem().Interface().(Loyalty_Point_Earning_Rules_Overwrite)
-			entries = append(entries, InterfaceValue)
-		}
-	}
+	entries = result.Items
 	return entries, nil
 
 }
@@ -3045,26 +3266,22 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Overwrite_Delete(Login, Key s
 	earningRuleKey := parts[0]
 	mmTransactionType := parts[1]
 
-	entry_na, exits := Map_Loyalty_Point_Earning_Rules_Overwrite.CheckThenGet(Key)
-	if !exits {
+	entry, entryErr := redisx.GetJSON[Loyalty_Point_Earning_Rules_Overwrite](context.Background(), RedisClient, Loyalty_Point_Earning_Rules_Overwrite{Key: Key}.RedisKey())
+	if redisx.IsNil(entryErr) {
 		err = errors.New("entry does not exist")
 		return err
 	}
-	entry, ok := entry_na.(Loyalty_Point_Earning_Rules_Overwrite)
-	if !ok {
-		err = errors.New("error in type assertion")
-		return err
+	if entryErr != nil {
+		return entryErr
 	}
 
-	earning_na, exits := Map_Loyalty_Point_Earning_Rules.CheckThenGet(earningRuleKey)
-	if !exits {
+	earning, earningErr := redisx.GetJSON[Loyalty_Point_Earning_Rules](context.Background(), RedisClient, Loyalty_Point_Earning_Rules{Key: earningRuleKey}.RedisKey())
+	if redisx.IsNil(earningErr) {
 		err = errors.New("earning rule does not exist")
 		return err
 	}
-	earning, ok := earning_na.(Loyalty_Point_Earning_Rules)
-	if !ok {
-		err = errors.New("error in type assertion")
-		return err
+	if earningErr != nil {
+		return earningErr
 	}
 	var newKeys []string
 
@@ -3078,8 +3295,26 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Overwrite_Delete(Login, Key s
 	} else if mmTransactionType == "BILLPAY" {
 		earning.Earning_Rules_Overwrite_MM_BILLPAY_Keys = newKeys
 	}
-	Map_Loyalty_Point_Earning_Rules.Put(earningRuleKey, earning)
-	Map_Loyalty_Point_Earning_Rules_Overwrite.Delete(Key)
+	{
+		putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, putErr := Mdb_Loyalty_Point_Earning_Rules.Coll.UpdateOne(putCtx, bson.M{"Key": earningRuleKey}, bson.M{"$set": earning}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+			log.Println("Mdb_Loyalty_Point_Earning_Rules upsert error:", putErr)
+		}
+		if putSetErr := redisx.SetJSON(putCtx, RedisClient, earning.RedisKey(), earning); putSetErr != nil {
+			log.Println("redisx.SetJSON Loyalty_Point_Earning_Rules error:", putSetErr)
+		}
+		putCancel()
+	}
+	{
+		delCtx, delCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, delErr := Mdb_Loyalty_Point_Earning_Rules_Overwrite.Coll.DeleteOne(delCtx, bson.M{"Key": Key}); delErr != nil {
+			log.Println("Mdb_Loyalty_Point_Earning_Rules_Overwrite DeleteOne error:", delErr)
+		}
+		if _, delRedisErr := redisx.DelJSON(delCtx, RedisClient, Loyalty_Point_Earning_Rules_Overwrite{Key: Key}.RedisKey()); delRedisErr != nil {
+			log.Println("redisx.DelJSON Loyalty_Point_Earning_Rules_Overwrite error:", delRedisErr)
+		}
+		delCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -3103,16 +3338,29 @@ func (Uc *UserControl) Loyalty_Point_Expiry_Rules_Add(Login string, request Loya
 		return Id, err
 	}
 	//check if key already used
-	exits := Map_Loyalty_Point_Expiry_Rules.Check(request.Key)
-	if exits {
-		err = errors.New("key already exist")
-		return Id, err
+	{
+		chkCtx, chkCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		_, chkErr := redisx.GetJSON[Loyalty_Point_Expiry_Rules](chkCtx, RedisClient, Loyalty_Point_Expiry_Rules{Key: request.Key}.RedisKey())
+		chkCancel()
+		if chkErr == nil {
+			err = errors.New("key already exist")
+			return Id, err
+		}
 	}
 
 	//Prepare new entry
 	var NewEntry Loyalty_Point_Expiry_Rules
-	NewEntry.Expiry_Rules_Id = Map_Loyalty_AutoIncrement.GetNextAI("Loyalty_Point_Expiry_Rules-Id")
-	Id = NewEntry.Expiry_Rules_Id
+	{
+		aiCtx, aiCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		NewEntry.Expiry_Rules_Id, err = redisx.NextAutoIncrementID(aiCtx, RedisClient, Mdb_Loyalty_AutoIncrement.Coll, "Loyalty_Point_Expiry_Rules-Id", redisx.NextIDOptions{
+			RedisBase: "AutoIncrement", MongoRetries: 3, RetryBackoff: 500 * time.Millisecond,
+		})
+		aiCancel()
+		if err != nil {
+			return Id, err
+		}
+		Id = NewEntry.Expiry_Rules_Id
+	}
 	NewEntry.Key = request.Key
 	NewEntry.Description = request.Description
 	NewEntry.Rolling_Expiration = request.Rolling_Expiration
@@ -3124,7 +3372,16 @@ func (Uc *UserControl) Loyalty_Point_Expiry_Rules_Add(Login string, request Loya
 	NewEntry.Expiration_Trigger_date = request.Expiration_Trigger_date
 	NewEntry.Expiration_Point_Before = request.Expiration_Point_Before
 	//add to cache and DB
-	Map_Loyalty_Point_Expiry_Rules.Put(NewEntry.Key, NewEntry)
+	{
+		putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, putErr := Mdb_Loyalty_Point_Expiry_Rules.Coll.UpdateOne(putCtx, bson.M{"Key": NewEntry.Key}, bson.M{"$set": NewEntry}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+			log.Println("Mdb_Loyalty_Point_Expiry_Rules upsert error:", putErr)
+		}
+		if putSetErr := redisx.SetJSON(putCtx, RedisClient, NewEntry.RedisKey(), NewEntry); putSetErr != nil {
+			log.Println("redisx.SetJSON Loyalty_Point_Expiry_Rules error:", putSetErr)
+		}
+		putCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -3144,14 +3401,13 @@ func (Uc *UserControl) Loyalty_Point_Expiry_Rules_Edit(Login string, request Loy
 		err = errors.New("key cannot be empty")
 		return Id, err
 	}
-	entry_na, exits := Map_Loyalty_Point_Expiry_Rules.CheckThenGet(request.Key)
-	if !exits {
+	entry, entryErr := redisx.GetJSON[Loyalty_Point_Expiry_Rules](context.Background(), RedisClient, Loyalty_Point_Expiry_Rules{Key: request.Key}.RedisKey())
+	if redisx.IsNil(entryErr) {
 		err = errors.New("key is not created")
 		return Id, err
 	}
-	entry, ok := entry_na.(Loyalty_Point_Expiry_Rules)
-	if !ok {
-		return Id, errors.New("error in type assertion")
+	if entryErr != nil {
+		return Id, entryErr
 	}
 	if entry.Expiry_Rules_Id != request.Expiry_Rules_Id {
 		return Id, errors.New("id is not matching")
@@ -3171,13 +3427,31 @@ func (Uc *UserControl) Loyalty_Point_Expiry_Rules_Edit(Login string, request Loy
 	if request.NewKey != "" {
 		if request.NewKey != request.Key {
 			//delete old
-			Map_Loyalty_Point_Expiry_Rules.Delete(request.Key)
+			{
+				delCtx, delCancel := context.WithTimeout(context.Background(), 10*time.Second)
+				if _, delErr := Mdb_Loyalty_Point_Expiry_Rules.Coll.DeleteOne(delCtx, bson.M{"Key": request.Key}); delErr != nil {
+					log.Println("Mdb_Loyalty_Point_Expiry_Rules DeleteOne error:", delErr)
+				}
+				if _, delRedisErr := redisx.DelJSON(delCtx, RedisClient, Loyalty_Point_Expiry_Rules{Key: request.Key}.RedisKey()); delRedisErr != nil {
+					log.Println("redisx.DelJSON Loyalty_Point_Expiry_Rules error:", delRedisErr)
+				}
+				delCancel()
+			}
 			//update key
 			entry.Key = request.NewKey
 		}
 	}
 	//add to cache and DB
-	Map_Loyalty_Point_Expiry_Rules.Put(entry.Key, entry)
+	{
+		putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, putErr := Mdb_Loyalty_Point_Expiry_Rules.Coll.UpdateOne(putCtx, bson.M{"Key": entry.Key}, bson.M{"$set": entry}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+			log.Println("Mdb_Loyalty_Point_Expiry_Rules upsert error:", putErr)
+		}
+		if putSetErr := redisx.SetJSON(putCtx, RedisClient, entry.RedisKey(), entry); putSetErr != nil {
+			log.Println("redisx.SetJSON Loyalty_Point_Expiry_Rules error:", putSetErr)
+		}
+		putCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -3193,29 +3467,21 @@ func (Uc *UserControl) Loyalty_Point_Expiry_Rules_Edit(Login string, request Loy
 
 func (Uc *UserControl) Loyalty_Point_Expiry_Rules_Get(Key string) (entries []Loyalty_Point_Expiry_Rules, err error) {
 	if Key == "" {
-		entries_na := Map_Loyalty_Point_Expiry_Rules.ConvertToArray()
-		if len(entries_na) > 0 {
-			for _, entry_na := range entries_na {
-				entry, ok := entry_na.(Loyalty_Point_Expiry_Rules)
-				if !ok {
-					err = errors.New("error in type assertion")
-					return entries, err
-				} else {
-					entries = append(entries, entry)
-				}
-			}
+		entries, err = redisx.GetAllJSONByPattern[Loyalty_Point_Expiry_Rules](context.Background(), RedisClient, redisx.ScanJSONOptions{
+			Pattern: "Loyalty_Point_Expiry_Rules:*", ScanCount: 500, PipelineSize: 250,
+		})
+		if err != nil {
+			return entries, err
 		}
 		return entries, nil
 	} else {
-		entry_na, exits := Map_Loyalty_Point_Expiry_Rules.CheckThenGet(Key)
-		if !exits {
+		entry, entryErr := redisx.GetJSON[Loyalty_Point_Expiry_Rules](context.Background(), RedisClient, Loyalty_Point_Expiry_Rules{Key: Key}.RedisKey())
+		if redisx.IsNil(entryErr) {
 			err = errors.New("key does not exist")
 			return entries, err
 		}
-		entry, ok := entry_na.(Loyalty_Point_Expiry_Rules)
-		if !ok {
-			err = errors.New("error in type assertion")
-			return entries, err
+		if entryErr != nil {
+			return entries, entryErr
 		}
 		entries = append(entries, entry)
 		return entries, nil
@@ -3230,7 +3496,6 @@ func (Uc *UserControl) Loyalty_Point_Expiry_Rules_GetPaginated(Page, Limit int64
 		return entries, errors.New("invalid limit (accept value between 1 and 50000)")
 	}
 
-	var findparams daoc.DAOFindParams
 	//var array []daoc.DAOFindCriteria
 	// if Outlet_Key != "" {
 	// 	//restrict access for records that belong to this user
@@ -3253,19 +3518,15 @@ func (Uc *UserControl) Loyalty_Point_Expiry_Rules_GetPaginated(Page, Limit int64
 	// if len(array) > 0 {
 	// 	findparams.FindCriteria = array
 	// }
-	var paginationparams daoc.DAOPaginate
-	paginationparams.Limit = Limit
-	paginationparams.Page = Page
-	findResult, err := DAO_Loyalty_Point_Expiry_Rules.FindPaginate(findparams, paginationparams)
+	pgCtx, pgCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer pgCancel()
+	result, err := mongox.FindPage[Loyalty_Point_Expiry_Rules](pgCtx, Mdb_Loyalty_Point_Expiry_Rules.Coll, bson.M{}, mongox.PageRequest{
+		Page: Page, PageSize: Limit, MaxPageSize: 50000,
+	})
 	if err != nil {
 		return entries, err
 	}
-	if len(findResult) > 0 {
-		for _, findres := range findResult {
-			InterfaceValue := reflect.ValueOf(findres).Elem().Interface().(Loyalty_Point_Expiry_Rules)
-			entries = append(entries, InterfaceValue)
-		}
-	}
+	entries = result.Items
 	return entries, nil
 
 }
@@ -3275,17 +3536,24 @@ func (Uc *UserControl) Loyalty_Point_Expiry_Rules_Delete(Login, Key string) (err
 		err = errors.New("key cannot be empty")
 		return err
 	}
-	entry_na, exits := Map_Loyalty_Point_Expiry_Rules.CheckThenGet(Key)
-	if !exits {
+	entry, entryErr := redisx.GetJSON[Loyalty_Point_Expiry_Rules](context.Background(), RedisClient, Loyalty_Point_Expiry_Rules{Key: Key}.RedisKey())
+	if redisx.IsNil(entryErr) {
 		err = errors.New("entry does not exist")
 		return err
 	}
-	entry, ok := entry_na.(Loyalty_Point_Expiry_Rules)
-	if !ok {
-		err = errors.New("error in type assertion")
-		return err
+	if entryErr != nil {
+		return entryErr
 	}
-	Map_Loyalty_Point_Expiry_Rules.Delete(Key)
+	{
+		delCtx, delCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, delErr := Mdb_Loyalty_Point_Expiry_Rules.Coll.DeleteOne(delCtx, bson.M{"Key": Key}); delErr != nil {
+			log.Println("Mdb_Loyalty_Point_Expiry_Rules DeleteOne error:", delErr)
+		}
+		if _, delRedisErr := redisx.DelJSON(delCtx, RedisClient, Loyalty_Point_Expiry_Rules{Key: Key}.RedisKey()); delRedisErr != nil {
+			log.Println("redisx.DelJSON Loyalty_Point_Expiry_Rules error:", delRedisErr)
+		}
+		delCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -3309,16 +3577,29 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Add(Login string, request 
 		return Id, err
 	}
 	//check if key already used
-	exits := Map_Loyalty_Point_Redemption_Rules.Check(request.Key)
-	if exits {
-		err = errors.New("key already exist")
-		return Id, err
+	{
+		chkCtx, chkCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		_, chkErr := redisx.GetJSON[Loyalty_Point_Redemption_Rules](chkCtx, RedisClient, Loyalty_Point_Redemption_Rules{Key: request.Key}.RedisKey())
+		chkCancel()
+		if chkErr == nil {
+			err = errors.New("key already exist")
+			return Id, err
+		}
 	}
 
 	//Prepare new entry
 	var NewEntry Loyalty_Point_Redemption_Rules
-	NewEntry.Redemption_Rules_Id = Map_Loyalty_AutoIncrement.GetNextAI("Loyalty_Point_Redemption_Rules-Id")
-	Id = NewEntry.Redemption_Rules_Id
+	{
+		aiCtx, aiCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		NewEntry.Redemption_Rules_Id, err = redisx.NextAutoIncrementID(aiCtx, RedisClient, Mdb_Loyalty_AutoIncrement.Coll, "Loyalty_Point_Redemption_Rules-Id", redisx.NextIDOptions{
+			RedisBase: "AutoIncrement", MongoRetries: 3, RetryBackoff: 500 * time.Millisecond,
+		})
+		aiCancel()
+		if err != nil {
+			return Id, err
+		}
+		Id = NewEntry.Redemption_Rules_Id
+	}
 	NewEntry.Key = request.Key
 	NewEntry.Description = request.Description
 	NewEntry.Min_Accumulated_Points = request.Min_Accumulated_Points
@@ -3385,7 +3666,16 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Add(Login string, request 
 	NewEntry.FreeSpinAndWin_Notification_Sender = request.FreeSpinAndWin_Notification_Sender
 	NewEntry.FreeSpinAndWin_Notification_Text = request.FreeSpinAndWin_Notification_Text
 	//add to cache and DB
-	Map_Loyalty_Point_Redemption_Rules.Put(NewEntry.Key, NewEntry)
+	{
+		putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, putErr := Mdb_Loyalty_Point_Redemption_Rules.Coll.UpdateOne(putCtx, bson.M{"Key": NewEntry.Key}, bson.M{"$set": NewEntry}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+			log.Println("Mdb_Loyalty_Point_Redemption_Rules upsert error:", putErr)
+		}
+		if putSetErr := redisx.SetJSON(putCtx, RedisClient, NewEntry.RedisKey(), NewEntry); putSetErr != nil {
+			log.Println("redisx.SetJSON Loyalty_Point_Redemption_Rules error:", putSetErr)
+		}
+		putCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -3405,14 +3695,13 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Edit(Login string, request
 		err = errors.New("key cannot be empty")
 		return Id, err
 	}
-	entry_na, exits := Map_Loyalty_Point_Redemption_Rules.CheckThenGet(request.Key)
-	if !exits {
+	entry, entryErr := redisx.GetJSON[Loyalty_Point_Redemption_Rules](context.Background(), RedisClient, Loyalty_Point_Redemption_Rules{Key: request.Key}.RedisKey())
+	if redisx.IsNil(entryErr) {
 		err = errors.New("key is not created")
 		return Id, err
 	}
-	entry, ok := entry_na.(Loyalty_Point_Redemption_Rules)
-	if !ok {
-		return Id, errors.New("error in type assertion")
+	if entryErr != nil {
+		return Id, entryErr
 	}
 	if entry.Redemption_Rules_Id != request.Redemption_Rules_Id {
 		return Id, errors.New("id is not matching")
@@ -3485,13 +3774,31 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Edit(Login string, request
 	if request.NewKey != "" {
 		if request.NewKey != request.Key {
 			//delete old
-			Map_Loyalty_Point_Redemption_Rules.Delete(request.Key)
+			{
+				delCtx, delCancel := context.WithTimeout(context.Background(), 10*time.Second)
+				if _, delErr := Mdb_Loyalty_Point_Redemption_Rules.Coll.DeleteOne(delCtx, bson.M{"Key": request.Key}); delErr != nil {
+					log.Println("Mdb_Loyalty_Point_Redemption_Rules DeleteOne error:", delErr)
+				}
+				if _, delRedisErr := redisx.DelJSON(delCtx, RedisClient, Loyalty_Point_Redemption_Rules{Key: request.Key}.RedisKey()); delRedisErr != nil {
+					log.Println("redisx.DelJSON Loyalty_Point_Redemption_Rules error:", delRedisErr)
+				}
+				delCancel()
+			}
 			//update key
 			entry.Key = request.NewKey
 		}
 	}
 	//add to cache and DB
-	Map_Loyalty_Point_Redemption_Rules.Put(entry.Key, entry)
+	{
+		putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, putErr := Mdb_Loyalty_Point_Redemption_Rules.Coll.UpdateOne(putCtx, bson.M{"Key": entry.Key}, bson.M{"$set": entry}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+			log.Println("Mdb_Loyalty_Point_Redemption_Rules upsert error:", putErr)
+		}
+		if putSetErr := redisx.SetJSON(putCtx, RedisClient, entry.RedisKey(), entry); putSetErr != nil {
+			log.Println("redisx.SetJSON Loyalty_Point_Redemption_Rules error:", putSetErr)
+		}
+		putCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -3507,29 +3814,21 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Edit(Login string, request
 
 func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Get(Key string) (entries []Loyalty_Point_Redemption_Rules, err error) {
 	if Key == "" {
-		entries_na := Map_Loyalty_Point_Redemption_Rules.ConvertToArray()
-		if len(entries_na) > 0 {
-			for _, entry_na := range entries_na {
-				entry, ok := entry_na.(Loyalty_Point_Redemption_Rules)
-				if !ok {
-					err = errors.New("error in type assertion")
-					return entries, err
-				} else {
-					entries = append(entries, entry)
-				}
-			}
+		entries, err = redisx.GetAllJSONByPattern[Loyalty_Point_Redemption_Rules](context.Background(), RedisClient, redisx.ScanJSONOptions{
+			Pattern: "Loyalty_Point_Redemption_Rules:*", ScanCount: 500, PipelineSize: 250,
+		})
+		if err != nil {
+			return entries, err
 		}
 		return entries, nil
 	} else {
-		entry_na, exits := Map_Loyalty_Point_Redemption_Rules.CheckThenGet(Key)
-		if !exits {
+		entry, entryErr := redisx.GetJSON[Loyalty_Point_Redemption_Rules](context.Background(), RedisClient, Loyalty_Point_Redemption_Rules{Key: Key}.RedisKey())
+		if redisx.IsNil(entryErr) {
 			err = errors.New("key does not exist")
 			return entries, err
 		}
-		entry, ok := entry_na.(Loyalty_Point_Redemption_Rules)
-		if !ok {
-			err = errors.New("error in type assertion")
-			return entries, err
+		if entryErr != nil {
+			return entries, entryErr
 		}
 		entries = append(entries, entry)
 		return entries, nil
@@ -3544,7 +3843,6 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_GetPaginated(Page, Limit i
 		return entries, errors.New("invalid limit (accept value between 1 and 50000)")
 	}
 
-	var findparams daoc.DAOFindParams
 	//var array []daoc.DAOFindCriteria
 	// if Outlet_Key != "" {
 	// 	//restrict access for records that belong to this user
@@ -3567,19 +3865,15 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_GetPaginated(Page, Limit i
 	// if len(array) > 0 {
 	// 	findparams.FindCriteria = array
 	// }
-	var paginationparams daoc.DAOPaginate
-	paginationparams.Limit = Limit
-	paginationparams.Page = Page
-	findResult, err := DAO_Loyalty_Point_Redemption_Rules.FindPaginate(findparams, paginationparams)
+	pgCtx, pgCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer pgCancel()
+	result, err := mongox.FindPage[Loyalty_Point_Redemption_Rules](pgCtx, Mdb_Loyalty_Point_Redemption_Rules.Coll, bson.M{}, mongox.PageRequest{
+		Page: Page, PageSize: Limit, MaxPageSize: 50000,
+	})
 	if err != nil {
 		return entries, err
 	}
-	if len(findResult) > 0 {
-		for _, findres := range findResult {
-			InterfaceValue := reflect.ValueOf(findres).Elem().Interface().(Loyalty_Point_Redemption_Rules)
-			entries = append(entries, InterfaceValue)
-		}
-	}
+	entries = result.Items
 	return entries, nil
 
 }
@@ -3589,17 +3883,24 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Delete(Login, Key string) 
 		err = errors.New("key cannot be empty")
 		return err
 	}
-	entry_na, exits := Map_Loyalty_Point_Redemption_Rules.CheckThenGet(Key)
-	if !exits {
+	entry, entryErr := redisx.GetJSON[Loyalty_Point_Redemption_Rules](context.Background(), RedisClient, Loyalty_Point_Redemption_Rules{Key: Key}.RedisKey())
+	if redisx.IsNil(entryErr) {
 		err = errors.New("entry does not exist")
 		return err
 	}
-	entry, ok := entry_na.(Loyalty_Point_Redemption_Rules)
-	if !ok {
-		err = errors.New("error in type assertion")
-		return err
+	if entryErr != nil {
+		return entryErr
 	}
-	Map_Loyalty_Point_Redemption_Rules.Delete(Key)
+	{
+		delCtx, delCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, delErr := Mdb_Loyalty_Point_Redemption_Rules.Coll.DeleteOne(delCtx, bson.M{"Key": Key}); delErr != nil {
+			log.Println("Mdb_Loyalty_Point_Redemption_Rules DeleteOne error:", delErr)
+		}
+		if _, delRedisErr := redisx.DelJSON(delCtx, RedisClient, Loyalty_Point_Redemption_Rules{Key: Key}.RedisKey()); delRedisErr != nil {
+			log.Println("redisx.DelJSON Loyalty_Point_Redemption_Rules error:", delRedisErr)
+		}
+		delCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -3623,31 +3924,42 @@ func (Uc *UserControl) Loyalty_Plan_Add(Login string, request Loyalty_Plan_AddRe
 		return Id, err
 	}
 	//check if key already used
-	exits := Map_Loyalty_Plan.Check(request.Key)
-	if exits {
-		err = errors.New("key already exist")
-		return Id, err
+	{
+		chkCtx, chkCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		_, chkErr := redisx.GetJSON[Loyalty_Plan](chkCtx, RedisClient, Loyalty_Plan{Key: request.Key}.RedisKey())
+		chkCancel()
+		if chkErr == nil {
+			err = errors.New("key already exist")
+			return Id, err
+		}
 	}
 
-	entries_na := Map_Loyalty_Plan.ConvertToArray()
-	if len(entries_na) > 0 {
-		for _, entry_na := range entries_na {
-			entry, ok := entry_na.(Loyalty_Plan)
-			if !ok {
-				err = errors.New("error in type assertion")
-				return Id, err
-			} else {
-				if request.Loyalty_Level_Key == entry.Loyalty_Level_Key && request.Loyalty_Account_Segment_Key == entry.Loyalty_Account_Segment_Key {
-					err = errors.New("a plan with the same Loyalty Level and Account Segment already exists. Please choose a different combination")
-					return Id, err
-				}
-			}
+	planEntries, planEntriesErr := redisx.GetAllJSONByPattern[Loyalty_Plan](context.Background(), RedisClient, redisx.ScanJSONOptions{
+		Pattern: "Loyalty_Plan:*", ScanCount: 500, PipelineSize: 250,
+	})
+	if planEntriesErr != nil {
+		err = planEntriesErr
+		return Id, err
+	}
+	for _, planEntry := range planEntries {
+		if request.Loyalty_Level_Key == planEntry.Loyalty_Level_Key && request.Loyalty_Account_Segment_Key == planEntry.Loyalty_Account_Segment_Key {
+			err = errors.New("a plan with the same Loyalty Level and Account Segment already exists. Please choose a different combination")
+			return Id, err
 		}
 	}
 	//Prepare new entry
 	var NewEntry Loyalty_Plan
-	NewEntry.Plan_Id = Map_Loyalty_AutoIncrement.GetNextAI("Loyalty_Plan-Id")
-	Id = NewEntry.Plan_Id
+	{
+		aiCtx, aiCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		NewEntry.Plan_Id, err = redisx.NextAutoIncrementID(aiCtx, RedisClient, Mdb_Loyalty_AutoIncrement.Coll, "Loyalty_Plan-Id", redisx.NextIDOptions{
+			RedisBase: "AutoIncrement", MongoRetries: 3, RetryBackoff: 500 * time.Millisecond,
+		})
+		aiCancel()
+		if err != nil {
+			return Id, err
+		}
+		Id = NewEntry.Plan_Id
+	}
 	NewEntry.Key = request.Key
 	NewEntry.Description = request.Description
 	NewEntry.Loyalty_Level_Key = request.Loyalty_Level_Key
@@ -3656,7 +3968,16 @@ func (Uc *UserControl) Loyalty_Plan_Add(Login string, request Loyalty_Plan_AddRe
 	NewEntry.Expiry_Rules_Key = request.Expiry_Rules_Key
 	NewEntry.Redemption_Rules_Key = request.Redemption_Rules_Key
 	//add to cache and DB
-	Map_Loyalty_Plan.Put(NewEntry.Key, NewEntry)
+	{
+		putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, putErr := Mdb_Loyalty_Plan.Coll.UpdateOne(putCtx, bson.M{"Key": NewEntry.Key}, bson.M{"$set": NewEntry}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+			log.Println("Mdb_Loyalty_Plan upsert error:", putErr)
+		}
+		if putSetErr := redisx.SetJSON(putCtx, RedisClient, NewEntry.RedisKey(), NewEntry); putSetErr != nil {
+			log.Println("redisx.SetJSON Loyalty_Plan error:", putSetErr)
+		}
+		putCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -3676,32 +3997,28 @@ func (Uc *UserControl) Loyalty_Plan_Edit(Login string, request Loyalty_Plan_Edit
 		err = errors.New("key cannot be empty")
 		return Id, err
 	}
-	entry_na, exits := Map_Loyalty_Plan.CheckThenGet(request.Key)
-	if !exits {
+	entry, entryErr := redisx.GetJSON[Loyalty_Plan](context.Background(), RedisClient, Loyalty_Plan{Key: request.Key}.RedisKey())
+	if redisx.IsNil(entryErr) {
 		err = errors.New("key is not created")
 		return Id, err
 	}
-	entry, ok := entry_na.(Loyalty_Plan)
-	if !ok {
-		return Id, errors.New("error in type assertion")
+	if entryErr != nil {
+		return Id, entryErr
 	}
 	if entry.Plan_Id != request.Plan_Id {
 		return Id, errors.New("id is not matching")
 	}
-	entries_na := Map_Loyalty_Plan.ConvertToArray()
-	if len(entries_na) > 0 {
-		for _, entry_na := range entries_na {
-			entry, ok := entry_na.(Loyalty_Plan)
-			if !ok {
-				err = errors.New("error in type assertion")
-				return Id, err
-			} else {
-				if request.Key != entry.Key && request.Loyalty_Level_Key == entry.Loyalty_Level_Key && request.Loyalty_Account_Segment_Key == entry.Loyalty_Account_Segment_Key {
-					err = errors.New("a plan with the same Loyalty Level and Account Segment already exists. Please choose a different combination")
-					return Id, err
-				}
-
-			}
+	planEntries2, planEntriesErr2 := redisx.GetAllJSONByPattern[Loyalty_Plan](context.Background(), RedisClient, redisx.ScanJSONOptions{
+		Pattern: "Loyalty_Plan:*", ScanCount: 500, PipelineSize: 250,
+	})
+	if planEntriesErr2 != nil {
+		err = planEntriesErr2
+		return Id, err
+	}
+	for _, planEntry2 := range planEntries2 {
+		if request.Key != planEntry2.Key && request.Loyalty_Level_Key == planEntry2.Loyalty_Level_Key && request.Loyalty_Account_Segment_Key == planEntry2.Loyalty_Account_Segment_Key {
+			err = errors.New("a plan with the same Loyalty Level and Account Segment already exists. Please choose a different combination")
+			return Id, err
 		}
 	}
 	Current_Entry := entry
@@ -3717,13 +4034,31 @@ func (Uc *UserControl) Loyalty_Plan_Edit(Login string, request Loyalty_Plan_Edit
 	if request.NewKey != "" {
 		if request.NewKey != request.Key {
 			//delete old
-			Map_Loyalty_Plan.Delete(request.Key)
+			{
+				delCtx, delCancel := context.WithTimeout(context.Background(), 10*time.Second)
+				if _, delErr := Mdb_Loyalty_Plan.Coll.DeleteOne(delCtx, bson.M{"Key": request.Key}); delErr != nil {
+					log.Println("Mdb_Loyalty_Plan DeleteOne error:", delErr)
+				}
+				if _, delRedisErr := redisx.DelJSON(delCtx, RedisClient, Loyalty_Plan{Key: request.Key}.RedisKey()); delRedisErr != nil {
+					log.Println("redisx.DelJSON Loyalty_Plan error:", delRedisErr)
+				}
+				delCancel()
+			}
 			//update key
 			entry.Key = request.NewKey
 		}
 	}
 	//add to cache and DB
-	Map_Loyalty_Plan.Put(entry.Key, entry)
+	{
+		putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, putErr := Mdb_Loyalty_Plan.Coll.UpdateOne(putCtx, bson.M{"Key": entry.Key}, bson.M{"$set": entry}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+			log.Println("Mdb_Loyalty_Plan upsert error:", putErr)
+		}
+		if putSetErr := redisx.SetJSON(putCtx, RedisClient, entry.RedisKey(), entry); putSetErr != nil {
+			log.Println("redisx.SetJSON Loyalty_Plan error:", putSetErr)
+		}
+		putCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -3739,29 +4074,21 @@ func (Uc *UserControl) Loyalty_Plan_Edit(Login string, request Loyalty_Plan_Edit
 
 func (Uc *UserControl) Loyalty_Plan_Get(Key string) (entries []Loyalty_Plan, err error) {
 	if Key == "" {
-		entries_na := Map_Loyalty_Plan.ConvertToArray()
-		if len(entries_na) > 0 {
-			for _, entry_na := range entries_na {
-				entry, ok := entry_na.(Loyalty_Plan)
-				if !ok {
-					err = errors.New("error in type assertion")
-					return entries, err
-				} else {
-					entries = append(entries, entry)
-				}
-			}
+		entries, err = redisx.GetAllJSONByPattern[Loyalty_Plan](context.Background(), RedisClient, redisx.ScanJSONOptions{
+			Pattern: "Loyalty_Plan:*", ScanCount: 500, PipelineSize: 250,
+		})
+		if err != nil {
+			return entries, err
 		}
 		return entries, nil
 	} else {
-		entry_na, exits := Map_Loyalty_Plan.CheckThenGet(Key)
-		if !exits {
+		entry, entryErr := redisx.GetJSON[Loyalty_Plan](context.Background(), RedisClient, Loyalty_Plan{Key: Key}.RedisKey())
+		if redisx.IsNil(entryErr) {
 			err = errors.New("key does not exist")
 			return entries, err
 		}
-		entry, ok := entry_na.(Loyalty_Plan)
-		if !ok {
-			err = errors.New("error in type assertion")
-			return entries, err
+		if entryErr != nil {
+			return entries, entryErr
 		}
 		entries = append(entries, entry)
 		return entries, nil
@@ -3776,7 +4103,6 @@ func (Uc *UserControl) Loyalty_Plan_GetPaginated(Page, Limit int64) (entries []L
 		return entries, errors.New("invalid limit (accept value between 1 and 50000)")
 	}
 
-	var findparams daoc.DAOFindParams
 	//var array []daoc.DAOFindCriteria
 	// if Outlet_Key != "" {
 	// 	//restrict access for records that belong to this user
@@ -3799,19 +4125,15 @@ func (Uc *UserControl) Loyalty_Plan_GetPaginated(Page, Limit int64) (entries []L
 	// if len(array) > 0 {
 	// 	findparams.FindCriteria = array
 	// }
-	var paginationparams daoc.DAOPaginate
-	paginationparams.Limit = Limit
-	paginationparams.Page = Page
-	findResult, err := DAO_Loyalty_Plan.FindPaginate(findparams, paginationparams)
+	pgCtx, pgCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer pgCancel()
+	result, err := mongox.FindPage[Loyalty_Plan](pgCtx, Mdb_Loyalty_Plan.Coll, bson.M{}, mongox.PageRequest{
+		Page: Page, PageSize: Limit, MaxPageSize: 50000,
+	})
 	if err != nil {
 		return entries, err
 	}
-	if len(findResult) > 0 {
-		for _, findres := range findResult {
-			InterfaceValue := reflect.ValueOf(findres).Elem().Interface().(Loyalty_Plan)
-			entries = append(entries, InterfaceValue)
-		}
-	}
+	entries = result.Items
 	return entries, nil
 
 }
@@ -3821,17 +4143,24 @@ func (Uc *UserControl) Loyalty_Plan_Delete(Login, Key string) (err error) {
 		err = errors.New("key cannot be empty")
 		return err
 	}
-	entry_na, exits := Map_Loyalty_Plan.CheckThenGet(Key)
-	if !exits {
+	entry, entryErr := redisx.GetJSON[Loyalty_Plan](context.Background(), RedisClient, Loyalty_Plan{Key: Key}.RedisKey())
+	if redisx.IsNil(entryErr) {
 		err = errors.New("entry does not exist")
 		return err
 	}
-	entry, ok := entry_na.(Loyalty_Plan)
-	if !ok {
-		err = errors.New("error in type assertion")
-		return err
+	if entryErr != nil {
+		return entryErr
 	}
-	Map_Loyalty_Plan.Delete(Key)
+	{
+		delCtx, delCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, delErr := Mdb_Loyalty_Plan.Coll.DeleteOne(delCtx, bson.M{"Key": Key}); delErr != nil {
+			log.Println("Mdb_Loyalty_Plan DeleteOne error:", delErr)
+		}
+		if _, delRedisErr := redisx.DelJSON(delCtx, RedisClient, Loyalty_Plan{Key: Key}.RedisKey()); delRedisErr != nil {
+			log.Println("redisx.DelJSON Loyalty_Plan error:", delRedisErr)
+		}
+		delCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -3856,20 +4185,42 @@ func (Uc *UserControl) Customer_UAT_Add(Login string, request Customer_UAT_AddRe
 		return Id, err
 	}
 	//check if key already used
-	exits := Map_Customer_UAT.Check(request.Key)
-	if exits {
-		err = errors.New("key already exist")
-		return Id, err
+	{
+		chkCtx, chkCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		_, chkErr := redisx.GetJSON[Customer_UAT](chkCtx, RedisClient, Customer_UAT{Key: request.Key}.RedisKey())
+		chkCancel()
+		if chkErr == nil {
+			err = errors.New("key already exist")
+			return Id, err
+		}
 	}
 	//Prepare new entry
 	var NewEntry Customer_UAT
-	NewEntry.Id = Map_Loyalty_AutoIncrement.GetNextAI("Customer_UAT-Id")
-	Id = NewEntry.Id
+	{
+		aiCtx, aiCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		NewEntry.Id, err = redisx.NextAutoIncrementID(aiCtx, RedisClient, Mdb_Loyalty_AutoIncrement.Coll, "Customer_UAT-Id", redisx.NextIDOptions{
+			RedisBase: "AutoIncrement", MongoRetries: 3, RetryBackoff: 500 * time.Millisecond,
+		})
+		aiCancel()
+		if err != nil {
+			return Id, err
+		}
+		Id = NewEntry.Id
+	}
 	NewEntry.Key = request.Key
 	NewEntry.AddTime = time.Now()
 	NewEntry.AddReason = request.AddReason
 	//add to cache and DB
-	Map_Customer_UAT.Put(NewEntry.Key, NewEntry)
+	{
+		putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, putErr := Mdb_Customer_UAT.Coll.UpdateOne(putCtx, bson.M{"Key": NewEntry.Key}, bson.M{"$set": NewEntry}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+			log.Println("Mdb_Customer_UAT upsert error:", putErr)
+		}
+		if putSetErr := redisx.SetJSON(putCtx, RedisClient, NewEntry.RedisKey(), NewEntry); putSetErr != nil {
+			log.Println("redisx.SetJSON Customer_UAT error:", putSetErr)
+		}
+		putCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -3889,14 +4240,13 @@ func (Uc *UserControl) Customer_UAT_Edit(Login string, request Customer_UAT_Edit
 		err = errors.New("key cannot be empty")
 		return Id, err
 	}
-	entry_na, exits := Map_Customer_UAT.CheckThenGet(request.Key)
-	if !exits {
+	entry, entryErr := redisx.GetJSON[Customer_UAT](context.Background(), RedisClient, Customer_UAT{Key: request.Key}.RedisKey())
+	if redisx.IsNil(entryErr) {
 		err = errors.New("key is not created")
 		return Id, err
 	}
-	entry, ok := entry_na.(Customer_UAT)
-	if !ok {
-		return Id, errors.New("error in type assertion")
+	if entryErr != nil {
+		return Id, entryErr
 	}
 	if entry.Id != request.Id {
 		return Id, errors.New("id is not matching")
@@ -3910,13 +4260,31 @@ func (Uc *UserControl) Customer_UAT_Edit(Login string, request Customer_UAT_Edit
 	if request.NewKey != "" {
 		if request.NewKey != request.Key {
 			//delete old
-			Map_Customer_UAT.Delete(request.Key)
+			{
+				delCtx, delCancel := context.WithTimeout(context.Background(), 10*time.Second)
+				if _, delErr := Mdb_Customer_UAT.Coll.DeleteOne(delCtx, bson.M{"Key": request.Key}); delErr != nil {
+					log.Println("Mdb_Customer_UAT DeleteOne error:", delErr)
+				}
+				if _, delRedisErr := redisx.DelJSON(delCtx, RedisClient, Customer_UAT{Key: request.Key}.RedisKey()); delRedisErr != nil {
+					log.Println("redisx.DelJSON Customer_UAT error:", delRedisErr)
+				}
+				delCancel()
+			}
 			//update key
 			entry.Key = request.NewKey
 		}
 	}
 	//add to cache and DB
-	Map_Customer_UAT.Put(entry.Key, entry)
+	{
+		putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, putErr := Mdb_Customer_UAT.Coll.UpdateOne(putCtx, bson.M{"Key": entry.Key}, bson.M{"$set": entry}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+			log.Println("Mdb_Customer_UAT upsert error:", putErr)
+		}
+		if putSetErr := redisx.SetJSON(putCtx, RedisClient, entry.RedisKey(), entry); putSetErr != nil {
+			log.Println("redisx.SetJSON Customer_UAT error:", putSetErr)
+		}
+		putCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -3932,29 +4300,21 @@ func (Uc *UserControl) Customer_UAT_Edit(Login string, request Customer_UAT_Edit
 
 func (Uc *UserControl) Customer_UAT_Get(Key string) (entries []Customer_UAT, err error) {
 	if Key == "" {
-		entries_na := Map_Customer_UAT.ConvertToArray()
-		if len(entries_na) > 0 {
-			for _, entry_na := range entries_na {
-				entry, ok := entry_na.(Customer_UAT)
-				if !ok {
-					err = errors.New("error in type assertion")
-					return entries, err
-				} else {
-					entries = append(entries, entry)
-				}
-			}
+		entries, err = redisx.GetAllJSONByPattern[Customer_UAT](context.Background(), RedisClient, redisx.ScanJSONOptions{
+			Pattern: "Customer_UAT:*", ScanCount: 500, PipelineSize: 250,
+		})
+		if err != nil {
+			return entries, err
 		}
 		return entries, nil
 	} else {
-		entry_na, exits := Map_Customer_UAT.CheckThenGet(Key)
-		if !exits {
+		entry, entryErr := redisx.GetJSON[Customer_UAT](context.Background(), RedisClient, Customer_UAT{Key: Key}.RedisKey())
+		if redisx.IsNil(entryErr) {
 			err = errors.New("key does not exist")
 			return entries, err
 		}
-		entry, ok := entry_na.(Customer_UAT)
-		if !ok {
-			err = errors.New("error in type assertion")
-			return entries, err
+		if entryErr != nil {
+			return entries, entryErr
 		}
 		entries = append(entries, entry)
 		return entries, nil
@@ -3969,7 +4329,6 @@ func (Uc *UserControl) Customer_UAT_GetPaginated(Page, Limit int64) (entries []C
 		return entries, errors.New("invalid limit (accept value between 1 and 50000)")
 	}
 
-	var findparams daoc.DAOFindParams
 	//var array []daoc.DAOFindCriteria
 	// if Outlet_Key != "" {
 	// 	//restrict access for records that belong to this user
@@ -3992,19 +4351,15 @@ func (Uc *UserControl) Customer_UAT_GetPaginated(Page, Limit int64) (entries []C
 	// if len(array) > 0 {
 	// 	findparams.FindCriteria = array
 	// }
-	var paginationparams daoc.DAOPaginate
-	paginationparams.Limit = Limit
-	paginationparams.Page = Page
-	findResult, err := DAO_Customer_UAT.FindPaginate(findparams, paginationparams)
+	pgCtx, pgCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer pgCancel()
+	result, err := mongox.FindPage[Customer_UAT](pgCtx, Mdb_Customer_UAT.Coll, bson.M{}, mongox.PageRequest{
+		Page: Page, PageSize: Limit, MaxPageSize: 50000,
+	})
 	if err != nil {
 		return entries, err
 	}
-	if len(findResult) > 0 {
-		for _, findres := range findResult {
-			InterfaceValue := reflect.ValueOf(findres).Elem().Interface().(Customer_UAT)
-			entries = append(entries, InterfaceValue)
-		}
-	}
+	entries = result.Items
 	return entries, nil
 
 }
@@ -4014,17 +4369,24 @@ func (Uc *UserControl) Customer_UAT_Delete(Login, Key string) (err error) {
 		err = errors.New("key cannot be empty")
 		return err
 	}
-	entry_na, exits := Map_Customer_UAT.CheckThenGet(Key)
-	if !exits {
+	entry, entryErr := redisx.GetJSON[Customer_UAT](context.Background(), RedisClient, Customer_UAT{Key: Key}.RedisKey())
+	if redisx.IsNil(entryErr) {
 		err = errors.New("entry does not exist")
 		return err
 	}
-	entry, ok := entry_na.(Customer_UAT)
-	if !ok {
-		err = errors.New("error in type assertion")
-		return err
+	if entryErr != nil {
+		return entryErr
 	}
-	Map_Customer_UAT.Delete(Key)
+	{
+		delCtx, delCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, delErr := Mdb_Customer_UAT.Coll.DeleteOne(delCtx, bson.M{"Key": Key}); delErr != nil {
+			log.Println("Mdb_Customer_UAT DeleteOne error:", delErr)
+		}
+		if _, delRedisErr := redisx.DelJSON(delCtx, RedisClient, Customer_UAT{Key: Key}.RedisKey()); delRedisErr != nil {
+			log.Println("redisx.DelJSON Customer_UAT error:", delRedisErr)
+		}
+		delCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -4049,20 +4411,42 @@ func (Uc *UserControl) Customer_DND_Add(Login string, request Customer_DND_AddRe
 		return Id, err
 	}
 	//check if key already used
-	exits := Map_Customer_DND.Check(request.Key)
-	if exits {
-		err = errors.New("key already exist")
-		return Id, err
+	{
+		chkCtx, chkCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		_, chkErr := redisx.GetJSON[Customer_DND](chkCtx, RedisClient, Customer_DND{Key: request.Key}.RedisKey())
+		chkCancel()
+		if chkErr == nil {
+			err = errors.New("key already exist")
+			return Id, err
+		}
 	}
 	//Prepare new entry
 	var NewEntry Customer_DND
-	NewEntry.Id = Map_Loyalty_AutoIncrement.GetNextAI("Customer_DND-Id")
-	Id = NewEntry.Id
+	{
+		aiCtx, aiCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		NewEntry.Id, err = redisx.NextAutoIncrementID(aiCtx, RedisClient, Mdb_Loyalty_AutoIncrement.Coll, "Customer_DND-Id", redisx.NextIDOptions{
+			RedisBase: "AutoIncrement", MongoRetries: 3, RetryBackoff: 500 * time.Millisecond,
+		})
+		aiCancel()
+		if err != nil {
+			return Id, err
+		}
+		Id = NewEntry.Id
+	}
 	NewEntry.Key = request.Key
 	NewEntry.AddTime = time.Now()
 	NewEntry.AddReason = request.AddReason
 	//add to cache and DB
-	Map_Customer_DND.Put(NewEntry.Key, NewEntry)
+	{
+		putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, putErr := Mdb_Customer_DND.Coll.UpdateOne(putCtx, bson.M{"Key": NewEntry.Key}, bson.M{"$set": NewEntry}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+			log.Println("Mdb_Customer_DND upsert error:", putErr)
+		}
+		if putSetErr := redisx.SetJSON(putCtx, RedisClient, NewEntry.RedisKey(), NewEntry); putSetErr != nil {
+			log.Println("redisx.SetJSON Customer_DND error:", putSetErr)
+		}
+		putCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -4082,14 +4466,13 @@ func (Uc *UserControl) Customer_DND_Edit(Login string, request Customer_DND_Edit
 		err = errors.New("key cannot be empty")
 		return Id, err
 	}
-	entry_na, exits := Map_Customer_DND.CheckThenGet(request.Key)
-	if !exits {
+	entry, entryErr := redisx.GetJSON[Customer_DND](context.Background(), RedisClient, Customer_DND{Key: request.Key}.RedisKey())
+	if redisx.IsNil(entryErr) {
 		err = errors.New("key is not created")
 		return Id, err
 	}
-	entry, ok := entry_na.(Customer_DND)
-	if !ok {
-		return Id, errors.New("error in type assertion")
+	if entryErr != nil {
+		return Id, entryErr
 	}
 	if entry.Id != request.Id {
 		return Id, errors.New("id is not matching")
@@ -4103,13 +4486,31 @@ func (Uc *UserControl) Customer_DND_Edit(Login string, request Customer_DND_Edit
 	if request.NewKey != "" {
 		if request.NewKey != request.Key {
 			//delete old
-			Map_Customer_DND.Delete(request.Key)
+			{
+				delCtx, delCancel := context.WithTimeout(context.Background(), 10*time.Second)
+				if _, delErr := Mdb_Customer_DND.Coll.DeleteOne(delCtx, bson.M{"Key": request.Key}); delErr != nil {
+					log.Println("Mdb_Customer_DND DeleteOne error:", delErr)
+				}
+				if _, delRedisErr := redisx.DelJSON(delCtx, RedisClient, Customer_DND{Key: request.Key}.RedisKey()); delRedisErr != nil {
+					log.Println("redisx.DelJSON Customer_DND error:", delRedisErr)
+				}
+				delCancel()
+			}
 			//update key
 			entry.Key = request.NewKey
 		}
 	}
 	//add to cache and DB
-	Map_Customer_DND.Put(entry.Key, entry)
+	{
+		putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, putErr := Mdb_Customer_DND.Coll.UpdateOne(putCtx, bson.M{"Key": entry.Key}, bson.M{"$set": entry}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+			log.Println("Mdb_Customer_DND upsert error:", putErr)
+		}
+		if putSetErr := redisx.SetJSON(putCtx, RedisClient, entry.RedisKey(), entry); putSetErr != nil {
+			log.Println("redisx.SetJSON Customer_DND error:", putSetErr)
+		}
+		putCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -4125,29 +4526,21 @@ func (Uc *UserControl) Customer_DND_Edit(Login string, request Customer_DND_Edit
 
 func (Uc *UserControl) Customer_DND_Get(Key string) (entries []Customer_DND, err error) {
 	if Key == "" {
-		entries_na := Map_Customer_DND.ConvertToArray()
-		if len(entries_na) > 0 {
-			for _, entry_na := range entries_na {
-				entry, ok := entry_na.(Customer_DND)
-				if !ok {
-					err = errors.New("error in type assertion")
-					return entries, err
-				} else {
-					entries = append(entries, entry)
-				}
-			}
+		entries, err = redisx.GetAllJSONByPattern[Customer_DND](context.Background(), RedisClient, redisx.ScanJSONOptions{
+			Pattern: "Customer_DND:*", ScanCount: 500, PipelineSize: 250,
+		})
+		if err != nil {
+			return entries, err
 		}
 		return entries, nil
 	} else {
-		entry_na, exits := Map_Customer_DND.CheckThenGet(Key)
-		if !exits {
+		entry, entryErr := redisx.GetJSON[Customer_DND](context.Background(), RedisClient, Customer_DND{Key: Key}.RedisKey())
+		if redisx.IsNil(entryErr) {
 			err = errors.New("key does not exist")
 			return entries, err
 		}
-		entry, ok := entry_na.(Customer_DND)
-		if !ok {
-			err = errors.New("error in type assertion")
-			return entries, err
+		if entryErr != nil {
+			return entries, entryErr
 		}
 		entries = append(entries, entry)
 		return entries, nil
@@ -4162,7 +4555,6 @@ func (Uc *UserControl) Customer_DND_GetPaginated(Page, Limit int64) (entries []C
 		return entries, errors.New("invalid limit (accept value between 1 and 50000)")
 	}
 
-	var findparams daoc.DAOFindParams
 	//var array []daoc.DAOFindCriteria
 	// if Outlet_Key != "" {
 	// 	//restrict access for records that belong to this user
@@ -4185,19 +4577,15 @@ func (Uc *UserControl) Customer_DND_GetPaginated(Page, Limit int64) (entries []C
 	// if len(array) > 0 {
 	// 	findparams.FindCriteria = array
 	// }
-	var paginationparams daoc.DAOPaginate
-	paginationparams.Limit = Limit
-	paginationparams.Page = Page
-	findResult, err := DAO_Customer_DND.FindPaginate(findparams, paginationparams)
+	pgCtx, pgCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer pgCancel()
+	result, err := mongox.FindPage[Customer_DND](pgCtx, Mdb_Customer_DND.Coll, bson.M{}, mongox.PageRequest{
+		Page: Page, PageSize: Limit, MaxPageSize: 50000,
+	})
 	if err != nil {
 		return entries, err
 	}
-	if len(findResult) > 0 {
-		for _, findres := range findResult {
-			InterfaceValue := reflect.ValueOf(findres).Elem().Interface().(Customer_DND)
-			entries = append(entries, InterfaceValue)
-		}
-	}
+	entries = result.Items
 	return entries, nil
 
 }
@@ -4207,17 +4595,24 @@ func (Uc *UserControl) Customer_DND_Delete(Login, Key string) (err error) {
 		err = errors.New("key cannot be empty")
 		return err
 	}
-	entry_na, exits := Map_Customer_DND.CheckThenGet(Key)
-	if !exits {
+	entry, entryErr := redisx.GetJSON[Customer_DND](context.Background(), RedisClient, Customer_DND{Key: Key}.RedisKey())
+	if redisx.IsNil(entryErr) {
 		err = errors.New("entry does not exist")
 		return err
 	}
-	entry, ok := entry_na.(Customer_DND)
-	if !ok {
-		err = errors.New("error in type assertion")
-		return err
+	if entryErr != nil {
+		return entryErr
 	}
-	Map_Customer_DND.Delete(Key)
+	{
+		delCtx, delCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, delErr := Mdb_Customer_DND.Coll.DeleteOne(delCtx, bson.M{"Key": Key}); delErr != nil {
+			log.Println("Mdb_Customer_DND DeleteOne error:", delErr)
+		}
+		if _, delRedisErr := redisx.DelJSON(delCtx, RedisClient, Customer_DND{Key: Key}.RedisKey()); delRedisErr != nil {
+			log.Println("redisx.DelJSON Customer_DND error:", delRedisErr)
+		}
+		delCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -4242,20 +4637,42 @@ func (Uc *UserControl) Customer_Exclusion_Add(Login string, request Customer_Exc
 		return Id, err
 	}
 	//check if key already used
-	exits := Map_Customer_Exclusion.Check(request.Key)
-	if exits {
-		err = errors.New("key already exist")
-		return Id, err
+	{
+		chkCtx, chkCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		_, chkErr := redisx.GetJSON[Customer_Exclusion](chkCtx, RedisClient, Customer_Exclusion{Key: request.Key}.RedisKey())
+		chkCancel()
+		if chkErr == nil {
+			err = errors.New("key already exist")
+			return Id, err
+		}
 	}
 	//Prepare new entry
 	var NewEntry Customer_Exclusion
-	NewEntry.Id = Map_Loyalty_AutoIncrement.GetNextAI("Customer_Exclusion-Id")
-	Id = NewEntry.Id
+	{
+		aiCtx, aiCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		NewEntry.Id, err = redisx.NextAutoIncrementID(aiCtx, RedisClient, Mdb_Loyalty_AutoIncrement.Coll, "Customer_Exclusion-Id", redisx.NextIDOptions{
+			RedisBase: "AutoIncrement", MongoRetries: 3, RetryBackoff: 500 * time.Millisecond,
+		})
+		aiCancel()
+		if err != nil {
+			return Id, err
+		}
+		Id = NewEntry.Id
+	}
 	NewEntry.Key = request.Key
 	NewEntry.AddTime = time.Now()
 	NewEntry.AddReason = request.AddReason
 	//add to cache and DB
-	Map_Customer_Exclusion.Put(NewEntry.Key, NewEntry)
+	{
+		putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, putErr := Mdb_Customer_Exclusion.Coll.UpdateOne(putCtx, bson.M{"Key": NewEntry.Key}, bson.M{"$set": NewEntry}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+			log.Println("Mdb_Customer_Exclusion upsert error:", putErr)
+		}
+		if putSetErr := redisx.SetJSON(putCtx, RedisClient, NewEntry.RedisKey(), NewEntry); putSetErr != nil {
+			log.Println("redisx.SetJSON Customer_Exclusion error:", putSetErr)
+		}
+		putCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -4275,14 +4692,13 @@ func (Uc *UserControl) Customer_Exclusion_Edit(Login string, request Customer_Ex
 		err = errors.New("key cannot be empty")
 		return Id, err
 	}
-	entry_na, exits := Map_Customer_Exclusion.CheckThenGet(request.Key)
-	if !exits {
+	entry, entryErr := redisx.GetJSON[Customer_Exclusion](context.Background(), RedisClient, Customer_Exclusion{Key: request.Key}.RedisKey())
+	if redisx.IsNil(entryErr) {
 		err = errors.New("key is not created")
 		return Id, err
 	}
-	entry, ok := entry_na.(Customer_Exclusion)
-	if !ok {
-		return Id, errors.New("error in type assertion")
+	if entryErr != nil {
+		return Id, entryErr
 	}
 	if entry.Id != request.Id {
 		return Id, errors.New("id is not matching")
@@ -4296,13 +4712,31 @@ func (Uc *UserControl) Customer_Exclusion_Edit(Login string, request Customer_Ex
 	if request.NewKey != "" {
 		if request.NewKey != request.Key {
 			//delete old
-			Map_Customer_Exclusion.Delete(request.Key)
+			{
+				delCtx, delCancel := context.WithTimeout(context.Background(), 10*time.Second)
+				if _, delErr := Mdb_Customer_Exclusion.Coll.DeleteOne(delCtx, bson.M{"Key": request.Key}); delErr != nil {
+					log.Println("Mdb_Customer_Exclusion DeleteOne error:", delErr)
+				}
+				if _, delRedisErr := redisx.DelJSON(delCtx, RedisClient, Customer_Exclusion{Key: request.Key}.RedisKey()); delRedisErr != nil {
+					log.Println("redisx.DelJSON Customer_Exclusion error:", delRedisErr)
+				}
+				delCancel()
+			}
 			//update key
 			entry.Key = request.NewKey
 		}
 	}
 	//add to cache and DB
-	Map_Customer_Exclusion.Put(entry.Key, entry)
+	{
+		putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, putErr := Mdb_Customer_Exclusion.Coll.UpdateOne(putCtx, bson.M{"Key": entry.Key}, bson.M{"$set": entry}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+			log.Println("Mdb_Customer_Exclusion upsert error:", putErr)
+		}
+		if putSetErr := redisx.SetJSON(putCtx, RedisClient, entry.RedisKey(), entry); putSetErr != nil {
+			log.Println("redisx.SetJSON Customer_Exclusion error:", putSetErr)
+		}
+		putCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -4318,29 +4752,21 @@ func (Uc *UserControl) Customer_Exclusion_Edit(Login string, request Customer_Ex
 
 func (Uc *UserControl) Customer_Exclusion_Get(Key string) (entries []Customer_Exclusion, err error) {
 	if Key == "" {
-		entries_na := Map_Customer_Exclusion.ConvertToArray()
-		if len(entries_na) > 0 {
-			for _, entry_na := range entries_na {
-				entry, ok := entry_na.(Customer_Exclusion)
-				if !ok {
-					err = errors.New("error in type assertion")
-					return entries, err
-				} else {
-					entries = append(entries, entry)
-				}
-			}
+		entries, err = redisx.GetAllJSONByPattern[Customer_Exclusion](context.Background(), RedisClient, redisx.ScanJSONOptions{
+			Pattern: "Customer_Exclusion:*", ScanCount: 500, PipelineSize: 250,
+		})
+		if err != nil {
+			return entries, err
 		}
 		return entries, nil
 	} else {
-		entry_na, exits := Map_Customer_Exclusion.CheckThenGet(Key)
-		if !exits {
+		entry, entryErr := redisx.GetJSON[Customer_Exclusion](context.Background(), RedisClient, Customer_Exclusion{Key: Key}.RedisKey())
+		if redisx.IsNil(entryErr) {
 			err = errors.New("key does not exist")
 			return entries, err
 		}
-		entry, ok := entry_na.(Customer_Exclusion)
-		if !ok {
-			err = errors.New("error in type assertion")
-			return entries, err
+		if entryErr != nil {
+			return entries, entryErr
 		}
 		entries = append(entries, entry)
 		return entries, nil
@@ -4355,7 +4781,6 @@ func (Uc *UserControl) Customer_Exclusion_GetPaginated(Page, Limit int64) (entri
 		return entries, errors.New("invalid limit (accept value between 1 and 50000)")
 	}
 
-	var findparams daoc.DAOFindParams
 	//var array []daoc.DAOFindCriteria
 	// if Outlet_Key != "" {
 	// 	//restrict access for records that belong to this user
@@ -4378,19 +4803,15 @@ func (Uc *UserControl) Customer_Exclusion_GetPaginated(Page, Limit int64) (entri
 	// if len(array) > 0 {
 	// 	findparams.FindCriteria = array
 	// }
-	var paginationparams daoc.DAOPaginate
-	paginationparams.Limit = Limit
-	paginationparams.Page = Page
-	findResult, err := DAO_Customer_Exclusion.FindPaginate(findparams, paginationparams)
+	pgCtx, pgCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer pgCancel()
+	result, err := mongox.FindPage[Customer_Exclusion](pgCtx, Mdb_Customer_Exclusion.Coll, bson.M{}, mongox.PageRequest{
+		Page: Page, PageSize: Limit, MaxPageSize: 50000,
+	})
 	if err != nil {
 		return entries, err
 	}
-	if len(findResult) > 0 {
-		for _, findres := range findResult {
-			InterfaceValue := reflect.ValueOf(findres).Elem().Interface().(Customer_Exclusion)
-			entries = append(entries, InterfaceValue)
-		}
-	}
+	entries = result.Items
 	return entries, nil
 
 }
@@ -4400,17 +4821,24 @@ func (Uc *UserControl) Customer_Exclusion_Delete(Login, Key string) (err error) 
 		err = errors.New("key cannot be empty")
 		return err
 	}
-	entry_na, exits := Map_Customer_Exclusion.CheckThenGet(Key)
-	if !exits {
+	entry, entryErr := redisx.GetJSON[Customer_Exclusion](context.Background(), RedisClient, Customer_Exclusion{Key: Key}.RedisKey())
+	if redisx.IsNil(entryErr) {
 		err = errors.New("entry does not exist")
 		return err
 	}
-	entry, ok := entry_na.(Customer_Exclusion)
-	if !ok {
-		err = errors.New("error in type assertion")
-		return err
+	if entryErr != nil {
+		return entryErr
 	}
-	Map_Customer_Exclusion.Delete(Key)
+	{
+		delCtx, delCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, delErr := Mdb_Customer_Exclusion.Coll.DeleteOne(delCtx, bson.M{"Key": Key}); delErr != nil {
+			log.Println("Mdb_Customer_Exclusion DeleteOne error:", delErr)
+		}
+		if _, delRedisErr := redisx.DelJSON(delCtx, RedisClient, Customer_Exclusion{Key: Key}.RedisKey()); delRedisErr != nil {
+			log.Println("redisx.DelJSON Customer_Exclusion error:", delRedisErr)
+		}
+		delCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -4434,20 +4862,42 @@ func (Uc *UserControl) Customer_COS_Exclusion_Add(Login string, request Customer
 		return Id, err
 	}
 	//check if key already used
-	exits := Map_Customer_COS_Exclusion.Check(request.Key)
-	if exits {
-		err = errors.New("key already exist")
-		return Id, err
+	{
+		chkCtx, chkCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		_, chkErr := redisx.GetJSON[Customer_COS_Exclusion](chkCtx, RedisClient, Customer_COS_Exclusion{Key: request.Key}.RedisKey())
+		chkCancel()
+		if chkErr == nil {
+			err = errors.New("key already exist")
+			return Id, err
+		}
 	}
 	//Prepare new entry
 	var NewEntry Customer_COS_Exclusion
-	NewEntry.Id = Map_Loyalty_AutoIncrement.GetNextAI("Customer_COS_Exclusion-Id")
-	Id = NewEntry.Id
+	{
+		aiCtx, aiCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		NewEntry.Id, err = redisx.NextAutoIncrementID(aiCtx, RedisClient, Mdb_Loyalty_AutoIncrement.Coll, "Customer_COS_Exclusion-Id", redisx.NextIDOptions{
+			RedisBase: "AutoIncrement", MongoRetries: 3, RetryBackoff: 500 * time.Millisecond,
+		})
+		aiCancel()
+		if err != nil {
+			return Id, err
+		}
+		Id = NewEntry.Id
+	}
 	NewEntry.Key = request.Key
 	NewEntry.AddTime = time.Now()
 	NewEntry.AddReason = request.AddReason
 	//add to cache and DB
-	Map_Customer_COS_Exclusion.Put(NewEntry.Key, NewEntry)
+	{
+		putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, putErr := Mdb_Customer_COS_Exclusion.Coll.UpdateOne(putCtx, bson.M{"Key": NewEntry.Key}, bson.M{"$set": NewEntry}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+			log.Println("Mdb_Customer_COS_Exclusion upsert error:", putErr)
+		}
+		if putSetErr := redisx.SetJSON(putCtx, RedisClient, NewEntry.RedisKey(), NewEntry); putSetErr != nil {
+			log.Println("redisx.SetJSON Customer_COS_Exclusion error:", putSetErr)
+		}
+		putCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -4467,14 +4917,13 @@ func (Uc *UserControl) Customer_COS_Exclusion_Edit(Login string, request Custome
 		err = errors.New("key cannot be empty")
 		return Id, err
 	}
-	entry_na, exits := Map_Customer_COS_Exclusion.CheckThenGet(request.Key)
-	if !exits {
+	entry, entryErr := redisx.GetJSON[Customer_COS_Exclusion](context.Background(), RedisClient, Customer_COS_Exclusion{Key: request.Key}.RedisKey())
+	if redisx.IsNil(entryErr) {
 		err = errors.New("key is not created")
 		return Id, err
 	}
-	entry, ok := entry_na.(Customer_COS_Exclusion)
-	if !ok {
-		return Id, errors.New("error in type assertion")
+	if entryErr != nil {
+		return Id, entryErr
 	}
 	if entry.Id != request.Id {
 		return Id, errors.New("id is not matching")
@@ -4488,13 +4937,31 @@ func (Uc *UserControl) Customer_COS_Exclusion_Edit(Login string, request Custome
 	if request.NewKey != "" {
 		if request.NewKey != request.Key {
 			//delete old
-			Map_Customer_COS_Exclusion.Delete(request.Key)
+			{
+				delCtx, delCancel := context.WithTimeout(context.Background(), 10*time.Second)
+				if _, delErr := Mdb_Customer_COS_Exclusion.Coll.DeleteOne(delCtx, bson.M{"Key": request.Key}); delErr != nil {
+					log.Println("Mdb_Customer_COS_Exclusion DeleteOne error:", delErr)
+				}
+				if _, delRedisErr := redisx.DelJSON(delCtx, RedisClient, Customer_COS_Exclusion{Key: request.Key}.RedisKey()); delRedisErr != nil {
+					log.Println("redisx.DelJSON Customer_COS_Exclusion error:", delRedisErr)
+				}
+				delCancel()
+			}
 			//update key
 			entry.Key = request.NewKey
 		}
 	}
 	//add to cache and DB
-	Map_Customer_COS_Exclusion.Put(entry.Key, entry)
+	{
+		putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, putErr := Mdb_Customer_COS_Exclusion.Coll.UpdateOne(putCtx, bson.M{"Key": entry.Key}, bson.M{"$set": entry}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+			log.Println("Mdb_Customer_COS_Exclusion upsert error:", putErr)
+		}
+		if putSetErr := redisx.SetJSON(putCtx, RedisClient, entry.RedisKey(), entry); putSetErr != nil {
+			log.Println("redisx.SetJSON Customer_COS_Exclusion error:", putSetErr)
+		}
+		putCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -4510,29 +4977,21 @@ func (Uc *UserControl) Customer_COS_Exclusion_Edit(Login string, request Custome
 
 func (Uc *UserControl) Customer_COS_Exclusion_Get(Key string) (entries []Customer_COS_Exclusion, err error) {
 	if Key == "" {
-		entries_na := Map_Customer_COS_Exclusion.ConvertToArray()
-		if len(entries_na) > 0 {
-			for _, entry_na := range entries_na {
-				entry, ok := entry_na.(Customer_COS_Exclusion)
-				if !ok {
-					err = errors.New("error in type assertion")
-					return entries, err
-				} else {
-					entries = append(entries, entry)
-				}
-			}
+		entries, err = redisx.GetAllJSONByPattern[Customer_COS_Exclusion](context.Background(), RedisClient, redisx.ScanJSONOptions{
+			Pattern: "Customer_COS_Exclusion:*", ScanCount: 500, PipelineSize: 250,
+		})
+		if err != nil {
+			return entries, err
 		}
 		return entries, nil
 	} else {
-		entry_na, exits := Map_Customer_COS_Exclusion.CheckThenGet(Key)
-		if !exits {
+		entry, entryErr := redisx.GetJSON[Customer_COS_Exclusion](context.Background(), RedisClient, Customer_COS_Exclusion{Key: Key}.RedisKey())
+		if redisx.IsNil(entryErr) {
 			err = errors.New("key does not exist")
 			return entries, err
 		}
-		entry, ok := entry_na.(Customer_COS_Exclusion)
-		if !ok {
-			err = errors.New("error in type assertion")
-			return entries, err
+		if entryErr != nil {
+			return entries, entryErr
 		}
 		entries = append(entries, entry)
 		return entries, nil
@@ -4547,7 +5006,6 @@ func (Uc *UserControl) Customer_COS_Exclusion_GetPaginated(Page, Limit int64) (e
 		return entries, errors.New("invalid limit (accept value between 1 and 50000)")
 	}
 
-	var findparams daoc.DAOFindParams
 	//var array []daoc.DAOFindCriteria
 	// if Outlet_Key != "" {
 	// 	//restrict access for records that belong to this user
@@ -4570,19 +5028,15 @@ func (Uc *UserControl) Customer_COS_Exclusion_GetPaginated(Page, Limit int64) (e
 	// if len(array) > 0 {
 	// 	findparams.FindCriteria = array
 	// }
-	var paginationparams daoc.DAOPaginate
-	paginationparams.Limit = Limit
-	paginationparams.Page = Page
-	findResult, err := DAO_Customer_COS_Exclusion.FindPaginate(findparams, paginationparams)
+	pgCtx, pgCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer pgCancel()
+	result, err := mongox.FindPage[Customer_COS_Exclusion](pgCtx, Mdb_Customer_COS_Exclusion.Coll, bson.M{}, mongox.PageRequest{
+		Page: Page, PageSize: Limit, MaxPageSize: 50000,
+	})
 	if err != nil {
 		return entries, err
 	}
-	if len(findResult) > 0 {
-		for _, findres := range findResult {
-			InterfaceValue := reflect.ValueOf(findres).Elem().Interface().(Customer_COS_Exclusion)
-			entries = append(entries, InterfaceValue)
-		}
-	}
+	entries = result.Items
 	return entries, nil
 
 }
@@ -4592,17 +5046,24 @@ func (Uc *UserControl) Customer_COS_Exclusion_Delete(Login, Key string) (err err
 		err = errors.New("key cannot be empty")
 		return err
 	}
-	entry_na, exits := Map_Customer_COS_Exclusion.CheckThenGet(Key)
-	if !exits {
+	entry, entryErr := redisx.GetJSON[Customer_COS_Exclusion](context.Background(), RedisClient, Customer_COS_Exclusion{Key: Key}.RedisKey())
+	if redisx.IsNil(entryErr) {
 		err = errors.New("entry does not exist")
 		return err
 	}
-	entry, ok := entry_na.(Customer_COS_Exclusion)
-	if !ok {
-		err = errors.New("error in type assertion")
-		return err
+	if entryErr != nil {
+		return entryErr
 	}
-	Map_Customer_COS_Exclusion.Delete(Key)
+	{
+		delCtx, delCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, delErr := Mdb_Customer_COS_Exclusion.Coll.DeleteOne(delCtx, bson.M{"Key": Key}); delErr != nil {
+			log.Println("Mdb_Customer_COS_Exclusion DeleteOne error:", delErr)
+		}
+		if _, delRedisErr := redisx.DelJSON(delCtx, RedisClient, Customer_COS_Exclusion{Key: Key}.RedisKey()); delRedisErr != nil {
+			log.Println("redisx.DelJSON Customer_COS_Exclusion error:", delRedisErr)
+		}
+		delCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -4627,27 +5088,48 @@ func (Uc *UserControl) Customer_Loyalty_Account_Add(Login string, request Custom
 		return Id, err
 	}
 	//check if key already used
-	exits := Map_Customer_Loyalty_Account.Check(request.Key)
-	if exits {
-		err = errors.New("key already exist")
-		return Id, err
+	{
+		chkCtx, chkCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		_, chkErr := redisx.GetJSON[Customer_Loyalty_Account](chkCtx, RedisClient, Customer_Loyalty_Account{Key: request.Key}.RedisKey())
+		chkCancel()
+		if chkErr == nil {
+			err = errors.New("key already exist")
+			return Id, err
+		}
 	}
 	//check exclusion list
-	exists_exclusion := Map_Customer_Exclusion.Check(request.Key)
-	if exists_exclusion {
-		err = errors.New("customer is included in the exclusion list")
-		return Id, err
+	{
+		chkCtx, chkCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		_, chkErr := redisx.GetJSON[Customer_Exclusion](chkCtx, RedisClient, Customer_Exclusion{Key: request.Key}.RedisKey())
+		chkCancel()
+		if chkErr == nil {
+			err = errors.New("customer is included in the exclusion list")
+			return Id, err
+		}
 	}
 	//check COS exclusion list
-	exists_exclusion_cos := Map_Customer_COS_Exclusion.Check(request.COS)
-	if exists_exclusion_cos {
-		err = errors.New("customer is included in the cos exclusion list")
-		return Id, err
+	{
+		chkCtx, chkCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		_, chkErr := redisx.GetJSON[Customer_COS_Exclusion](chkCtx, RedisClient, Customer_COS_Exclusion{Key: request.COS}.RedisKey())
+		chkCancel()
+		if chkErr == nil {
+			err = errors.New("customer is included in the cos exclusion list")
+			return Id, err
+		}
 	}
 	//Prepare new entry
 	var NewEntry Customer_Loyalty_Account
-	NewEntry.Customer_Id = Map_Loyalty_AutoIncrement.GetNextAI("Customer_Loyalty_Account-Id")
-	Id = NewEntry.Customer_Id
+	{
+		aiCtx, aiCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		NewEntry.Customer_Id, err = redisx.NextAutoIncrementID(aiCtx, RedisClient, Mdb_Loyalty_AutoIncrement.Coll, "Customer_Loyalty_Account-Id", redisx.NextIDOptions{
+			RedisBase: "AutoIncrement", MongoRetries: 3, RetryBackoff: 500 * time.Millisecond,
+		})
+		aiCancel()
+		if err != nil {
+			return Id, err
+		}
+		Id = NewEntry.Customer_Id
+	}
 	NewEntry.Key = request.Key
 
 	NewEntry.COS = request.COS
@@ -4688,7 +5170,16 @@ func (Uc *UserControl) Customer_Loyalty_Account_Add(Login string, request Custom
 	}
 
 	//add to cache and DB
-	Map_Customer_Loyalty_Account.Put(NewEntry.Key, NewEntry)
+	{
+		putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, putErr := Mdb_Customer_Loyalty_Account.Coll.UpdateOne(putCtx, bson.M{"Key": NewEntry.Key}, bson.M{"$set": NewEntry}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+			log.Println("Mdb_Customer_Loyalty_Account upsert error:", putErr)
+		}
+		if putSetErr := redisx.SetJSON(putCtx, RedisClient, NewEntry.RedisKey(), NewEntry); putSetErr != nil {
+			log.Println("redisx.SetJSON Customer_Loyalty_Account error:", putSetErr)
+		}
+		putCancel()
+	}
 	//add logs
 	if Login != "DWH_Import" && Login != "INLiveFeed" { //--> off to avoid filling up logs
 		Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
@@ -4759,9 +5250,13 @@ func (Uc *UserControl) Customer_Loyalty_Account_Add(Login string, request Custom
 			}
 			YYYY, MM, _, _, _, _, _ := GetTimeParts(time.Now())
 			Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
-			_, err = DAO_NotificationLog.PutOneLogs(WelcomeNotiLog, Db, DAO_NotificationLog.Collection)
-			if err != nil {
-				log.Println("Error in Write welcome Notification Logs:", err, " (", WelcomeNotiLog, ")")
+			{
+				notiCtx, notiCancel := context.WithTimeout(context.Background(), 10*time.Second)
+				_, notiErr := Uc.MongoClient.Mongo.Database(Db).Collection("Col_NotificationLog").InsertOne(notiCtx, WelcomeNotiLog)
+				notiCancel()
+				if notiErr != nil {
+					log.Println("Error in Write welcome Notification Logs:", notiErr, " (", WelcomeNotiLog, ")")
+				}
 			}
 		}
 	}
@@ -4775,14 +5270,13 @@ func (Uc *UserControl) Customer_Loyalty_Account_Edit(Login string, request Custo
 		err = errors.New("key cannot be empty")
 		return Id, err
 	}
-	entry_na, exits := Map_Customer_Loyalty_Account.CheckThenGet(request.Key)
-	if !exits {
+	entry, entryErr := redisx.GetJSON[Customer_Loyalty_Account](context.Background(), RedisClient, Customer_Loyalty_Account{Key: request.Key}.RedisKey())
+	if redisx.IsNil(entryErr) {
 		err = errors.New("key is not created")
 		return Id, err
 	}
-	entry, ok := entry_na.(Customer_Loyalty_Account)
-	if !ok {
-		return Id, errors.New("error in type assertion")
+	if entryErr != nil {
+		return Id, entryErr
 	}
 	if entry.Customer_Id != request.Customer_Id {
 		return Id, errors.New("id is not matching")
@@ -4794,42 +5288,46 @@ func (Uc *UserControl) Customer_Loyalty_Account_Edit(Login string, request Custo
 		return Id, err
 	}
 	//check exclusion list
-	exists_exclusion := Map_Customer_Exclusion.Check(request.Key)
-	if exists_exclusion {
-		Uc.Customer_Loyalty_Account_Delete(Login, request.Key)
-		err = errors.New("customer is included in the exclusion list")
-		return Id, err
+	{
+		chkCtx, chkCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		_, chkErr := redisx.GetJSON[Customer_Exclusion](chkCtx, RedisClient, Customer_Exclusion{Key: request.Key}.RedisKey())
+		chkCancel()
+		if chkErr == nil {
+			Uc.Customer_Loyalty_Account_Delete(Login, request.Key)
+			err = errors.New("customer is included in the exclusion list")
+			return Id, err
+		}
 	}
 	//check COS exclusion list
-	exists_exclusion_cos := Map_Customer_COS_Exclusion.Check(request.COS)
-	if exists_exclusion_cos {
-		Uc.Customer_Loyalty_Account_Delete(Login, request.Key)
-		err = errors.New("customer is included in the cos exclusion list")
-		return Id, err
+	{
+		chkCtx, chkCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		_, chkErr := redisx.GetJSON[Customer_COS_Exclusion](chkCtx, RedisClient, Customer_COS_Exclusion{Key: request.COS}.RedisKey())
+		chkCancel()
+		if chkErr == nil {
+			Uc.Customer_Loyalty_Account_Delete(Login, request.Key)
+			err = errors.New("customer is included in the cos exclusion list")
+			return Id, err
+		}
 	}
 	//Prepare new entry
 	entry.Key = request.Key
 	if entry.Loyalty_Level_Key != request.Loyalty_Level_Key {
 
-		current_level_na, lvlexist := Map_Loyalty_Level.CheckThenGet(entry.Loyalty_Level_Key)
-		if !lvlexist {
+		current_level, currentLvlErr := redisx.GetJSON[Loyalty_Level](context.Background(), RedisClient, Loyalty_Level{Key: entry.Loyalty_Level_Key}.RedisKey())
+		if redisx.IsNil(currentLvlErr) {
 			err = errors.New("current level is invalid")
 			return Id, err
 		}
-		current_level, ok := current_level_na.(Loyalty_Level)
-		if !ok {
-			err = errors.New("error in type assertion")
-			return Id, err
+		if currentLvlErr != nil {
+			return Id, currentLvlErr
 		}
-		new_level_na, lvlexist := Map_Loyalty_Level.CheckThenGet(request.Loyalty_Level_Key)
-		if !lvlexist {
+		new_level, newLvlErr := redisx.GetJSON[Loyalty_Level](context.Background(), RedisClient, Loyalty_Level{Key: request.Loyalty_Level_Key}.RedisKey())
+		if redisx.IsNil(newLvlErr) {
 			err = errors.New("new level is invalid")
 			return Id, err
 		}
-		new_level, ok := new_level_na.(Loyalty_Level)
-		if !ok {
-			err = errors.New("error in type assertion")
-			return Id, err
+		if newLvlErr != nil {
+			return Id, newLvlErr
 		}
 
 		if entry.Loyalty_Level_Key != request.Loyalty_Level_Key {
@@ -4891,29 +5389,25 @@ func (Uc *UserControl) Customer_Loyalty_Account_Edit(Login string, request Custo
 			entry.Loyalty_Account_Segment_SetBy = Login
 		}
 
-		plan_na, planexist := Map_Loyalty_Plan.CheckThenGet(entry.Loyalty_Level_Key + "|" + entry.Loyalty_Account_Segment_Key)
-		if !planexist {
+		plan, planErr := redisx.GetJSON[Loyalty_Plan](context.Background(), RedisClient, Loyalty_Plan{Key: entry.Loyalty_Level_Key + "|" + entry.Loyalty_Account_Segment_Key}.RedisKey())
+		if redisx.IsNil(planErr) {
 			err = errors.New("loyalty plan does not exist")
 			return Id, err
 		}
-		plan, ok := plan_na.(Loyalty_Plan)
-		if !ok {
-			err = errors.New("type assertion issue with Loyalty_Plan")
-			return Id, err
+		if planErr != nil {
+			return Id, planErr
 		}
 		if plan.Expiry_Rules_Key == "" {
 			err = errors.New("expiry rules is not defined")
 			return Id, err
 		}
-		expiry_Rules_na, expirynexist := Map_Loyalty_Point_Expiry_Rules.CheckThenGet(plan.Expiry_Rules_Key)
-		if !expirynexist {
+		expiry_Rule, expiryErr := redisx.GetJSON[Loyalty_Point_Expiry_Rules](context.Background(), RedisClient, Loyalty_Point_Expiry_Rules{Key: plan.Expiry_Rules_Key}.RedisKey())
+		if redisx.IsNil(expiryErr) {
 			err = errors.New("expiry rules is not defined")
 			return Id, err
 		}
-		expiry_Rule, ok := expiry_Rules_na.(Loyalty_Point_Expiry_Rules)
-		if !ok {
-			err = errors.New("type assertion issue with Loyalty_Point_Expiry_Rules")
-			return Id, err
+		if expiryErr != nil {
+			return Id, expiryErr
 		}
 		var initialDate time.Time
 		if !entry.Expiry_Date.IsZero() {
@@ -4961,14 +5455,32 @@ func (Uc *UserControl) Customer_Loyalty_Account_Edit(Login string, request Custo
 	if request.NewKey != "" {
 		if request.NewKey != request.Key {
 			//delete old
-			Map_Customer_Loyalty_Account.Delete(request.Key)
+			{
+				delCtx, delCancel := context.WithTimeout(context.Background(), 10*time.Second)
+				if _, delErr := Mdb_Customer_Loyalty_Account.Coll.DeleteOne(delCtx, bson.M{"Key": request.Key}); delErr != nil {
+					log.Println("Mdb_Customer_Loyalty_Account DeleteOne error:", delErr)
+				}
+				if _, delRedisErr := redisx.DelJSON(delCtx, RedisClient, Customer_Loyalty_Account{Key: request.Key}.RedisKey()); delRedisErr != nil {
+					log.Println("redisx.DelJSON Customer_Loyalty_Account error:", delRedisErr)
+				}
+				delCancel()
+			}
 			//update key
 			entry.Key = request.NewKey
 		}
 	}
 
 	//add to cache and DB
-	Map_Customer_Loyalty_Account.Put(entry.Key, entry)
+	{
+		putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, putErr := Mdb_Customer_Loyalty_Account.Coll.UpdateOne(putCtx, bson.M{"Key": entry.Key}, bson.M{"$set": entry}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+			log.Println("Mdb_Customer_Loyalty_Account upsert error:", putErr)
+		}
+		if putSetErr := redisx.SetJSON(putCtx, RedisClient, entry.RedisKey(), entry); putSetErr != nil {
+			log.Println("redisx.SetJSON Customer_Loyalty_Account error:", putSetErr)
+		}
+		putCancel()
+	}
 	//add logs
 	if Login != "DWH_Import" { // --> off to avoid filling up logs
 		Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
@@ -4987,17 +5499,11 @@ func (Uc *UserControl) Customer_Loyalty_Account_Edit(Login string, request Custo
 
 func (Uc *UserControl) Customer_Loyalty_Account_Get(Key string) (entries []Customer_Loyalty_Account, err error) {
 	if Key == "" {
-		entries_na := Map_Customer_Loyalty_Account.ConvertToArray()
-		if len(entries_na) > 0 {
-			for _, entry_na := range entries_na {
-				entry, ok := entry_na.(Customer_Loyalty_Account)
-				if !ok {
-					err = errors.New("error in type assertion")
-					return entries, err
-				} else {
-					entries = append(entries, entry)
-				}
-			}
+		entries, err = redisx.GetAllJSONByPattern[Customer_Loyalty_Account](context.Background(), RedisClient, redisx.ScanJSONOptions{
+			Pattern: "Customer_Loyalty_Account:*", ScanCount: 500, PipelineSize: 250,
+		})
+		if err != nil {
+			return entries, err
 		}
 		return entries, nil
 	} else {
@@ -5006,42 +5512,35 @@ func (Uc *UserControl) Customer_Loyalty_Account_Get(Key string) (entries []Custo
 			err = errors.New("key cannot be empty")
 			return entries, err
 		}
-		entry_na, exits := Map_Customer_Loyalty_Account.CheckThenGet(Key)
-		if !exits {
+		entry, entryErr := redisx.GetJSON[Customer_Loyalty_Account](context.Background(), RedisClient, Customer_Loyalty_Account{Key: Key}.RedisKey())
+		if redisx.IsNil(entryErr) {
 			err = errors.New("key does not exist")
 			return entries, err
 		}
-		entry, ok := entry_na.(Customer_Loyalty_Account)
-		if !ok {
-			err = errors.New("error in type assertion")
-			return entries, err
+		if entryErr != nil {
+			return entries, entryErr
 		}
 
-		plan_na, planexist := Map_Loyalty_Plan.CheckThenGet(entry.Loyalty_Level_Key + "|" + entry.Loyalty_Account_Segment_Key)
-		if !planexist {
+		plan, planErr := redisx.GetJSON[Loyalty_Plan](context.Background(), RedisClient, Loyalty_Plan{Key: entry.Loyalty_Level_Key + "|" + entry.Loyalty_Account_Segment_Key}.RedisKey())
+		if redisx.IsNil(planErr) {
 			err = errors.New("loyalty plan does not exist")
 			return entries, err
 		}
-		plan, ok := plan_na.(Loyalty_Plan)
-		if !ok {
-			err = errors.New("type assertion issue with Loyalty_Plan")
-			return entries, err
+		if planErr != nil {
+			return entries, planErr
 		}
 		//validate earning rules
 		if plan.Expiry_Rules_Key == "" {
 			err = errors.New("expiry rules is not defined")
 			return entries, err
 		}
-		expiry_Rules_na, expirynexist := Map_Loyalty_Point_Expiry_Rules.CheckThenGet(plan.Expiry_Rules_Key)
-		if !expirynexist {
+		expiry_Rule, expiryErr := redisx.GetJSON[Loyalty_Point_Expiry_Rules](context.Background(), RedisClient, Loyalty_Point_Expiry_Rules{Key: plan.Expiry_Rules_Key}.RedisKey())
+		if redisx.IsNil(expiryErr) {
 			err = errors.New("expiry rules is not defined")
 			return entries, err
-
 		}
-		expiry_Rule, ok := expiry_Rules_na.(Loyalty_Point_Expiry_Rules)
-		if !ok {
-			err = errors.New("type assertion issue with Loyalty_Point_Expiry_Rules")
-			return entries, err
+		if expiryErr != nil {
+			return entries, expiryErr
 		}
 		var initialDate time.Time
 		if !entry.Expiry_Date.IsZero() {
@@ -5084,26 +5583,20 @@ func (Uc *UserControl) Customer_Loyalty_Account_Get(Key string) (entries []Custo
 				totalMonths--
 			}
 			if totalMonths > 0 {
-				loyalty_Level_na, exits := Map_Loyalty_Level.CheckThenGet(entry.Loyalty_Level_Key)
-				if !exits {
+				loyalty_Level, loyaltyLvlErr := redisx.GetJSON[Loyalty_Level](context.Background(), RedisClient, Loyalty_Level{Key: entry.Loyalty_Level_Key}.RedisKey())
+				if redisx.IsNil(loyaltyLvlErr) {
 					err = errors.New("failed to get loyalty account level")
 					return entries, err
 				}
-				loyalty_Level, ok := loyalty_Level_na.(Loyalty_Level)
-				if !ok {
-					err = errors.New("failed to get loyalty account level")
-					return entries, err
+				if loyaltyLvlErr != nil {
+					return entries, loyaltyLvlErr
 				}
 				for _, lvl := range loyalty_Level.Seniority_Levels {
-					seniorityLevel_na, seniorityexist := Map_Loyalty_Seniority_Level.CheckThenGet(lvl.Loyalty_Seniority_Level_Key)
-					if seniorityexist {
-						seniority, ok := seniorityLevel_na.(Loyalty_Seniority_Level)
-						if ok {
-							if months >= int(seniority.AON_From) && months <= int(seniority.AON_Till) {
-								entry.Multiplier_Percentage = lvl.Multiplier_Percentage
-							}
+					seniority, seniorityErr := redisx.GetJSON[Loyalty_Seniority_Level](context.Background(), RedisClient, Loyalty_Seniority_Level{Key: lvl.Loyalty_Seniority_Level_Key}.RedisKey())
+					if seniorityErr == nil {
+						if months >= int(seniority.AON_From) && months <= int(seniority.AON_Till) {
+							entry.Multiplier_Percentage = lvl.Multiplier_Percentage
 						}
-
 					}
 
 				}
@@ -5124,7 +5617,6 @@ func (Uc *UserControl) Customer_Loyalty_Account_GetPaginated(Page, Limit int64) 
 		return entries, errors.New("invalid limit (accept value between 1 and 50000)")
 	}
 
-	var findparams daoc.DAOFindParams
 	//var array []daoc.DAOFindCriteria
 	// if Outlet_Key != "" {
 	// 	//restrict access for records that belong to this user
@@ -5147,19 +5639,15 @@ func (Uc *UserControl) Customer_Loyalty_Account_GetPaginated(Page, Limit int64) 
 	// if len(array) > 0 {
 	// 	findparams.FindCriteria = array
 	// }
-	var paginationparams daoc.DAOPaginate
-	paginationparams.Limit = Limit
-	paginationparams.Page = Page
-	findResult, err := DAO_Customer_Loyalty_Account.FindPaginate(findparams, paginationparams)
+	pgCtx, pgCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer pgCancel()
+	result, err := mongox.FindPage[Customer_Loyalty_Account](pgCtx, Mdb_Customer_Loyalty_Account.Coll, bson.M{}, mongox.PageRequest{
+		Page: Page, PageSize: Limit, MaxPageSize: 50000,
+	})
 	if err != nil {
 		return entries, err
 	}
-	if len(findResult) > 0 {
-		for _, findres := range findResult {
-			InterfaceValue := reflect.ValueOf(findres).Elem().Interface().(Customer_Loyalty_Account)
-			entries = append(entries, InterfaceValue)
-		}
-	}
+	entries = result.Items
 	return entries, nil
 }
 
@@ -5169,17 +5657,24 @@ func (Uc *UserControl) Customer_Loyalty_Account_Delete(Login, Key string) (err e
 		err = errors.New("key cannot be empty")
 		return err
 	}
-	entry_na, exits := Map_Customer_Loyalty_Account.CheckThenGet(Key)
-	if !exits {
+	entry, entryErr := redisx.GetJSON[Customer_Loyalty_Account](context.Background(), RedisClient, Customer_Loyalty_Account{Key: Key}.RedisKey())
+	if redisx.IsNil(entryErr) {
 		err = errors.New("entry does not exist")
 		return err
 	}
-	entry, ok := entry_na.(Customer_Loyalty_Account)
-	if !ok {
-		err = errors.New("error in type assertion")
-		return err
+	if entryErr != nil {
+		return entryErr
 	}
-	Map_Customer_Loyalty_Account.Delete(Key)
+	{
+		delCtx, delCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, delErr := Mdb_Customer_Loyalty_Account.Coll.DeleteOne(delCtx, bson.M{"Key": Key}); delErr != nil {
+			log.Println("Mdb_Customer_Loyalty_Account DeleteOne error:", delErr)
+		}
+		if _, delRedisErr := redisx.DelJSON(delCtx, RedisClient, Customer_Loyalty_Account{Key: Key}.RedisKey()); delRedisErr != nil {
+			log.Println("redisx.DelJSON Customer_Loyalty_Account error:", delRedisErr)
+		}
+		delCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -5208,29 +5703,21 @@ func addValidity(date time.Time, unit string, duration int) time.Time {
 
 func (Uc *UserControl) Customer_Loyalty_Account_Points_Details_Get(Key string) (entries []Customer_Loyalty_Account_Points_Detail, err error) {
 	if Key == "" {
-		entries_na := Map_Customer_Loyalty_Account_Points_Detail.ConvertToArray()
-		if len(entries_na) > 0 {
-			for _, entry_na := range entries_na {
-				entry, ok := entry_na.(Customer_Loyalty_Account_Points_Detail)
-				if !ok {
-					err = errors.New("error in type assertion")
-					return entries, err
-				} else {
-					entries = append(entries, entry)
-				}
-			}
+		entries, err = redisx.GetAllJSONByPattern[Customer_Loyalty_Account_Points_Detail](context.Background(), RedisClient, redisx.ScanJSONOptions{
+			Pattern: "Customer_Loyalty_Account_Points_Detail:*", ScanCount: 500, PipelineSize: 250,
+		})
+		if err != nil {
+			return entries, err
 		}
 		return entries, nil
 	} else {
-		entry_na, exits := Map_Customer_Loyalty_Account_Points_Detail.CheckThenGet(Key)
-		if !exits {
+		entry, entryErr := redisx.GetJSON[Customer_Loyalty_Account_Points_Detail](context.Background(), RedisClient, Customer_Loyalty_Account_Points_Detail{Key: Key}.RedisKey())
+		if redisx.IsNil(entryErr) {
 			err = errors.New("key does not exist")
 			return entries, err
 		}
-		entry, ok := entry_na.(Customer_Loyalty_Account_Points_Detail)
-		if !ok {
-			err = errors.New("error in type assertion")
-			return entries, err
+		if entryErr != nil {
+			return entries, entryErr
 		}
 		entries = append(entries, entry)
 		return entries, nil
@@ -5245,20 +5732,15 @@ func (Uc *UserControl) Customer_Loyalty_Account_Points_Details_GetPaginated(Page
 		return entries, errors.New("invalid limit (accept value between 1 and 50000)")
 	}
 
-	var findparams daoc.DAOFindParams
-	var paginationparams daoc.DAOPaginate
-	paginationparams.Limit = Limit
-	paginationparams.Page = Page
-	findResult, err := DAO_Customer_Loyalty_Account_Points_Detail.FindPaginate(findparams, paginationparams)
+	pgCtx, pgCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer pgCancel()
+	result, err := mongox.FindPage[Customer_Loyalty_Account_Points_Detail](pgCtx, Mdb_Customer_Loyalty_Account_Points_Detail.Coll, bson.M{}, mongox.PageRequest{
+		Page: Page, PageSize: Limit, MaxPageSize: 50000,
+	})
 	if err != nil {
 		return entries, err
 	}
-	if len(findResult) > 0 {
-		for _, findres := range findResult {
-			InterfaceValue := reflect.ValueOf(findres).Elem().Interface().(Customer_Loyalty_Account_Points_Detail)
-			entries = append(entries, InterfaceValue)
-		}
-	}
+	entries = result.Items
 	return entries, nil
 }
 func (Uc *UserControl) Customer_Loyalty_Account_GetRedemption_Rules(MSISDN string) (Redemption_Rules Loyalty_Point_Redemption_Rule, err error) {
@@ -5267,13 +5749,12 @@ func (Uc *UserControl) Customer_Loyalty_Account_GetRedemption_Rules(MSISDN strin
 		return Redemption_Rules, errors.New("msisdn cannot be empty")
 	}
 	//get loyalty account detail
-	loyalty_account_na, subexist := Map_Customer_Loyalty_Account.CheckThenGet(MSISDN)
-	if !subexist {
+	loyalty_account, loyaltyAccErr := redisx.GetJSON[Customer_Loyalty_Account](context.Background(), RedisClient, Customer_Loyalty_Account{Key: MSISDN}.RedisKey())
+	if redisx.IsNil(loyaltyAccErr) {
 		return Redemption_Rules, errors.New("loyalty account does not exist")
 	}
-	loyalty_account, ok := loyalty_account_na.(Customer_Loyalty_Account)
-	if !ok {
-		return Redemption_Rules, errors.New("type assertion issue with Customer_Loyalty_Account")
+	if loyaltyAccErr != nil {
+		return Redemption_Rules, loyaltyAccErr
 	}
 	if loyalty_account.Loyalty_Account_Segment_Key == "" {
 		return Redemption_Rules, errors.New("type assertion issue with Customer_Loyalty_Account")
@@ -5282,25 +5763,23 @@ func (Uc *UserControl) Customer_Loyalty_Account_GetRedemption_Rules(MSISDN strin
 		return Redemption_Rules, errors.New("loyalty account level is not assigned")
 	}
 	//get the loyalty plan
-	plan_na, planexist := Map_Loyalty_Plan.CheckThenGet(loyalty_account.Loyalty_Level_Key + "|" + loyalty_account.Loyalty_Account_Segment_Key)
-	if !planexist {
+	plan, planErr := redisx.GetJSON[Loyalty_Plan](context.Background(), RedisClient, Loyalty_Plan{Key: loyalty_account.Loyalty_Level_Key + "|" + loyalty_account.Loyalty_Account_Segment_Key}.RedisKey())
+	if redisx.IsNil(planErr) {
 		return Redemption_Rules, errors.New("loyalty plan does not exist")
 	}
-	plan, ok := plan_na.(Loyalty_Plan)
-	if !ok {
-		return Redemption_Rules, errors.New("type assertion issue with Loyalty_Plan")
+	if planErr != nil {
+		return Redemption_Rules, planErr
 	}
 	//validate earning rules
 	if plan.Redemption_Rules_Key == "" {
 		return Redemption_Rules, errors.New("redemption rules is not defined")
 	}
-	redemption_Rules_na, redemptionexist := Map_Loyalty_Point_Redemption_Rules.CheckThenGet(plan.Redemption_Rules_Key)
-	if !redemptionexist {
+	Redemption_Rule, redemptionErr := redisx.GetJSON[Loyalty_Point_Redemption_Rules](context.Background(), RedisClient, Loyalty_Point_Redemption_Rules{Key: plan.Redemption_Rules_Key}.RedisKey())
+	if redisx.IsNil(redemptionErr) {
 		return Redemption_Rules, errors.New("redemption rules is not defined")
 	}
-	Redemption_Rule, ok := redemption_Rules_na.(Loyalty_Point_Redemption_Rules)
-	if !ok {
-		return Redemption_Rules, errors.New("type assertion issue with Loyalty_Point_Redemption_Rules")
+	if redemptionErr != nil {
+		return Redemption_Rules, redemptionErr
 	}
 	var cleanRedemptionRule Loyalty_Point_Redemption_Rule
 	err = copier.Copy(&cleanRedemptionRule, &Redemption_Rule)
@@ -5316,13 +5795,12 @@ func (Uc *UserControl) Customer_Loyalty_Account_GetEarning_Rule(MSISDN string) (
 		return Earning_Rules, errors.New("msisdn cannot be empty")
 	}
 	//get loyalty account detail
-	loyalty_account_na, subexist := Map_Customer_Loyalty_Account.CheckThenGet(MSISDN)
-	if !subexist {
+	loyalty_account, loyaltyAccErr := redisx.GetJSON[Customer_Loyalty_Account](context.Background(), RedisClient, Customer_Loyalty_Account{Key: MSISDN}.RedisKey())
+	if redisx.IsNil(loyaltyAccErr) {
 		return Earning_Rules, errors.New("loyalty account does not exist")
 	}
-	loyalty_account, ok := loyalty_account_na.(Customer_Loyalty_Account)
-	if !ok {
-		return Earning_Rules, errors.New("type assertion issue with Customer_Loyalty_Account")
+	if loyaltyAccErr != nil {
+		return Earning_Rules, loyaltyAccErr
 	}
 	if loyalty_account.Loyalty_Account_Segment_Key == "" {
 		return Earning_Rules, errors.New("type assertion issue with Customer_Loyalty_Account")
@@ -5331,25 +5809,23 @@ func (Uc *UserControl) Customer_Loyalty_Account_GetEarning_Rule(MSISDN string) (
 		return Earning_Rules, errors.New("loyalty account level is not assigned")
 	}
 	//get the loyalty plan
-	plan_na, planexist := Map_Loyalty_Plan.CheckThenGet(loyalty_account.Loyalty_Level_Key + "|" + loyalty_account.Loyalty_Account_Segment_Key)
-	if !planexist {
+	plan, planErr := redisx.GetJSON[Loyalty_Plan](context.Background(), RedisClient, Loyalty_Plan{Key: loyalty_account.Loyalty_Level_Key + "|" + loyalty_account.Loyalty_Account_Segment_Key}.RedisKey())
+	if redisx.IsNil(planErr) {
 		return Earning_Rules, errors.New("loyalty plan does not exist")
 	}
-	plan, ok := plan_na.(Loyalty_Plan)
-	if !ok {
-		return Earning_Rules, errors.New("type assertion issue with Loyalty_Plan")
+	if planErr != nil {
+		return Earning_Rules, planErr
 	}
 	//validate earning rules
 	if plan.Earning_Rules_Key == "" {
 		return Earning_Rules, errors.New("earning rule is not defined")
 	}
-	Earning_Rules_na, earningexist := Map_Loyalty_Point_Earning_Rules.CheckThenGet(plan.Earning_Rules_Key)
-	if !earningexist {
+	Earning_Rule, earningErr := redisx.GetJSON[Loyalty_Point_Earning_Rules](context.Background(), RedisClient, Loyalty_Point_Earning_Rules{Key: plan.Earning_Rules_Key}.RedisKey())
+	if redisx.IsNil(earningErr) {
 		return Earning_Rules, errors.New("earning rule is not defined")
 	}
-	Earning_Rule, ok := Earning_Rules_na.(Loyalty_Point_Earning_Rules)
-	if !ok {
-		return Earning_Rules, errors.New("type assertion issue with Loyalty_Point_Earning_Rules")
+	if earningErr != nil {
+		return Earning_Rules, earningErr
 	}
 
 	return Earning_Rule, nil
@@ -5440,8 +5916,8 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 	response.Points_To_Redeem = request.Points_To_Redeem
 
 	//get loyalty account detail
-	loyalty_Account_na, exits := Map_Customer_Loyalty_Account.CheckThenGet(request.MSISDN)
-	if !exits {
+	loyalty_Account, loyaltyAccErr := redisx.GetJSON[Customer_Loyalty_Account](context.Background(), RedisClient, Customer_Loyalty_Account{Key: request.MSISDN}.RedisKey())
+	if redisx.IsNil(loyaltyAccErr) {
 		response.Status = "failed"
 		response.StatusCode = http.StatusBadRequest
 		response.StatusDescription = "loyalty account not found"
@@ -5451,12 +5927,11 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 		Uc.Write_Loyalty_Redemption_log(*response)
 		return
 	}
-	loyalty_Account, ok := loyalty_Account_na.(Customer_Loyalty_Account)
-	if !ok {
+	if loyaltyAccErr != nil {
 		response.Status = "failed"
 		response.StatusCode = http.StatusBadRequest
 		response.StatusDescription = "error in loyalty account type assertion"
-		response.ErrorDescription = "error in loyalty account type assertion"
+		response.ErrorDescription = loyaltyAccErr.Error()
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_Redemption_log(*response)
@@ -5767,9 +6242,13 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			}
 			YYYY, MM, _, _, _, _, _ := GetTimeParts(response.ReceiveDate)
 			Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
-			_, err = DAO_NotificationLog.PutOneLogs(AirtimeNotiLog, Db, DAO_NotificationLog.Collection)
-			if err != nil {
-				log.Println("Error in Write Airtime Notification Logs:", err, " (", AirtimeNotiLog, ")")
+			{
+				notiCtx, notiCancel := context.WithTimeout(context.Background(), 10*time.Second)
+				_, notiErr := Uc.MongoClient.Mongo.Database(Db).Collection("Col_NotificationLog").InsertOne(notiCtx, AirtimeNotiLog)
+				notiCancel()
+				if notiErr != nil {
+					log.Println("Error in Write Airtime Notification Logs:", notiErr, " (", AirtimeNotiLog, ")")
+				}
 			}
 		}
 
@@ -6134,9 +6613,13 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			}
 			YYYY, MM, _, _, _, _, _ := GetTimeParts(response.ReceiveDate)
 			Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
-			_, err = DAO_NotificationLog.PutOneLogs(BundleNotiLog, Db, DAO_NotificationLog.Collection)
-			if err != nil {
-				log.Println("Error in Write Bundle Notification Logs:", err, " (", BundleNotiLog, ")")
+			{
+				notiCtx, notiCancel := context.WithTimeout(context.Background(), 10*time.Second)
+				_, notiErr := Uc.MongoClient.Mongo.Database(Db).Collection("Col_NotificationLog").InsertOne(notiCtx, BundleNotiLog)
+				notiCancel()
+				if notiErr != nil {
+					log.Println("Error in Write Bundle Notification Logs:", notiErr, " (", BundleNotiLog, ")")
+				}
 			}
 		}
 	case "MobileMoney":
@@ -6351,9 +6834,13 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			}
 			YYYY, MM, _, _, _, _, _ := GetTimeParts(response.ReceiveDate)
 			Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
-			_, err = DAO_NotificationLog.PutOneLogs(MobileMoneyNotiLog, Db, DAO_NotificationLog.Collection)
-			if err != nil {
-				log.Println("Error in Write Mobile Money Notification Logs:", err, " (", MobileMoneyNotiLog, ")")
+			{
+				notiCtx, notiCancel := context.WithTimeout(context.Background(), 10*time.Second)
+				_, notiErr := Uc.MongoClient.Mongo.Database(Db).Collection("Col_NotificationLog").InsertOne(notiCtx, MobileMoneyNotiLog)
+				notiCancel()
+				if notiErr != nil {
+					log.Println("Error in Write Mobile Money Notification Logs:", notiErr, " (", MobileMoneyNotiLog, ")")
+				}
 			}
 		}
 	case "SpinAndWin":
@@ -6527,9 +7014,13 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			}
 			YYYY, MM, _, _, _, _, _ := GetTimeParts(response.ReceiveDate)
 			Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
-			_, err = DAO_NotificationLog.PutOneLogs(SpinWinNotiLog, Db, DAO_NotificationLog.Collection)
-			if err != nil {
-				log.Println("Error in Write Mobile Money Notification Logs:", err, " (", SpinWinNotiLog, ")")
+			{
+				notiCtx, notiCancel := context.WithTimeout(context.Background(), 10*time.Second)
+				_, notiErr := Uc.MongoClient.Mongo.Database(Db).Collection("Col_NotificationLog").InsertOne(notiCtx, SpinWinNotiLog)
+				notiCancel()
+				if notiErr != nil {
+					log.Println("Error in Write Mobile Money Notification Logs:", notiErr, " (", SpinWinNotiLog, ")")
+				}
 			}
 		}
 
@@ -6581,8 +7072,8 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 	response.Points_To_Redeem = request.Points_To_Redeem
 
 	//get loyalty account detail
-	loyalty_Account_na, exits := Map_Customer_Loyalty_Account.CheckThenGet(request.MSISDN)
-	if !exits {
+	loyalty_Account, loyaltyAccErr := redisx.GetJSON[Customer_Loyalty_Account](context.Background(), RedisClient, Customer_Loyalty_Account{Key: request.MSISDN}.RedisKey())
+	if redisx.IsNil(loyaltyAccErr) {
 		response.Status = "failed"
 		response.StatusCode = http.StatusBadRequest
 		response.StatusDescription = "loyalty account not found"
@@ -6592,12 +7083,11 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 		Uc.Write_Loyalty_Redemption_log(*response)
 		return
 	}
-	loyalty_Account, ok := loyalty_Account_na.(Customer_Loyalty_Account)
-	if !ok {
+	if loyaltyAccErr != nil {
 		response.Status = "failed"
 		response.StatusCode = http.StatusBadRequest
 		response.StatusDescription = "error in loyalty account type assertion"
-		response.ErrorDescription = "error in loyalty account type assertion"
+		response.ErrorDescription = loyaltyAccErr.Error()
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_Redemption_log(*response)
@@ -6912,9 +7402,13 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			}
 			YYYY, MM, _, _, _, _, _ := GetTimeParts(response.ReceiveDate)
 			Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
-			_, err = DAO_NotificationLog.PutOneLogs(AirtimeNotiLog, Db, DAO_NotificationLog.Collection)
-			if err != nil {
-				log.Println("Error in Write Airtime Notification Logs:", err, " (", AirtimeNotiLog, ")")
+			{
+				notiCtx, notiCancel := context.WithTimeout(context.Background(), 10*time.Second)
+				_, notiErr := Uc.MongoClient.Mongo.Database(Db).Collection("Col_NotificationLog").InsertOne(notiCtx, AirtimeNotiLog)
+				notiCancel()
+				if notiErr != nil {
+					log.Println("Error in Write Airtime Notification Logs:", notiErr, " (", AirtimeNotiLog, ")")
+				}
 			}
 		}
 
@@ -7282,9 +7776,13 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			}
 			YYYY, MM, _, _, _, _, _ := GetTimeParts(response.ReceiveDate)
 			Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
-			_, err = DAO_NotificationLog.PutOneLogs(BundleNotiLog, Db, DAO_NotificationLog.Collection)
-			if err != nil {
-				log.Println("Error in Write Bundle Notification Logs:", err, " (", BundleNotiLog, ")")
+			{
+				notiCtx, notiCancel := context.WithTimeout(context.Background(), 10*time.Second)
+				_, notiErr := Uc.MongoClient.Mongo.Database(Db).Collection("Col_NotificationLog").InsertOne(notiCtx, BundleNotiLog)
+				notiCancel()
+				if notiErr != nil {
+					log.Println("Error in Write Bundle Notification Logs:", notiErr, " (", BundleNotiLog, ")")
+				}
 			}
 		}
 	case "MobileMoney":
@@ -7522,9 +8020,13 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			}
 			YYYY, MM, _, _, _, _, _ := GetTimeParts(response.ReceiveDate)
 			Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
-			_, err = DAO_NotificationLog.PutOneLogs(MobileMoneyNotiLog, Db, DAO_NotificationLog.Collection)
-			if err != nil {
-				log.Println("Error in Write Mobile Money Notification Logs:", err, " (", MobileMoneyNotiLog, ")")
+			{
+				notiCtx, notiCancel := context.WithTimeout(context.Background(), 10*time.Second)
+				_, notiErr := Uc.MongoClient.Mongo.Database(Db).Collection("Col_NotificationLog").InsertOne(notiCtx, MobileMoneyNotiLog)
+				notiCancel()
+				if notiErr != nil {
+					log.Println("Error in Write Mobile Money Notification Logs:", notiErr, " (", MobileMoneyNotiLog, ")")
+				}
 			}
 		}
 	case "SpinAndWin":
@@ -7698,9 +8200,13 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			}
 			YYYY, MM, _, _, _, _, _ := GetTimeParts(response.ReceiveDate)
 			Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
-			_, err = DAO_NotificationLog.PutOneLogs(SpinWinNotiLog, Db, DAO_NotificationLog.Collection)
-			if err != nil {
-				log.Println("Error in Write Mobile Money Notification Logs:", err, " (", SpinWinNotiLog, ")")
+			{
+				notiCtx, notiCancel := context.WithTimeout(context.Background(), 10*time.Second)
+				_, notiErr := Uc.MongoClient.Mongo.Database(Db).Collection("Col_NotificationLog").InsertOne(notiCtx, SpinWinNotiLog)
+				notiCancel()
+				if notiErr != nil {
+					log.Println("Error in Write Mobile Money Notification Logs:", notiErr, " (", SpinWinNotiLog, ")")
+				}
 			}
 		}
 
@@ -7728,14 +8234,14 @@ func Loyalty_Account_Segment_Selection(Amount float64, FirstUse_date time.Time) 
 	//AON_Hours := time.Now().Sub(FirstUse_date).Hours()
 	AON_Hours := time.Since(FirstUse_date).Hours()
 	AON_Months := (AON_Hours / 24) / 30
-	Schemes_na := Map_Loyalty_Account_Segment.ConvertToArray()
-	if len(Schemes_na) > 0 {
-		for _, scheme_na := range Schemes_na {
-			scheme, ok := scheme_na.(Loyalty_Account_Segment)
-			if !ok {
-				log.Println("error Loyalty_Account_Segment in type assertion")
-				continue
-			}
+	Schemes, redisErr := redisx.GetAllJSONByPattern[Loyalty_Account_Segment](context.Background(), RedisClient, redisx.ScanJSONOptions{
+		Pattern: "Loyalty_Account_Segment:*", ScanCount: 500, PipelineSize: 250,
+	})
+	if redisErr != nil {
+		log.Println("error getting Loyalty_Account_Segment from Redis:", redisErr)
+	}
+	if len(Schemes) > 0 {
+		for _, scheme := range Schemes {
 			if Amount >= scheme.Amount_From && Amount < scheme.Amount_Till {
 				if AON_Months >= scheme.AON_From && AON_Months < scheme.AON_Till {
 					//DailyImportSubsStats.With(prometheus.Labels{"IsElligble": "true", "Reason": "", "Scheme": scheme.Key}).Inc()
@@ -7752,14 +8258,14 @@ func Loyalty_Account_Segment_Selection(Amount float64, FirstUse_date time.Time) 
 }
 
 func Loyalty_Level_Selection(Accumulated_Points float64) (level_key string) {
-	levels_na := Map_Loyalty_Level.ConvertToArray()
-	if len(levels_na) > 0 {
-		for _, level_na := range levels_na {
-			level, ok := level_na.(Loyalty_Level)
-			if !ok {
-				log.Println("error Loyalty_Level in type assertion")
-				continue
-			}
+	levels, redisErr := redisx.GetAllJSONByPattern[Loyalty_Level](context.Background(), RedisClient, redisx.ScanJSONOptions{
+		Pattern: "Loyalty_Level:*", ScanCount: 500, PipelineSize: 250,
+	})
+	if redisErr != nil {
+		log.Println("error getting Loyalty_Level from Redis:", redisErr)
+	}
+	if len(levels) > 0 {
+		for _, level := range levels {
 			if Accumulated_Points >= level.Min_Accumulated_Points && Accumulated_Points < level.Max_Accumulated_Points {
 				return level.Key
 			}
@@ -7803,8 +8309,8 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 	response.EventDetailCode = request.EventDetailCode
 
 	//validate loyalty account
-	loyalty_account_na, subexist := Map_Customer_Loyalty_Account.CheckThenGet(request.MSISDN)
-	if !subexist {
+	loyalty_account, loyaltyAccErr := redisx.GetJSON[Customer_Loyalty_Account](context.Background(), RedisClient, Customer_Loyalty_Account{Key: request.MSISDN}.RedisKey())
+	if redisx.IsNil(loyaltyAccErr) {
 		response.Status = "failed"
 		response.StatusCode = http.StatusBadRequest
 		response.StatusDescription = "failed to get loyalty account"
@@ -7813,10 +8319,8 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_AccountCreditPoints_log(*response)
 		return
-
 	}
-	loyalty_account, ok := loyalty_account_na.(Customer_Loyalty_Account)
-	if !ok {
+	if loyaltyAccErr != nil {
 		response.Status = "failed"
 		response.StatusCode = http.StatusBadRequest
 		response.StatusDescription = "failed to get loyalty account"
@@ -7845,28 +8349,36 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 		return
 	}
 	//check exclusion list
-	exists_exclusion := Map_Customer_Exclusion.Check(loyalty_account.Key)
-	if exists_exclusion {
-		response.Status = "failed"
-		response.StatusCode = http.StatusBadRequest
-		response.StatusDescription = "customer is included in the exclusion list"
-		response.ErrorDescription = "customer is included in the exclusion list"
-		response.StatusDate = time.Now()
-		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
-		Uc.Write_Loyalty_AccountCreditPoints_log(*response)
-		return
+	{
+		chkCtx, chkCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		_, chkErr := redisx.GetJSON[Customer_Exclusion](chkCtx, RedisClient, Customer_Exclusion{Key: loyalty_account.Key}.RedisKey())
+		chkCancel()
+		if chkErr == nil {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "customer is included in the exclusion list"
+			response.ErrorDescription = "customer is included in the exclusion list"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_AccountCreditPoints_log(*response)
+			return
+		}
 	}
 	//check COS exclusion list
-	exists_exclusion_cos := Map_Customer_COS_Exclusion.Check(loyalty_account.COS)
-	if exists_exclusion_cos {
-		response.Status = "failed"
-		response.StatusCode = http.StatusBadRequest
-		response.StatusDescription = "customer is included in the cos exclusion list"
-		response.ErrorDescription = "customer is included in the cos exclusion list"
-		response.StatusDate = time.Now()
-		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
-		Uc.Write_Loyalty_AccountCreditPoints_log(*response)
-		return
+	{
+		chkCtx, chkCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		_, chkErr := redisx.GetJSON[Customer_COS_Exclusion](chkCtx, RedisClient, Customer_COS_Exclusion{Key: loyalty_account.COS}.RedisKey())
+		chkCancel()
+		if chkErr == nil {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "customer is included in the cos exclusion list"
+			response.ErrorDescription = "customer is included in the cos exclusion list"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_AccountCreditPoints_log(*response)
+			return
+		}
 	}
 	//exclude loyalty redemption accounts
 	if response.EventSource == "MobileMoney_feed" && response.EventType == "CASHIN" && response.EventDetail != "" {
@@ -7923,8 +8435,8 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 		return
 	}
 	//validate loyalty level
-	loyalty_Level_na, exits := Map_Loyalty_Level.CheckThenGet(loyalty_account.Loyalty_Level_Key)
-	if !exits {
+	loyalty_Level, loyaltyLevelErr := redisx.GetJSON[Loyalty_Level](context.Background(), RedisClient, Loyalty_Level{Key: loyalty_account.Loyalty_Level_Key}.RedisKey())
+	if redisx.IsNil(loyaltyLevelErr) {
 		response.Status = "failed"
 		response.StatusCode = http.StatusBadRequest
 		response.StatusDescription = "failed to get loyalty account level"
@@ -7934,8 +8446,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 		Uc.Write_Loyalty_AccountCreditPoints_log(*response)
 		return
 	}
-	loyalty_Level, ok := loyalty_Level_na.(Loyalty_Level)
-	if !ok {
+	if loyaltyLevelErr != nil {
 		response.Status = "failed"
 		response.StatusCode = http.StatusBadRequest
 		response.StatusDescription = "failed to get loyalty account level"
@@ -7956,8 +8467,8 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 		return
 	}
 	//validate the loyalty plan
-	plan_na, planexist := Map_Loyalty_Plan.CheckThenGet(loyalty_account.Loyalty_Level_Key + "|" + loyalty_account.Loyalty_Account_Segment_Key)
-	if !planexist {
+	plan, planErr := redisx.GetJSON[Loyalty_Plan](context.Background(), RedisClient, Loyalty_Plan{Key: loyalty_account.Loyalty_Level_Key + "|" + loyalty_account.Loyalty_Account_Segment_Key}.RedisKey())
+	if redisx.IsNil(planErr) {
 		response.Status = "failed"
 		response.StatusCode = http.StatusBadRequest
 		response.StatusDescription = "failed to get loyalty plan"
@@ -7967,8 +8478,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 		Uc.Write_Loyalty_AccountCreditPoints_log(*response)
 		return
 	}
-	plan, ok := plan_na.(Loyalty_Plan)
-	if !ok {
+	if planErr != nil {
 		response.Status = "failed"
 		response.StatusCode = http.StatusBadRequest
 		response.StatusDescription = "failed to get loyalty plan"
@@ -7989,8 +8499,8 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 		Uc.Write_Loyalty_AccountCreditPoints_log(*response)
 		return
 	}
-	point_earning_rules_na, earningexist := Map_Loyalty_Point_Earning_Rules.CheckThenGet(plan.Earning_Rules_Key)
-	if !earningexist {
+	point_earning_rules, earningErr := redisx.GetJSON[Loyalty_Point_Earning_Rules](context.Background(), RedisClient, Loyalty_Point_Earning_Rules{Key: plan.Earning_Rules_Key}.RedisKey())
+	if redisx.IsNil(earningErr) {
 		response.Status = "failed"
 		response.StatusCode = http.StatusBadRequest
 		response.StatusDescription = "failed to get earning rules"
@@ -8000,8 +8510,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 		Uc.Write_Loyalty_AccountCreditPoints_log(*response)
 		return
 	}
-	point_earning_rules, ok := point_earning_rules_na.(Loyalty_Point_Earning_Rules)
-	if !ok {
+	if earningErr != nil {
 		response.Status = "failed"
 		response.StatusCode = http.StatusBadRequest
 		response.StatusDescription = "failed to get earning rules"
@@ -8030,20 +8539,16 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 			}
 			if totalMonths >= 0 {
 				for _, lvl := range loyalty_Level.Seniority_Levels {
-					seniorityLevel_na, seniorityexist := Map_Loyalty_Seniority_Level.CheckThenGet(lvl.Loyalty_Seniority_Level_Key)
-					if seniorityexist {
-						seniority, ok := seniorityLevel_na.(Loyalty_Seniority_Level)
-						if ok {
-							if totalMonths >= int(seniority.AON_From) && totalMonths <= int(seniority.AON_Till) {
-								changedPointsflt := (points + Outstanding_fraction_points) - initial_Outstanding_fraction_points
-								seniorityPoints := changedPointsflt * lvl.Multiplier_Percentage / 100
-								endPoints := seniorityPoints + changedPointsflt + initial_Outstanding_fraction_points
-								points = math.Floor(endPoints)
-								Outstanding_fraction_points = endPoints - points
-								break
-							}
+					seniority, seniorityErr := redisx.GetJSON[Loyalty_Seniority_Level](context.Background(), RedisClient, Loyalty_Seniority_Level{Key: lvl.Loyalty_Seniority_Level_Key}.RedisKey())
+					if seniorityErr == nil {
+						if totalMonths >= int(seniority.AON_From) && totalMonths <= int(seniority.AON_Till) {
+							changedPointsflt := (points + Outstanding_fraction_points) - initial_Outstanding_fraction_points
+							seniorityPoints := changedPointsflt * lvl.Multiplier_Percentage / 100
+							endPoints := seniorityPoints + changedPointsflt + initial_Outstanding_fraction_points
+							points = math.Floor(endPoints)
+							Outstanding_fraction_points = endPoints - points
+							break
 						}
-
 					}
 
 				}
@@ -8058,8 +8563,8 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 		//response.OpeningAvailablePoints = (loyalty_account.Awarded_Points + loyalty_account.Expired_Points) - loyalty_account.Redeemed_Points
 		response.AwardedPoints = points
 		//validate governance rules
-		loyalty_governance_na, lg_exist := Map_Loyalty_Governance.CheckThenGet(LOYALTY_GOVERNANCE_KEY)
-		if !lg_exist {
+		loyalty_governance, lgErr := redisx.GetJSON[Loyalty_Governance](context.Background(), RedisClient, Loyalty_Governance{Key: LOYALTY_GOVERNANCE_KEY}.RedisKey())
+		if redisx.IsNil(lgErr) {
 			response.Status = "failed"
 			response.StatusCode = http.StatusBadRequest
 			response.StatusDescription = "failed to get governance entry"
@@ -8069,8 +8574,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 			Uc.Write_Loyalty_AccountCreditPoints_log(*response)
 			return
 		}
-		loyalty_governance, ok := loyalty_governance_na.(Loyalty_Governance)
-		if !ok {
+		if lgErr != nil {
 			response.Status = "failed"
 			response.StatusCode = http.StatusBadRequest
 			response.StatusDescription = "failed to get governance entry"
@@ -8116,8 +8620,8 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 		YYYY, MM, _, _, _, _, _ := GetTimeParts(time.Now())
 		//prepare the monthly points detail
 		var PointsDetail Customer_Loyalty_Account_Points_Detail
-		PointsDetail_na, exist := Map_Customer_Loyalty_Account_Points_Detail.CheckThenGet(request.MSISDN + "|" + YYYY + MM)
-		if !exist {
+		PointsDetail, pdErr := redisx.GetJSON[Customer_Loyalty_Account_Points_Detail](context.Background(), RedisClient, Customer_Loyalty_Account_Points_Detail{Key: request.MSISDN + "|" + YYYY + MM}.RedisKey())
+		if redisx.IsNil(pdErr) {
 			PointsDetail.Key = request.MSISDN + "|" + YYYY + MM
 			PointsDetail.Year_Month = YYYY + MM
 			PointsDetail.Creation_date = time.Now()
@@ -8125,18 +8629,16 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 			PointsDetail.Available_Points = PointsDetail.Awarded_Points
 			PointsDetail.Last_Credit_Date = time.Now()
 			loyalty_account.Points_Detail_Keys = append(loyalty_account.Points_Detail_Keys, request.MSISDN+"|"+YYYY+MM)
+		} else if pdErr != nil {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "failed to credit loyalty account"
+			response.ErrorDescription = "issue with Customer_Loyalty_Account_Points_Detail type assertion"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_AccountCreditPoints_log(*response)
+			return
 		} else {
-			PointsDetail, ok = PointsDetail_na.(Customer_Loyalty_Account_Points_Detail)
-			if !ok {
-				response.Status = "failed"
-				response.StatusCode = http.StatusBadRequest
-				response.StatusDescription = "failed to credit loyalty account"
-				response.ErrorDescription = "issue with Customer_Loyalty_Account_Points_Detail type assertion"
-				response.StatusDate = time.Now()
-				response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
-				Uc.Write_Loyalty_AccountCreditPoints_log(*response)
-				return
-			}
 			if !refundValue {
 				PointsDetail.Awarded_Points = PointsDetail.Awarded_Points + points
 			} else {
@@ -8157,8 +8659,26 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 		}
 		err := Uc.Loyalty_Governance_Available_Points_Debit(points, refundValue)
 		if err == nil {
-			Map_Customer_Loyalty_Account.Put(loyalty_account.Key, loyalty_account)
-			Map_Customer_Loyalty_Account_Points_Detail.Put(PointsDetail.Key, PointsDetail)
+			{
+				putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+				if _, putErr := Mdb_Customer_Loyalty_Account.Coll.UpdateOne(putCtx, bson.M{"Key": loyalty_account.Key}, bson.M{"$set": loyalty_account}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+					log.Println("Mdb_Customer_Loyalty_Account upsert error:", putErr)
+				}
+				if putSetErr := redisx.SetJSON(putCtx, RedisClient, loyalty_account.RedisKey(), loyalty_account); putSetErr != nil {
+					log.Println("redisx.SetJSON Customer_Loyalty_Account error:", putSetErr)
+				}
+				putCancel()
+			}
+			{
+				putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+				if _, putErr := Mdb_Customer_Loyalty_Account_Points_Detail.Coll.UpdateOne(putCtx, bson.M{"Key": PointsDetail.Key}, bson.M{"$set": PointsDetail}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+					log.Println("Mdb_Customer_Loyalty_Account_Points_Detail upsert error:", putErr)
+				}
+				if putSetErr := redisx.SetJSON(putCtx, RedisClient, PointsDetail.RedisKey(), PointsDetail); putSetErr != nil {
+					log.Println("redisx.SetJSON Customer_Loyalty_Account_Points_Detail error:", putSetErr)
+				}
+				putCancel()
+			}
 			new_Loyalty_level_key, errNL := Uc.EvaluateAndUpdate_CustomerLoyaltyLevel(response.AppLogin, loyalty_account.Key)
 			if errNL != nil {
 				loyalty_account.Loyalty_Level_Key = new_Loyalty_level_key
@@ -8167,7 +8687,16 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 	} else {
 		if Outstanding_fraction_points > 0 {
 			loyalty_account.Outstanding_fraction_points = Outstanding_fraction_points
-			Map_Customer_Loyalty_Account.Put(loyalty_account.Key, loyalty_account)
+			{
+				putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+				if _, putErr := Mdb_Customer_Loyalty_Account.Coll.UpdateOne(putCtx, bson.M{"Key": loyalty_account.Key}, bson.M{"$set": loyalty_account}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+					log.Println("Mdb_Customer_Loyalty_Account upsert error:", putErr)
+				}
+				if putSetErr := redisx.SetJSON(putCtx, RedisClient, loyalty_account.RedisKey(), loyalty_account); putSetErr != nil {
+					log.Println("redisx.SetJSON Customer_Loyalty_Account error:", putSetErr)
+				}
+				putCancel()
+			}
 		} else {
 			response.Status = "failed"
 			response.StatusCode = http.StatusBadRequest
@@ -8223,9 +8752,13 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 		}
 		YYYY, MM, _, _, _, _, _ := GetTimeParts(time.Now())
 		Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
-		_, err := DAO_NotificationLog.PutOneLogs(EarnNotiLog, Db, DAO_NotificationLog.Collection)
-		if err != nil {
-			log.Println("Error in Write earning Notification Logs:", err, " (", EarnNotiLog, ")")
+		{
+			notiCtx, notiCancel := context.WithTimeout(context.Background(), 10*time.Second)
+			_, notiErr := Uc.MongoClient.Mongo.Database(Db).Collection("Col_NotificationLog").InsertOne(notiCtx, EarnNotiLog)
+			notiCancel()
+			if notiErr != nil {
+				log.Println("Error in Write earning Notification Logs:", notiErr, " (", EarnNotiLog, ")")
+			}
 		}
 	}
 	//successful reply
@@ -8281,8 +8814,8 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 		return
 	}
 	//get loyalty account detail
-	loyalty_Account_na, exits := Map_Customer_Loyalty_Account.CheckThenGet(request.MSISDN)
-	if !exits {
+	loyalty_Account, loyaltyAccErr := redisx.GetJSON[Customer_Loyalty_Account](context.Background(), RedisClient, Customer_Loyalty_Account{Key: request.MSISDN}.RedisKey())
+	if redisx.IsNil(loyaltyAccErr) {
 		response.Status = "failed"
 		response.StatusCode = http.StatusBadRequest
 		response.StatusDescription = "loyalty account not found"
@@ -8292,8 +8825,7 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 		Uc.Write_Loyalty_AccountDebitPoints_log(*response)
 		return
 	}
-	loyalty_Account, ok := loyalty_Account_na.(Customer_Loyalty_Account)
-	if !ok {
+	if loyaltyAccErr != nil {
 		response.Status = "failed"
 		response.StatusCode = http.StatusBadRequest
 		response.StatusDescription = "error in loyalty account type assertion"
@@ -8321,28 +8853,36 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 		Uc.Write_Loyalty_AccountDebitPoints_log(*response)
 		return
 	}
-	exists_exclusion := Map_Customer_Exclusion.Check(loyalty_Account.Key)
-	if exists_exclusion {
-		response.Status = "failed"
-		response.StatusCode = http.StatusBadRequest
-		response.StatusDescription = "customer is included in the exclusion list"
-		response.ErrorDescription = "customer is included in the exclusion list"
-		response.StatusDate = time.Now()
-		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
-		Uc.Write_Loyalty_AccountDebitPoints_log(*response)
-		return
+	{
+		chkCtx, chkCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		_, chkErr := redisx.GetJSON[Customer_Exclusion](chkCtx, RedisClient, Customer_Exclusion{Key: loyalty_Account.Key}.RedisKey())
+		chkCancel()
+		if chkErr == nil {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "customer is included in the exclusion list"
+			response.ErrorDescription = "customer is included in the exclusion list"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_AccountDebitPoints_log(*response)
+			return
+		}
 	}
 	//check COS exclusion list
-	exists_exclusion_cos := Map_Customer_COS_Exclusion.Check(loyalty_Account.COS)
-	if exists_exclusion_cos {
-		response.Status = "failed"
-		response.StatusCode = http.StatusBadRequest
-		response.StatusDescription = "customer is included in the cos exclusion list"
-		response.ErrorDescription = "customer is included in the cos exclusion list"
-		response.StatusDate = time.Now()
-		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
-		Uc.Write_Loyalty_AccountDebitPoints_log(*response)
-		return
+	{
+		chkCtx, chkCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		_, chkErr := redisx.GetJSON[Customer_COS_Exclusion](chkCtx, RedisClient, Customer_COS_Exclusion{Key: loyalty_Account.COS}.RedisKey())
+		chkCancel()
+		if chkErr == nil {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "customer is included in the cos exclusion list"
+			response.ErrorDescription = "customer is included in the cos exclusion list"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_AccountDebitPoints_log(*response)
+			return
+		}
 	}
 	//check if available balance is enough
 	if response.Opening_Available_Points < request.Debit_Amount {
@@ -8376,21 +8916,18 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 			//fmt.Println(d.Format("2006-01-02"))
 			YYYY, MM, _, _, _, _, _ := GetTimeParts(d)
 			//prepare the monthly points detail
-			var PointsDetail Customer_Loyalty_Account_Points_Detail
-			PointsDetail_na, exist := Map_Customer_Loyalty_Account_Points_Detail.CheckThenGet(request.MSISDN + "|" + YYYY + MM)
-			if exist {
-				var ok bool
-				PointsDetail, ok = PointsDetail_na.(Customer_Loyalty_Account_Points_Detail)
-				if !ok {
-					response.Status = "failed"
-					response.StatusCode = http.StatusBadRequest
-					response.StatusDescription = "failed to credit loyalty account"
-					response.ErrorDescription = "issue with Customer_Loyalty_Account_Points_Detail type assertion"
-					response.StatusDate = time.Now()
-					response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
-					Uc.Write_Loyalty_AccountDebitPoints_log(*response)
-					return
-				}
+			PointsDetail, pdErr := redisx.GetJSON[Customer_Loyalty_Account_Points_Detail](context.Background(), RedisClient, Customer_Loyalty_Account_Points_Detail{Key: request.MSISDN + "|" + YYYY + MM}.RedisKey())
+			if pdErr != nil && !redisx.IsNil(pdErr) {
+				response.Status = "failed"
+				response.StatusCode = http.StatusBadRequest
+				response.StatusDescription = "failed to credit loyalty account"
+				response.ErrorDescription = "issue with Customer_Loyalty_Account_Points_Detail type assertion"
+				response.StatusDate = time.Now()
+				response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+				Uc.Write_Loyalty_AccountDebitPoints_log(*response)
+				return
+			}
+			if pdErr == nil {
 				if PointsDetail.Available_Points > 0 {
 					if PointsDetail.Available_Points >= Amount_to_debit {
 						//full amount available
@@ -8414,7 +8951,16 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 						PointsDetail.Available_Points = 0
 						Amount_to_debit = Amount_to_debit - partial_debit_amount
 					}
-					Map_Customer_Loyalty_Account_Points_Detail.Put(PointsDetail.Key, PointsDetail)
+					{
+						putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+						if _, putErr := Mdb_Customer_Loyalty_Account_Points_Detail.Coll.UpdateOne(putCtx, bson.M{"Key": PointsDetail.Key}, bson.M{"$set": PointsDetail}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+							log.Println("Mdb_Customer_Loyalty_Account_Points_Detail upsert error:", putErr)
+						}
+						if putSetErr := redisx.SetJSON(putCtx, RedisClient, PointsDetail.RedisKey(), PointsDetail); putSetErr != nil {
+							log.Println("redisx.SetJSON Customer_Loyalty_Account_Points_Detail error:", putSetErr)
+						}
+						putCancel()
+					}
 					if Amount_to_debit == 0 {
 						break
 					}
@@ -8426,7 +8972,16 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 			break
 		}
 	}
-	Map_Customer_Loyalty_Account.Put(loyalty_Account.Key, loyalty_Account)
+	{
+		putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, putErr := Mdb_Customer_Loyalty_Account.Coll.UpdateOne(putCtx, bson.M{"Key": loyalty_Account.Key}, bson.M{"$set": loyalty_Account}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+			log.Println("Mdb_Customer_Loyalty_Account upsert error:", putErr)
+		}
+		if putSetErr := redisx.SetJSON(putCtx, RedisClient, loyalty_Account.RedisKey(), loyalty_Account); putSetErr != nil {
+			log.Println("redisx.SetJSON Customer_Loyalty_Account error:", putSetErr)
+		}
+		putCancel()
+	}
 	response.Closure_Awarded_Points = loyalty_Account.Awarded_Points
 	response.Closure_Redeemed_Points = loyalty_Account.Redeemed_Points
 	response.Closure_Available_Points = loyalty_Account.Available_Points
@@ -8480,8 +9035,8 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 	response.Opt_Status = request.Opt_Status
 
 	//validate loyalty account
-	loyalty_account_na, subexist := Map_Customer_Loyalty_Account.CheckThenGet(request.MSISDN)
-	if !subexist {
+	loyalty_account, loyaltyAccErr := redisx.GetJSON[Customer_Loyalty_Account](context.Background(), RedisClient, Customer_Loyalty_Account{Key: request.MSISDN}.RedisKey())
+	if redisx.IsNil(loyaltyAccErr) {
 		response.Request_Status = "failed"
 		response.Request_StatusCode = http.StatusBadRequest
 		response.StatusDescription = "failed to get loyalty account"
@@ -8490,10 +9045,8 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 		response.E2E_Elapsedtime = (time.Since(response.StatusDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_Status_log(*response)
 		return
-
 	}
-	loyalty_account, ok := loyalty_account_na.(Customer_Loyalty_Account)
-	if !ok {
+	if loyaltyAccErr != nil {
 		response.Request_Status = "failed"
 		response.Request_StatusCode = http.StatusBadRequest
 		response.StatusDescription = "failed to get loyalty account"
@@ -8519,28 +9072,36 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 		return
 	}
 	//check exclusion list
-	exists_exclusion := Map_Customer_Exclusion.Check(loyalty_account.Key)
-	if exists_exclusion {
-		response.Request_Status = "failed"
-		response.Request_StatusCode = http.StatusBadRequest
-		response.StatusDescription = "customer is included in the exclusion list"
-		response.ErrorDescription = "customer is included in the exclusion list"
-		response.StatusDate = time.Now()
-		response.E2E_Elapsedtime = (time.Since(response.StatusDate).Nanoseconds()) / 1000000
-		Uc.Write_Loyalty_Status_log(*response)
-		return
+	{
+		chkCtx, chkCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		_, chkErr := redisx.GetJSON[Customer_Exclusion](chkCtx, RedisClient, Customer_Exclusion{Key: loyalty_account.Key}.RedisKey())
+		chkCancel()
+		if chkErr == nil {
+			response.Request_Status = "failed"
+			response.Request_StatusCode = http.StatusBadRequest
+			response.StatusDescription = "customer is included in the exclusion list"
+			response.ErrorDescription = "customer is included in the exclusion list"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.StatusDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Status_log(*response)
+			return
+		}
 	}
 	//check COS exclusion list
-	exists_exclusion_cos := Map_Customer_COS_Exclusion.Check(loyalty_account.COS)
-	if exists_exclusion_cos {
-		response.Request_Status = "failed"
-		response.Request_StatusCode = http.StatusBadRequest
-		response.StatusDescription = "customer is included in the cos exclusion list"
-		response.ErrorDescription = "customer is included in the cos exclusion list"
-		response.StatusDate = time.Now()
-		response.E2E_Elapsedtime = (time.Since(response.StatusDate).Nanoseconds()) / 1000000
-		Uc.Write_Loyalty_Status_log(*response)
-		return
+	{
+		chkCtx, chkCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		_, chkErr := redisx.GetJSON[Customer_COS_Exclusion](chkCtx, RedisClient, Customer_COS_Exclusion{Key: loyalty_account.COS}.RedisKey())
+		chkCancel()
+		if chkErr == nil {
+			response.Request_Status = "failed"
+			response.Request_StatusCode = http.StatusBadRequest
+			response.StatusDescription = "customer is included in the cos exclusion list"
+			response.ErrorDescription = "customer is included in the cos exclusion list"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.StatusDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_Status_log(*response)
+			return
+		}
 	}
 
 	if loyalty_account.Loyalty_Account_Segment_Key == "" {
@@ -8564,8 +9125,8 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 		return
 	}
 	//validate loyalty level
-	_, exits := Map_Loyalty_Level.CheckThenGet(loyalty_account.Loyalty_Level_Key)
-	if !exits {
+	_, loyaltyLevelErr := redisx.GetJSON[Loyalty_Level](context.Background(), RedisClient, Loyalty_Level{Key: loyalty_account.Loyalty_Level_Key}.RedisKey())
+	if redisx.IsNil(loyaltyLevelErr) {
 		response.Request_Status = "failed"
 		response.Request_StatusCode = http.StatusBadRequest
 		response.StatusDescription = "failed to get loyalty account level"
@@ -8577,8 +9138,8 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 	}
 
 	//validate the loyalty plan
-	plan_na, planexist := Map_Loyalty_Plan.CheckThenGet(loyalty_account.Loyalty_Level_Key + "|" + loyalty_account.Loyalty_Account_Segment_Key)
-	if !planexist {
+	plan, planErr := redisx.GetJSON[Loyalty_Plan](context.Background(), RedisClient, Loyalty_Plan{Key: loyalty_account.Loyalty_Level_Key + "|" + loyalty_account.Loyalty_Account_Segment_Key}.RedisKey())
+	if redisx.IsNil(planErr) {
 		response.Request_Status = "failed"
 		response.Request_StatusCode = http.StatusBadRequest
 		response.StatusDescription = "failed to get loyalty plan"
@@ -8588,8 +9149,7 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 		Uc.Write_Loyalty_Status_log(*response)
 		return
 	}
-	plan, ok := plan_na.(Loyalty_Plan)
-	if !ok {
+	if planErr != nil {
 		response.Request_Status = "failed"
 		response.Request_StatusCode = http.StatusBadRequest
 		response.StatusDescription = "failed to get loyalty plan"
@@ -8612,11 +9172,29 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 	}
 	loyalty_account.Opt_Status = request.Opt_Status
 	loyalty_account.Last_Opt_Status_Date = time.Now()
-	Map_Customer_Loyalty_Account.Put(loyalty_account.Key, loyalty_account)
+	{
+		putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, putErr := Mdb_Customer_Loyalty_Account.Coll.UpdateOne(putCtx, bson.M{"Key": loyalty_account.Key}, bson.M{"$set": loyalty_account}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+			log.Println("Mdb_Customer_Loyalty_Account upsert error:", putErr)
+		}
+		if putSetErr := redisx.SetJSON(putCtx, RedisClient, loyalty_account.RedisKey(), loyalty_account); putSetErr != nil {
+			log.Println("redisx.SetJSON Customer_Loyalty_Account error:", putSetErr)
+		}
+		putCancel()
+	}
 
 	if loyalty_account.First_Opt_In_Status_Date.IsZero() && request.Opt_Status == "OptedIn" {
 		loyalty_account.First_Opt_In_Status_Date = time.Now()
-		Map_Customer_Loyalty_Account.Put(loyalty_account.Key, loyalty_account)
+		{
+			putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+			if _, putErr := Mdb_Customer_Loyalty_Account.Coll.UpdateOne(putCtx, bson.M{"Key": loyalty_account.Key}, bson.M{"$set": loyalty_account}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+				log.Println("Mdb_Customer_Loyalty_Account upsert error:", putErr)
+			}
+			if putSetErr := redisx.SetJSON(putCtx, RedisClient, loyalty_account.RedisKey(), loyalty_account); putSetErr != nil {
+				log.Println("redisx.SetJSON Customer_Loyalty_Account error:", putSetErr)
+			}
+			putCancel()
+		}
 		var loyalty_AccountCreditPoints_log Loyalty_AccountCreditPoints_log
 		var loyalty_AccountCreditPoints_Request Loyalty_AccountCreditPoints_Request
 		loyalty_AccountCreditPoints_Request.MSISDN = loyalty_account.Key
@@ -8636,8 +9214,8 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 			log.Println("failed to get data")
 			return
 		}
-		loyalty_account_na, subexist := Map_Customer_Loyalty_Account.CheckThenGet(request.MSISDN)
-		if !subexist {
+		loyalty_account, loyaltyAccErr2 := redisx.GetJSON[Customer_Loyalty_Account](context.Background(), RedisClient, Customer_Loyalty_Account{Key: request.MSISDN}.RedisKey())
+		if redisx.IsNil(loyaltyAccErr2) {
 			response.Request_Status = "failed"
 			response.Request_StatusCode = http.StatusBadRequest
 			response.StatusDescription = "failed to get loyalty account"
@@ -8646,10 +9224,8 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 			response.E2E_Elapsedtime = (time.Since(response.StatusDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Status_log(*response)
 			return
-
 		}
-		loyalty_account, ok := loyalty_account_na.(Customer_Loyalty_Account)
-		if !ok {
+		if loyaltyAccErr2 != nil {
 			response.Request_Status = "failed"
 			response.Request_StatusCode = http.StatusBadRequest
 			response.StatusDescription = "failed to get loyalty account"
@@ -8696,9 +9272,13 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 			}
 			YYYY, MM, _, _, _, _, _ := GetTimeParts(time.Now())
 			Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
-			_, err = DAO_NotificationLog.PutOneLogs(WelcomeNotiLog, Db, DAO_NotificationLog.Collection)
-			if err != nil {
-				log.Println("Error in Write welcome Notification Logs:", err, " (", WelcomeNotiLog, ")")
+			{
+				notiCtx, notiCancel := context.WithTimeout(context.Background(), 10*time.Second)
+				_, notiErr := Uc.MongoClient.Mongo.Database(Db).Collection("Col_NotificationLog").InsertOne(notiCtx, WelcomeNotiLog)
+				notiCancel()
+				if notiErr != nil {
+					log.Println("Error in Write welcome Notification Logs:", notiErr, " (", WelcomeNotiLog, ")")
+				}
 			}
 		}
 	}
@@ -8958,44 +9538,23 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 			}
 			return 0, current_outstanding_points, false, "", ""
 		case "MERCHPAY":
-			entry_na, exits := Map_Loyalty_Point_Earning_Rules_Overwrite.CheckThenGet(rules.Key + "|MERCHPAY|" + award_request.EventDetailCode)
-			if exits {
-				entry, ok := entry_na.(Loyalty_Point_Earning_Rules_Overwrite)
-				if ok {
-					if entry.Award_Type == "Transaction" {
-						if entry.Points > 0 {
-							// return entry.MM_MERCHPAY_Points, current_outstanding_points
-							flt_points := entry.Points + current_outstanding_points
-							int_points := int(flt_points)
-							outstanding_points = flt_points - float64(int_points)
-							return float64(int_points), outstanding_points, rules.Overwrite_MM_MERCHPAY_Notification, rules.Overwrite_MM_MERCHPAY_Notification_Sender, rules.Overwrite_MM_MERCHPAY_Notification_Text
-						}
-					} else if entry.Award_Type == "Amount" {
-						if entry.Amount > 0 && award_request.EventAmount > 0 {
-							flt_fractions := award_request.EventAmount / entry.Amount
-							flt_points := (flt_fractions * entry.Points) + current_outstanding_points
-							int_points := int(flt_points)
-							outstanding_points = flt_points - float64(int_points)
-							return float64(int_points), outstanding_points, rules.Overwrite_MM_MERCHPAY_Notification, rules.Overwrite_MM_MERCHPAY_Notification_Sender, rules.Overwrite_MM_MERCHPAY_Notification_Text
-						}
+			entry, entryErr := redisx.GetJSON[Loyalty_Point_Earning_Rules_Overwrite](context.Background(), RedisClient, Loyalty_Point_Earning_Rules_Overwrite{Key: rules.Key + "|MERCHPAY|" + award_request.EventDetailCode}.RedisKey())
+			if entryErr == nil {
+				if entry.Award_Type == "Transaction" {
+					if entry.Points > 0 {
+						// return entry.MM_MERCHPAY_Points, current_outstanding_points
+						flt_points := entry.Points + current_outstanding_points
+						int_points := int(flt_points)
+						outstanding_points = flt_points - float64(int_points)
+						return float64(int_points), outstanding_points, rules.Overwrite_MM_MERCHPAY_Notification, rules.Overwrite_MM_MERCHPAY_Notification_Sender, rules.Overwrite_MM_MERCHPAY_Notification_Text
 					}
-				} else {
-					if rules.MM_MERCHPAY_Award_Type == "Transaction" {
-						if rules.MM_MERCHPAY_Points > 0 {
-							// return rules.MM_MERCHPAY_Points, current_outstanding_points
-							flt_points := rules.MM_MERCHPAY_Points + current_outstanding_points
-							int_points := int(flt_points)
-							outstanding_points = flt_points - float64(int_points)
-							return float64(int_points), outstanding_points, rules.MM_MERCHPAY_Notification, rules.MM_MERCHPAY_Notification_Sender, rules.MM_MERCHPAY_Notification_Text
-						}
-					} else if rules.MM_MERCHPAY_Award_Type == "Amount" {
-						if rules.MM_MERCHPAY_Amount > 0 && award_request.EventAmount > 0 {
-							flt_fractions := award_request.EventAmount / rules.MM_MERCHPAY_Amount
-							flt_points := (flt_fractions * rules.MM_MERCHPAY_Points) + current_outstanding_points
-							int_points := int(flt_points)
-							outstanding_points = flt_points - float64(int_points)
-							return float64(int_points), outstanding_points, rules.MM_MERCHPAY_Notification, rules.MM_MERCHPAY_Notification_Sender, rules.MM_MERCHPAY_Notification_Text
-						}
+				} else if entry.Award_Type == "Amount" {
+					if entry.Amount > 0 && award_request.EventAmount > 0 {
+						flt_fractions := award_request.EventAmount / entry.Amount
+						flt_points := (flt_fractions * entry.Points) + current_outstanding_points
+						int_points := int(flt_points)
+						outstanding_points = flt_points - float64(int_points)
+						return float64(int_points), outstanding_points, rules.Overwrite_MM_MERCHPAY_Notification, rules.Overwrite_MM_MERCHPAY_Notification_Sender, rules.Overwrite_MM_MERCHPAY_Notification_Text
 					}
 				}
 			} else {
@@ -9020,44 +9579,23 @@ func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request L
 
 			return 0, current_outstanding_points, false, "", ""
 		case "BILLPAY":
-			entry_na, exits := Map_Loyalty_Point_Earning_Rules_Overwrite.CheckThenGet(rules.Key + "|BILLPAY|" + award_request.EventDetailCode)
-			if exits {
-				entry, ok := entry_na.(Loyalty_Point_Earning_Rules_Overwrite)
-				if ok {
-					if entry.Award_Type == "Transaction" {
-						if entry.Points > 0 {
-							// return entry.MM_BILLPAY_Points, current_outstanding_points
-							flt_points := entry.Points + current_outstanding_points
-							int_points := int(flt_points)
-							outstanding_points = flt_points - float64(int_points)
-							return float64(int_points), outstanding_points, rules.Overwrite_MM_BILLPAY_Notification, rules.Overwrite_MM_BILLPAY_Notification_Sender, rules.Overwrite_MM_BILLPAY_Notification_Text
-						}
-					} else if entry.Award_Type == "Amount" {
-						if entry.Amount > 0 && award_request.EventAmount > 0 {
-							flt_fractions := award_request.EventAmount / rules.MM_BILLPAY_Amount
-							flt_points := (flt_fractions * entry.Points) + current_outstanding_points
-							int_points := int(flt_points)
-							outstanding_points = flt_points - float64(int_points)
-							return float64(int_points), outstanding_points, rules.Overwrite_MM_BILLPAY_Notification, rules.Overwrite_MM_BILLPAY_Notification_Sender, rules.Overwrite_MM_BILLPAY_Notification_Text
-						}
+			entry, entryErr := redisx.GetJSON[Loyalty_Point_Earning_Rules_Overwrite](context.Background(), RedisClient, Loyalty_Point_Earning_Rules_Overwrite{Key: rules.Key + "|BILLPAY|" + award_request.EventDetailCode}.RedisKey())
+			if entryErr == nil {
+				if entry.Award_Type == "Transaction" {
+					if entry.Points > 0 {
+						// return entry.MM_BILLPAY_Points, current_outstanding_points
+						flt_points := entry.Points + current_outstanding_points
+						int_points := int(flt_points)
+						outstanding_points = flt_points - float64(int_points)
+						return float64(int_points), outstanding_points, rules.Overwrite_MM_BILLPAY_Notification, rules.Overwrite_MM_BILLPAY_Notification_Sender, rules.Overwrite_MM_BILLPAY_Notification_Text
 					}
-				} else {
-					if rules.MM_BILLPAY_Award_Type == "Transaction" {
-						if rules.MM_BILLPAY_Points > 0 {
-							// return rules.MM_BILLPAY_Points, current_outstanding_points
-							flt_points := rules.MM_BILLPAY_Points + current_outstanding_points
-							int_points := int(flt_points)
-							outstanding_points = flt_points - float64(int_points)
-							return float64(int_points), outstanding_points, rules.MM_BILLPAY_Notification, rules.MM_BILLPAY_Notification_Sender, rules.MM_BILLPAY_Notification_Text
-						}
-					} else if rules.MM_BILLPAY_Award_Type == "Amount" {
-						if rules.MM_BILLPAY_Amount > 0 && award_request.EventAmount > 0 {
-							flt_fractions := award_request.EventAmount / rules.MM_BILLPAY_Amount
-							flt_points := (flt_fractions * rules.MM_BILLPAY_Points) + current_outstanding_points
-							int_points := int(flt_points)
-							outstanding_points = flt_points - float64(int_points)
-							return float64(int_points), outstanding_points, rules.MM_BILLPAY_Notification, rules.MM_BILLPAY_Notification_Sender, rules.MM_BILLPAY_Notification_Text
-						}
+				} else if entry.Award_Type == "Amount" {
+					if entry.Amount > 0 && award_request.EventAmount > 0 {
+						flt_fractions := award_request.EventAmount / rules.MM_BILLPAY_Amount
+						flt_points := (flt_fractions * entry.Points) + current_outstanding_points
+						int_points := int(flt_points)
+						outstanding_points = flt_points - float64(int_points)
+						return float64(int_points), outstanding_points, rules.Overwrite_MM_BILLPAY_Notification, rules.Overwrite_MM_BILLPAY_Notification_Sender, rules.Overwrite_MM_BILLPAY_Notification_Text
 					}
 				}
 			} else {
@@ -9241,7 +9779,7 @@ func (Uc *UserControl) ReadAccountDebitPointsDetailsFromMongoDB(startDate, endDa
 		collName := "Col_Loyalty_AccountDebitPoints_log_" + dayStr
 
 		// Fetch the collection
-		collection := Uc.LoyaltyMongoDB.MongoDBClient.Database(MongoDB_DB_Name).Collection(collName)
+		collection := Uc.LoyaltyMongoClient.Mongo.Database(MongoDB_DB_Name).Collection(collName)
 		// Build the filter for the date range
 		filter := bson.D{
 			{Key: "MSISDN", Value: MSISDN},
@@ -9313,7 +9851,7 @@ func (Uc *UserControl) ReadAccountCreditPointsDetailsFromMongoDB(startDate, endD
 		collName := "Col_Loyalty_AccountCreditPoints_log_" + dayStr
 
 		// Fetch the collection
-		collection := Uc.LoyaltyMongoDB.MongoDBClient.Database(MongoDB_DB_Name).Collection(collName)
+		collection := Uc.LoyaltyMongoClient.Mongo.Database(MongoDB_DB_Name).Collection(collName)
 		// Build the filter for the date range
 		filter := bson.D{
 			{Key: "MSISDN", Value: MSISDN},
@@ -9386,7 +9924,7 @@ func (Uc *UserControl) ReadAccountRedemptionPointsDetailsFromMongoDB(startDate, 
 		collName := "Col_Loyalty_Redemption_log_" + dayStr
 
 		// Fetch the collection
-		collection := Uc.LoyaltyMongoDB.MongoDBClient.Database(MongoDB_DB_Name).Collection(collName)
+		collection := Uc.LoyaltyMongoClient.Mongo.Database(MongoDB_DB_Name).Collection(collName)
 		// Build the filter for the date range
 		filter := bson.D{
 			{Key: "MSISDN", Value: MSISDN},
@@ -9459,7 +9997,7 @@ func (Uc *UserControl) ReadAccountExpiryPointsDetailsFromMongoDB(startDate, endD
 		collName := "Col_Loyalty_Expiry_log_" + dayStr
 
 		// Fetch the collection
-		collection := Uc.LoyaltyMongoDB.MongoDBClient.Database(MongoDB_DB_Name).Collection(collName)
+		collection := Uc.LoyaltyMongoClient.Mongo.Database(MongoDB_DB_Name).Collection(collName)
 		// Build the filter for the date range
 		filter := bson.D{
 			{Key: "MSISDN", Value: MSISDN},
@@ -9527,7 +10065,7 @@ func (Uc *UserControl) ReadAccountLevelChangeDetailsFromMongoDB(startDate, endDa
 		collName := "Col_Loyalty_Level_Change_log"
 
 		// Fetch the collection
-		collection := Uc.LoyaltyMongoDB.MongoDBClient.Database(MongoDB_DB_Name).Collection(collName)
+		collection := Uc.LoyaltyMongoClient.Mongo.Database(MongoDB_DB_Name).Collection(collName)
 		// Build the filter for the date range
 		filter := bson.D{
 			{Key: "MSISDN", Value: MSISDN},
@@ -9604,7 +10142,7 @@ func (Uc *UserControl) ReadAccountEventsDetailsFromMongoDB(startDate, endDate ti
 		collName := "Col_Loyalty_Event_Log_" + dayStr
 
 		// Fetch the collection
-		collection := Uc.LoyaltyMongoDB.MongoDBClient.Database(MongoDB_DB_Name).Collection(collName)
+		collection := Uc.LoyaltyMongoClient.Mongo.Database(MongoDB_DB_Name).Collection(collName)
 		// Build the filter for the date range
 		filter := bson.D{
 			{Key: "MSISDN", Value: MSISDN},
@@ -9678,7 +10216,7 @@ func (Uc *UserControl) ReadAccountStatusDetailsFromMongoDB(startDate, endDate ti
 		collName := "Col_Loyalty_Status_log_" + dayStr
 
 		// Fetch the collection
-		collection := Uc.LoyaltyMongoDB.MongoDBClient.Database(MongoDB_DB_Name).Collection(collName)
+		collection := Uc.LoyaltyMongoClient.Mongo.Database(MongoDB_DB_Name).Collection(collName)
 		// Build the filter for the date range
 		filter := bson.D{
 			{Key: "MSISDN", Value: MSISDN},
@@ -9752,7 +10290,7 @@ func (Uc *UserControl) ReadAccountStatusExpiryDetailsFromMongoDB(startDate, endD
 		collName := "Col_Loyalty_Full_Expiry_log_" + dayStr
 
 		// Fetch the collection
-		collection := Uc.LoyaltyMongoDB.MongoDBClient.Database(MongoDB_DB_Name).Collection(collName)
+		collection := Uc.LoyaltyMongoClient.Mongo.Database(MongoDB_DB_Name).Collection(collName)
 		// Build the filter for the date range
 		filter := bson.D{
 			{Key: "MSISDN", Value: MSISDN},
@@ -9813,7 +10351,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_GetAwardedPoints(startDate, endD
 
 		collName := "Col_Loyalty_AccountCreditPoints_log_" + dayStr
 		// Fetch the collection
-		collection := Uc.LoyaltyMongoDB.MongoDBClient.Database(MongoDB_DB_Name).Collection(collName)
+		collection := Uc.LoyaltyMongoClient.Mongo.Database(MongoDB_DB_Name).Collection(collName)
 		pipeline := mongo.Pipeline{
 			{{Key: "$match", Value: bson.D{
 				{Key: "AwardedPoints", Value: bson.D{{Key: "$gt", Value: 0}}},
@@ -9846,12 +10384,10 @@ func (Uc *UserControl) Customer_Loyalty_Account_GetAwardedPoints(startDate, endD
 				continue
 			}
 			existing := results[doc.MSISDN]
-			entry_na, exits := Map_Customer_Loyalty_Account.CheckThenGet(doc.MSISDN)
-			if !exits {
+			cusAccount, caErr := redisx.GetJSON[Customer_Loyalty_Account](context.Background(), RedisClient, Customer_Loyalty_Account{Key: doc.MSISDN}.RedisKey())
+			if redisx.IsNil(caErr) {
 				fmt.Println("key does not exist")
-			}
-			cusAccount, ok := entry_na.(Customer_Loyalty_Account)
-			if !ok {
+			} else if caErr != nil {
 				fmt.Println("error in type assertion")
 			}
 			existing.LoyaltyLevel = cusAccount.Loyalty_Level_Key
@@ -10021,7 +10557,7 @@ func (Uc *UserControl) ReadAccountLogsDetailsFromMongoDB(Type string, startDate,
 		collName := "Col_Loyalty_Event_Log_" + dayStr
 
 		// Fetch the collection
-		collection := Uc.LoyaltyMongoDB.MongoDBClient.Database(MongoDB_DB_Name).Collection(collName)
+		collection := Uc.LoyaltyMongoClient.Mongo.Database(MongoDB_DB_Name).Collection(collName)
 		// Build the filter for the date range
 		filter := bson.D{
 			{Key: "MSISDN", Value: MSISDN},
@@ -10057,43 +10593,41 @@ func (Uc *UserControl) ReadAccountLogsDetailsFromMongoDB(Type string, startDate,
 }
 
 func (Uc *UserControl) EvaluateAndUpdate_CustomerLoyaltyLevel(Login string, Account_Key string) (New_Loyalty_Level_Key string, err error) {
-	loyalty_account_na, subexist := Map_Customer_Loyalty_Account.CheckThenGet(Account_Key)
-	if !subexist {
+	loyalty_account, laErr := redisx.GetJSON[Customer_Loyalty_Account](context.Background(), RedisClient, Customer_Loyalty_Account{Key: Account_Key}.RedisKey())
+	if redisx.IsNil(laErr) {
 		return New_Loyalty_Level_Key, errors.New("loyalty account does not exist")
 	}
-	loyalty_account, ok := loyalty_account_na.(Customer_Loyalty_Account)
-	if !ok {
+	if laErr != nil {
 		return New_Loyalty_Level_Key, errors.New("type assertion issue with Customer_Loyalty_Account")
 	}
 	//evaluate loyalty level
 	var New_Loyalty_Level Loyalty_Level
-	loyalty_Level_na := Map_Loyalty_Level.ConvertToArray()
-	if len(loyalty_Level_na) > 0 {
-		for _, loyalty_Level_na := range loyalty_Level_na {
-			loyalty_Level, ok := loyalty_Level_na.(Loyalty_Level)
-			if !ok {
-				return New_Loyalty_Level_Key, errors.New("error in type assertion")
-			} else {
-				//evaluate
-				if loyalty_account.Awarded_Points >= loyalty_Level.Min_Accumulated_Points && loyalty_account.Awarded_Points < loyalty_Level.Max_Accumulated_Points {
-					New_Loyalty_Level = loyalty_Level
-					New_Loyalty_Level_Key = New_Loyalty_Level.Key
-					if New_Loyalty_Level.Key == loyalty_account.Loyalty_Level_Key {
-						//===>> no level change
-						return New_Loyalty_Level_Key, nil
-					} else {
-						break
-					}
+	llScanCtx, llScanCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	loyalty_Level_slice, llScanErr := redisx.GetAllJSONByPattern[Loyalty_Level](llScanCtx, RedisClient, redisx.ScanJSONOptions{Pattern: "Loyalty_Level:*"})
+	llScanCancel()
+	if llScanErr != nil {
+		return New_Loyalty_Level_Key, fmt.Errorf("error scanning Loyalty_Level: %w", llScanErr)
+	}
+	if len(loyalty_Level_slice) > 0 {
+		for _, loyalty_Level := range loyalty_Level_slice {
+			//evaluate
+			if loyalty_account.Awarded_Points >= loyalty_Level.Min_Accumulated_Points && loyalty_account.Awarded_Points < loyalty_Level.Max_Accumulated_Points {
+				New_Loyalty_Level = loyalty_Level
+				New_Loyalty_Level_Key = New_Loyalty_Level.Key
+				if New_Loyalty_Level.Key == loyalty_account.Loyalty_Level_Key {
+					//===>> no level change
+					return New_Loyalty_Level_Key, nil
+				} else {
+					break
 				}
 			}
 		}
 		//update customer level
-		current_level_na, lvlexist := Map_Loyalty_Level.CheckThenGet(loyalty_account.Loyalty_Level_Key)
-		if !lvlexist {
+		current_level, clErr := redisx.GetJSON[Loyalty_Level](context.Background(), RedisClient, Loyalty_Level{Key: loyalty_account.Loyalty_Level_Key}.RedisKey())
+		if redisx.IsNil(clErr) {
 			return New_Loyalty_Level_Key, errors.New("current level is invalid")
 		}
-		current_level, ok := current_level_na.(Loyalty_Level)
-		if !ok {
+		if clErr != nil {
 			return New_Loyalty_Level_Key, errors.New("error in type assertion")
 		}
 		if New_Loyalty_Level.Min_Accumulated_Points > current_level.Min_Accumulated_Points &&
@@ -10105,7 +10639,16 @@ func (Uc *UserControl) EvaluateAndUpdate_CustomerLoyaltyLevel(Login string, Acco
 			loyalty_account.Loyalty_Level_Date = time.Now()
 			loyalty_account.Loyalty_Level_Direction = "Upgrade"
 			loyalty_account.Loyalty_Level_SetBy = Login
-			Map_Customer_Loyalty_Account.Put(loyalty_account.Key, loyalty_account)
+			{
+				putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+				if _, putErr := Mdb_Customer_Loyalty_Account.Coll.UpdateOne(putCtx, bson.M{"Key": loyalty_account.Key}, bson.M{"$set": loyalty_account}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+					log.Println("Mdb_Customer_Loyalty_Account upsert error:", putErr)
+				}
+				if putSetErr := redisx.SetJSON(putCtx, RedisClient, loyalty_account.RedisKey(), loyalty_account); putSetErr != nil {
+					log.Println("redisx.SetJSON Customer_Loyalty_Account error:", putSetErr)
+				}
+				putCancel()
+			}
 
 		} else {
 			//downgrade ==> Sof landing (one downgrade during anniversary year)
@@ -10126,7 +10669,16 @@ func (Uc *UserControl) EvaluateAndUpdate_CustomerLoyaltyLevel(Login string, Acco
 				loyalty_account.Loyalty_Level_Date = time.Now()
 				loyalty_account.Loyalty_Level_Direction = "Downgrade"
 				loyalty_account.Loyalty_Level_SetBy = Login
-				Map_Customer_Loyalty_Account.Put(loyalty_account.Key, loyalty_account)
+				{
+					putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+					if _, putErr := Mdb_Customer_Loyalty_Account.Coll.UpdateOne(putCtx, bson.M{"Key": loyalty_account.Key}, bson.M{"$set": loyalty_account}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+						log.Println("Mdb_Customer_Loyalty_Account upsert error:", putErr)
+					}
+					if putSetErr := redisx.SetJSON(putCtx, RedisClient, loyalty_account.RedisKey(), loyalty_account); putSetErr != nil {
+						log.Println("redisx.SetJSON Customer_Loyalty_Account error:", putSetErr)
+					}
+					putCancel()
+				}
 			} else {
 				return loyalty_account.Loyalty_Level_Key, errors.New("downgrade level is not defined")
 			}
@@ -10172,7 +10724,9 @@ func (Uc *UserControl) PointsExpiry_Process() {
 					if exec == 0 {
 						exec = 1
 						log.Println(LOG_ID + " triggered")
-						count, err := DAO_Customer_Loyalty_Account.Count(daoc.DAOCountParams{})
+						countCtx, countCancel := context.WithTimeout(context.Background(), 10*time.Second)
+						count, err := Mdb_Customer_Loyalty_Account.Coll.CountDocuments(countCtx, bson.D{})
+						countCancel()
 						if err != nil {
 							log.Println(LOG_ID + " count get error: " + err.Error())
 						} else {
@@ -10244,16 +10798,15 @@ func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account
 	monthly_expiry_log.OpeningLoyaltyLevel = account.Loyalty_Level_Key
 	monthly_expiry_log.EndLoyaltyLevel = account.Loyalty_Level_Key
 	//validate the loyalty plan
-	plan_na, planexist := Map_Loyalty_Plan.CheckThenGet(account.Loyalty_Level_Key + "|" + account.Loyalty_Account_Segment_Key)
-	if !planexist {
+	plan, planErr := redisx.GetJSON[Loyalty_Plan](context.Background(), RedisClient, Loyalty_Plan{Key: account.Loyalty_Level_Key + "|" + account.Loyalty_Account_Segment_Key}.RedisKey())
+	if redisx.IsNil(planErr) {
 		monthly_expiry_log.ExpiryStatus = "failed"
 		monthly_expiry_log.ExpiryStatusDescription = "loyalty plan does not exist"
 		Uc.Write_Loyalty_Monthly_Expiry_log(monthly_expiry_log)
 		<-chan_PointsExpiry_Controler
 		return
 	}
-	plan, ok := plan_na.(Loyalty_Plan)
-	if !ok {
+	if planErr != nil {
 		monthly_expiry_log.ExpiryStatus = "failed"
 		monthly_expiry_log.ExpiryStatusDescription = "type assertion issue with Loyalty_Plan"
 		Uc.Write_Loyalty_Monthly_Expiry_log(monthly_expiry_log)
@@ -10311,7 +10864,16 @@ func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account
 
 			//update governance expiry
 			Uc.Loyalty_Governance_Expiry_Points_Credit(expired_Points)
-			Map_Customer_Loyalty_Account.Put(account.Key, account)
+			{
+				putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+				if _, putErr := Mdb_Customer_Loyalty_Account.Coll.UpdateOne(putCtx, bson.M{"Key": account.Key}, bson.M{"$set": account}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+					log.Println("Mdb_Customer_Loyalty_Account upsert error:", putErr)
+				}
+				if putSetErr := redisx.SetJSON(putCtx, RedisClient, account.RedisKey(), account); putSetErr != nil {
+					log.Println("redisx.SetJSON Customer_Loyalty_Account error:", putSetErr)
+				}
+				putCancel()
+			}
 
 			//update logs
 			monthly_expiry_log.End_Awarded_Points = 0
@@ -10330,18 +10892,23 @@ func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account
 			monthly_expiry_log.ExpiryStatus = "successful"
 			monthly_expiry_log.ExpiryStatusDescription = "Cycle expiry"
 			Uc.Write_Loyalty_Monthly_Expiry_log(monthly_expiry_log)
-			Map_Customer_Loyalty_Account_Points_Detail.Delete(pointsDetail[0].Key)
+			{
+				delCtx, delCancel := context.WithTimeout(context.Background(), 10*time.Second)
+				if _, delErr := Mdb_Customer_Loyalty_Account_Points_Detail.Coll.DeleteOne(delCtx, bson.M{"Key": pointsDetail[0].Key}); delErr != nil {
+					log.Println("Mdb_Customer_Loyalty_Account_Points_Detail DeleteOne error:", delErr)
+				}
+				if _, delRedisErr := redisx.DelJSON(delCtx, RedisClient, Customer_Loyalty_Account_Points_Detail{Key: pointsDetail[0].Key}.RedisKey()); delRedisErr != nil {
+					log.Println("redisx.DelJSON Customer_Loyalty_Account_Points_Detail error:", delRedisErr)
+				}
+				delCancel()
+			}
 
 		}
-		entry_na, exits := Map_Customer_Loyalty_Account.CheckThenGet(account.Key)
-		if !exits {
+		entry, entryErr := redisx.GetJSON[Customer_Loyalty_Account](context.Background(), RedisClient, Customer_Loyalty_Account{Key: account.Key}.RedisKey())
+		if redisx.IsNil(entryErr) {
 			err = errors.New("key does not exist")
-
-		}
-		entry, ok := entry_na.(Customer_Loyalty_Account)
-		if !ok {
+		} else if entryErr != nil {
 			err = errors.New("error in type assertion")
-
 		}
 
 		expiry_log.EndLoyaltyLevel = entry.Loyalty_Level_Key
@@ -10373,14 +10940,13 @@ func (Uc *UserControl) LoyaltyGovernancePools_Metrics_Process() {
 	for range time.Tick(time.Second * 15) {
 		if exec == 0 {
 			exec = 1
-			loyalty_governance_na, exist := Map_Loyalty_Governance.CheckThenGet(LOYALTY_GOVERNANCE_KEY)
-			if !exist {
+			loyalty_governance, lgErr := redisx.GetJSON[Loyalty_Governance](context.Background(), RedisClient, Loyalty_Governance{Key: LOYALTY_GOVERNANCE_KEY}.RedisKey())
+			if redisx.IsNil(lgErr) {
 				log.Println("loyalty governance entry not found")
 				exec = 0
 				continue
 			}
-			loyalty_governance, ok := loyalty_governance_na.(Loyalty_Governance)
-			if !ok {
+			if lgErr != nil {
 				log.Println("loyalty governance type assertion issue")
 				exec = 0
 				continue
@@ -10437,7 +11003,9 @@ func (Uc *UserControl) GetLoyaltySubsSummary() (err error) {
 		},
 	}
 
-	cur, err := Uc.MongoDB.MongoDBClient.Database(Configuration.DB_Name_Loyalty).Collection(DAO_Customer_Loyalty_Account.Collection).Aggregate(context.TODO(), pipeline, options.Aggregate())
+	aggCtx, aggCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	cur, err := Mdb_Customer_Loyalty_Account.Coll.Aggregate(aggCtx, pipeline)
+	aggCancel()
 	if err != nil {
 		log.Println("Error in GetLoyaltySubsSummary: ", err)
 		return
@@ -10471,16 +11039,29 @@ func (Uc *UserControl) Loyalty_Campaign_Add(Login string, request Loyalty_Campai
 		return Id, err
 	}
 	//check if key already used
-	exits := Map_Loyalty_Campaign.Check(request.Key)
-	if exits {
-		err = errors.New("key already exist")
-		return Id, err
+	{
+		chkCtx, chkCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		_, chkErr := redisx.GetJSON[Loyalty_Campaign](chkCtx, RedisClient, Loyalty_Campaign{Key: request.Key}.RedisKey())
+		chkCancel()
+		if chkErr == nil {
+			err = errors.New("key already exist")
+			return Id, err
+		}
 	}
 
 	//Prepare new entry
 	var NewEntry Loyalty_Campaign
-	NewEntry.Campaign_Id = Map_Loyalty_AutoIncrement.GetNextAI("Loyalty_Campaign-Id")
-	Id = NewEntry.Campaign_Id
+	{
+		aiCtx, aiCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		NewEntry.Campaign_Id, err = redisx.NextAutoIncrementID(aiCtx, RedisClient, Mdb_Loyalty_AutoIncrement.Coll, "Loyalty_Campaign-Id", redisx.NextIDOptions{
+			RedisBase: "AutoIncrement", MongoRetries: 3, RetryBackoff: 500 * time.Millisecond,
+		})
+		aiCancel()
+		if err != nil {
+			return Id, err
+		}
+		Id = NewEntry.Campaign_Id
+	}
 	NewEntry.Key = request.Key
 	NewEntry.Description = request.Description
 	NewEntry.Add_Date = time.Now()
@@ -10547,7 +11128,16 @@ func (Uc *UserControl) Loyalty_Campaign_Add(Login string, request Loyalty_Campai
 	NewEntry.PointsAward_SMS_Text = request.PointsAward_SMS_Text
 
 	//add to cache and DB
-	Map_Loyalty_Campaign.Put(NewEntry.Key, NewEntry)
+	{
+		putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, putErr := Mdb_Loyalty_Campaign.Coll.UpdateOne(putCtx, bson.M{"Key": NewEntry.Key}, bson.M{"$set": NewEntry}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+			log.Println("Mdb_Loyalty_Campaign upsert error:", putErr)
+		}
+		if putSetErr := redisx.SetJSON(putCtx, RedisClient, NewEntry.RedisKey(), NewEntry); putSetErr != nil {
+			log.Println("redisx.SetJSON Loyalty_Campaign error:", putSetErr)
+		}
+		putCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -10567,13 +11157,12 @@ func (Uc *UserControl) Loyalty_Campaign_Edit(Login string, request Loyalty_Campa
 		err = errors.New("key cannot be empty")
 		return Id, err
 	}
-	entry_na, exits := Map_Loyalty_Campaign.CheckThenGet(request.Key)
-	if !exits {
+	entry, entryErr := redisx.GetJSON[Loyalty_Campaign](context.Background(), RedisClient, Loyalty_Campaign{Key: request.Key}.RedisKey())
+	if redisx.IsNil(entryErr) {
 		err = errors.New("key is not created")
 		return Id, err
 	}
-	entry, ok := entry_na.(Loyalty_Campaign)
-	if !ok {
+	if entryErr != nil {
 		return Id, errors.New("error in type assertion")
 	}
 	if entry.Campaign_Id != request.Campaign_Id {
@@ -10650,13 +11239,31 @@ func (Uc *UserControl) Loyalty_Campaign_Edit(Login string, request Loyalty_Campa
 	if request.NewKey != "" {
 		if request.NewKey != request.Key {
 			//delete old
-			Map_Loyalty_Campaign.Delete(request.Key)
+			{
+				delCtx, delCancel := context.WithTimeout(context.Background(), 10*time.Second)
+				if _, delErr := Mdb_Loyalty_Campaign.Coll.DeleteOne(delCtx, bson.M{"Key": request.Key}); delErr != nil {
+					log.Println("Mdb_Loyalty_Campaign DeleteOne error:", delErr)
+				}
+				if _, delRedisErr := redisx.DelJSON(delCtx, RedisClient, Loyalty_Campaign{Key: request.Key}.RedisKey()); delRedisErr != nil {
+					log.Println("redisx.DelJSON Loyalty_Campaign error:", delRedisErr)
+				}
+				delCancel()
+			}
 			//update key
 			entry.Key = request.NewKey
 		}
 	}
 	//add to cache and DB
-	Map_Loyalty_Campaign.Put(entry.Key, entry)
+	{
+		putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, putErr := Mdb_Loyalty_Campaign.Coll.UpdateOne(putCtx, bson.M{"Key": entry.Key}, bson.M{"$set": entry}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+			log.Println("Mdb_Loyalty_Campaign upsert error:", putErr)
+		}
+		if putSetErr := redisx.SetJSON(putCtx, RedisClient, entry.RedisKey(), entry); putSetErr != nil {
+			log.Println("redisx.SetJSON Loyalty_Campaign error:", putSetErr)
+		}
+		putCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -10672,27 +11279,19 @@ func (Uc *UserControl) Loyalty_Campaign_Edit(Login string, request Loyalty_Campa
 
 func (Uc *UserControl) Loyalty_Campaign_Get(Key string) (entries []Loyalty_Campaign, err error) {
 	if Key == "" {
-		entries_na := Map_Loyalty_Campaign.ConvertToArray()
-		if len(entries_na) > 0 {
-			for _, entry_na := range entries_na {
-				entry, ok := entry_na.(Loyalty_Campaign)
-				if !ok {
-					err = errors.New("error in type assertion")
-					return entries, err
-				} else {
-					entries = append(entries, entry)
-				}
-			}
+		{
+			scanCtx, scanCancel := context.WithTimeout(context.Background(), 10*time.Second)
+			entries, err = redisx.GetAllJSONByPattern[Loyalty_Campaign](scanCtx, RedisClient, redisx.ScanJSONOptions{Pattern: "Loyalty_Campaign:*"})
+			scanCancel()
 		}
-		return entries, nil
+		return entries, err
 	} else {
-		entry_na, exits := Map_Loyalty_Campaign.CheckThenGet(Key)
-		if !exits {
+		entry, getErr := redisx.GetJSON[Loyalty_Campaign](context.Background(), RedisClient, Loyalty_Campaign{Key: Key}.RedisKey())
+		if redisx.IsNil(getErr) {
 			err = errors.New("key does not exist")
 			return entries, err
 		}
-		entry, ok := entry_na.(Loyalty_Campaign)
-		if !ok {
+		if getErr != nil {
 			err = errors.New("error in type assertion")
 			return entries, err
 		}
@@ -10709,42 +11308,15 @@ func (Uc *UserControl) Loyalty_Campaign_GetPaginated(Page, Limit int64) (entries
 		return entries, errors.New("invalid limit (accept value between 1 and 50000)")
 	}
 
-	var findparams daoc.DAOFindParams
-	//var array []daoc.DAOFindCriteria
-	// if Outlet_Key != "" {
-	// 	//restrict access for records that belong to this user
-	// 	var criteria daoc.DAOFindCriteria = daoc.DAOFindCriteria{
-	// 		Field:    "Outlet_Key",
-	// 		Value:    Outlet_Key,
-	// 		Operator: "EQUAL",
-	// 	}
-	// 	array = append(array, criteria)
-	// }
-	// if Agent_Key != "" {
-	// 	//restrict access for records that belong to this user
-	// 	var criteria daoc.DAOFindCriteria = daoc.DAOFindCriteria{
-	// 		Field:    "Agent_Key",
-	// 		Value:    Agent_Key,
-	// 		Operator: "EQUAL",
-	// 	}
-	// 	array = append(array, criteria)
-	// }
-	// if len(array) > 0 {
-	// 	findparams.FindCriteria = array
-	// }
-	var paginationparams daoc.DAOPaginate
-	paginationparams.Limit = Limit
-	paginationparams.Page = Page
-	findResult, err := DAO_Loyalty_Campaign.FindPaginate(findparams, paginationparams)
+	pgCtx, pgCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer pgCancel()
+	result, err := mongox.FindPage[Loyalty_Campaign](pgCtx, Mdb_Loyalty_Campaign.Coll, bson.M{}, mongox.PageRequest{
+		Page: Page, PageSize: Limit, MaxPageSize: 50000,
+	})
 	if err != nil {
 		return entries, err
 	}
-	if len(findResult) > 0 {
-		for _, findres := range findResult {
-			InterfaceValue := reflect.ValueOf(findres).Elem().Interface().(Loyalty_Campaign)
-			entries = append(entries, InterfaceValue)
-		}
-	}
+	entries = result.Items
 	return entries, nil
 
 }
@@ -10754,17 +11326,25 @@ func (Uc *UserControl) Loyalty_Campaign_Delete(Login, Key string) (err error) {
 		err = errors.New("key cannot be empty")
 		return err
 	}
-	entry_na, exits := Map_Loyalty_Campaign.CheckThenGet(Key)
-	if !exits {
+	entry, entryErr := redisx.GetJSON[Loyalty_Campaign](context.Background(), RedisClient, Loyalty_Campaign{Key: Key}.RedisKey())
+	if redisx.IsNil(entryErr) {
 		err = errors.New("entry does not exist")
 		return err
 	}
-	entry, ok := entry_na.(Loyalty_Campaign)
-	if !ok {
+	if entryErr != nil {
 		err = errors.New("error in type assertion")
 		return err
 	}
-	Map_Loyalty_Campaign.Delete(Key)
+	{
+		delCtx, delCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		if _, delErr := Mdb_Loyalty_Campaign.Coll.DeleteOne(delCtx, bson.M{"Key": Key}); delErr != nil {
+			log.Println("Mdb_Loyalty_Campaign DeleteOne error:", delErr)
+		}
+		if _, delRedisErr := redisx.DelJSON(delCtx, RedisClient, Loyalty_Campaign{Key: Key}.RedisKey()); delRedisErr != nil {
+			log.Println("redisx.DelJSON Loyalty_Campaign error:", delRedisErr)
+		}
+		delCancel()
+	}
 	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
@@ -10809,7 +11389,7 @@ func SendSMS(Sender string, target string, SMSText string) (_rErr error) {
 	if Configuration.Operation == "Angola" || resp.StatusCode == 200 {
 		return nil
 	} else {
-		err := errors.New("error sending SMS: " + string(resp.StatusCode))
+		err := errors.New("error sending SMS: " + strconv.Itoa(resp.StatusCode))
 		return err
 	}
 }

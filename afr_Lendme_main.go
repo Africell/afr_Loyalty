@@ -68,8 +68,8 @@ func (p *program) run() {
 	//**Loyalty main section
 	if lendme.Configuration.HttpAppLoyaltyServicePort != "" {
 		//Initialize loyalty
-		UserControl.InitializeLoyaltyDAO()
-		UserControl.InitializeLoyaltyCache()
+		UserControl.InitializeMongoxRepositories()
+		UserControl.RedisDataLoader()
 		UserControl.LoyaltyIndexesMaintenanceProcess()
 		// UserControl.InitializeLoyaltyDefaultUAT()
 

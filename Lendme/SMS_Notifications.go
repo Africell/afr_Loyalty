@@ -1,12 +1,14 @@
 package Lendme
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
+	"redisx"
 	"time"
 )
 
@@ -19,17 +21,15 @@ func Send_SMS(sender string, target string, text string) (_rErr error) {
 	// target = Configuration.SMPP.CountryCodePrefix + target[(len(target)-Configuration.SMPP.MSISDN_Short_len):]
 	//check if UAT and if target is in UAT pool
 	if !Configuration.IsLoyaltyProduction {
-		existsUAT := Map_Customer_UAT.Check(target)
-		if !existsUAT {
-			// err := errors.New("sending SMS blocked by UAT pool: Sender (" + Sender + "), Target (" + target + "), text (" + SMSText + ") ")
-			// return err
+		_, uatErr := redisx.GetJSON[Customer_UAT](context.Background(), RedisClient, Customer_UAT{Key: target}.RedisKey())
+		if uatErr != nil {
 			return
 		}
 	}
 
 	//check if target is in do not disturb list
-	existsDND := Map_Customer_DND.Check(target)
-	if existsDND {
+	_, dndErr := redisx.GetJSON[Customer_DND](context.Background(), RedisClient, Customer_DND{Key: target}.RedisKey())
+	if dndErr == nil {
 		err := errors.New("sending SMS blocked by DND: Sender (" + sender + "), Target (" + target + "), text (" + text + ") ")
 		return err
 	}
