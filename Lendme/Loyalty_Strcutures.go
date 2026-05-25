@@ -78,6 +78,12 @@ type Loyalty_Governance struct {
 	MaxSubsAwardedPoints            float64 `bson:"MaxSubsAwardedPoints" json:"MaxSubsAwardedPoints"`
 	EVC_Account_Balance             float64 `bson:"EVC_Account_Balance" json:"EVC_Account_Balance"`
 	Merchant_Account_Balance        float64 `bson:"Merchant_Account_Balance" json:"Merchant_Account_Balance"`
+	DailyEarningLimit               float64 `bson:"DailyEarningLimit" json:"DailyEarningLimit"`
+	DailyPointsRedemptionLimit      float64 `bson:"DailyPointsRedemptionLimit" json:"DailyPointsRedemptionLimit"`
+	DailyRedemptionAttemptLimit     int64   `bson:"DailyRedemptionAttemptLimit" json:"DailyRedemptionAttemptLimit"`
+	WeeklyEarningLimit              float64 `bson:"WeeklyEarningLimit" json:"WeeklyEarningLimit"`
+	WeeklyPointsRedemptionLimit     float64 `bson:"WeeklyPointsRedemptionLimit" json:"WeeklyPointsRedemptionLimit"`
+	WeeklyRedemptionAttemptLimit    int64   `bson:"WeeklyRedemptionAttemptLimit" json:"WeeklyRedemptionAttemptLimit"`
 }
 
 type Loyalty_Governance_AddRequest struct {
@@ -92,6 +98,12 @@ type Loyalty_Governance_AddRequest struct {
 	MaxSubsAwardedPoints            float64 `bson:"MaxSubsAwardedPoints" json:"MaxSubsAwardedPoints"`
 	EVC_Account_Balance             float64 `bson:"EVC_Account_Balance" json:"EVC_Account_Balance"`
 	Merchant_Account_Balance        float64 `bson:"Merchant_Account_Balance" json:"Merchant_Account_Balance"`
+	DailyEarningLimit               float64 `bson:"DailyEarningLimit" json:"DailyEarningLimit"`
+	DailyPointsRedemptionLimit      float64 `bson:"DailyPointsRedemptionLimit" json:"DailyPointsRedemptionLimit"`
+	DailyRedemptionAttemptLimit     int64   `bson:"DailyRedemptionAttemptLimit" json:"DailyRedemptionAttemptLimit"`
+	WeeklyEarningLimit              float64 `bson:"WeeklyEarningLimit" json:"WeeklyEarningLimit"`
+	WeeklyPointsRedemptionLimit     float64 `bson:"WeeklyPointsRedemptionLimit" json:"WeeklyPointsRedemptionLimit"`
+	WeeklyRedemptionAttemptLimit    int64   `bson:"WeeklyRedemptionAttemptLimit" json:"WeeklyRedemptionAttemptLimit"`
 }
 
 type Loyalty_Governance_EditRequest struct {
@@ -105,6 +117,12 @@ type Loyalty_Governance_EditRequest struct {
 	MaxAllowedPoints_PerTransaction float64 `bson:"MaxAllowedPoints_PerTransaction" json:"MaxAllowedPoints_PerTransaction"`
 	MaxSubsAwardedPoints_PerMonth   float64 `bson:"MaxSubsAwardedPoints_PerMonth" json:"MaxSubsAwardedPoints_PerMonth"`
 	MaxSubsAwardedPoints            float64 `bson:"MaxSubsAwardedPoints" json:"MaxSubsAwardedPoints"`
+	DailyEarningLimit               float64 `bson:"DailyEarningLimit" json:"DailyEarningLimit"`
+	DailyPointsRedemptionLimit      float64 `bson:"DailyPointsRedemptionLimit" json:"DailyPointsRedemptionLimit"`
+	DailyRedemptionAttemptLimit     int64   `bson:"DailyRedemptionAttemptLimit" json:"DailyRedemptionAttemptLimit"`
+	WeeklyEarningLimit              float64 `bson:"WeeklyEarningLimit" json:"WeeklyEarningLimit"`
+	WeeklyPointsRedemptionLimit     float64 `bson:"WeeklyPointsRedemptionLimit" json:"WeeklyPointsRedemptionLimit"`
+	WeeklyRedemptionAttemptLimit    int64   `bson:"WeeklyRedemptionAttemptLimit" json:"WeeklyRedemptionAttemptLimit"`
 }
 
 type Loyalty_Governance_log struct {

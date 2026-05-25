@@ -716,6 +716,15 @@ func (Uc *UserControl) Loyalty_Governance_Add(Login string, request Loyalty_Gove
 		err = errors.New("key cannot be empty")
 		return Id, err
 	}
+	if request.DailyEarningLimit > request.WeeklyEarningLimit {
+		return Id, errors.New("Daily Limit cannot exceed Weekly Limit")
+	}
+	if request.DailyPointsRedemptionLimit > request.WeeklyPointsRedemptionLimit {
+		return Id, errors.New("Daily Limit cannot exceed Weekly Limit")
+	}
+	if request.DailyRedemptionAttemptLimit > request.WeeklyRedemptionAttemptLimit {
+		return Id, errors.New("Daily Limit cannot exceed Weekly Limit")
+	}
 	//check if key already used
 	{
 		chkCtx, chkCancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -747,6 +756,12 @@ func (Uc *UserControl) Loyalty_Governance_Add(Login string, request Loyalty_Gove
 	NewEntry.MaxAllowedPoints_PerTransaction = request.MaxAllowedPoints_PerTransaction
 	NewEntry.MaxSubsAwardedPoints_PerMonth = request.MaxSubsAwardedPoints_PerMonth
 	NewEntry.MaxSubsAwardedPoints = request.MaxSubsAwardedPoints
+	NewEntry.DailyEarningLimit = request.DailyEarningLimit
+	NewEntry.DailyPointsRedemptionLimit = request.DailyPointsRedemptionLimit
+	NewEntry.DailyRedemptionAttemptLimit = request.DailyRedemptionAttemptLimit
+	NewEntry.WeeklyEarningLimit = request.WeeklyEarningLimit
+	NewEntry.WeeklyPointsRedemptionLimit = request.WeeklyPointsRedemptionLimit
+	NewEntry.WeeklyRedemptionAttemptLimit = request.WeeklyRedemptionAttemptLimit
 	//add to cache and DB
 	{
 		putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -779,6 +794,15 @@ func (Uc *UserControl) Loyalty_Governance_Edit(Login string, request Loyalty_Gov
 		err = errors.New("key cannot be empty")
 		return Id, err
 	}
+	if request.DailyEarningLimit > request.WeeklyEarningLimit {
+		return Id, errors.New("Daily Limit cannot exceed Weekly Limit")
+	}
+	if request.DailyPointsRedemptionLimit > request.WeeklyPointsRedemptionLimit {
+		return Id, errors.New("Daily Limit cannot exceed Weekly Limit")
+	}
+	if request.DailyRedemptionAttemptLimit > request.WeeklyRedemptionAttemptLimit {
+		return Id, errors.New("Daily Limit cannot exceed Weekly Limit")
+	}
 	entry, entryErr := redisx.GetJSON[Loyalty_Governance](context.Background(), RedisClient, Loyalty_Governance{Key: request.Key}.RedisKey())
 	if redisx.IsNil(entryErr) {
 		err = errors.New("key is not created")
@@ -800,6 +824,12 @@ func (Uc *UserControl) Loyalty_Governance_Edit(Login string, request Loyalty_Gov
 	entry.MaxAllowedPoints_PerTransaction = request.MaxAllowedPoints_PerTransaction
 	entry.MaxSubsAwardedPoints_PerMonth = request.MaxSubsAwardedPoints_PerMonth
 	entry.MaxSubsAwardedPoints = request.MaxSubsAwardedPoints
+	entry.DailyEarningLimit = request.DailyEarningLimit
+	entry.DailyPointsRedemptionLimit = request.DailyPointsRedemptionLimit
+	entry.DailyRedemptionAttemptLimit = request.DailyRedemptionAttemptLimit
+	entry.WeeklyEarningLimit = request.WeeklyEarningLimit
+	entry.WeeklyPointsRedemptionLimit = request.WeeklyPointsRedemptionLimit
+	entry.WeeklyRedemptionAttemptLimit = request.WeeklyRedemptionAttemptLimit
 
 	if request.NewKey != "" {
 		if request.NewKey != request.Key {
