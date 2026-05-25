@@ -66,7 +66,6 @@ type ConfigType struct {
 		Timeout_After time.Duration
 	}
 
-		UserName   string
 	Mongo        mongox.Config
 	LoyaltyMongo mongox.Config
 

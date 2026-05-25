@@ -70,61 +70,24 @@ var Mdb_Loyalty_Campaign_Account *mongox.Repository
 // redisx client (shared)
 var RedisClient *redisx.Client
 
-
-func (e Loyalty_Governance) RedisKey() string {
-	return "Loyalty_Governance:" + e.Key
-}
-func (e Loyalty_Level) RedisKey() string {
-	return "Loyalty_Level:" + e.Key
-}
-func (e Loyalty_Seniority_Level) RedisKey() string {
-	return "Loyalty_Seniority_Level:" + e.Key
-}
-func (e Loyalty_Account_Segment) RedisKey() string {
-	return "Loyalty_Account_Segment:" + e.Key
-}
-func (e Loyalty_Point_Earning_Rules) RedisKey() string {
-	return "Loyalty_Point_Earning_Rules:" + e.Key
-}
-func (e Loyalty_Point_Earning_Rules_Overwrite) RedisKey() string {
-	return "Loyalty_Point_Earning_Rules_Overwrite:" + e.Key
-}
-func (e Loyalty_Point_Expiry_Rules) RedisKey() string {
-	return "Loyalty_Point_Expiry_Rules:" + e.Key
-}
-func (e Loyalty_Point_Redemption_Rules) RedisKey() string {
-	return "Loyalty_Point_Redemption_Rules:" + e.Key
-}
-func (e Loyalty_Plan) RedisKey() string {
-	return "Loyalty_Plan:" + e.Key
-}
-func (e Customer_Loyalty_Account) RedisKey() string {
-	return "Customer_Loyalty_Account:" + e.Key
-}
-func (e Customer_Loyalty_Account_Points_Detail) RedisKey() string {
-	return "Customer_Loyalty_Account_Points_Detail:" + e.Key
-}
-func (e Customer_DND) RedisKey() string {
-	return "Customer_DND:" + e.Key
-}
-func (e Customer_Exclusion) RedisKey() string {
-	return "Customer_Exclusion:" + e.Key
-}
-func (e Customer_COS_Exclusion) RedisKey() string {
-	return "Customer_COS_Exclusion:" + e.Key
-}
-func (e Customer_UAT) RedisKey() string {
-	return "Customer_UAT:" + e.Key
-}
-func (e Loyalty_Campaign) RedisKey() string {
-	return "Loyalty_Campaign:" + e.Key
-}
-func (e Loyalty_Campaign_Target_List) RedisKey() string {
-	return "Loyalty_Campaign_Target_List:" + e.Key
-}
-func (e Loyalty_Campaign_Account) RedisKey() string {
-	return "Loyalty_Campaign_Account:" + e.Key
-}
+func (e Loyalty_Governance) RedisKey() string        				{ return "Loyalty_Governance:" + e.Key }
+func (e Loyalty_Level) RedisKey() string               				{ return "Loyalty_Level:" + e.Key }
+func (e Loyalty_Seniority_Level) RedisKey() string     				{ return "Loyalty_Seniority_Level:" + e.Key }
+func (e Loyalty_Account_Segment) RedisKey() string    				{ return "Loyalty_Account_Segment:" + e.Key }
+func (e Loyalty_Point_Earning_Rules) RedisKey() string 				{ return "Loyalty_Point_Earning_Rules:" + e.Key }
+func (e Loyalty_Point_Earning_Rules_Overwrite) RedisKey() string 	{ return "Loyalty_Point_Earning_Rules_Overwrite:" + e.Key }
+func (e Loyalty_Point_Expiry_Rules) RedisKey() string 				{ return "Loyalty_Point_Expiry_Rules:" + e.Key }
+func (e Loyalty_Point_Redemption_Rules) RedisKey() string 			{ return "Loyalty_Point_Redemption_Rules:" + e.Key }
+func (e Loyalty_Plan) RedisKey() string             				{ return "Loyalty_Plan:" + e.Key }
+func (e Customer_Loyalty_Account) RedisKey() string 				{ return "Customer_Loyalty_Account:" + e.Key }
+func (e Customer_Loyalty_Account_Points_Detail) RedisKey() string 	{ return "Customer_Loyalty_Account_Points_Detail:" + e.Key}
+func (e Customer_DND) RedisKey() string           					{ return "Customer_DND:" + e.Key }
+func (e Customer_Exclusion) RedisKey() string     					{ return "Customer_Exclusion:" + e.Key }
+func (e Customer_COS_Exclusion) RedisKey() string 					{ return "Customer_COS_Exclusion:" + e.Key }
+func (e Customer_UAT) RedisKey() string           					{ return "Customer_UAT:" + e.Key }
+func (e Loyalty_Campaign) RedisKey() string      					{ return "Loyalty_Campaign:" + e.Key }
+func (e Loyalty_Campaign_Target_List) RedisKey() string 			{ return "Loyalty_Campaign_Target_List:" + e.Key }
+func (e Loyalty_Campaign_Account) RedisKey() string 				{ return "Loyalty_Campaign_Account:" + e.Key }
 
 var chan_LoyaltyGovernance_Controler = make(chan int, 1)
 
@@ -138,144 +101,113 @@ var processedMu sync.Mutex
 var jobs = make(map[string]*JobStatus)
 var jobsMu sync.Mutex
 
-func (uc *UserControl) InitializeMongoxRepositories() error {
+func (UC *UserControl) InitializeMongoxRepositories() error {
 	// main MongoDB (for AccessEntry and NotificationLog)
-	mainDB, err := mongox.NewDB(uc.MongoClient.Mongo, Configuration.DB_Name_Loyalty, 10*time.Second)
+	mainDB, err := mongox.NewDB(UC.MongoClient.Mongo, Configuration.DB_Name_Loyalty, 5*time.Second)
 	if err != nil {
-		return fmt.Errorf("mongox.NewDB (main): %w", err)
+		return err
 	}
-	Mdb_AccessEntry, err = mongox.NewRepository(mainDB, "Col_AccessEntry")
-	if err != nil {
-		return fmt.Errorf("Col_AccessEntry: %w", err)
+	if Mdb_AccessEntry, err = mongox.NewRepository(mainDB, "Col_AccessEntry"); err != nil {
+		return err
 	}
-	Mdb_NotificationLog, err = mongox.NewRepository(mainDB, "Col_NotificationLog")
-	if err != nil {
-		return fmt.Errorf("Col_NotificationLog: %w", err)
+	if Mdb_NotificationLog, err = mongox.NewRepository(mainDB, "Col_NotificationLog"); err != nil {
+		return err
 	}
 
 	// loyalty MongoDB
-	loyaltyDB, err := mongox.NewDB(uc.LoyaltyMongoClient.Mongo, Configuration.DB_Name_Loyalty, 10*time.Second)
+	loyaltyDB, err := mongox.NewDB(UC.LoyaltyMongoClient.Mongo, Configuration.DB_Name_Loyalty, 5*time.Second)
 	if err != nil {
-		return fmt.Errorf("mongox.NewDB (loyalty): %w", err)
+		return err
 	}
-	Mdb_Loyalty_AutoIncrement, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_AutoIncrement")
-	if err != nil {
-		return fmt.Errorf("Col_Loyalty_AutoIncrement: %w", err)
+	if Mdb_Loyalty_AutoIncrement, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_AutoIncrement"); err != nil {
+		return err
 	}
-	Mdb_Loyalty_Governance, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Governance")
-	if err != nil {
-		return fmt.Errorf("Col_Loyalty_Governance: %w", err)
+	if Mdb_Loyalty_Governance, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Governance"); err != nil {
+		return err
 	}
-	Mdb_Loyalty_Governance_log, err = mongox.NewRepository(loyaltyDB, "Loyalty_Governance_log")
-	if err != nil {
-		return fmt.Errorf("Loyalty_Governance_log: %w", err)
+	if Mdb_Loyalty_Governance_log, err = mongox.NewRepository(loyaltyDB, "Loyalty_Governance_log"); err != nil {
+		return err
 	}
-	Mdb_Loyalty_Level, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Level")
-	if err != nil {
-		return fmt.Errorf("Col_Loyalty_Level: %w", err)
+	if Mdb_Loyalty_Level, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Level"); err != nil {
+		return err
 	}
-	Mdb_Loyalty_Level_Change_log, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Level_Change_log")
-	if err != nil {
-		return fmt.Errorf("Col_Loyalty_Level_Change_log: %w", err)
+	if Mdb_Loyalty_Level_Change_log, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Level_Change_log"); err != nil {
+		return err
 	}
-	Mdb_Loyalty_Seniority_Level, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Seniority_Level")
-	if err != nil {
-		return fmt.Errorf("Col_Loyalty_Seniority_Level: %w", err)
+	if Mdb_Loyalty_Seniority_Level, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Seniority_Level"); err != nil {
+		return err
 	}
-	Mdb_Loyalty_Account_Segment, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Account_Segment")
-	if err != nil {
-		return fmt.Errorf("Col_Loyalty_Account_Segment: %w", err)
+	if Mdb_Loyalty_Account_Segment, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Account_Segment"); err != nil {
+		return err
 	}
-	Mdb_Loyalty_Point_Earning_Rules, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Point_Earning_Rules")
-	if err != nil {
-		return fmt.Errorf("Col_Loyalty_Point_Earning_Rules: %w", err)
+	if Mdb_Loyalty_Point_Earning_Rules, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Point_Earning_Rules"); err != nil {
+		return err
 	}
-	Mdb_Loyalty_Point_Earning_Rules_Overwrite, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Point_Earning_Rules_Overwrite")
-	if err != nil {
-		return fmt.Errorf("Col_Loyalty_Point_Earning_Rules_Overwrite: %w", err)
+	if Mdb_Loyalty_Point_Earning_Rules_Overwrite, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Point_Earning_Rules_Overwrite"); err != nil {
+		return err
 	}
-	Mdb_Loyalty_Point_Expiry_Rules, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Point_Expiry_Rules")
-	if err != nil {
-		return fmt.Errorf("Col_Loyalty_Point_Expiry_Rules: %w", err)
+	if Mdb_Loyalty_Point_Expiry_Rules, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Point_Expiry_Rules"); err != nil {
+		return err
 	}
-	Mdb_Loyalty_Point_Redemption_Rules, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Point_Redemption_Rules")
-	if err != nil {
-		return fmt.Errorf("Col_Loyalty_Point_Redemption_Rules: %w", err)
+	if Mdb_Loyalty_Point_Redemption_Rules, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Point_Redemption_Rules"); err != nil {
+		return err
 	}
-	Mdb_Loyalty_Plan, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Plan")
-	if err != nil {
-		return fmt.Errorf("Col_Loyalty_Plan: %w", err)
+	if Mdb_Loyalty_Plan, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Plan"); err != nil {
+		return err
 	}
-	Mdb_Customer_Loyalty_Account, err = mongox.NewRepository(loyaltyDB, "Col_Customer_Loyalty_Account")
-	if err != nil {
-		return fmt.Errorf("Col_Customer_Loyalty_Account: %w", err)
+	if Mdb_Customer_Loyalty_Account, err = mongox.NewRepository(loyaltyDB, "Col_Customer_Loyalty_Account"); err != nil {
+		return err
 	}
-	Mdb_Churned_Customer_Loyalty_Account, err = mongox.NewRepository(loyaltyDB, "Col_Churned_Customer_Loyalty_Account")
-	if err != nil {
-		return fmt.Errorf("Col_Churned_Customer_Loyalty_Account: %w", err)
+	if Mdb_Churned_Customer_Loyalty_Account, err = mongox.NewRepository(loyaltyDB, "Col_Churned_Customer_Loyalty_Account"); err != nil {
+		return err
 	}
-	Mdb_Customer_Loyalty_Account_Points_Detail, err = mongox.NewRepository(loyaltyDB, "Col_Customer_Loyalty_Account_Points_Detail")
-	if err != nil {
-		return fmt.Errorf("Col_Customer_Loyalty_Account_Points_Detail: %w", err)
+	if Mdb_Customer_Loyalty_Account_Points_Detail, err = mongox.NewRepository(loyaltyDB, "Col_Customer_Loyalty_Account_Points_Detail"); err != nil {
+		return err
 	}
-	Mdb_Customer_DND, err = mongox.NewRepository(loyaltyDB, "Col_Customer_DND")
-	if err != nil {
-		return fmt.Errorf("Col_Customer_DND: %w", err)
+	if Mdb_Customer_DND, err = mongox.NewRepository(loyaltyDB, "Col_Customer_DND"); err != nil {
+		return err
 	}
-	Mdb_Customer_Exclusion, err = mongox.NewRepository(loyaltyDB, "Col_Customer_Exclusion")
-	if err != nil {
-		return fmt.Errorf("Col_Customer_Exclusion: %w", err)
+	if Mdb_Customer_Exclusion, err = mongox.NewRepository(loyaltyDB, "Col_Customer_Exclusion"); err != nil {
+		return err
 	}
-	Mdb_Customer_COS_Exclusion, err = mongox.NewRepository(loyaltyDB, "Col_Customer_COS_Exclusion")
-	if err != nil {
-		return fmt.Errorf("Col_Customer_COS_Exclusion: %w", err)
+	if Mdb_Customer_COS_Exclusion, err = mongox.NewRepository(loyaltyDB, "Col_Customer_COS_Exclusion"); err != nil {
+		return err
 	}
-	Mdb_Customer_UAT, err = mongox.NewRepository(loyaltyDB, "Col_Customer_UAT")
-	if err != nil {
-		return fmt.Errorf("Col_Customer_UAT: %w", err)
+	if Mdb_Customer_UAT, err = mongox.NewRepository(loyaltyDB, "Col_Customer_UAT"); err != nil {
+		return err
 	}
-	Mdb_Loyalty_Event_Log, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Event_Log")
-	if err != nil {
-		return fmt.Errorf("Col_Loyalty_Event_Log: %w", err)
+	if Mdb_Loyalty_Event_Log, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Event_Log"); err != nil {
+		return err
 	}
-	Mdb_Loyalty_Expiry_log, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Expiry_log")
-	if err != nil {
-		return fmt.Errorf("Col_Loyalty_Expiry_log: %w", err)
+	if Mdb_Loyalty_Expiry_log, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Expiry_log"); err != nil {
+		return err
 	}
-	Mdb_Loyalty_Full_Expiry_log, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Full_Expiry_log")
-	if err != nil {
-		return fmt.Errorf("Col_Loyalty_Full_Expiry_log: %w", err)
+	if Mdb_Loyalty_Full_Expiry_log, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Full_Expiry_log"); err != nil {
+		return err
 	}
-	Mdb_Loyalty_Redemption_log, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Redemption_log")
-	if err != nil {
-		return fmt.Errorf("Col_Loyalty_Redemption_log: %w", err)
+	if Mdb_Loyalty_Redemption_log, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Redemption_log"); err != nil {
+		return err
 	}
-	Mdb_Loyalty_Status_log, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Status_log")
-	if err != nil {
-		return fmt.Errorf("Col_Loyalty_Status_log: %w", err)
+	if Mdb_Loyalty_Status_log, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Status_log"); err != nil {
+		return err
 	}
-	Mdb_Loyalty_AccountCreditPoints_log, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_AccountCreditPoints_log")
-	if err != nil {
-		return fmt.Errorf("Col_Loyalty_AccountCreditPoints_log: %w", err)
+	if Mdb_Loyalty_AccountCreditPoints_log, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_AccountCreditPoints_log"); err != nil {
+		return err
 	}
-	Mdb_Loyalty_AccountDebitPoints_log, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_AccountDebitPoints_log")
-	if err != nil {
-		return fmt.Errorf("Col_Loyalty_AccountDebitPoints_log: %w", err)
+	if Mdb_Loyalty_AccountDebitPoints_log, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_AccountDebitPoints_log"); err != nil {
+		return err
 	}
-	Mdb_Loyalty_Campaign, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Campaign")
-	if err != nil {
-		return fmt.Errorf("Col_Loyalty_Campaign: %w", err)
+	if Mdb_Loyalty_Campaign, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Campaign"); err != nil {
+		return err
 	}
-	Mdb_Loyalty_Campaign_Target_List, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Campaign_Target_List")
-	if err != nil {
-		return fmt.Errorf("Col_Loyalty_Campaign_Target_List: %w", err)
+	if Mdb_Loyalty_Campaign_Target_List, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Campaign_Target_List"); err != nil {
+		return err
 	}
-	Mdb_Loyalty_Campaign_Account, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Campaign_Account")
-	if err != nil {
-		return fmt.Errorf("Col_Loyalty_Campaign_Account: %w", err)
+	if Mdb_Loyalty_Campaign_Account, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Campaign_Account"); err != nil {
+		return err
 	}
 
-	RedisClient = uc.Redis
+	RedisClient = UC.Redis
 	return nil
 }
 

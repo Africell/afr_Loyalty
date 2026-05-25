@@ -201,7 +201,7 @@ Avoid unused imports. Run `go fmt` and fix compile errors.
 
 ## 5. Configuration Pattern
 
-Add Mongo and Redis configuration to the project configuration struct. Use the pattern that best matches the current project.
+Add Mongo and Redis configuration to the project configuration struct by embedding `mongox.Config` and `redisx.Config` directly. There is no custom Mongo struct; the full MongoDB connection URI is composed once per environment inside each config function.
 
 ### Redis `Mode` is required — no default, omitting it crashes the service
 
@@ -211,177 +211,134 @@ Add Mongo and Redis configuration to the project configuration struct. Use the p
 
 **Responsibility split:**
 
-- The **dev** config function (e.g., `setDefaultConfiguration_Dev`) in `Configuration.go` **must** set all Redis fields in code, because developers run the service locally without external config injection.
+- The **dev** config function (e.g., `setDefaultConfiguration_Dev`) in `Configuration.go` **must** set all Mongo and Redis fields in code, because developers run the service locally without external config injection.
 - **UAT, staging, and production** Redis config is the responsibility of **DevOps** — values are injected via environment variables, secrets managers, or config files at deploy time. Do not hardcode non-dev credentials in source code.
 
-### Dev config — set all Redis fields in code
+### `ConfigType` struct
 
-In the dev config function, always set every Redis field explicitly:
-
-```go
-Configuration.Redis.Mode     = redisx.ModeSingle
-Configuration.Redis.Addr     = "127.0.0.1:6379"
-Configuration.Redis.Username = "dev_user"
-Configuration.Redis.Password = "dev_password"
-Configuration.Redis.DB       = 0
-Configuration.Redis.KeyPrefix = "appname:dev:"
-Configuration.Redis.DefaultTTL = -1 // See TTL note below.
-```
-
-Adapt `Addr`, `Username`, `Password`, and `KeyPrefix` to the actual dev Redis instance for this project. Use `redisx.ModeSentinel` or `redisx.ModeCluster` if the dev instance requires it.
-
-### Option A — Direct package config structs
-
-Use this if the project can store `mongox.Config` and `redisx.Config` directly:
+Embed `mongox.Config` and `redisx.Config` directly. No custom Mongo struct is needed:
 
 ```go
-type ConfigType struct {
-    Mongo mongox.Config
-    Redis redisx.Config
-}
-```
-
-Example:
-
-```go
-Configuration.Mongo = mongox.Config{
-    URI:                    "mongodb://localhost:27017",
-    AppName:                Configuration.Module,
-    ConnectTimeout:         10 * time.Second,
-    ServerSelectionTimeout: 10 * time.Second,
-    SocketTimeout:          30 * time.Second,
-    MinPoolSize:            1,
-    MaxPoolSize:            100,
-    RetryReads:             true,
-    RetryWrites:            true,
-}
-
-Configuration.Redis = redisx.Config{
-    Mode:       redisx.ModeSingle,
-    Addr:       "127.0.0.1:6379",
-    Username:   "dev_user",
-    Password:   "dev_password",
-    DB:         0,
-    KeyPrefix:  "appname:dev:",
-    DefaultTTL: -1, // See TTL note below.
-}
-```
-
-### Option B — Rename old custom Mongo struct fields, keep individual fields
-
-Use this when the old project had a custom MongoDB struct (host, port, username, password, replica set) and DevOps manages the per-environment credentials directly in the config functions.
-
-**Do NOT convert the individual-field environment configs to URI format. Only modify the dev config function.**
-
-In `ConfigType`, rename the old structs from `MongoDB`/`LoyaltyMongoDB` to `Mongo`/`LoyaltyMongo`, keeping the old struct definitions commented out for reference:
-
-```go
-import "redisx"
+import (
+    "mongox"
+    "redisx"
+)
 
 type ConfigType struct {
-    Mongo struct {
-        ReplicaSet string
-        UserName   string
-        Password   string
-        HostIP_1   string
-        HostPort_1 string
-        HostIP_2   string
-        HostPort_2 string
-        HostIP_3   string
-        HostPort_3 string
-        HostIP_4   string
-        HostPort_4 string
-    }
-    LoyaltyMongo struct {
-        ReplicaSet string
-        UserName   string
-        Password   string
-        HostIP_1   string
-        HostPort_1 string
-        HostIP_2   string
-        HostPort_2 string
-        HostIP_3   string
-        HostPort_3 string
-        HostIP_4   string
-        HostPort_4 string
-    }
-    // MongoDB struct { ... old fields ... }
-    // LoyaltyMongoDB struct { ... old fields ... }
-    Redis redisx.Config
+    // ... other fields ...
+    Mongo        mongox.Config
+    SecondaryMongo mongox.Config 
+    Redis        redisx.Config
+    // ... other fields ...
 }
 ```
 
-Update `buildMongoURI` and `buildLoyaltyMongoURI` helpers to reference `cfg.Mongo` and `cfg.LoyaltyMongo` instead of `cfg.MongoDB` and `cfg.LoyaltyMongoDB`. These helpers are still needed in `UserControl.go`:
+If the project uses only one Mongo database, omit `SecondaryMongo`.
+
+### Environment config functions (UAT / Live)
+
+Each environment config function sets the full Mongo URI directly. Do **not** use `buildMongoURI` helpers or custom struct fields:
 
 ```go
-func buildMongoURI(cfg ConfigType) string {
-    c := cfg.Mongo
-    // ... same logic as before, using c.ReplicaSet, c.UserName, etc.
-}
+// Replica-set (multi-host) example
+Configuration.Mongo.URI        = "mongodb://10.10.1.1:9001,10.10.1.2:9002,10.10.1.3:9003/?replicaSet=reps01"
+Configuration.Mongo.Username   = "db_user"
+Configuration.Mongo.Password   = "db_password"
+Configuration.Mongo.AuthSource = "admin"
+Configuration.Mongo.AppName    = "service-name"
+Configuration.DB_Name_Secondary  = "Secondary_DB"
+Configuration.SecondaryMongo     = Configuration.Mongo
 
-func buildLoyaltyMongoURI(cfg ConfigType) string {
-    c := cfg.LoyaltyMongo
-    // ... same logic
-}
+// Single-host (no replica set) example
+Configuration.Mongo.URI        = "mongodb://hostname:27017"
+Configuration.Mongo.Username   = "db_user"
+Configuration.Mongo.Password   = "db_password"
+Configuration.Mongo.AuthSource = "admin"
+Configuration.Mongo.AppName    = "service-name"
+Configuration.DB_Name_Secondary  = "Secondary_DB"
+Configuration.SecondaryMongo     = Configuration.Mongo
 ```
 
-In `UserControl.go` (or equivalent container init), keep using the helpers and add a `Ping` after each connect to verify reachability:
+When `Mongo` and `SecondaryMongo` share the same cluster, assign `Configuration.SecondaryMongo = Configuration.Mongo` at the end of the Mongo block. When they differ, set `SecondaryMongo` fields independently.
+
+Redis `Mode` must still be set explicitly in every environment config function using the typed constant:
 
 ```go
-mongoClient, err := mongox.Connect(ctx, mongox.Config{
-    URI:     buildMongoURI(Configuration),
-    AppName: "appname",
-})
-if err != nil {
-    log.Fatal("mongox.Connect (MongoDB):", err)
-}
-if err := mongoClient.Ping(ctx); err != nil {
-    log.Fatal("Mongo not reachable:", err)
-}
-
-loyaltyMongoClient, err := mongox.Connect(ctx, mongox.Config{
-    URI:     buildLoyaltyMongoURI(Configuration),
-    AppName: "appname",
-})
-if err != nil {
-    log.Fatal("mongox.Connect (LoyaltyMongoDB):", err)
-}
-if err := loyaltyMongoClient.Ping(ctx); err != nil {
-    log.Fatal("LoyaltyMongo not reachable:", err)
-}
+Configuration.Redis.Mode = redisx.ModeSingle  // or redisx.ModeSentinel / redisx.ModeCluster
 ```
 
-> **Note on Ping:** `mongox.Connect` already validates connectivity internally via Ping before returning. The explicit `Ping` call above is a required pattern for clarity and explicit startup fail-fast behaviour. It is not redundant for operational reasons.
-
-#### Only modify the Dev config function
-
-**Do not touch any UAT, staging, or Live config functions.** Those are managed by DevOps and should keep their existing individual-field assignments. Only `setDefaultConfiguration_Dev` (or equivalent) needs to be updated to use the new field names (`Mongo.` instead of `MongoDB.`) and to set all Redis fields for local development:
+### Dev config — set all Mongo and Redis fields in code
 
 ```go
-// setDefaultConfiguration_Dev — only this function is modified during migration
-Configuration.Mongo.ReplicaSet = ""
-Configuration.Mongo.UserName   = ""
-Configuration.Mongo.Password   = ""
-Configuration.Mongo.HostIP_1   = "localhost"
-Configuration.Mongo.HostPort_1 = "27017"
-Configuration.Mongo.HostIP_2   = ""
-Configuration.Mongo.HostPort_2 = ""
-Configuration.Mongo.HostIP_3   = ""
-Configuration.Mongo.HostPort_3 = ""
-Configuration.Mongo.HostIP_4   = ""
-Configuration.Mongo.HostPort_4 = ""
-Configuration.LoyaltyMongo = Configuration.Mongo
+// setDefaultConfiguration_Dev — all fields set in code for local development
+Configuration.Mongo.URI     = "mongodb://localhost:27017"
+Configuration.Mongo.AppName = "service-name"
+
+Configuration.SecondaryMongo = Configuration.Mongo
 
 Configuration.Redis.Mode       = redisx.ModeSingle  // always use the constant, not the string "single"
 Configuration.Redis.Addr       = "localhost:6379"
 Configuration.Redis.Username   = ""
 Configuration.Redis.Password   = ""
 Configuration.Redis.DB         = 0
-Configuration.Redis.KeyPrefix  = "appname:dev:"     // replace appname with the service name
-Configuration.Redis.DefaultTTL = -1                 // -1 = no expiry; 0 would be overridden to 5 min by redisx defaults
+Configuration.Redis.KeyPrefix  = "appname:dev:"    // replace appname with the service name
+Configuration.Redis.DefaultTTL = -1               // -1 = no expiry; 0 would be overridden to 5 min by redisx defaults
+
+Configuration.DB_Name_Secondary = "Secondary_DB"
 ```
 
-All other environment config functions need only a field-name rename (`MongoDB.` → `Mongo.`, `LoyaltyMongoDB.` → `LoyaltyMongo.`) — their credential values stay untouched.
+If the dev Mongo requires authentication, add `Username`, `Password`, and `AuthSource` to the dev Mongo block as well.
+
+### UserControl initialization — mongox and redisx connections
+
+In the project container constructor (e.g., `NewUserControl`), connect to Mongo and Redis and call `Ping` after each Mongo connect to fail fast at startup:
+
+```go
+func NewUserControl() *UserControl {
+    ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+    defer cancel()
+
+    mongoClient, err := mongox.Connect(ctx, Configuration.Mongo)
+    if err != nil {
+        log.Fatal("mongox.Connect (MongoDB):", err)
+    }
+    if err := mongoClient.Ping(ctx); err != nil {
+        log.Fatal("Mongo not reachable:", err)
+    }
+    log.Println("MongoDB connected")
+
+    secondaryMongoClient, err := mongox.Connect(ctx, Configuration.SecondaryMongo)
+    if err != nil {
+        log.Fatal("mongox.Connect (SecondaryMongoDB):", err)
+    }
+    if err := secondaryMongoClient.Ping(ctx); err != nil {
+        log.Fatal("SecondaryMongo not reachable:", err)
+    }
+    log.Println("SecondaryMongoDB connected")
+
+    redisClient, err := redisx.New(Configuration.Redis)
+    if err != nil {
+        log.Fatal("redisx.New:", err)
+    }
+    log.Println("Redis connected")
+
+    // ... initialize other external service clients ...
+
+    return &UserControl{
+        MongoClient:        mongoClient,
+        SecondaryMongoClient: secondaryMongoClient,
+        Redis:              redisClient,
+        // ... other fields ...
+    }
+}
+```
+
+Key rules:
+
+- Pass `Configuration.Mongo` and `Configuration.SecondaryMongo` directly to `mongox.Connect` — never build URIs by hand inside the constructor.
+- `mongox.Connect` performs an internal connectivity check. The explicit `Ping` call is still required as a startup fail-fast assertion.
+- `redisx.New` returns an error for a bad config (e.g., missing `Mode`); `log.Fatal` on startup is correct here.
+- If the project uses only one Mongo database, omit the `SecondaryMongoClient` block.
 
 ### Redis TTL note
 
@@ -419,61 +376,7 @@ type ProjectContainer struct {
 }
 ```
 
-Example using direct `mongox.Config` pass-through (single Mongo database):
-
-```go
-func NewProjectContainer() *ProjectContainer {
-    ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-    defer cancel()
-
-    mongoClient, err := mongox.Connect(ctx, Configuration.Mongo)
-    if err != nil {
-        log.Fatal("mongox.Connect:", err)
-    }
-
-    redisClient, err := redisx.New(Configuration.Redis)
-    if err != nil {
-        log.Fatal("redisx.New:", err)
-    }
-
-    return &ProjectContainer{
-        MongoClient: mongoClient,
-        Redis:       redisClient,
-    }
-}
-```
-
-Example with two Mongo clients (primary + secondary database on the same cluster):
-
-```go
-func NewProjectContainer() *ProjectContainer {
-    ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-    defer cancel()
-
-    mongoClient, err := mongox.Connect(ctx, Configuration.Mongo)
-    if err != nil {
-        log.Fatal("mongox.Connect (primary):", err)
-    }
-
-    secondaryMongoClient, err := mongox.Connect(ctx, Configuration.LoyaltyMongo)
-    if err != nil {
-        log.Fatal("mongox.Connect (secondary):", err)
-    }
-
-    redisClient, err := redisx.New(Configuration.Redis)
-    if err != nil {
-        log.Fatal("redisx.New:", err)
-    }
-
-    return &ProjectContainer{
-        MongoClient:          mongoClient,
-        SecondaryMongoClient: secondaryMongoClient,
-        Redis:                redisClient,
-    }
-}
-```
-
-Pass `Configuration.Mongo` (or `Configuration.LoyaltyMongo`) directly — do not build URIs by hand or use a `buildMongoURI` helper. The URI is already set in each environment config function.
+For the full initialization pattern including `Ping` and secondary Mongo, see section 5 — **UserControl initialization**.
 
 Keep existing project-specific fields in the project container if they are still needed. If the project uses package-level globals instead of a container struct, add the clients using that existing style.
 
@@ -560,15 +463,15 @@ Replace DAO initialization with repository initialization:
 
 ```go
 func (app *ProjectContainer) InitializeMongoxRepositories() error {
-    // Replace app.MongoClient.Mongo with the confirmed way this mongox version exposes the underlying Mongo client.
-    db, err := mongox.NewDB(app.MongoClient.Mongo, Configuration.DB_Name, 10*time.Second)
+    // Create mongox DB wrapper
+    db, err := mongox.NewDB(app.MongoClient.Mongo, Configuration.DB_Name, 5*time.Second)
     if err != nil {
-        return fmt.Errorf("mongox.NewDB: %w", err)
+        return err
     }
 
-    Mdb_Entity, err = mongox.NewRepository(db, "Col_Entity")
-    if err != nil {
-        return fmt.Errorf("Col_Entity: %w", err)
+    // Create a repository bound to a collection
+    if Mdb_Entity, err = mongox.NewRepository(db, "Col_Entity"); err != nil {
+        return err
     }
 
     // Repeat for every Mongo collection.
@@ -644,26 +547,21 @@ RedisKey() string
 General format:
 
 ```go
-func (e EntityName) RedisKey() string {
-    return "EntityName:" + e.Key
-}
+func (e EntityName) RedisKey() string { return "EntityName:" + e.Key}
 ```
 
 Examples:
 
 ```go
-func (e User) RedisKey() string {
-    return "User:" + e.Key
-}
+func (e User) RedisKey() string { return "User:" + e.Key}
 
-func (e Product) RedisKey() string {
-    return "Product:" + e.Key
-}
+func (e Product) RedisKey() string { return "Product:" + e.Key}
 ```
 
 Rules:
 
 - Use `entry.RedisKey()` when writing an entity to Redis.
+- Add the Redis Keys to *_Functions.go
 - Use `EntityType{Key: keyVar}.RedisKey()` when reading or deleting by key.
 - Do not hardcode keys like `"Entity:" + Key` at call sites when an entity method exists.
 - Use collection-specific patterns only for scans, for example `"Entity:*"`.
@@ -997,9 +895,7 @@ Redis is the primary counter. MongoDB is the fallback/reconciliation store if co
 
 ### Key naming for auto-increment
 
-The `key` string passed to `NextAutoIncrementID` must match the `Key` field stored in the MongoDB `AutoIncrement` collection. Using a different name re-starts the counter from 1 and loses the existing sequence.
-
-> **Human action required after migration:** Before running the service for the first time, check the existing `AutoIncrement` collection and confirm that the key names used in all `GetNewId` / `NextAutoIncrementID` calls match what is already there. Adjust the key strings in code if they differ.
+> **Human action required after migration:** The `key` string passed to `NextAutoIncrementID` must match the `Key` field stored in the MongoDB `AutoIncrement` collection — a different name re-starts the counter from 1. Before running the service for the first time, check the existing collection and confirm all key names match. Adjust the key strings in code if they differ.
 >
 > ```javascript
 > db.<AutoIncrementCollection>.find().pretty()
@@ -1296,20 +1192,7 @@ func Local_CacheInit() {
 }
 ```
 
-When transforming cache data:
-
-- Use `redisx.GetAllJSONByPattern` for full collection reads.
-- Use `redisx.GetJSON` for per-key reads.
-- Use a fresh 10-second context for each single Redis read.
-- Use a 5-minute context for scans/bulk cache building.
-
-Example per-key Redis read:
-
-```go
-ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-item, err := redisx.GetJSON[Item](ctx, RedisClient, Item{Key: itemKey}.RedisKey())
-cancel()
-```
+For context timeout rules on Redis reads and scans, see section 12.
 
 Reading from local cache:
 
