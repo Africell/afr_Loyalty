@@ -932,6 +932,15 @@ type Customer_Loyalty_Account struct {
 	Initial_Date                time.Time `bson:"Initial_Date" json:"Initial_Date"`
 	Outstanding_fraction_points float64   `bson:"Outstanding_fraction_points" json:"Outstanding_fraction_points"`
 
+	Daily_Earned_Points         float64   `bson:"Daily_Earned_Points" json:"Daily_Earned_Points"`
+	Daily_Redeemed_Points       float64   `bson:"Daily_Redeemed_Points" json:"Daily_Redeemed_Points"`
+	Daily_Redemption_Attempts   int64     `bson:"Daily_Redemption_Attempts" json:"Daily_Redemption_Attempts"`
+	Weekly_Earned_Points        float64   `bson:"Weekly_Earned_Points" json:"Weekly_Earned_Points"`
+	Weekly_Redeemed_Points      float64   `bson:"Weekly_Redeemed_Points" json:"Weekly_Redeemed_Points"`
+	Weekly_Redemption_Attempts  int64     `bson:"Weekly_Redemption_Attempts" json:"Weekly_Redemption_Attempts"`
+	Daily_Reset_Date            time.Time `bson:"Daily_Reset_Date" json:"Daily_Reset_Date"`
+	Weekly_Reset_Date           time.Time `bson:"Weekly_Reset_Date" json:"Weekly_Reset_Date"`
+
 	Points_Detail_Keys []string `bson:"Points_Detail_Keys" json:"Points_Detail_Keys"`
 }
 type Loyalty_Opt_Request struct {

@@ -95,6 +95,33 @@ var chan_PointsExpiry_Controler = make(chan int, 50)
 
 var LOYALTY_GOVERNANCE_KEY string = "Loyalty_Governance"
 
+// resetDailyWeeklyCountersIfNeeded resets daily and weekly counters when the
+// calendar day or ISO week has rolled over since the last reset.
+func resetDailyWeeklyCountersIfNeeded(acc *Customer_Loyalty_Account) {
+	now := time.Now().UTC()
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+
+	// ISO week starts Monday (weekday 1). Sunday maps to 7.
+	weekday := int(now.Weekday())
+	if weekday == 0 {
+		weekday = 7
+	}
+	startOfWeek := today.AddDate(0, 0, -(weekday - 1))
+
+	if acc.Daily_Reset_Date.Before(today) {
+		acc.Daily_Earned_Points = 0
+		acc.Daily_Redeemed_Points = 0
+		acc.Daily_Redemption_Attempts = 0
+		acc.Daily_Reset_Date = today
+	}
+	if acc.Weekly_Reset_Date.Before(startOfWeek) {
+		acc.Weekly_Earned_Points = 0
+		acc.Weekly_Redeemed_Points = 0
+		acc.Weekly_Redemption_Attempts = 0
+		acc.Weekly_Reset_Date = startOfWeek
+	}
+}
+
 var processed = make(map[string]struct{})
 var processedMu sync.Mutex
 
@@ -8607,8 +8634,33 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 			Uc.Write_Loyalty_AccountCreditPoints_log(*response)
 			return
 		}
+		resetDailyWeeklyCountersIfNeeded(&loyalty_account)
+		if loyalty_governance.DailyEarningLimit > 0 && (loyalty_account.Daily_Earned_Points + points) > loyalty_governance.DailyEarningLimit {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "failed to credit loyalty account"
+			response.ErrorDescription = "daily earning limit exceeded"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_AccountCreditPoints_log(*response)
+			return
+		}
+		if loyalty_governance.WeeklyEarningLimit > 0 && (loyalty_account.Weekly_Earned_Points + points) > loyalty_governance.WeeklyEarningLimit {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "failed to credit loyalty account"
+			response.ErrorDescription = "weekly earning limit exceeded"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_AccountCreditPoints_log(*response)
+			return
+		}
 		err := Uc.Loyalty_Governance_Available_Points_Debit(points, refundValue)
 		if err == nil {
+			if !refundValue {
+				loyalty_account.Daily_Earned_Points += points
+				loyalty_account.Weekly_Earned_Points += points
+			}
 			{
 				putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
 				if _, putErr := Mdb_Customer_Loyalty_Account.Coll.UpdateOne(putCtx, bson.M{"Key": loyalty_account.Key}, bson.M{"$set": loyalty_account}, options.UpdateOne().SetUpsert(true)); putErr != nil {
@@ -8849,6 +8901,70 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 	if len(notRedemption) > 0 {
 		notRedemptionValue = notRedemption[0]
 	}
+	if !notRedemptionValue {
+		resetDailyWeeklyCountersIfNeeded(&loyalty_Account)
+		loyalty_governance, lgErr := redisx.GetJSON[Loyalty_Governance](context.Background(), RedisClient, Loyalty_Governance{Key: LOYALTY_GOVERNANCE_KEY}.RedisKey())
+		if redisx.IsNil(lgErr) {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "failed to debit loyalty account"
+			response.ErrorDescription = "loyalty governance entry not found"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_AccountDebitPoints_log(*response)
+			return
+		}
+		if lgErr != nil {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "failed to debit loyalty account"
+			response.ErrorDescription = "loyalty governance type assertion issue"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_AccountDebitPoints_log(*response)
+			return
+		}
+		if loyalty_governance.DailyPointsRedemptionLimit > 0 && (loyalty_Account.Daily_Redeemed_Points+request.Debit_Amount) > loyalty_governance.DailyPointsRedemptionLimit {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "daily redemption points limit exceeded"
+			response.ErrorDescription = "daily redemption points limit exceeded"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_AccountDebitPoints_log(*response)
+			return
+		}
+		if loyalty_governance.WeeklyPointsRedemptionLimit > 0 && (loyalty_Account.Weekly_Redeemed_Points+request.Debit_Amount) > loyalty_governance.WeeklyPointsRedemptionLimit {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "weekly redemption points limit exceeded"
+			response.ErrorDescription = "weekly redemption points limit exceeded"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_AccountDebitPoints_log(*response)
+			return
+		}
+		if loyalty_governance.DailyRedemptionAttemptLimit > 0 && (loyalty_Account.Daily_Redemption_Attempts+1) > loyalty_governance.DailyRedemptionAttemptLimit {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "daily redemption attempt limit exceeded"
+			response.ErrorDescription = "daily redemption attempt limit exceeded"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_AccountDebitPoints_log(*response)
+			return
+		}
+		if loyalty_governance.WeeklyRedemptionAttemptLimit > 0 && (loyalty_Account.Weekly_Redemption_Attempts+1) > loyalty_governance.WeeklyRedemptionAttemptLimit {
+			response.Status = "failed"
+			response.StatusCode = http.StatusBadRequest
+			response.StatusDescription = "weekly redemption attempt limit exceeded"
+			response.ErrorDescription = "weekly redemption attempt limit exceeded"
+			response.StatusDate = time.Now()
+			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
+			Uc.Write_Loyalty_AccountDebitPoints_log(*response)
+			return
+		}
+	}
 	//debit the account
 	if notRedemptionValue {
 		loyalty_Account.Awarded_Points = loyalty_Account.Awarded_Points - request.Debit_Amount
@@ -8921,6 +9037,12 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 		} else {
 			break
 		}
+	}
+	if !notRedemptionValue {
+		loyalty_Account.Daily_Redeemed_Points += request.Debit_Amount
+		loyalty_Account.Weekly_Redeemed_Points += request.Debit_Amount
+		loyalty_Account.Daily_Redemption_Attempts++
+		loyalty_Account.Weekly_Redemption_Attempts++
 	}
 	{
 		putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
