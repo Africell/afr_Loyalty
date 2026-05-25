@@ -489,7 +489,7 @@ func (Uc *UserControl) AddToOKAPIAccessEntry(existing map[string]AuthCenter.Acce
 				bson.M{"Key": accessEntry.Key},
 				bson.M{"$set": accessEntry},
 				options.UpdateOne().SetUpsert(true))
-			redisx.SetJSON(ctx, Uc.Redis, accessEntry.RedisKey(), accessEntry)
+			redisx.SetJSON(ctx, Uc.Redis, "AccessEntry:{"+accessEntry.Key+"}", accessEntry)
 			fmt.Println("Created Access Entry: ", accessEntry.Key)
 		} else {
 			json.NewEncoder(os.Stdout).Encode(accessEntry)
