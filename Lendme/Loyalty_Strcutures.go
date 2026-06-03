@@ -206,6 +206,9 @@ type Loyalty_Point_Earning_Rules struct {
 	Welcome_Notification               bool    `bson:"Welcome_Notification" json:"Welcome_Notification"`
 	Welcome_Notification_Sender        string  `bson:"Welcome_Notification_Sender" json:"Welcome_Notification_Sender"`
 	Welcome_Notification_Text          string  `bson:"Welcome_Notification_Text" json:"Welcome_Notification_Text"`
+	Rejoiner_Notification              bool    `bson:"Rejoiner_Notification" json:"Rejoiner_Notification"`
+	Rejoiner_Notification_Sender       string  `bson:"Rejoiner_Notification_Sender" json:"Rejoiner_Notification_Sender"`
+	Rejoiner_Notification_Text         string  `bson:"Rejoiner_Notification_Text" json:"Rejoiner_Notification_Text"`
 	Level_Change_Notification          bool    `bson:"Level_Change_Notification" json:"Level_Change_Notification"`
 	Level_Change_Notification_Sender   string  `bson:"Level_Change_Notification_Sender" json:"Level_Change_Notification_Sender"`
 	Level_Change_Notification_Text     string  `bson:"Level_Change_Notification_Text" json:"Level_Change_Notification_Text"`
@@ -345,6 +348,9 @@ type Loyalty_Point_Earning_Rules_AddRequest struct {
 	Welcome_Notification               bool    `bson:"Welcome_Notification" json:"Welcome_Notification"`
 	Welcome_Notification_Sender        string  `bson:"Welcome_Notification_Sender" json:"Welcome_Notification_Sender"`
 	Welcome_Notification_Text          string  `bson:"Welcome_Notification_Text" json:"Welcome_Notification_Text"`
+	Rejoiner_Notification              bool    `bson:"Rejoiner_Notification" json:"Rejoiner_Notification"`
+	Rejoiner_Notification_Sender       string  `bson:"Rejoiner_Notification_Sender" json:"Rejoiner_Notification_Sender"`
+	Rejoiner_Notification_Text         string  `bson:"Rejoiner_Notification_Text" json:"Rejoiner_Notification_Text"`
 	Level_Change_Notification          bool    `bson:"Level_Change_Notification" json:"Level_Change_Notification"`
 	Level_Change_Notification_Sender   string  `bson:"Level_Change_Notification_Sender" json:"Level_Change_Notification_Sender"`
 	Level_Change_Notification_Text     string  `bson:"Level_Change_Notification_Text" json:"Level_Change_Notification_Text"`
@@ -473,6 +479,9 @@ type Loyalty_Point_Earning_Rules_EditRequest struct {
 	Welcome_Notification               bool    `bson:"Welcome_Notification" json:"Welcome_Notification"`
 	Welcome_Notification_Sender        string  `bson:"Welcome_Notification_Sender" json:"Welcome_Notification_Sender"`
 	Welcome_Notification_Text          string  `bson:"Welcome_Notification_Text" json:"Welcome_Notification_Text"`
+	Rejoiner_Notification              bool    `bson:"Rejoiner_Notification" json:"Rejoiner_Notification"`
+	Rejoiner_Notification_Sender       string  `bson:"Rejoiner_Notification_Sender" json:"Rejoiner_Notification_Sender"`
+	Rejoiner_Notification_Text         string  `bson:"Rejoiner_Notification_Text" json:"Rejoiner_Notification_Text"`
 	Level_Change_Notification          bool    `bson:"Level_Change_Notification" json:"Level_Change_Notification"`
 	Level_Change_Notification_Sender   string  `bson:"Level_Change_Notification_Sender" json:"Level_Change_Notification_Sender"`
 	Level_Change_Notification_Text     string  `bson:"Level_Change_Notification_Text" json:"Level_Change_Notification_Text"`

@@ -1,4 +1,4 @@
-package Lendme
+﻿package Lendme
 
 import (
 	"afr_ao_apgw_v2/APGWClientV2"
@@ -2289,6 +2289,9 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Add(Login string, request Loy
 	NewEntry.Welcome_Notification = request.Welcome_Notification
 	NewEntry.Welcome_Notification_Sender = request.Welcome_Notification_Sender
 	NewEntry.Welcome_Notification_Text = request.Welcome_Notification_Text
+	NewEntry.Rejoiner_Notification = request.Rejoiner_Notification
+	NewEntry.Rejoiner_Notification_Sender = request.Rejoiner_Notification_Sender
+	NewEntry.Rejoiner_Notification_Text = request.Rejoiner_Notification_Text
 	NewEntry.Level_Change_Notification = request.Level_Change_Notification
 	NewEntry.Level_Change_Notification_Sender = request.Level_Change_Notification_Sender
 	NewEntry.Level_Change_Notification_Text = request.Level_Change_Notification_Text
@@ -2634,6 +2637,9 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Edit(Login string, request Lo
 	entry.Welcome_Notification = request.Welcome_Notification
 	entry.Welcome_Notification_Sender = request.Welcome_Notification_Sender
 	entry.Welcome_Notification_Text = request.Welcome_Notification_Text
+	entry.Rejoiner_Notification = request.Rejoiner_Notification
+	entry.Rejoiner_Notification_Sender = request.Rejoiner_Notification_Sender
+	entry.Rejoiner_Notification_Text = request.Rejoiner_Notification_Text
 	entry.Level_Change_Notification = request.Level_Change_Notification
 	entry.Level_Change_Notification_Sender = request.Level_Change_Notification_Sender
 	entry.Level_Change_Notification_Text = request.Level_Change_Notification_Text
@@ -9198,6 +9204,56 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 				notiCancel()
 				if notiErr != nil {
 					log.Println("Error in Write welcome Notification Logs:", notiErr, " (", WelcomeNotiLog, ")")
+				}
+			}
+		}
+	} else if !loyalty_account.First_Opt_In_Status_Date.IsZero() && request.Opt_Status == "OptedIn" {
+		Earningrecord, earningErr := Uc.Customer_Loyalty_Account_GetEarning_Rule(loyalty_account.Key)
+		if earningErr != nil {
+			log.Println("failed to get earning rule for rejoiner notification")
+		} else if Earningrecord.Rejoiner_Notification {
+			RejoinerNotiLog := NotificationLog{
+				SourceAction:  "Rejoiner",
+				TransactionId: "",
+				Medium:        "SMS",
+				SourceAddress: Earningrecord.Rejoiner_Notification_Sender,
+				Destination:   loyalty_account.Key,
+				Subject:       "Rejoiner",
+				AddUser:       "SYSTEM",
+				AddDate:       time.Now(),
+			}
+			Rejoiner_Noti_Text := Earningrecord.Rejoiner_Notification_Text
+			if Rejoiner_Noti_Text != "" {
+				Rejoiner_Noti_Text = strings.ReplaceAll(Rejoiner_Noti_Text, "{{LoyaltyBalance}}", fmt.Sprint(loyalty_account.Available_Points))
+				Rejoiner_Noti_Text = strings.ReplaceAll(Rejoiner_Noti_Text, "{{NewLevel}}", fmt.Sprint(loyalty_account.Loyalty_Level_Key))
+				Rejoiner_Noti_Text = strings.ReplaceAll(Rejoiner_Noti_Text, "{{PreviousLevel}}", fmt.Sprint(loyalty_account.Previous_Loyalty_Level_Key))
+				Rejoiner_Noti_Text = strings.ReplaceAll(Rejoiner_Noti_Text, "{{LevelChangeDirection}}", fmt.Sprint(loyalty_account.Loyalty_Level_Direction))
+				RejoinerNotiLog.Payload = Rejoiner_Noti_Text
+				err := error(nil)
+				if Configuration.Operation == "Angola" {
+					err = SendSMS(Earningrecord.Rejoiner_Notification_Sender, loyalty_account.Key, Rejoiner_Noti_Text)
+				} else {
+					err = Send_SMS(Earningrecord.Rejoiner_Notification_Sender, loyalty_account.Key, Rejoiner_Noti_Text)
+				}
+				if err != nil {
+					RejoinerNotiLog.Status = "Failed"
+					RejoinerNotiLog.Error = err.Error()
+				} else {
+					RejoinerNotiLog.Status = "Successful"
+				}
+			} else {
+				RejoinerNotiLog.Payload = Rejoiner_Noti_Text
+				RejoinerNotiLog.Status = "Failed"
+				RejoinerNotiLog.Error = "Undefined rejoiner notification for transaction"
+			}
+			YYYY, MM, _, _, _, _, _ := GetTimeParts(time.Now())
+			Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
+			{
+				notiCtx, notiCancel := context.WithTimeout(context.Background(), 10*time.Second)
+				_, notiErr := Uc.MongoClient.Mongo.Database(Db).Collection("Col_NotificationLog").InsertOne(notiCtx, RejoinerNotiLog)
+				notiCancel()
+				if notiErr != nil {
+					log.Println("Error in Write rejoiner Notification Logs:", notiErr, " (", RejoinerNotiLog, ")")
 				}
 			}
 		}
