@@ -78,6 +78,12 @@ type Loyalty_Governance struct {
 	MaxSubsAwardedPoints            float64 `bson:"MaxSubsAwardedPoints" json:"MaxSubsAwardedPoints"`
 	EVC_Account_Balance             float64 `bson:"EVC_Account_Balance" json:"EVC_Account_Balance"`
 	Merchant_Account_Balance        float64 `bson:"Merchant_Account_Balance" json:"Merchant_Account_Balance"`
+	DailyEarningLimit               float64 `bson:"DailyEarningLimit" json:"DailyEarningLimit"`
+	DailyPointsRedemptionLimit      float64 `bson:"DailyPointsRedemptionLimit" json:"DailyPointsRedemptionLimit"`
+	DailyRedemptionAttemptLimit     int64   `bson:"DailyRedemptionAttemptLimit" json:"DailyRedemptionAttemptLimit"`
+	WeeklyEarningLimit              float64 `bson:"WeeklyEarningLimit" json:"WeeklyEarningLimit"`
+	WeeklyPointsRedemptionLimit     float64 `bson:"WeeklyPointsRedemptionLimit" json:"WeeklyPointsRedemptionLimit"`
+	WeeklyRedemptionAttemptLimit    int64   `bson:"WeeklyRedemptionAttemptLimit" json:"WeeklyRedemptionAttemptLimit"`
 }
 
 type Loyalty_Governance_AddRequest struct {
@@ -92,6 +98,12 @@ type Loyalty_Governance_AddRequest struct {
 	MaxSubsAwardedPoints            float64 `bson:"MaxSubsAwardedPoints" json:"MaxSubsAwardedPoints"`
 	EVC_Account_Balance             float64 `bson:"EVC_Account_Balance" json:"EVC_Account_Balance"`
 	Merchant_Account_Balance        float64 `bson:"Merchant_Account_Balance" json:"Merchant_Account_Balance"`
+	DailyEarningLimit               float64 `bson:"DailyEarningLimit" json:"DailyEarningLimit"`
+	DailyPointsRedemptionLimit      float64 `bson:"DailyPointsRedemptionLimit" json:"DailyPointsRedemptionLimit"`
+	DailyRedemptionAttemptLimit     int64   `bson:"DailyRedemptionAttemptLimit" json:"DailyRedemptionAttemptLimit"`
+	WeeklyEarningLimit              float64 `bson:"WeeklyEarningLimit" json:"WeeklyEarningLimit"`
+	WeeklyPointsRedemptionLimit     float64 `bson:"WeeklyPointsRedemptionLimit" json:"WeeklyPointsRedemptionLimit"`
+	WeeklyRedemptionAttemptLimit    int64   `bson:"WeeklyRedemptionAttemptLimit" json:"WeeklyRedemptionAttemptLimit"`
 }
 
 type Loyalty_Governance_EditRequest struct {
@@ -105,6 +117,12 @@ type Loyalty_Governance_EditRequest struct {
 	MaxAllowedPoints_PerTransaction float64 `bson:"MaxAllowedPoints_PerTransaction" json:"MaxAllowedPoints_PerTransaction"`
 	MaxSubsAwardedPoints_PerMonth   float64 `bson:"MaxSubsAwardedPoints_PerMonth" json:"MaxSubsAwardedPoints_PerMonth"`
 	MaxSubsAwardedPoints            float64 `bson:"MaxSubsAwardedPoints" json:"MaxSubsAwardedPoints"`
+	DailyEarningLimit               float64 `bson:"DailyEarningLimit" json:"DailyEarningLimit"`
+	DailyPointsRedemptionLimit      float64 `bson:"DailyPointsRedemptionLimit" json:"DailyPointsRedemptionLimit"`
+	DailyRedemptionAttemptLimit     int64   `bson:"DailyRedemptionAttemptLimit" json:"DailyRedemptionAttemptLimit"`
+	WeeklyEarningLimit              float64 `bson:"WeeklyEarningLimit" json:"WeeklyEarningLimit"`
+	WeeklyPointsRedemptionLimit     float64 `bson:"WeeklyPointsRedemptionLimit" json:"WeeklyPointsRedemptionLimit"`
+	WeeklyRedemptionAttemptLimit    int64   `bson:"WeeklyRedemptionAttemptLimit" json:"WeeklyRedemptionAttemptLimit"`
 }
 
 type Loyalty_Governance_log struct {
@@ -922,6 +940,15 @@ type Customer_Loyalty_Account struct {
 	Expiry_Date                 time.Time `bson:"Expiry_Date" json:"Expiry_Date"`
 	Initial_Date                time.Time `bson:"Initial_Date" json:"Initial_Date"`
 	Outstanding_fraction_points float64   `bson:"Outstanding_fraction_points" json:"Outstanding_fraction_points"`
+
+	Daily_Earned_Points         float64   `bson:"Daily_Earned_Points" json:"Daily_Earned_Points"`
+	Daily_Redeemed_Points       float64   `bson:"Daily_Redeemed_Points" json:"Daily_Redeemed_Points"`
+	Daily_Redemption_Attempts   int64     `bson:"Daily_Redemption_Attempts" json:"Daily_Redemption_Attempts"`
+	Weekly_Earned_Points        float64   `bson:"Weekly_Earned_Points" json:"Weekly_Earned_Points"`
+	Weekly_Redeemed_Points      float64   `bson:"Weekly_Redeemed_Points" json:"Weekly_Redeemed_Points"`
+	Weekly_Redemption_Attempts  int64     `bson:"Weekly_Redemption_Attempts" json:"Weekly_Redemption_Attempts"`
+	Daily_Reset_Date            time.Time `bson:"Daily_Reset_Date" json:"Daily_Reset_Date"`
+	Weekly_Reset_Date           time.Time `bson:"Weekly_Reset_Date" json:"Weekly_Reset_Date"`
 
 	Points_Detail_Keys []string `bson:"Points_Detail_Keys" json:"Points_Detail_Keys"`
 }
