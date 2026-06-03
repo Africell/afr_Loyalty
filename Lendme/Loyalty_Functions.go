@@ -9034,6 +9034,12 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 						putCancel()
 					}
 					if Amount_to_debit == 0 {
+						if !notRedemptionValue {
+							loyalty_Account.Daily_Redeemed_Points += request.Debit_Amount
+							loyalty_Account.Weekly_Redeemed_Points += request.Debit_Amount
+							loyalty_Account.Daily_Redemption_Attempts++
+							loyalty_Account.Weekly_Redemption_Attempts++
+						}
 						break
 					}
 				}
@@ -9043,12 +9049,6 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 		} else {
 			break
 		}
-	}
-	if !notRedemptionValue {
-		loyalty_Account.Daily_Redeemed_Points += request.Debit_Amount
-		loyalty_Account.Weekly_Redeemed_Points += request.Debit_Amount
-		loyalty_Account.Daily_Redemption_Attempts++
-		loyalty_Account.Weekly_Redemption_Attempts++
 	}
 	{
 		putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
