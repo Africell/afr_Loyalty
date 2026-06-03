@@ -591,6 +591,12 @@ func (Uc *UserControl) InitializeLoyaltyDefaultUAT() {
 		MaxSubsAwardedPoints:            100000,
 		EVC_Account_Balance:             0,
 		Merchant_Account_Balance:        0,
+		DailyEarningLimit:               10000,
+		DailyPointsRedemptionLimit:      10000,
+		DailyRedemptionAttemptLimit:     10,
+		WeeklyEarningLimit:              100000,
+		WeeklyPointsRedemptionLimit:     100000,
+		WeeklyRedemptionAttemptLimit:    100,
 	})
 	Uc.Loyalty_Level_Add("Default", Loyalty_Level_AddRequest{
 		Key:                    "Member",
