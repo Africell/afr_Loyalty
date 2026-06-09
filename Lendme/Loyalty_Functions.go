@@ -5662,7 +5662,6 @@ func (Uc *UserControl) Customer_Loyalty_Account_Delete(Login, Key string) (err e
 			return errors.New("loyalty governance entry not found")
 		}
 		loyalty_governance.Distributed_Points_Pool = loyalty_governance.Distributed_Points_Pool - entry.Available_Points
-		loyalty_governance.Available_Points_Pool = loyalty_governance.Available_Points_Pool + entry.Available_Points
 		{
 			putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
 			_, putErr := Mdb_Loyalty_Governance.Coll.UpdateOne(putCtx, bson.M{"Key": loyalty_governance.Key}, bson.M{"$set": loyalty_governance}, options.UpdateOne().SetUpsert(true))
@@ -5688,6 +5687,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_Delete(Login, Key string) (err e
 		}
 		delCancel()
 	}
+	//add logs
 	Uc.Write_Loyalty_Event_Log(Loyalty_Event_Log{
 		Event_User:         Login,
 		Event_Time:         time.Now(),
