@@ -652,46 +652,58 @@ type Loyalty_Point_Earning_Rules_Overwrite_EditRequest struct {
 }
 
 type Loyalty_Point_Expiry_Rules struct {
-	Key                     string    `bson:"Key" json:"Key"`
-	Expiry_Rules_Id         int64     `bson:"Expiry_Rules_Id" json:"Expiry_Rules_Id"`
-	Description             string    `bson:"Description" json:"Description"`
-	Rolling_Expiration      bool      `bson:"Rolling_Expiration" json:"Rolling_Expiration"`
-	Validity_Unit           string    `bson:"Validity_Unit" json:"Validity_Unit"`                     //Month, Year --> only when Rolling_Expiration is true
-	Validity_Duration       int       `bson:"Validity_Duration" json:"Validity_Duration"`             //only when Rolling_Expiration is true
-	Grace_Validity_Unit     string    `bson:"Grace_Validity_Unit" json:"Grace_Validity_Unit"`         //actual expiry unit
-	Grace_Validity_Duration int       `bson:"Grace_Validity_Duration" json:"Grace_Validity_Duration"` //actual expiry duration
-	Fix_Date_Expiration     bool      `bson:"Fix_Date_Expiration" json:"Fix_Date_Expiration"`
-	Expiration_Trigger_date time.Time `bson:"Expiration_Trigger_date" json:"Expiration_Trigger_date"` //when the expiry process will run
-	Expiration_Point_Before time.Time `bson:"Expiration_Point_Before" json:"Expiration_Point_Before"` //expiry all points before this date
+	Key                         string    `bson:"Key" json:"Key"`
+	Expiry_Rules_Id             int64     `bson:"Expiry_Rules_Id" json:"Expiry_Rules_Id"`
+	Description                 string    `bson:"Description" json:"Description"`
+	Rolling_Expiration          bool      `bson:"Rolling_Expiration" json:"Rolling_Expiration"`
+	Opted_In_Rule_Type          string    `bson:"Opted_In_Rule_Type" json:"Opted_In_Rule_Type"`           // "Fixed" | "Monthly" | "Quarterly"
+	Validity_Unit               string    `bson:"Validity_Unit" json:"Validity_Unit"`                     //Month, Year --> only when Rolling_Expiration is true
+	Validity_Duration           int       `bson:"Validity_Duration" json:"Validity_Duration"`             //only when Rolling_Expiration is true
+	Grace_Validity_Unit         string    `bson:"Grace_Validity_Unit" json:"Grace_Validity_Unit"`         //actual expiry unit
+	Grace_Validity_Duration     int       `bson:"Grace_Validity_Duration" json:"Grace_Validity_Duration"` //actual expiry duration
+	Fix_Date_Expiration         bool      `bson:"Fix_Date_Expiration" json:"Fix_Date_Expiration"`
+	Expiration_Trigger_date     time.Time `bson:"Expiration_Trigger_date" json:"Expiration_Trigger_date"` //when the expiry process will run
+	Expiration_Point_Before     time.Time `bson:"Expiration_Point_Before" json:"Expiration_Point_Before"` //expiry all points before this date
+	Opted_Out_Rule_Type         string    `bson:"Opted_Out_Rule_Type" json:"Opted_Out_Rule_Type"`         // "Fixed" | "FollowOptedIn"
+	Opted_Out_Validity_Unit     string    `bson:"Opted_Out_Validity_Unit" json:"Opted_Out_Validity_Unit"` // "Year" | "Month" | "Day"
+	Opted_Out_Validity_Duration int       `bson:"Opted_Out_Validity_Duration" json:"Opted_Out_Validity_Duration"`
 }
 
 type Loyalty_Point_Expiry_Rules_AddRequest struct {
-	Key                     string    `bson:"Key" json:"Key"`
-	Expiry_Rules_Id         int64     `bson:"Expiry_Rules_Id" json:"Expiry_Rules_Id"`
-	Description             string    `bson:"Description" json:"Description"`
-	Rolling_Expiration      bool      `bson:"Rolling_Expiration" json:"Rolling_Expiration"`
-	Validity_Unit           string    `bson:"Validity_Unit" json:"Validity_Unit"`                     //Month, Year --> only when Rolling_Expiration is true
-	Validity_Duration       int       `bson:"Validity_Duration" json:"Validity_Duration"`             //only when Rolling_Expiration is true
-	Grace_Validity_Unit     string    `bson:"Grace_Validity_Unit" json:"Grace_Validity_Unit"`         //actual expiry unit
-	Grace_Validity_Duration int       `bson:"Grace_Validity_Duration" json:"Grace_Validity_Duration"` //actual expiry duration
-	Fix_Date_Expiration     bool      `bson:"Fix_Date_Expiration" json:"Fix_Date_Expiration"`
-	Expiration_Trigger_date time.Time `bson:"Expiration_Trigger_date" json:"Expiration_Trigger_date"` //when the expiry process will run
-	Expiration_Point_Before time.Time `bson:"Expiration_Point_Before" json:"Expiration_Point_Before"` //expiry all points before this date
+	Key                         string    `bson:"Key" json:"Key"`
+	Expiry_Rules_Id             int64     `bson:"Expiry_Rules_Id" json:"Expiry_Rules_Id"`
+	Description                 string    `bson:"Description" json:"Description"`
+	Rolling_Expiration          bool      `bson:"Rolling_Expiration" json:"Rolling_Expiration"`
+	Opted_In_Rule_Type          string    `bson:"Opted_In_Rule_Type" json:"Opted_In_Rule_Type"`
+	Validity_Unit               string    `bson:"Validity_Unit" json:"Validity_Unit"`                     //Month, Year --> only when Rolling_Expiration is true
+	Validity_Duration           int       `bson:"Validity_Duration" json:"Validity_Duration"`             //only when Rolling_Expiration is true
+	Grace_Validity_Unit         string    `bson:"Grace_Validity_Unit" json:"Grace_Validity_Unit"`         //actual expiry unit
+	Grace_Validity_Duration     int       `bson:"Grace_Validity_Duration" json:"Grace_Validity_Duration"` //actual expiry duration
+	Fix_Date_Expiration         bool      `bson:"Fix_Date_Expiration" json:"Fix_Date_Expiration"`
+	Expiration_Trigger_date     time.Time `bson:"Expiration_Trigger_date" json:"Expiration_Trigger_date"` //when the expiry process will run
+	Expiration_Point_Before     time.Time `bson:"Expiration_Point_Before" json:"Expiration_Point_Before"` //expiry all points before this date
+	Opted_Out_Rule_Type         string    `bson:"Opted_Out_Rule_Type" json:"Opted_Out_Rule_Type"`
+	Opted_Out_Validity_Unit     string    `bson:"Opted_Out_Validity_Unit" json:"Opted_Out_Validity_Unit"`
+	Opted_Out_Validity_Duration int       `bson:"Opted_Out_Validity_Duration" json:"Opted_Out_Validity_Duration"`
 }
 
 type Loyalty_Point_Expiry_Rules_EditRequest struct {
-	Key                     string    `bson:"Key" json:"Key"`
-	NewKey                  string    `bson:"NewKey" json:"NewKey"`
-	Expiry_Rules_Id         int64     `bson:"Expiry_Rules_Id" json:"Expiry_Rules_Id"`
-	Description             string    `bson:"Description" json:"Description"`
-	Rolling_Expiration      bool      `bson:"Rolling_Expiration" json:"Rolling_Expiration"`
-	Validity_Unit           string    `bson:"Validity_Unit" json:"Validity_Unit"`                     //Month, Year --> only when Rolling_Expiration is true
-	Validity_Duration       int       `bson:"Validity_Duration" json:"Validity_Duration"`             //only when Rolling_Expiration is true
-	Grace_Validity_Unit     string    `bson:"Grace_Validity_Unit" json:"Grace_Validity_Unit"`         //actual expiry unit
-	Grace_Validity_Duration int       `bson:"Grace_Validity_Duration" json:"Grace_Validity_Duration"` //actual expiry duration
-	Fix_Date_Expiration     bool      `bson:"Fix_Date_Expiration" json:"Fix_Date_Expiration"`
-	Expiration_Trigger_date time.Time `bson:"Expiration_Trigger_date" json:"Expiration_Trigger_date"` //when the expiry process will run
-	Expiration_Point_Before time.Time `bson:"Expiration_Point_Before" json:"Expiration_Point_Before"` //expiry all points before this date
+	Key                         string    `bson:"Key" json:"Key"`
+	NewKey                      string    `bson:"NewKey" json:"NewKey"`
+	Expiry_Rules_Id             int64     `bson:"Expiry_Rules_Id" json:"Expiry_Rules_Id"`
+	Description                 string    `bson:"Description" json:"Description"`
+	Rolling_Expiration          bool      `bson:"Rolling_Expiration" json:"Rolling_Expiration"`
+	Opted_In_Rule_Type          string    `bson:"Opted_In_Rule_Type" json:"Opted_In_Rule_Type"`
+	Validity_Unit               string    `bson:"Validity_Unit" json:"Validity_Unit"`                     //Month, Year --> only when Rolling_Expiration is true
+	Validity_Duration           int       `bson:"Validity_Duration" json:"Validity_Duration"`             //only when Rolling_Expiration is true
+	Grace_Validity_Unit         string    `bson:"Grace_Validity_Unit" json:"Grace_Validity_Unit"`         //actual expiry unit
+	Grace_Validity_Duration     int       `bson:"Grace_Validity_Duration" json:"Grace_Validity_Duration"` //actual expiry duration
+	Fix_Date_Expiration         bool      `bson:"Fix_Date_Expiration" json:"Fix_Date_Expiration"`
+	Expiration_Trigger_date     time.Time `bson:"Expiration_Trigger_date" json:"Expiration_Trigger_date"` //when the expiry process will run
+	Expiration_Point_Before     time.Time `bson:"Expiration_Point_Before" json:"Expiration_Point_Before"` //expiry all points before this date
+	Opted_Out_Rule_Type         string    `bson:"Opted_Out_Rule_Type" json:"Opted_Out_Rule_Type"`
+	Opted_Out_Validity_Unit     string    `bson:"Opted_Out_Validity_Unit" json:"Opted_Out_Validity_Unit"`
+	Opted_Out_Validity_Duration int       `bson:"Opted_Out_Validity_Duration" json:"Opted_Out_Validity_Duration"`
 }
 
 type Loyalty_Point_Redemption_Rules struct {
