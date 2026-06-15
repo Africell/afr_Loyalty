@@ -5705,6 +5705,29 @@ func (Uc *UserControl) Customer_Loyalty_Account_Delete(Login, Key string) (err e
 	if entryErr != nil {
 		return entryErr
 	}
+	if entry.Available_Points > 0 {
+		chan_LoyaltyGovernance_Controler <- 1
+		loyalty_governance, loyaltyErr := redisx.GetJSON[Loyalty_Governance](context.Background(), RedisClient, Loyalty_Governance{Key: LOYALTY_GOVERNANCE_KEY}.RedisKey())
+		if loyaltyErr != nil {
+			<-chan_LoyaltyGovernance_Controler
+			return errors.New("loyalty governance entry not found")
+		}
+		loyalty_governance.Distributed_Points_Pool = loyalty_governance.Distributed_Points_Pool - entry.Available_Points
+		{
+			putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+			_, putErr := Mdb_Loyalty_Governance.Coll.UpdateOne(putCtx, bson.M{"Key": loyalty_governance.Key}, bson.M{"$set": loyalty_governance}, options.UpdateOne().SetUpsert(true))
+			if putErr != nil {
+				putCancel()
+				<-chan_LoyaltyGovernance_Controler
+				return putErr
+			}
+			if putSetErr := redisx.SetJSON(putCtx, RedisClient, loyalty_governance.RedisKey(), loyalty_governance); putSetErr != nil {
+				log.Println("redisx.SetJSON Loyalty_Governance error:", putSetErr)
+			}
+			putCancel()
+		}
+		<-chan_LoyaltyGovernance_Controler
+	}
 	{
 		delCtx, delCancel := context.WithTimeout(context.Background(), 10*time.Second)
 		if _, delErr := Mdb_Customer_Loyalty_Account.Coll.DeleteOne(delCtx, bson.M{"Key": Key}); delErr != nil {
