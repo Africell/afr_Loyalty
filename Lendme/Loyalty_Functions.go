@@ -11368,24 +11368,23 @@ func (Uc *UserControl) LoyaltyGovernancePools_Metrics_Process() {
 }
 
 func Normalize_International_MSISDN(MSISDN string) (N_MSISDN string) {
-	// if len(MSISDN) < Configuration.MSISDN_Short_len {
-	// 	return ""
-	// } else {
-	// 	//check if msisdn contain character
-	// 	_, err := strconv.Atoi(MSISDN)
-	// 	if err != nil {
-	// 		return ""
-	// 	}
-	// 	//normalize
-	// 	if len(MSISDN) == len(Configuration.CountryCode)+Configuration.MSISDN_Short_len {
-	// 		return MSISDN
-	// 	} else if len(MSISDN) == Configuration.MSISDN_Short_len {
-	// 		return Configuration.CountryCode + MSISDN
-	// 	} else {
-	// 		return Configuration.CountryCode + MSISDN[len(MSISDN)-Configuration.MSISDN_Short_len:]
-	// 	}
-	// }
-	return MSISDN
+	if len(MSISDN) < Configuration.MSISDN_Short_len {
+		return ""
+	} else {
+		//check if msisdn contain character
+		_, err := strconv.Atoi(MSISDN)
+		if err != nil {
+			return ""
+		}
+		//normalize
+		if len(MSISDN) == len(Configuration.CountryCode)+Configuration.MSISDN_Short_len {
+			return MSISDN
+		} else if len(MSISDN) == Configuration.MSISDN_Short_len {
+			return Configuration.CountryCode + MSISDN
+		} else {
+			return Configuration.CountryCode + MSISDN[len(MSISDN)-Configuration.MSISDN_Short_len:]
+		}
+	}
 }
 
 func (Uc *UserControl) Auto_GetLoyaltySubsSummary() {
