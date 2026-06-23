@@ -1231,9 +1231,19 @@ func (Uc *UserControl) Loyalty_Customer_Account_Daily_Snapshot() {
 					if exec == 0 {
 						exec = 1
 						log.Println(LOG_ID + " triggered")
-						// TODO: CollectionSnapshot not yet implemented in mongox migration.
-						// Original: snapshot Col_Customer_Loyalty_Account to dynamic DB+collection by date.
-						log.Println(LOG_ID + " snapshot skipped (pending mongox implementation)")
+						yesterday := time.Now().AddDate(0, 0, -1)
+						YYYY, MM, _, DD, _, _, _ := GetTimeParts(yesterday)
+						targetDB := Configuration.DB_Name_Loyalty + "_" + YYYY + MM
+						targetColl := "Col_Customer_Loyalty_Account_" + DD
+						pipeline := bson.A{bson.D{{Key: "$out", Value: bson.M{"db": targetDB, "coll": targetColl}}}}
+						snapCtx, snapCancel := context.WithTimeout(context.Background(), 5*time.Minute)
+						cursor, err := Mdb_Customer_Loyalty_Account.Coll.Aggregate(snapCtx, pipeline)
+						snapCancel()
+						if err != nil {
+							log.Println("error while taking a snapshot from customer account collection", err)
+						} else {
+							cursor.Close(context.Background())
+						}
 						log.Println(LOG_ID + " finished")
 					}
 				}
