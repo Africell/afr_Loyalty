@@ -5436,8 +5436,8 @@ func (Uc *UserControl) Customer_Loyalty_Account_Edit(Login string, request Custo
 			entry.Coming_Expiry_Date = comingExpiry
 			entry.Initial_Date = resolvedInitial
 			entry.Points_To_Expire = resolvedPoints
-		} else if expiry_Rule.Opted_In_Rule_Type == "" {
-			// legacy path: only when rule type is not set (new rule types with no batches leave dates as-is)
+		} else if expiry_Rule.Opted_In_Rule_Type != "Monthly" && expiry_Rule.Opted_In_Rule_Type != "Quarterly" {
+			// legacy path: all points earned from initialDate to initialDate + validity duration will expire on initialDate + validity duration + grace period
 			var initialDate time.Time
 			if !entry.Expiry_Date.IsZero() {
 				initialDate = entry.Expiry_Date
@@ -5583,8 +5583,8 @@ func (Uc *UserControl) Customer_Loyalty_Account_Get(Key string) (entries []Custo
 			entry.Coming_Expiry_Date = comingExpiry
 			entry.Initial_Date = resolvedInitial
 			entry.Points_To_Expire = resolvedPoints
-		} else if expiry_Rule.Opted_In_Rule_Type == "" {
-			// legacy path: only when rule type is not set (new rule types with no batches leave dates as-is)
+		} else if expiry_Rule.Opted_In_Rule_Type != "Monthly" && expiry_Rule.Opted_In_Rule_Type != "Quarterly" {
+			// legacy path: all points earned from initialDate to initialDate + validity duration will expire on initialDate + validity duration + grace period
 			var initialDate time.Time
 			if !entry.Expiry_Date.IsZero() {
 				initialDate = entry.Expiry_Date
@@ -5794,16 +5794,6 @@ func validateExpiryRules(req Loyalty_Point_Expiry_Rules_AddRequest) error {
 		return nil
 	}
 	switch req.Opted_In_Rule_Type {
-	case "Fixed":
-		if req.Validity_Unit != "Month" {
-			return errors.New("Fixed rule requires Validity_Unit = Month")
-		}
-		if req.Validity_Duration <= 0 {
-			return errors.New("Fixed rule requires Validity_Duration > 0")
-		}
-		if req.Grace_Validity_Duration > 0 && req.Grace_Validity_Unit != "Month" {
-			return errors.New("Fixed rule requires Grace_Validity_Unit = Month when Grace_Validity_Duration is set")
-		}
 	case "Monthly":
 		if req.Validity_Unit != "Month" {
 			return errors.New("Monthly rule requires Validity_Unit = Month")
@@ -5814,7 +5804,7 @@ func validateExpiryRules(req Loyalty_Point_Expiry_Rules_AddRequest) error {
 	case "Quarterly":
 		// no additional fields required
 	default:
-		return fmt.Errorf("invalid Opted_In_Rule_Type %q: must be Fixed, Monthly, or Quarterly", req.Opted_In_Rule_Type)
+		return fmt.Errorf("invalid Opted_In_Rule_Type %q: must be Monthly or Quarterly (leave empty for fixed-date/legacy expiry)", req.Opted_In_Rule_Type)
 	}
 	switch req.Opted_Out_Rule_Type {
 	case "Fixed":
@@ -5836,11 +5826,7 @@ func validateExpiryRules(req Loyalty_Point_Expiry_Rules_AddRequest) error {
 
 func resolveAccountExpiryDates(account Customer_Loyalty_Account, rule Loyalty_Point_Expiry_Rules, batches []Customer_Loyalty_Account_Points_Detail, ) (comingExpiry time.Time, initialDate time.Time, pointsToExpire float64) {
 
-	if rule.Opted_In_Rule_Type == "" {
-		return // zero values signal caller to use legacy path
-	}
-
-	// opted-out + Fixed: single account-level expiry from opt-out date
+	// opted-out + Fixed: single account-level expiry from the opt-out date.
 	if account.Opt_Status == "OptedOut" && rule.Opted_Out_Rule_Type == "Fixed" {
 		comingExpiry = addValidity(account.Last_Opt_Status_Date, rule.Opted_Out_Validity_Unit, rule.Opted_Out_Validity_Duration)
 		initialDate = comingExpiry
@@ -5850,36 +5836,11 @@ func resolveAccountExpiryDates(account Customer_Loyalty_Account, rule Loyalty_Po
 		return
 	}
 
-	// OptedIn, or OptedOut+FollowOptedIn: apply Opted_In_Rule_Type logic
+	if rule.Opted_In_Rule_Type == "" {
+		return // zero values signal caller to use legacy path
+	}
+
 	switch rule.Opted_In_Rule_Type {
-	case "Fixed":
-		var refDate time.Time
-		if !account.Expiry_Date.IsZero() {
-			refDate = account.Expiry_Date
-		} else if !account.First_Opt_In_Status_Date.IsZero() {
-			refDate = account.First_Opt_In_Status_Date
-		} else {
-			refDate = account.Creation_date
-		}
-		initialDate = addValidity(refDate, rule.Validity_Unit, rule.Validity_Duration)
-		if rule.Grace_Validity_Duration > 0 {
-			comingExpiry = addValidity(initialDate, rule.Grace_Validity_Unit, rule.Grace_Validity_Duration)
-		} else {
-			comingExpiry = initialDate
-		}
-		for _, b := range batches {
-			if len(b.Year_Month) != 6 {
-				continue
-			}
-			year, yearErr := strconv.Atoi(b.Year_Month[:4])
-			month, monthErr := strconv.Atoi(b.Year_Month[4:])
-			if yearErr != nil || monthErr != nil {
-				continue
-			}
-			if year < initialDate.Year() || (year == initialDate.Year() && month <= int(initialDate.Month())) {
-				pointsToExpire += b.Available_Points
-			}
-		}
 	case "Monthly", "Quarterly":
 		var nearestExpiry time.Time
 		var nearestPoints float64
@@ -11064,8 +11025,8 @@ func (Uc *UserControl) PointsExpiry_Process() {
 	for range time.Tick(time.Second * 1) {
 		_CurrentDateTime := time.Now()
 		_hr, _mi, _se := _CurrentDateTime.Clock()
-		if _hr == 00 {
-			if _mi == 00 {
+		if _hr == 14 {
+			if _mi == 57 {
 				if _se < 60 {
 					if exec == 0 {
 						exec = 1
@@ -11095,6 +11056,8 @@ func (Uc *UserControl) PointsExpiry_Process() {
 											finalAccount, err := Uc.Customer_Loyalty_Account_Get(loyalty_Account.Key)
 											if err != nil || len(finalAccount) == 0 {
 												break
+												// one bad account kills the whole loop, should we use continue instead of break?
+												// continue 
 											}
 											if finalAccount[0].Coming_Expiry_Date.Before(time.Now()) {
 												go Uc.PointsExpiry_ProcessExec(finalAccount[0])
@@ -11183,7 +11146,10 @@ func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account
 		<-chan_PointsExpiry_Controler
 		return
 	}
-	for _, pointKey := range account.Points_Detail_Keys {
+	// Iterate a snapshot: removeStringFromArray below mutates account.Points_Detail_Keys
+	// in place, which would otherwise shift elements and skip batches mid-range.
+	pointKeysSnapshot := append([]string(nil), account.Points_Detail_Keys...)
+	for _, pointKey := range pointKeysSnapshot {
 		pointsDetail, err := Uc.Customer_Loyalty_Account_Points_Details_Get(pointKey)
 		if err != nil {
 			monthly_expiry_log.ExpiryStatus = "failed"
@@ -11203,8 +11169,18 @@ func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account
 		changedPoints := 0.0
 		var shouldExpire bool
 		switch {
-		case expiry_Rule.Opted_In_Rule_Type == "" || expiry_Rule.Opted_In_Rule_Type == "Fixed":
-			// legacy and fixed: expire batches up to and including account.Initial_Date month
+		case account.Opt_Status == "OptedOut" && expiry_Rule.Opted_Out_Rule_Type == "Fixed":
+			// all points expire at account.Coming_Expiry_Date (pre-computed by resolveAccountExpiryDates)
+			shouldExpire = !account.Coming_Expiry_Date.IsZero() && !time.Now().Before(account.Coming_Expiry_Date)
+
+		case expiry_Rule.Opted_In_Rule_Type == "Monthly" || expiry_Rule.Opted_In_Rule_Type == "Quarterly":
+			// per-batch expiry date
+			batchExpiry, batchErr := computeBatchExpiryDate(pointsDetail[0].Year_Month, expiry_Rule)
+			shouldExpire = batchErr == nil && !time.Now().Before(batchExpiry)
+
+		default:
+			// legacy fixed-date (empty Opted_In_Rule_Type): account.Initial_Date is the
+			// cutoff; expire batches up to and including that month.
 			month, monthErr := strconv.Atoi(pointsDetail[0].Year_Month[4:])
 			if monthErr != nil {
 				monthly_expiry_log.ExpiryStatus = "failed"
@@ -11214,15 +11190,6 @@ func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account
 				return
 			}
 			shouldExpire = year < account.Initial_Date.Year() || (year == account.Initial_Date.Year() && month <= int(account.Initial_Date.Month()))
-
-		case account.Opt_Status == "OptedOut" && expiry_Rule.Opted_Out_Rule_Type == "Fixed":
-			// all points expire at account.Coming_Expiry_Date (pre-computed by resolveAccountExpiryDates)
-			shouldExpire = !account.Coming_Expiry_Date.IsZero() && !time.Now().Before(account.Coming_Expiry_Date)
-
-		default:
-			// Monthly, Quarterly, or OptedOut+FollowOptedIn: per-batch expiry date
-			batchExpiry, batchErr := computeBatchExpiryDate(pointsDetail[0].Year_Month, expiry_Rule)
-			shouldExpire = batchErr == nil && !time.Now().Before(batchExpiry)
 		}
 		if shouldExpire {
 			changedPoints += pointsDetail[0].Available_Points
@@ -11238,7 +11205,11 @@ func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account
 
 			account.Expired_Points = account.Expired_Points + expired_Points
 			account.Redeemed_Expired_Points = account.Redeemed_Expired_Points + redeemed_Points
-			account.Expiry_Date = account.Coming_Expiry_Date
+			// Anchor the next cycle on the cutoff (Initial_Date), NOT Coming (= Initial +
+			// grace). For the legacy/fixed path the next refDate is Expiry_Date, so using
+			// Coming would drift the window forward by the grace period each cycle. Initial
+			// == Coming for Monthly/Quarterly/OptedOut, so this is a no-op there.
+			account.Expiry_Date = account.Initial_Date
 			account.Awarded_Points = account.Awarded_Points - (expired_Points + redeemed_Points)
 			account.Redeemed_Points = account.Redeemed_Points - redeemed_Points
 			account.Available_Points = account.Awarded_Points - account.Redeemed_Points
