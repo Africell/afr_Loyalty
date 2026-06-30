@@ -11058,8 +11058,8 @@ func (Uc *UserControl) PointsExpiry_Process() {
 	for range time.Tick(time.Second * 1) {
 		_CurrentDateTime := time.Now()
 		_hr, _mi, _se := _CurrentDateTime.Clock()
-		if _hr == 14 {
-			if _mi == 57 {
+		if _hr == 00 {
+			if _mi == 00 {
 				if _se < 60 {
 					if exec == 0 {
 						exec = 1
@@ -11088,9 +11088,9 @@ func (Uc *UserControl) PointsExpiry_Process() {
 										for _, loyalty_Account := range loyalty_Accounts {
 											finalAccount, err := Uc.Customer_Loyalty_Account_Get(loyalty_Account.Key)
 											if err != nil || len(finalAccount) == 0 {
-												break
-												// one bad account kills the whole loop, should we use continue instead of break?
-												// continue 
+												// break
+												// one bad account kills the whole loop, we should use continue instead of break 
+												continue 
 											}
 											if finalAccount[0].Coming_Expiry_Date.Before(time.Now()) {
 												go Uc.PointsExpiry_ProcessExec(finalAccount[0])
