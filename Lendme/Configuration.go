@@ -1237,8 +1237,8 @@ func setDefaultConfiguration_GM_UAT() (Configuration ConfigType) { //lendme serv
 	Configuration.SpinAndWin.Timeout = 30 * time.Second
 
 	Configuration.Lendme_AUC.Protocol = "http"
-	Configuration.Lendme_AUC.Hostname = "10.30.8.119"
-	Configuration.Lendme_AUC.Port = "9293"
+	Configuration.Lendme_AUC.Hostname = "10.30.8.150"
+	Configuration.Lendme_AUC.Port = "9003"
 	Configuration.Lendme_AUC.Module = "AUC"
 	Configuration.Lendme_AUC.Version = "V1"
 	Configuration.Lendme_AUC.S2S_Username = "Lendme_Admin"
@@ -1246,7 +1246,7 @@ func setDefaultConfiguration_GM_UAT() (Configuration ConfigType) { //lendme serv
 	Configuration.Lendme_AUC.Timeout_After = 5 * time.Second
 
 	Configuration.Lendme.Protocol = "http"
-	Configuration.Lendme.Hostname = "10.30.8.119"
+	Configuration.Lendme.Hostname = "10.30.8.150"
 	Configuration.Lendme.Port = "9290"
 	Configuration.Lendme.Module = "Lendme"
 	Configuration.Lendme.Version = "V1"
