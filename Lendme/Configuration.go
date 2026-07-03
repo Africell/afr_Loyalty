@@ -1080,7 +1080,7 @@ func setDefaultConfiguration_GM_Loyalty_Live() (Configuration ConfigType) { //le
 	return
 }
 
-func setDefaultConfiguration_GM_Loyalty_UAT() (Configuration ConfigType) { //lendme services
+func setDefaultConfiguration_GM_UAT() (Configuration ConfigType) { //lendme services
 	Configuration.HttpAppLoyaltyServicePort = "9280"    //for USSD and Mobile App
 	Configuration.HttpAppLoyaltyManagementPort = "9281" //for OKAPI
 	Configuration.HttpAppLoyaltyFeedPort = "9282"       //for IN & MM live feed
@@ -1089,11 +1089,11 @@ func setDefaultConfiguration_GM_Loyalty_UAT() (Configuration ConfigType) { //len
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:5173")
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:4173")
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:4414")
-	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "https://okpaihruat.africell.gm")
+	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "https://okapihruat.africell.gm")
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "https://outlet.africell.ao")
 
 	Configuration.Operation = "Gambia"
-	Configuration.HostId = "Lendme-01"
+	Configuration.HostId = "Loyalty-01"
 
 	Configuration.LoyaltyVersion = "V1"
 	Configuration.LoyaltyModule = "Loyalty"
@@ -1119,7 +1119,7 @@ func setDefaultConfiguration_GM_Loyalty_UAT() (Configuration ConfigType) { //len
 
 	Configuration.App_AUC.Description = "App AUC service"
 	Configuration.App_AUC.Protocol = "http"
-	Configuration.App_AUC.Hostname = "Lendme_auc"
+	Configuration.App_AUC.Hostname = "afr-loyalty-auc"
 	Configuration.App_AUC.Port = "9293"
 	Configuration.App_AUC.Module = "AUC"
 	Configuration.App_AUC.Version = "V1"
@@ -1130,7 +1130,7 @@ func setDefaultConfiguration_GM_Loyalty_UAT() (Configuration ConfigType) { //len
 	Configuration.OKAPI_AUC.Description = "OKAPI AUC service"
 	Configuration.OKAPI_AUC.Protocol = "http"
 	//Configuration.OKAPI_AUC.Hostname = "auc"
-	Configuration.OKAPI_AUC.Hostname = "10.30.0.119"
+	Configuration.OKAPI_AUC.Hostname = "10.30.8.119"
 	Configuration.OKAPI_AUC.Port = "9001"
 	Configuration.OKAPI_AUC.Module = "AUC"
 	Configuration.OKAPI_AUC.Version = "V1"
@@ -1138,16 +1138,29 @@ func setDefaultConfiguration_GM_Loyalty_UAT() (Configuration ConfigType) { //len
 	Configuration.OKAPI_AUC.S2S_Password = "s@le$P@s$W0$3"
 	Configuration.OKAPI_AUC.Timeout_After = 5 * time.Second
 
-	Configuration.Mongo.URI = "mongodb://10.30.0.151:9510"
-	Configuration.Mongo.Username = "db_root"
-	Configuration.Mongo.Password = "P@s54D0Brdara_r@75S"
+	Configuration.Mongo.URI = "mongodb://10.30.9.44:9510"
+	Configuration.Mongo.Username = "mongo-root"
+	Configuration.Mongo.Password = "Speci@LB0ssB@beDB_GM"
 	Configuration.Mongo.AuthSource = "admin"
 	Configuration.Mongo.AppName = "afr_Loyalty"
+
+	Configuration.Redis.Mode = redisx.ModeCluster
+	Configuration.Redis.Addrs = []string{
+		"10.30.9.48:6379",
+		"10.30.9.49:6379",
+	}
+	Configuration.Redis.Username = "default"
+	Configuration.Redis.Password = "Root@Pass123_Redis" // your ACL password
+	Configuration.Redis.DB = 0
+	Configuration.Redis.KeyPrefix = "loyalty:uat:"
+	Configuration.Redis.DefaultTTL = -1
+
 	Configuration.DB_Name_Loyalty = "Loyalty_DB"
 	Configuration.LoyaltyMongo = Configuration.Mongo
 
 	Configuration.IN.IP = "192.168.0.232"
 	Configuration.IN.Port = "8080"
+
 	Configuration.IN.WS_SOAP_Endpoint = "/axis2/services/WebService.WebServiceHttpSoap12Endpoint/"
 	Configuration.IN.WS_XMLNS_SOAP_Env = "http://schemas.xmlsoap.org/soap/envelope/"
 	Configuration.IN.WS_XMLNS_Web = "http://webservice.CSI.omvia.convergys.com"
@@ -1178,7 +1191,7 @@ func setDefaultConfiguration_GM_Loyalty_UAT() (Configuration ConfigType) { //len
 
 	Configuration.CGW_AUC.Description = "UCGW AUC service"
 	Configuration.CGW_AUC.Protocol = "http"
-	Configuration.CGW_AUC.Hostname = "10.30.0.119"
+	Configuration.CGW_AUC.Hostname = "10.30.8.119"
 	Configuration.CGW_AUC.Port = "9994"
 	Configuration.CGW_AUC.Module = "AUC"
 	Configuration.CGW_AUC.Version = "V1"
@@ -1187,7 +1200,7 @@ func setDefaultConfiguration_GM_Loyalty_UAT() (Configuration ConfigType) { //len
 	Configuration.CGW_AUC.Timeout_After = 5 * time.Second
 
 	Configuration.CGW.Protocol = "http"
-	Configuration.CGW.Hostname = "10.30.0.119"
+	Configuration.CGW.Hostname = "10.30.8.119"
 	Configuration.CGW.Port = "9991"
 	Configuration.CGW.Module = "UCGW"
 	Configuration.CGW.Version = "V1"
@@ -1196,7 +1209,7 @@ func setDefaultConfiguration_GM_Loyalty_UAT() (Configuration ConfigType) { //len
 	Configuration.Propylaea.Description = "Product Design Center - Propylaea"
 	Configuration.Propylaea.Protocol = "http"
 	Configuration.Propylaea.Port = "9900"
-	Configuration.Propylaea.Hostname = "10.30.0.119"
+	Configuration.Propylaea.Hostname = "10.30.8.119"
 	Configuration.Propylaea.Module = "Propylaea"
 	Configuration.Propylaea.Version = "V1"
 	Configuration.Propylaea.S2S_Username = "Propylaea_Admin"
@@ -1208,8 +1221,8 @@ func setDefaultConfiguration_GM_Loyalty_UAT() (Configuration ConfigType) { //len
 
 	Configuration.SpinAndWin_AUC.Description = "SAW AUC"
 	Configuration.SpinAndWin_AUC.Protocol = "http"
-	Configuration.SpinAndWin_AUC.Hostname = "10.30.0.119"
-	Configuration.SpinAndWin_AUC.Port = "9102"
+	Configuration.SpinAndWin_AUC.Hostname = "afr-saw-auc-uat-service"
+	Configuration.SpinAndWin_AUC.Port = "9001"
 	Configuration.SpinAndWin_AUC.Module = "AUC"
 	Configuration.SpinAndWin_AUC.Version = "V1"
 	Configuration.SpinAndWin_AUC.S2S_Username = "SAW_Admin"
@@ -1217,14 +1230,14 @@ func setDefaultConfiguration_GM_Loyalty_UAT() (Configuration ConfigType) { //len
 	Configuration.SpinAndWin_AUC.Timeout_After = 30 * time.Second
 
 	Configuration.SpinAndWin.Protocol = "http"
-	Configuration.SpinAndWin.Hostname = "10.30.0.119"
+	Configuration.SpinAndWin.Hostname = "afr-spinwin-be-uat-service"
 	Configuration.SpinAndWin.Port = "9112"
 	Configuration.SpinAndWin.Module = "SpinAndWin"
 	Configuration.SpinAndWin.Version = "V1"
 	Configuration.SpinAndWin.Timeout = 30 * time.Second
 
 	Configuration.Lendme_AUC.Protocol = "http"
-	Configuration.Lendme_AUC.Hostname = "Lendme_auc"
+	Configuration.Lendme_AUC.Hostname = "10.30.8.119"
 	Configuration.Lendme_AUC.Port = "9293"
 	Configuration.Lendme_AUC.Module = "AUC"
 	Configuration.Lendme_AUC.Version = "V1"
@@ -1233,7 +1246,7 @@ func setDefaultConfiguration_GM_Loyalty_UAT() (Configuration ConfigType) { //len
 	Configuration.Lendme_AUC.Timeout_After = 5 * time.Second
 
 	Configuration.Lendme.Protocol = "http"
-	Configuration.Lendme.Hostname = "Lendme_service"
+	Configuration.Lendme.Hostname = "10.30.8.119"
 	Configuration.Lendme.Port = "9290"
 	Configuration.Lendme.Module = "Lendme"
 	Configuration.Lendme.Version = "V1"
