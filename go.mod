@@ -2,7 +2,7 @@ module afr_Loyalty
 
 go 1.25.3
 
-replace afr_lendme => ../afr_Lendme/
+replace afr_lendme => ../afr_lendme/
 
 replace afr_auth_center => ../afr_auth_center/
 
