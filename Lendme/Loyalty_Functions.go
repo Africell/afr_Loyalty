@@ -1,4 +1,4 @@
-﻿package Lendme
+package Lendme
 
 import (
 	"afr_ao_apgw_v2/APGWClientV2"
@@ -70,24 +70,32 @@ var Mdb_Loyalty_Campaign_Account *mongox.Repository
 // redisx client (shared)
 var RedisClient *redisx.Client
 
-func (e Loyalty_Governance) RedisKey() string        				{ return "Loyalty_Governance:" + e.Key }
-func (e Loyalty_Level) RedisKey() string               				{ return "Loyalty_Level:" + e.Key }
-func (e Loyalty_Seniority_Level) RedisKey() string     				{ return "Loyalty_Seniority_Level:" + e.Key }
-func (e Loyalty_Account_Segment) RedisKey() string    				{ return "Loyalty_Account_Segment:" + e.Key }
-func (e Loyalty_Point_Earning_Rules) RedisKey() string 				{ return "Loyalty_Point_Earning_Rules:" + e.Key }
-func (e Loyalty_Point_Earning_Rules_Overwrite) RedisKey() string 	{ return "Loyalty_Point_Earning_Rules_Overwrite:" + e.Key }
-func (e Loyalty_Point_Expiry_Rules) RedisKey() string 				{ return "Loyalty_Point_Expiry_Rules:" + e.Key }
-func (e Loyalty_Point_Redemption_Rules) RedisKey() string 			{ return "Loyalty_Point_Redemption_Rules:" + e.Key }
-func (e Loyalty_Plan) RedisKey() string             				{ return "Loyalty_Plan:" + e.Key }
-func (e Customer_Loyalty_Account) RedisKey() string 				{ return "Customer_Loyalty_Account:" + e.Key }
-func (e Customer_Loyalty_Account_Points_Detail) RedisKey() string 	{ return "Customer_Loyalty_Account_Points_Detail:" + e.Key}
-func (e Customer_DND) RedisKey() string           					{ return "Customer_DND:" + e.Key }
-func (e Customer_Exclusion) RedisKey() string     					{ return "Customer_Exclusion:" + e.Key }
-func (e Customer_COS_Exclusion) RedisKey() string 					{ return "Customer_COS_Exclusion:" + e.Key }
-func (e Customer_UAT) RedisKey() string           					{ return "Customer_UAT:" + e.Key }
-func (e Loyalty_Campaign) RedisKey() string      					{ return "Loyalty_Campaign:" + e.Key }
-func (e Loyalty_Campaign_Target_List) RedisKey() string 			{ return "Loyalty_Campaign_Target_List:" + e.Key }
-func (e Loyalty_Campaign_Account) RedisKey() string 				{ return "Loyalty_Campaign_Account:" + e.Key }
+func (e Loyalty_Governance) RedisKey() string          { return "Loyalty_Governance:" + e.Key }
+func (e Loyalty_Level) RedisKey() string               { return "Loyalty_Level:" + e.Key }
+func (e Loyalty_Seniority_Level) RedisKey() string     { return "Loyalty_Seniority_Level:" + e.Key }
+func (e Loyalty_Account_Segment) RedisKey() string     { return "Loyalty_Account_Segment:" + e.Key }
+func (e Loyalty_Point_Earning_Rules) RedisKey() string { return "Loyalty_Point_Earning_Rules:" + e.Key }
+func (e Loyalty_Point_Earning_Rules_Overwrite) RedisKey() string {
+	return "Loyalty_Point_Earning_Rules_Overwrite:" + e.Key
+}
+func (e Loyalty_Point_Expiry_Rules) RedisKey() string { return "Loyalty_Point_Expiry_Rules:" + e.Key }
+func (e Loyalty_Point_Redemption_Rules) RedisKey() string {
+	return "Loyalty_Point_Redemption_Rules:" + e.Key
+}
+func (e Loyalty_Plan) RedisKey() string             { return "Loyalty_Plan:" + e.Key }
+func (e Customer_Loyalty_Account) RedisKey() string { return "Customer_Loyalty_Account:" + e.Key }
+func (e Customer_Loyalty_Account_Points_Detail) RedisKey() string {
+	return "Customer_Loyalty_Account_Points_Detail:" + e.Key
+}
+func (e Customer_DND) RedisKey() string           { return "Customer_DND:" + e.Key }
+func (e Customer_Exclusion) RedisKey() string     { return "Customer_Exclusion:" + e.Key }
+func (e Customer_COS_Exclusion) RedisKey() string { return "Customer_COS_Exclusion:" + e.Key }
+func (e Customer_UAT) RedisKey() string           { return "Customer_UAT:" + e.Key }
+func (e Loyalty_Campaign) RedisKey() string       { return "Loyalty_Campaign:" + e.Key }
+func (e Loyalty_Campaign_Target_List) RedisKey() string {
+	return "Loyalty_Campaign_Target_List:" + e.Key
+}
+func (e Loyalty_Campaign_Account) RedisKey() string { return "Loyalty_Campaign_Account:" + e.Key }
 
 var chan_LoyaltyGovernance_Controler = make(chan int, 1)
 
@@ -129,108 +137,101 @@ var jobs = make(map[string]*JobStatus)
 var jobsMu sync.Mutex
 
 func (UC *UserControl) InitializeMongoxRepositories() error {
-	// main MongoDB (for AccessEntry and NotificationLog)
-	mainDB, err := mongox.NewDB(UC.MongoClient.Mongo, Configuration.DB_Name_Loyalty, 5*time.Second)
+	db, err := mongox.NewDB(UC.MongoClient.Mongo, Configuration.DB_Name_Loyalty, 5*time.Second)
 	if err != nil {
 		return err
 	}
-	if Mdb_AccessEntry, err = mongox.NewRepository(mainDB, "Col_AccessEntry"); err != nil {
+	if Mdb_AccessEntry, err = mongox.NewRepository(db, "Col_AccessEntry"); err != nil {
 		return err
 	}
-	if Mdb_NotificationLog, err = mongox.NewRepository(mainDB, "Col_NotificationLog"); err != nil {
+	if Mdb_NotificationLog, err = mongox.NewRepository(db, "Col_NotificationLog"); err != nil {
 		return err
 	}
-
-	// loyalty MongoDB
-	loyaltyDB, err := mongox.NewDB(UC.LoyaltyMongoClient.Mongo, Configuration.DB_Name_Loyalty, 5*time.Second)
-	if err != nil {
+	if Mdb_Loyalty_AutoIncrement, err = mongox.NewRepository(db, "Col_Loyalty_AutoIncrement"); err != nil {
 		return err
 	}
-	if Mdb_Loyalty_AutoIncrement, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_AutoIncrement"); err != nil {
+	if Mdb_Loyalty_Governance, err = mongox.NewRepository(db, "Col_Loyalty_Governance"); err != nil {
 		return err
 	}
-	if Mdb_Loyalty_Governance, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Governance"); err != nil {
+	if Mdb_Loyalty_Governance_log, err = mongox.NewRepository(db, "Loyalty_Governance_log"); err != nil {
 		return err
 	}
-	if Mdb_Loyalty_Governance_log, err = mongox.NewRepository(loyaltyDB, "Loyalty_Governance_log"); err != nil {
+	if Mdb_Loyalty_Level, err = mongox.NewRepository(db, "Col_Loyalty_Level"); err != nil {
 		return err
 	}
-	if Mdb_Loyalty_Level, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Level"); err != nil {
+	if Mdb_Loyalty_Level_Change_log, err = mongox.NewRepository(db, "Col_Loyalty_Level_Change_log"); err != nil {
 		return err
 	}
-	if Mdb_Loyalty_Level_Change_log, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Level_Change_log"); err != nil {
+	if Mdb_Loyalty_Seniority_Level, err = mongox.NewRepository(db, "Col_Loyalty_Seniority_Level"); err != nil {
 		return err
 	}
-	if Mdb_Loyalty_Seniority_Level, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Seniority_Level"); err != nil {
+	if Mdb_Loyalty_Account_Segment, err = mongox.NewRepository(db, "Col_Loyalty_Account_Segment"); err != nil {
 		return err
 	}
-	if Mdb_Loyalty_Account_Segment, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Account_Segment"); err != nil {
+	if Mdb_Loyalty_Point_Earning_Rules, err = mongox.NewRepository(db, "Col_Loyalty_Point_Earning_Rules"); err != nil {
 		return err
 	}
-	if Mdb_Loyalty_Point_Earning_Rules, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Point_Earning_Rules"); err != nil {
+	if Mdb_Loyalty_Point_Earning_Rules_Overwrite, err = mongox.NewRepository(db, "Col_Loyalty_Point_Earning_Rules_Overwrite"); err != nil {
 		return err
 	}
-	if Mdb_Loyalty_Point_Earning_Rules_Overwrite, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Point_Earning_Rules_Overwrite"); err != nil {
+	if Mdb_Loyalty_Point_Expiry_Rules, err = mongox.NewRepository(db, "Col_Loyalty_Point_Expiry_Rules"); err != nil {
 		return err
 	}
-	if Mdb_Loyalty_Point_Expiry_Rules, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Point_Expiry_Rules"); err != nil {
+	if Mdb_Loyalty_Point_Redemption_Rules, err = mongox.NewRepository(db, "Col_Loyalty_Point_Redemption_Rules"); err != nil {
 		return err
 	}
-	if Mdb_Loyalty_Point_Redemption_Rules, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Point_Redemption_Rules"); err != nil {
+	if Mdb_Loyalty_Plan, err = mongox.NewRepository(db, "Col_Loyalty_Plan"); err != nil {
 		return err
 	}
-	if Mdb_Loyalty_Plan, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Plan"); err != nil {
+	if Mdb_Customer_Loyalty_Account, err = mongox.NewRepository(db, "Col_Customer_Loyalty_Account"); err != nil {
 		return err
 	}
-	if Mdb_Customer_Loyalty_Account, err = mongox.NewRepository(loyaltyDB, "Col_Customer_Loyalty_Account"); err != nil {
+	if Mdb_Churned_Customer_Loyalty_Account, err = mongox.NewRepository(db, "Col_Churned_Customer_Loyalty_Account"); err != nil {
 		return err
 	}
-	if Mdb_Churned_Customer_Loyalty_Account, err = mongox.NewRepository(loyaltyDB, "Col_Churned_Customer_Loyalty_Account"); err != nil {
+	if Mdb_Customer_Loyalty_Account_Points_Detail, err = mongox.NewRepository(db, "Col_Customer_Loyalty_Account_Points_Detail"); err != nil {
 		return err
 	}
-	if Mdb_Customer_Loyalty_Account_Points_Detail, err = mongox.NewRepository(loyaltyDB, "Col_Customer_Loyalty_Account_Points_Detail"); err != nil {
+	if Mdb_Customer_DND, err = mongox.NewRepository(db, "Col_Customer_DND"); err != nil {
 		return err
 	}
-	if Mdb_Customer_DND, err = mongox.NewRepository(loyaltyDB, "Col_Customer_DND"); err != nil {
+	if Mdb_Customer_Exclusion, err = mongox.NewRepository(db, "Col_Customer_Exclusion"); err != nil {
 		return err
 	}
-	if Mdb_Customer_Exclusion, err = mongox.NewRepository(loyaltyDB, "Col_Customer_Exclusion"); err != nil {
+	if Mdb_Customer_COS_Exclusion, err = mongox.NewRepository(db, "Col_Customer_COS_Exclusion"); err != nil {
 		return err
 	}
-	if Mdb_Customer_COS_Exclusion, err = mongox.NewRepository(loyaltyDB, "Col_Customer_COS_Exclusion"); err != nil {
+	if Mdb_Customer_UAT, err = mongox.NewRepository(db, "Col_Customer_UAT"); err != nil {
 		return err
 	}
-	if Mdb_Customer_UAT, err = mongox.NewRepository(loyaltyDB, "Col_Customer_UAT"); err != nil {
+	if Mdb_Loyalty_Event_Log, err = mongox.NewRepository(db, "Col_Loyalty_Event_Log"); err != nil {
 		return err
 	}
-	if Mdb_Loyalty_Event_Log, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Event_Log"); err != nil {
+	if Mdb_Loyalty_Expiry_log, err = mongox.NewRepository(db, "Col_Loyalty_Expiry_log"); err != nil {
 		return err
 	}
-	if Mdb_Loyalty_Expiry_log, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Expiry_log"); err != nil {
+	if Mdb_Loyalty_Full_Expiry_log, err = mongox.NewRepository(db, "Col_Loyalty_Full_Expiry_log"); err != nil {
 		return err
 	}
-	if Mdb_Loyalty_Full_Expiry_log, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Full_Expiry_log"); err != nil {
+	if Mdb_Loyalty_Redemption_log, err = mongox.NewRepository(db, "Col_Loyalty_Redemption_log"); err != nil {
 		return err
 	}
-	if Mdb_Loyalty_Redemption_log, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Redemption_log"); err != nil {
+	if Mdb_Loyalty_Status_log, err = mongox.NewRepository(db, "Col_Loyalty_Status_log"); err != nil {
 		return err
 	}
-	if Mdb_Loyalty_Status_log, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Status_log"); err != nil {
+	if Mdb_Loyalty_AccountCreditPoints_log, err = mongox.NewRepository(db, "Col_Loyalty_AccountCreditPoints_log"); err != nil {
 		return err
 	}
-	if Mdb_Loyalty_AccountCreditPoints_log, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_AccountCreditPoints_log"); err != nil {
+	if Mdb_Loyalty_AccountDebitPoints_log, err = mongox.NewRepository(db, "Col_Loyalty_AccountDebitPoints_log"); err != nil {
 		return err
 	}
-	if Mdb_Loyalty_AccountDebitPoints_log, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_AccountDebitPoints_log"); err != nil {
+	if Mdb_Loyalty_Campaign, err = mongox.NewRepository(db, "Col_Loyalty_Campaign"); err != nil {
 		return err
 	}
-	if Mdb_Loyalty_Campaign, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Campaign"); err != nil {
+	if Mdb_Loyalty_Campaign_Target_List, err = mongox.NewRepository(db, "Col_Loyalty_Campaign_Target_List"); err != nil {
 		return err
 	}
-	if Mdb_Loyalty_Campaign_Target_List, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Campaign_Target_List"); err != nil {
-		return err
-	}
-	if Mdb_Loyalty_Campaign_Account, err = mongox.NewRepository(loyaltyDB, "Col_Loyalty_Campaign_Account"); err != nil {
+	if Mdb_Loyalty_Campaign_Account, err = mongox.NewRepository(db, "Col_Loyalty_Campaign_Account"); err != nil {
 		return err
 	}
 
@@ -413,7 +414,7 @@ func (Uc *UserControl) Write_Loyalty_Event_Log(record Loyalty_Event_Log) {
 	YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.Event_Time)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	col := Uc.LoyaltyMongoClient.Mongo.Database(Configuration.DB_Name_Loyalty + "_" + YYYY + MM).Collection("Col_Loyalty_Event_Log_" + DD)
+	col := Uc.MongoClient.Mongo.Database(Configuration.DB_Name_Loyalty + "_" + YYYY + MM).Collection("Col_Loyalty_Event_Log_" + DD)
 	_, err := col.InsertOne(ctx, record)
 	if err != nil {
 		log.Println("Error in Write_Loyalty_Event_Log:", err, " (", record, ")")
@@ -425,7 +426,7 @@ func (Uc *UserControl) Write_Loyalty_Level_Change_log(record Loyalty_Level_Chang
 	YYYY, MM, _, _, _, _, _ := GetTimeParts(record.Level_Change_Date)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	col := Uc.LoyaltyMongoClient.Mongo.Database(Configuration.DB_Name_Loyalty + "_" + YYYY + MM).Collection("Col_Loyalty_Level_Change_log")
+	col := Uc.MongoClient.Mongo.Database(Configuration.DB_Name_Loyalty + "_" + YYYY + MM).Collection("Col_Loyalty_Level_Change_log")
 	_, err := col.InsertOne(ctx, record)
 	if err != nil {
 		log.Println("Error in Write_Loyalty_Level_Change_log:", err, " (", record, ")")
@@ -489,7 +490,7 @@ func (Uc *UserControl) Write_Loyalty_AccountCreditPoints_log(record Loyalty_Acco
 	YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.ReceiveDate)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	col := Uc.LoyaltyMongoClient.Mongo.Database(Configuration.DB_Name_Loyalty + "_" + YYYY + MM).Collection("Col_Loyalty_AccountCreditPoints_log_" + DD)
+	col := Uc.MongoClient.Mongo.Database(Configuration.DB_Name_Loyalty + "_" + YYYY + MM).Collection("Col_Loyalty_AccountCreditPoints_log_" + DD)
 	_, err := col.InsertOne(ctx, record)
 	if err != nil {
 		log.Println("Error in Write_Loyalty_AccountCreditPoints_log:", err, " (", record, ")")
@@ -501,7 +502,7 @@ func (Uc *UserControl) Write_Loyalty_Monthly_Expiry_log(record Loyalty_Monthly_E
 	YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.ExpiryTime)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	col := Uc.LoyaltyMongoClient.Mongo.Database(Configuration.DB_Name_Loyalty + "_" + YYYY + MM).Collection("Col_Loyalty_Expiry_log_" + DD)
+	col := Uc.MongoClient.Mongo.Database(Configuration.DB_Name_Loyalty + "_" + YYYY + MM).Collection("Col_Loyalty_Expiry_log_" + DD)
 	_, err := col.InsertOne(ctx, record)
 	if err != nil {
 		log.Println("Error in Write_Loyalty_Monthly_Expiry_log:", err, " (", record, ")")
@@ -513,7 +514,7 @@ func (Uc *UserControl) Write_Loyalty_Full_Expiry_log(record Loyalty_Full_Expiry_
 	YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.ExpiryTime)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	col := Uc.LoyaltyMongoClient.Mongo.Database(Configuration.DB_Name_Loyalty + "_" + YYYY + MM).Collection("Col_Loyalty_Full_Expiry_log_" + DD)
+	col := Uc.MongoClient.Mongo.Database(Configuration.DB_Name_Loyalty + "_" + YYYY + MM).Collection("Col_Loyalty_Full_Expiry_log_" + DD)
 	_, err := col.InsertOne(ctx, record)
 	if err != nil {
 		log.Println("Error in Write_Full_Loyalty_Expiry_log:", err, " (", record, ")")
@@ -525,7 +526,7 @@ func (Uc *UserControl) Write_Loyalty_Redemption_log(record Loyalty_Redemption_lo
 	YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.ReceiveDate)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	col := Uc.LoyaltyMongoClient.Mongo.Database(Configuration.DB_Name_Loyalty + "_" + YYYY + MM).Collection("Col_Loyalty_Redemption_log_" + DD)
+	col := Uc.MongoClient.Mongo.Database(Configuration.DB_Name_Loyalty + "_" + YYYY + MM).Collection("Col_Loyalty_Redemption_log_" + DD)
 	_, err := col.InsertOne(ctx, record)
 	if err != nil {
 		log.Println("Error in Write_Loyalty_Redemption_log:", err, " (", record, ")")
@@ -537,7 +538,7 @@ func (Uc *UserControl) Write_Loyalty_Account_Churned_log(record Customer_Loyalty
 	YYYY, MM, _, DD, _, _, _ := GetTimeParts(time.Now())
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	col := Uc.LoyaltyMongoClient.Mongo.Database(Configuration.DB_Name_Loyalty + "_" + YYYY + MM).Collection("Col_Churned_Customer_Loyalty_Account_" + DD)
+	col := Uc.MongoClient.Mongo.Database(Configuration.DB_Name_Loyalty + "_" + YYYY + MM).Collection("Col_Churned_Customer_Loyalty_Account_" + DD)
 	_, err := col.InsertOne(ctx, record)
 	if err != nil {
 		log.Println("Error in Write_Loyalty_Account_Churned_log:", err, " (", record, ")")
@@ -549,7 +550,7 @@ func (Uc *UserControl) Write_Loyalty_Status_log(record Loyalty_Status_log) {
 	YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.StatusDate)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	col := Uc.LoyaltyMongoClient.Mongo.Database(Configuration.DB_Name_Loyalty + "_" + YYYY + MM).Collection("Col_Loyalty_Status_log_" + DD)
+	col := Uc.MongoClient.Mongo.Database(Configuration.DB_Name_Loyalty + "_" + YYYY + MM).Collection("Col_Loyalty_Status_log_" + DD)
 	_, err := col.InsertOne(ctx, record)
 	if err != nil {
 		log.Println("Error in Write_Loyalty_Status_log:", err, " (", record, ")")
@@ -561,7 +562,7 @@ func (Uc *UserControl) Write_Loyalty_AccountDebitPoints_log(record Loyalty_Accou
 	YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.ReceiveDate)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	col := Uc.LoyaltyMongoClient.Mongo.Database(Configuration.DB_Name_Loyalty + "_" + YYYY + MM).Collection("Col_Loyalty_AccountDebitPoints_log_" + DD)
+	col := Uc.MongoClient.Mongo.Database(Configuration.DB_Name_Loyalty + "_" + YYYY + MM).Collection("Col_Loyalty_AccountDebitPoints_log_" + DD)
 	_, err := col.InsertOne(ctx, record)
 	if err != nil {
 		log.Println("Error in Write_Loyalty_AccountDebitPoints_log:", err, " (", record, ")")
@@ -1291,7 +1292,7 @@ func (Uc *UserControl) Loyalty_Status_Expiry_Daily_Process() {
 		MongoDB_DB_Name := "Loyalty_DB"
 		collName := "Col_Customer_Loyalty_Account"
 		// Fetch the collection
-		collection := Uc.LoyaltyMongoClient.Mongo.Database(MongoDB_DB_Name).Collection(collName)
+		collection := Uc.MongoClient.Mongo.Database(MongoDB_DB_Name).Collection(collName)
 
 		cursor, err := collection.Aggregate(context.Background(), pipeline)
 		if err != nil {
@@ -5857,7 +5858,7 @@ func validateExpiryRules(req Loyalty_Point_Expiry_Rules_AddRequest) error {
 	return nil
 }
 
-func resolveAccountExpiryDates(account Customer_Loyalty_Account, rule Loyalty_Point_Expiry_Rules, batches []Customer_Loyalty_Account_Points_Detail, ) (comingExpiry time.Time, initialDate time.Time, pointsToExpire float64) {
+func resolveAccountExpiryDates(account Customer_Loyalty_Account, rule Loyalty_Point_Expiry_Rules, batches []Customer_Loyalty_Account_Points_Detail) (comingExpiry time.Time, initialDate time.Time, pointsToExpire float64) {
 
 	// opted-out + Fixed: single account-level expiry from the opt-out date.
 	if account.Opt_Status == "OptedOut" && rule.Opted_Out_Rule_Type == "Fixed" {
@@ -8853,7 +8854,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 			return
 		}
 		resetDailyWeeklyCountersIfNeeded(&loyalty_account)
-		if loyalty_governance.DailyEarningLimit > 0 && (loyalty_account.Daily_Earned_Points + points) > loyalty_governance.DailyEarningLimit {
+		if loyalty_governance.DailyEarningLimit > 0 && (loyalty_account.Daily_Earned_Points+points) > loyalty_governance.DailyEarningLimit {
 			response.Status = "failed"
 			response.StatusCode = http.StatusBadRequest
 			response.StatusDescription = "failed to credit loyalty account"
@@ -8863,7 +8864,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 			Uc.Write_Loyalty_AccountCreditPoints_log(*response)
 			return
 		}
-		if loyalty_governance.WeeklyEarningLimit > 0 && (loyalty_account.Weekly_Earned_Points + points) > loyalty_governance.WeeklyEarningLimit {
+		if loyalty_governance.WeeklyEarningLimit > 0 && (loyalty_account.Weekly_Earned_Points+points) > loyalty_governance.WeeklyEarningLimit {
 			response.Status = "failed"
 			response.StatusCode = http.StatusBadRequest
 			response.StatusDescription = "failed to credit loyalty account"
@@ -10119,7 +10120,7 @@ func (Uc *UserControl) ReadAccountDebitPointsDetailsFromMongoDB(startDate, endDa
 		collName := "Col_Loyalty_AccountDebitPoints_log_" + dayStr
 
 		// Fetch the collection
-		collection := Uc.LoyaltyMongoClient.Mongo.Database(MongoDB_DB_Name).Collection(collName)
+		collection := Uc.MongoClient.Mongo.Database(MongoDB_DB_Name).Collection(collName)
 		// Build the filter for the date range
 		filter := bson.D{
 			{Key: "MSISDN", Value: MSISDN},
@@ -10191,7 +10192,7 @@ func (Uc *UserControl) ReadAccountCreditPointsDetailsFromMongoDB(startDate, endD
 		collName := "Col_Loyalty_AccountCreditPoints_log_" + dayStr
 
 		// Fetch the collection
-		collection := Uc.LoyaltyMongoClient.Mongo.Database(MongoDB_DB_Name).Collection(collName)
+		collection := Uc.MongoClient.Mongo.Database(MongoDB_DB_Name).Collection(collName)
 		// Build the filter for the date range
 		filter := bson.D{
 			{Key: "MSISDN", Value: MSISDN},
@@ -10264,7 +10265,7 @@ func (Uc *UserControl) ReadAccountRedemptionPointsDetailsFromMongoDB(startDate, 
 		collName := "Col_Loyalty_Redemption_log_" + dayStr
 
 		// Fetch the collection
-		collection := Uc.LoyaltyMongoClient.Mongo.Database(MongoDB_DB_Name).Collection(collName)
+		collection := Uc.MongoClient.Mongo.Database(MongoDB_DB_Name).Collection(collName)
 		// Build the filter for the date range
 		filter := bson.D{
 			{Key: "MSISDN", Value: MSISDN},
@@ -10337,7 +10338,7 @@ func (Uc *UserControl) ReadAccountExpiryPointsDetailsFromMongoDB(startDate, endD
 		collName := "Col_Loyalty_Expiry_log_" + dayStr
 
 		// Fetch the collection
-		collection := Uc.LoyaltyMongoClient.Mongo.Database(MongoDB_DB_Name).Collection(collName)
+		collection := Uc.MongoClient.Mongo.Database(MongoDB_DB_Name).Collection(collName)
 		// Build the filter for the date range
 		filter := bson.D{
 			{Key: "MSISDN", Value: MSISDN},
@@ -10405,7 +10406,7 @@ func (Uc *UserControl) ReadAccountLevelChangeDetailsFromMongoDB(startDate, endDa
 		collName := "Col_Loyalty_Level_Change_log"
 
 		// Fetch the collection
-		collection := Uc.LoyaltyMongoClient.Mongo.Database(MongoDB_DB_Name).Collection(collName)
+		collection := Uc.MongoClient.Mongo.Database(MongoDB_DB_Name).Collection(collName)
 		// Build the filter for the date range
 		filter := bson.D{
 			{Key: "MSISDN", Value: MSISDN},
@@ -10482,7 +10483,7 @@ func (Uc *UserControl) ReadAccountEventsDetailsFromMongoDB(startDate, endDate ti
 		collName := "Col_Loyalty_Event_Log_" + dayStr
 
 		// Fetch the collection
-		collection := Uc.LoyaltyMongoClient.Mongo.Database(MongoDB_DB_Name).Collection(collName)
+		collection := Uc.MongoClient.Mongo.Database(MongoDB_DB_Name).Collection(collName)
 		// Build the filter for the date range
 		filter := bson.D{
 			{Key: "MSISDN", Value: MSISDN},
@@ -10556,7 +10557,7 @@ func (Uc *UserControl) ReadAccountStatusDetailsFromMongoDB(startDate, endDate ti
 		collName := "Col_Loyalty_Status_log_" + dayStr
 
 		// Fetch the collection
-		collection := Uc.LoyaltyMongoClient.Mongo.Database(MongoDB_DB_Name).Collection(collName)
+		collection := Uc.MongoClient.Mongo.Database(MongoDB_DB_Name).Collection(collName)
 		// Build the filter for the date range
 		filter := bson.D{
 			{Key: "MSISDN", Value: MSISDN},
@@ -10630,7 +10631,7 @@ func (Uc *UserControl) ReadAccountStatusExpiryDetailsFromMongoDB(startDate, endD
 		collName := "Col_Loyalty_Full_Expiry_log_" + dayStr
 
 		// Fetch the collection
-		collection := Uc.LoyaltyMongoClient.Mongo.Database(MongoDB_DB_Name).Collection(collName)
+		collection := Uc.MongoClient.Mongo.Database(MongoDB_DB_Name).Collection(collName)
 		// Build the filter for the date range
 		filter := bson.D{
 			{Key: "MSISDN", Value: MSISDN},
@@ -10691,7 +10692,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_GetAwardedPoints(startDate, endD
 
 		collName := "Col_Loyalty_AccountCreditPoints_log_" + dayStr
 		// Fetch the collection
-		collection := Uc.LoyaltyMongoClient.Mongo.Database(MongoDB_DB_Name).Collection(collName)
+		collection := Uc.MongoClient.Mongo.Database(MongoDB_DB_Name).Collection(collName)
 		pipeline := mongo.Pipeline{
 			{{Key: "$match", Value: bson.D{
 				{Key: "AwardedPoints", Value: bson.D{{Key: "$gt", Value: 0}}},
@@ -10897,7 +10898,7 @@ func (Uc *UserControl) ReadAccountLogsDetailsFromMongoDB(Type string, startDate,
 		collName := "Col_Loyalty_Event_Log_" + dayStr
 
 		// Fetch the collection
-		collection := Uc.LoyaltyMongoClient.Mongo.Database(MongoDB_DB_Name).Collection(collName)
+		collection := Uc.MongoClient.Mongo.Database(MongoDB_DB_Name).Collection(collName)
 		// Build the filter for the date range
 		filter := bson.D{
 			{Key: "MSISDN", Value: MSISDN},
@@ -11089,8 +11090,8 @@ func (Uc *UserControl) PointsExpiry_Process() {
 											finalAccount, err := Uc.Customer_Loyalty_Account_Get(loyalty_Account.Key)
 											if err != nil || len(finalAccount) == 0 {
 												// break
-												// one bad account kills the whole loop, we should use continue instead of break 
-												continue 
+												// one bad account kills the whole loop, we should use continue instead of break
+												continue
 											}
 											if finalAccount[0].Coming_Expiry_Date.Before(time.Now()) {
 												go Uc.PointsExpiry_ProcessExec(finalAccount[0])

@@ -20,17 +20,16 @@ var SpinAndWinHostConfig SpinAndWin_client.SpinAndWin_Client
 var LendmeHostConfig LendmeClient.Lendme_Client
 
 type UserControl struct {
-	MongoClient        *mongox.Client
-	LoyaltyMongoClient *mongox.Client
-	Redis              *redisx.Client
-	AppAUC             *AuthCenterClient.AUC
-	OKAPIAUC           *AuthCenterClient.AUC
-	IN                 *INClient.IN
-	CGW                *UCGW_client.UC_GW
-	Propylaea          *Prop.Propylaea
-	SpinAndWin         *SpinAndWin_client.SpinAndWin
-	APGW               *APGW.APGW
-	Lendme             *LendmeClient.LendMe
+	MongoClient *mongox.Client
+	Redis       *redisx.Client
+	AppAUC      *AuthCenterClient.AUC
+	OKAPIAUC    *AuthCenterClient.AUC
+	IN          *INClient.IN
+	CGW         *UCGW_client.UC_GW
+	Propylaea   *Prop.Propylaea
+	SpinAndWin  *SpinAndWin_client.SpinAndWin
+	APGW        *APGW.APGW
+	Lendme      *LendmeClient.LendMe
 }
 
 func NewUserControl() *UserControl {
@@ -45,15 +44,6 @@ func NewUserControl() *UserControl {
 		log.Fatal("Mongo not reachable:", err)
 	}
 	log.Println("MongoDB connected")
-
-	loyaltyMongoClient, err := mongox.Connect(ctx, Configuration.LoyaltyMongo)
-	if err != nil {
-		log.Fatal("mongox.Connect (LoyaltyMongoDB):", err)
-	}
-	if err := loyaltyMongoClient.Ping(ctx); err != nil {
-		log.Fatal("LoyaltyMongo not reachable:", err)
-	}
-	log.Println("LoyaltyMongoDB connected")
 
 	redisClient, err := redisx.New(Configuration.Redis)
 	if err != nil {
@@ -181,17 +171,16 @@ func NewUserControl() *UserControl {
 	log.Println(LendmeHostConfig)
 
 	UC := &UserControl{
-		MongoClient:        mongoClient,
-		LoyaltyMongoClient: loyaltyMongoClient,
-		Redis:              redisClient,
-		AppAUC:             AuthCenterClient.NewAUCClient(App_AUCHostConfig),
-		OKAPIAUC:           AuthCenterClient.NewAUCClient(OKAPI_AUCHostConfig),
-		IN:                 INClient.NewINClient(INHostConfig),
-		CGW:                UCGW_client.NewUC_GWClient(CGWHostConfig),
-		Propylaea:          Prop.NewPropylaeaClient(propylaea_config),
-		SpinAndWin:         SpinAndWin_client.NewSpinAndWinClient(SpinAndWinHostConfig),
-		APGW:               APGW.NewAPGWClient(APGW_config),
-		Lendme:             LendmeClient.NewLendmeClient(LendmeHostConfig),
+		MongoClient: mongoClient,
+		Redis:       redisClient,
+		AppAUC:      AuthCenterClient.NewAUCClient(App_AUCHostConfig),
+		OKAPIAUC:    AuthCenterClient.NewAUCClient(OKAPI_AUCHostConfig),
+		IN:          INClient.NewINClient(INHostConfig),
+		CGW:         UCGW_client.NewUC_GWClient(CGWHostConfig),
+		Propylaea:   Prop.NewPropylaeaClient(propylaea_config),
+		SpinAndWin:  SpinAndWin_client.NewSpinAndWinClient(SpinAndWinHostConfig),
+		APGW:        APGW.NewAPGWClient(APGW_config),
+		Lendme:      LendmeClient.NewLendmeClient(LendmeHostConfig),
 	}
 	return UC
 }

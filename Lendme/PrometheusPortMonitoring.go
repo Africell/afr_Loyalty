@@ -1,11 +1,11 @@
 package Lendme
 
 import (
+	"fmt"
 	"log"
 	"net"
-	"time"
 	"strings"
-	"fmt"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -45,7 +45,7 @@ func Init_DestinationHosts() {
 	// 	}
 	// 	destinationHots = append(destinationHots, host)
 	// }
-	uri := Configuration.LoyaltyMongo.URI
+	uri := Configuration.Mongo.URI
 	uri = strings.TrimPrefix(uri, "mongodb+srv://")
 	uri = strings.TrimPrefix(uri, "mongodb://")
 	if i := strings.Index(uri, "/"); i >= 0 {

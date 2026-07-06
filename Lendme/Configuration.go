@@ -66,8 +66,7 @@ type ConfigType struct {
 		Timeout_After time.Duration
 	}
 
-	Mongo        mongox.Config
-	LoyaltyMongo mongox.Config
+	Mongo mongox.Config
 
 	Redis redisx.Config
 
@@ -266,7 +265,6 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) { //lendme se
 	Configuration.Mongo.AppName = "afr_Loyalty"
 	Configuration.DB_Name_Loyalty = "Loyalty_DB"
 	Configuration.LoyaltyProgramName = "Loyalty"
-	Configuration.LoyaltyMongo = Configuration.Mongo
 
 	Configuration.IN.IP = "10.95.73.12" //"10.70.1.59"
 	Configuration.IN.Port = "8444"
@@ -395,7 +393,6 @@ func setDefaultConfiguration_DRC_Loyalty_UAT() (Configuration ConfigType) {
 	Configuration.Mongo.AuthSource = "admin"
 	Configuration.Mongo.AppName = "afr_Loyalty"
 	Configuration.DB_Name_Loyalty = "Loyalty_DB"
-	Configuration.LoyaltyMongo = Configuration.Mongo
 
 	Configuration.IN.IP = "10.95.73.12" //"10.70.1.59"
 	Configuration.IN.Port = "8444"
@@ -547,7 +544,6 @@ func setDefaultConfiguration_DRC_Loyalty_UAT_K8s() (Configuration ConfigType) { 
 	Configuration.Mongo.AuthSource = "admin"
 	Configuration.Mongo.AppName = "afr_Loyalty"
 	Configuration.DB_Name_Loyalty = "Loyalty_DB"
-	Configuration.LoyaltyMongo = Configuration.Mongo
 
 	Configuration.IN.IP = "10.95.73.12" //"10.70.1.59"
 	Configuration.IN.Port = "8444"
@@ -695,7 +691,6 @@ func setDefaultConfiguration_GM_Live() (Configuration ConfigType) { //lendme ser
 	Configuration.Mongo.AuthSource = "admin"
 	Configuration.Mongo.AppName = "afr_Loyalty"
 	Configuration.DB_Name_Loyalty = "Loyalty_DB"
-	Configuration.LoyaltyMongo = Configuration.Mongo
 
 	Configuration.IN.IP = "192.168.0.232"
 	Configuration.IN.Port = "8080"
@@ -827,7 +822,6 @@ func setDefaultConfiguration_GM_Loyalty() (Configuration ConfigType) { //lendme 
 	Configuration.Mongo.AuthSource = "admin"
 	Configuration.Mongo.AppName = "afr_Loyalty"
 	Configuration.DB_Name_Loyalty = "Loyalty_DB"
-	Configuration.LoyaltyMongo = Configuration.Mongo
 
 	Configuration.IN.IP = "192.168.0.232"
 	Configuration.IN.Port = "8080"
@@ -982,7 +976,6 @@ func setDefaultConfiguration_GM_Loyalty_Live() (Configuration ConfigType) { //le
 	Configuration.Mongo.AuthSource = "admin"
 	Configuration.Mongo.AppName = "afr_Loyalty"
 	Configuration.DB_Name_Loyalty = "Loyalty_DB"
-	Configuration.LoyaltyMongo = Configuration.Mongo
 
 	Configuration.IN.IP = "192.168.0.232"
 	Configuration.IN.Port = "8080"
@@ -1156,7 +1149,6 @@ func setDefaultConfiguration_GM_UAT() (Configuration ConfigType) { //lendme serv
 	Configuration.Redis.DefaultTTL = -1
 
 	Configuration.DB_Name_Loyalty = "Loyalty_DB"
-	Configuration.LoyaltyMongo = Configuration.Mongo
 
 	Configuration.IN.IP = "192.168.0.232"
 	Configuration.IN.Port = "8080"
@@ -1311,7 +1303,6 @@ func setDefaultConfiguration_SL_Live() (Configuration ConfigType) { //lendme ser
 	Configuration.Mongo.AuthSource = "admin"
 	Configuration.Mongo.AppName = "afr_Loyalty"
 	Configuration.DB_Name_Loyalty = "Loyalty_DB"
-	Configuration.LoyaltyMongo = Configuration.Mongo
 
 	Configuration.IN.IP = "10.10.51.51"
 	Configuration.IN.Port = "8080"
@@ -1457,7 +1448,6 @@ func setDefaultConfiguration_SL_Loyalty() (Configuration ConfigType) { //lendme 
 	Configuration.Mongo.AuthSource = "admin"
 	Configuration.Mongo.AppName = "afr_Loyalty"
 	Configuration.DB_Name_Loyalty = "Loyalty_DB"
-	Configuration.LoyaltyMongo = Configuration.Mongo
 
 	Configuration.IN.IP = "10.10.51.51"
 	Configuration.IN.Port = "8080"
@@ -1620,7 +1610,6 @@ func setDefaultConfiguration_SL_Loyalty_UAT() (Configuration ConfigType) { //len
 	Configuration.Mongo.AppName = "afr_Loyalty"
 
 	Configuration.DB_Name_Loyalty = "Loyalty_DB"
-	Configuration.LoyaltyMongo = Configuration.Mongo
 
 	Configuration.IN.IP = "10.10.51.51"
 	Configuration.IN.Port = "8080"
@@ -1759,7 +1748,6 @@ func setDefaultConfiguration_AO_Loyalty() (Configuration ConfigType) { //lendme 
 	Configuration.Mongo.AppName = "afr_Loyalty"
 
 	Configuration.DB_Name_Loyalty = "Loyalty_DB"
-	Configuration.LoyaltyMongo = Configuration.Mongo
 
 	Configuration.IN.IP = "" // "10.10.51.51"
 	Configuration.IN.Port = "8080"
@@ -1923,7 +1911,6 @@ func setDefaultConfiguration_AO_Loyalty_UAT() (Configuration ConfigType) { //len
 	Configuration.Mongo.AppName = "afr_Loyalty"
 
 	Configuration.DB_Name_Loyalty = "Loyalty_DB_UAT"
-	Configuration.LoyaltyMongo = Configuration.Mongo
 
 	Configuration.IN.IP = "" // "10.10.51.51"
 	Configuration.IN.Port = "8080"
@@ -2176,7 +2163,6 @@ func setDefaultConfiguration_Dev() (Configuration ConfigType) { //lendme service
 	Configuration.Redis.DefaultTTL = -1
 
 	Configuration.DB_Name_Loyalty = "Loyalty_DB"
-	Configuration.LoyaltyMongo = Configuration.Mongo
 
 	Configuration.IN.IP = "10.95.73.12" //"10.70.1.59"
 	Configuration.IN.Port = "8444"
