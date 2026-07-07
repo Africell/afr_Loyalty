@@ -27,6 +27,7 @@ import (
 
 	"github.com/jinzhu/copier"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/redis/go-redis/v9"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
@@ -5545,6 +5546,38 @@ func (Uc *UserControl) Customer_Loyalty_Account_Edit(Login string, request Custo
 	return Id, nil
 }
 
+// getJSONWithMongoFallback is a TESTING/DIAGNOSTIC read-through helper. It tries
+// Redis first and, on a Redis MISS (redis.Nil), falls back to Mongo (the source
+// of truth) and re-populates the cache best-effort. A genuine Redis error is
+// surfaced unchanged. When the document is absent in BOTH stores it returns
+// redis.Nil, so existing redisx.IsNil(...) callers keep treating it as
+// "does not exist". It logs every Mongo-served read so UAT misses are visible.
+// Remove once the Redis preload/consistency issue on UAT is resolved.
+func getJSONWithMongoFallback[T any](ctx context.Context, redisKey string, repo *mongox.Repository, filter bson.M) (T, error) {
+	v, err := redisx.GetJSON[T](ctx, RedisClient, redisKey)
+	if err == nil {
+		return v, nil
+	}
+	if !redisx.IsNil(err) {
+		return v, err // genuine Redis error, not a miss
+	}
+
+	// Redis miss -> Mongo fallback
+	v, mErr := mongox.FindOne[T](ctx, repo.Coll, filter)
+	if mErr != nil {
+		if mongox.IsNotFound(mErr) {
+			var zero T
+			return zero, redis.Nil // preserve "does not exist" semantics for callers
+		}
+		return v, mErr
+	}
+	log.Println("[MongoFallback] served from Mongo (redis miss):", redisKey)
+	if setErr := redisx.SetJSON(ctx, RedisClient, redisKey, v); setErr != nil {
+		log.Println("[MongoFallback] re-cache failed for", redisKey, ":", setErr)
+	}
+	return v, nil
+}
+
 func (Uc *UserControl) Customer_Loyalty_Account_Get(Key string) (entries []Customer_Loyalty_Account, err error) {
 	if Key == "" {
 		entries, err = redisx.GetAllJSONByPattern[Customer_Loyalty_Account](context.Background(), RedisClient, redisx.ScanJSONOptions{
@@ -5560,7 +5593,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_Get(Key string) (entries []Custo
 			err = errors.New("key cannot be empty")
 			return entries, err
 		}
-		entry, entryErr := redisx.GetJSON[Customer_Loyalty_Account](context.Background(), RedisClient, Customer_Loyalty_Account{Key: Key}.RedisKey())
+		entry, entryErr := getJSONWithMongoFallback[Customer_Loyalty_Account](context.Background(), Customer_Loyalty_Account{Key: Key}.RedisKey(), Mdb_Customer_Loyalty_Account, bson.M{"Key": Key})
 		if redisx.IsNil(entryErr) {
 			err = errors.New("key does not exist")
 			return entries, err
@@ -5569,7 +5602,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_Get(Key string) (entries []Custo
 			return entries, entryErr
 		}
 
-		plan, planErr := redisx.GetJSON[Loyalty_Plan](context.Background(), RedisClient, Loyalty_Plan{Key: entry.Loyalty_Level_Key + "|" + entry.Loyalty_Account_Segment_Key}.RedisKey())
+		plan, planErr := getJSONWithMongoFallback[Loyalty_Plan](context.Background(), Loyalty_Plan{Key: entry.Loyalty_Level_Key + "|" + entry.Loyalty_Account_Segment_Key}.RedisKey(), Mdb_Loyalty_Plan, bson.M{"Key": entry.Loyalty_Level_Key + "|" + entry.Loyalty_Account_Segment_Key})
 		if redisx.IsNil(planErr) {
 			err = errors.New("loyalty plan does not exist")
 			return entries, err
@@ -5582,7 +5615,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_Get(Key string) (entries []Custo
 			err = errors.New("expiry rules is not defined")
 			return entries, err
 		}
-		expiry_Rule, expiryErr := redisx.GetJSON[Loyalty_Point_Expiry_Rules](context.Background(), RedisClient, Loyalty_Point_Expiry_Rules{Key: plan.Expiry_Rules_Key}.RedisKey())
+		expiry_Rule, expiryErr := getJSONWithMongoFallback[Loyalty_Point_Expiry_Rules](context.Background(), Loyalty_Point_Expiry_Rules{Key: plan.Expiry_Rules_Key}.RedisKey(), Mdb_Loyalty_Point_Expiry_Rules, bson.M{"Key": plan.Expiry_Rules_Key})
 		if redisx.IsNil(expiryErr) {
 			err = errors.New("expiry rules is not defined")
 			return entries, err
@@ -5645,7 +5678,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_Get(Key string) (entries []Custo
 				totalMonths--
 			}
 			if totalMonths > 0 {
-				loyalty_Level, loyaltyLvlErr := redisx.GetJSON[Loyalty_Level](context.Background(), RedisClient, Loyalty_Level{Key: entry.Loyalty_Level_Key}.RedisKey())
+				loyalty_Level, loyaltyLvlErr := getJSONWithMongoFallback[Loyalty_Level](context.Background(), Loyalty_Level{Key: entry.Loyalty_Level_Key}.RedisKey(), Mdb_Loyalty_Level, bson.M{"Key": entry.Loyalty_Level_Key})
 				if redisx.IsNil(loyaltyLvlErr) {
 					err = errors.New("failed to get loyalty account level")
 					return entries, err
@@ -5654,7 +5687,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_Get(Key string) (entries []Custo
 					return entries, loyaltyLvlErr
 				}
 				for _, lvl := range loyalty_Level.Seniority_Levels {
-					seniority, seniorityErr := redisx.GetJSON[Loyalty_Seniority_Level](context.Background(), RedisClient, Loyalty_Seniority_Level{Key: lvl.Loyalty_Seniority_Level_Key}.RedisKey())
+					seniority, seniorityErr := getJSONWithMongoFallback[Loyalty_Seniority_Level](context.Background(), Loyalty_Seniority_Level{Key: lvl.Loyalty_Seniority_Level_Key}.RedisKey(), Mdb_Loyalty_Seniority_Level, bson.M{"Key": lvl.Loyalty_Seniority_Level_Key})
 					if seniorityErr == nil {
 						if months >= int(seniority.AON_From) && months <= int(seniority.AON_Till) {
 							entry.Multiplier_Percentage = lvl.Multiplier_Percentage
@@ -5918,7 +5951,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_Points_Details_Get(Key string) (
 		}
 		return entries, nil
 	} else {
-		entry, entryErr := redisx.GetJSON[Customer_Loyalty_Account_Points_Detail](context.Background(), RedisClient, Customer_Loyalty_Account_Points_Detail{Key: Key}.RedisKey())
+		entry, entryErr := getJSONWithMongoFallback[Customer_Loyalty_Account_Points_Detail](context.Background(), Customer_Loyalty_Account_Points_Detail{Key: Key}.RedisKey(), Mdb_Customer_Loyalty_Account_Points_Detail, bson.M{"Key": Key})
 		if redisx.IsNil(entryErr) {
 			err = errors.New("key does not exist")
 			return entries, err
