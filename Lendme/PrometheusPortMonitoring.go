@@ -21,30 +21,6 @@ type destinationHost struct {
 var destinationHots []destinationHost
 
 func Init_DestinationHosts() {
-	// if Configuration.LoyaltyMongoDB.HostIP_1 != "" {
-	// 	host := destinationHost{
-	// 		HostName: "Loyalty MongoDB 01",
-	// 		HostIP:   Configuration.LoyaltyMongoDB.HostIP_1,
-	// 		HostPort: Configuration.LoyaltyMongoDB.HostPort_1,
-	// 	}
-	// 	destinationHots = append(destinationHots, host)
-	// }
-	// if Configuration.LoyaltyMongoDB.HostIP_2 != "" {
-	// 	host := destinationHost{
-	// 		HostName: "Loyalty MongoDB 02",
-	// 		HostIP:   Configuration.LoyaltyMongoDB.HostIP_2,
-	// 		HostPort: Configuration.LoyaltyMongoDB.HostPort_2,
-	// 	}
-	// 	destinationHots = append(destinationHots, host)
-	// }
-	// if Configuration.LoyaltyMongoDB.HostIP_3 != "" {
-	// 	host := destinationHost{
-	// 		HostName: "Loyalty MongoDB 03",
-	// 		HostIP:   Configuration.LoyaltyMongoDB.HostIP_3,
-	// 		HostPort: Configuration.LoyaltyMongoDB.HostPort_3,
-	// 	}
-	// 	destinationHots = append(destinationHots, host)
-	// }
 	uri := Configuration.Mongo.URI
 	uri = strings.TrimPrefix(uri, "mongodb+srv://")
 	uri = strings.TrimPrefix(uri, "mongodb://")

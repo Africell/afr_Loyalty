@@ -1,4 +1,4 @@
-package Lendme
+﻿package Lendme
 
 import (
 	"afr_ao_apgw_v2/APGWClientV2"
@@ -32,10 +32,8 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
-// mongox repositories â€” main MongoDB (for AccessEntry and NotificationLog)
 var Mdb_AccessEntry *mongox.Repository
 
-// mongox repositories â€” loyalty MongoDB
 var Mdb_Loyalty_AutoIncrement *mongox.Repository
 var Mdb_Loyalty_Governance *mongox.Repository
 var Mdb_Loyalty_Governance_log *mongox.Repository
@@ -103,33 +101,6 @@ var chan_PointsExpiry_Controler = make(chan int, 50)
 
 var LOYALTY_GOVERNANCE_KEY string = "Loyalty_Governance"
 
-// resetDailyWeeklyCountersIfNeeded resets daily and weekly counters when the
-// calendar day or ISO week has rolled over since the last reset.
-func resetDailyWeeklyCountersIfNeeded(acc *Customer_Loyalty_Account) {
-	now := time.Now().UTC()
-	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
-
-	// ISO week starts Monday (weekday 1). Sunday maps to 7.
-	weekday := int(now.Weekday())
-	if weekday == 0 {
-		weekday = 7
-	}
-	startOfWeek := today.AddDate(0, 0, -(weekday - 1))
-
-	if acc.Daily_Reset_Date.Before(today) {
-		acc.Daily_Earned_Points = 0
-		acc.Daily_Redeemed_Points = 0
-		acc.Daily_Redemption_Attempts = 0
-		acc.Daily_Reset_Date = today
-	}
-	if acc.Weekly_Reset_Date.Before(startOfWeek) {
-		acc.Weekly_Earned_Points = 0
-		acc.Weekly_Redeemed_Points = 0
-		acc.Weekly_Redemption_Attempts = 0
-		acc.Weekly_Reset_Date = startOfWeek
-	}
-}
-
 var processed = make(map[string]struct{})
 var processedMu sync.Mutex
 
@@ -137,7 +108,7 @@ var jobs = make(map[string]*JobStatus)
 var jobsMu sync.Mutex
 
 func (UC *UserControl) InitializeMongoxRepositories() error {
-	db, err := mongox.NewDB(UC.MongoClient.Mongo, Configuration.DB_Name_Loyalty, 5*time.Second)
+	db, err := mongox.NewDB(UC.MongoClient.Mongo, Configuration.DB_Name, 5*time.Second)
 	if err != nil {
 		return err
 	}
@@ -240,98 +211,137 @@ func (UC *UserControl) InitializeMongoxRepositories() error {
 }
 
 func (uc *UserControl) RedisDataLoader() error {
+	FlushBeforeLoad := Configuration.IsPrimary
+
+	// A single timeout for the whole load operation (tune as needed)
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
-	if _, _, err := redisx.LoadMongoToRedis[Loyalty_Governance](ctx, RedisClient, Mdb_Loyalty_Governance.Coll, redisx.MongoLoadOptions{
-		BatchSize: 2000, FlushBeforeLoad: true, FlushPattern: "Loyalty_Governance:*", UseUnlink: true,
+	if loaded, total, err := redisx.LoadMongoToRedis[Loyalty_Governance](ctx, RedisClient, Mdb_Loyalty_Governance.Coll, redisx.MongoLoadOptions{
+		BatchSize: 2000, TTL: 0, FlushBeforeLoad: FlushBeforeLoad, FlushPattern: "Loyalty_Governance:*", UseUnlink: true,
 	}); err != nil {
 		return fmt.Errorf("load Loyalty_Governance: %w", err)
+	} else {
+		log.Printf("%s Redis load: loaded=%d total=%d", "Loyalty_Governance", loaded, total)
 	}
-	if _, _, err := redisx.LoadMongoToRedis[Loyalty_Level](ctx, RedisClient, Mdb_Loyalty_Level.Coll, redisx.MongoLoadOptions{
-		BatchSize: 2000, FlushBeforeLoad: true, FlushPattern: "Loyalty_Level:*", UseUnlink: true,
+	if loaded, total, err := redisx.LoadMongoToRedis[Loyalty_Level](ctx, RedisClient, Mdb_Loyalty_Level.Coll, redisx.MongoLoadOptions{
+		BatchSize: 2000, TTL: 0, FlushBeforeLoad: FlushBeforeLoad, FlushPattern: "Loyalty_Level:*", UseUnlink: true,
 	}); err != nil {
 		return fmt.Errorf("load Loyalty_Level: %w", err)
+	} else {
+		log.Printf("%s Redis load: loaded=%d total=%d", "Loyalty_Level", loaded, total)
 	}
-	if _, _, err := redisx.LoadMongoToRedis[Loyalty_Seniority_Level](ctx, RedisClient, Mdb_Loyalty_Seniority_Level.Coll, redisx.MongoLoadOptions{
-		BatchSize: 2000, FlushBeforeLoad: true, FlushPattern: "Loyalty_Seniority_Level:*", UseUnlink: true,
+	if loaded, total, err := redisx.LoadMongoToRedis[Loyalty_Seniority_Level](ctx, RedisClient, Mdb_Loyalty_Seniority_Level.Coll, redisx.MongoLoadOptions{
+		BatchSize: 2000, TTL: 0, FlushBeforeLoad: FlushBeforeLoad, FlushPattern: "Loyalty_Seniority_Level:*", UseUnlink: true,
 	}); err != nil {
 		return fmt.Errorf("load Loyalty_Seniority_Level: %w", err)
+	} else {
+		log.Printf("%s Redis load: loaded=%d total=%d", "Loyalty_Seniority_Level", loaded, total)
 	}
-	if _, _, err := redisx.LoadMongoToRedis[Loyalty_Account_Segment](ctx, RedisClient, Mdb_Loyalty_Account_Segment.Coll, redisx.MongoLoadOptions{
-		BatchSize: 2000, FlushBeforeLoad: true, FlushPattern: "Loyalty_Account_Segment:*", UseUnlink: true,
+	if loaded, total, err := redisx.LoadMongoToRedis[Loyalty_Account_Segment](ctx, RedisClient, Mdb_Loyalty_Account_Segment.Coll, redisx.MongoLoadOptions{
+		BatchSize: 2000, TTL: 0, FlushBeforeLoad: FlushBeforeLoad, FlushPattern: "Loyalty_Account_Segment:*", UseUnlink: true,
 	}); err != nil {
 		return fmt.Errorf("load Loyalty_Account_Segment: %w", err)
+	} else {
+		log.Printf("%s Redis load: loaded=%d total=%d", "Loyalty_Account_Segment", loaded, total)
 	}
-	if _, _, err := redisx.LoadMongoToRedis[Loyalty_Point_Earning_Rules](ctx, RedisClient, Mdb_Loyalty_Point_Earning_Rules.Coll, redisx.MongoLoadOptions{
-		BatchSize: 2000, FlushBeforeLoad: true, FlushPattern: "Loyalty_Point_Earning_Rules:*", UseUnlink: true,
+	if loaded, total, err := redisx.LoadMongoToRedis[Loyalty_Point_Earning_Rules](ctx, RedisClient, Mdb_Loyalty_Point_Earning_Rules.Coll, redisx.MongoLoadOptions{
+		BatchSize: 2000, TTL: 0, FlushBeforeLoad: FlushBeforeLoad, FlushPattern: "Loyalty_Point_Earning_Rules:*", UseUnlink: true,
 	}); err != nil {
 		return fmt.Errorf("load Loyalty_Point_Earning_Rules: %w", err)
+	} else {
+		log.Printf("%s Redis load: loaded=%d total=%d", "Loyalty_Point_Earning_Rules", loaded, total)
 	}
-	if _, _, err := redisx.LoadMongoToRedis[Loyalty_Point_Earning_Rules_Overwrite](ctx, RedisClient, Mdb_Loyalty_Point_Earning_Rules_Overwrite.Coll, redisx.MongoLoadOptions{
-		BatchSize: 2000, FlushBeforeLoad: true, FlushPattern: "Loyalty_Point_Earning_Rules_Overwrite:*", UseUnlink: true,
+	if loaded, total, err := redisx.LoadMongoToRedis[Loyalty_Point_Earning_Rules_Overwrite](ctx, RedisClient, Mdb_Loyalty_Point_Earning_Rules_Overwrite.Coll, redisx.MongoLoadOptions{
+		BatchSize: 2000, TTL: 0, FlushBeforeLoad: FlushBeforeLoad, FlushPattern: "Loyalty_Point_Earning_Rules_Overwrite:*", UseUnlink: true,
 	}); err != nil {
 		return fmt.Errorf("load Loyalty_Point_Earning_Rules_Overwrite: %w", err)
+	} else {
+		log.Printf("%s Redis load: loaded=%d total=%d", "Loyalty_Point_Earning_Rules_Overwrite", loaded, total)
 	}
-	if _, _, err := redisx.LoadMongoToRedis[Loyalty_Point_Expiry_Rules](ctx, RedisClient, Mdb_Loyalty_Point_Expiry_Rules.Coll, redisx.MongoLoadOptions{
-		BatchSize: 2000, FlushBeforeLoad: true, FlushPattern: "Loyalty_Point_Expiry_Rules:*", UseUnlink: true,
+	if loaded, total, err := redisx.LoadMongoToRedis[Loyalty_Point_Expiry_Rules](ctx, RedisClient, Mdb_Loyalty_Point_Expiry_Rules.Coll, redisx.MongoLoadOptions{
+		BatchSize: 2000, TTL: 0, FlushBeforeLoad: FlushBeforeLoad, FlushPattern: "Loyalty_Point_Expiry_Rules:*", UseUnlink: true,
 	}); err != nil {
 		return fmt.Errorf("load Loyalty_Point_Expiry_Rules: %w", err)
+	} else {
+		log.Printf("%s Redis load: loaded=%d total=%d", "Loyalty_Point_Expiry_Rules", loaded, total)
 	}
-	if _, _, err := redisx.LoadMongoToRedis[Loyalty_Point_Redemption_Rules](ctx, RedisClient, Mdb_Loyalty_Point_Redemption_Rules.Coll, redisx.MongoLoadOptions{
-		BatchSize: 2000, FlushBeforeLoad: true, FlushPattern: "Loyalty_Point_Redemption_Rules:*", UseUnlink: true,
+	if loaded, total, err := redisx.LoadMongoToRedis[Loyalty_Point_Redemption_Rules](ctx, RedisClient, Mdb_Loyalty_Point_Redemption_Rules.Coll, redisx.MongoLoadOptions{
+		BatchSize: 2000, TTL: 0, FlushBeforeLoad: FlushBeforeLoad, FlushPattern: "Loyalty_Point_Redemption_Rules:*", UseUnlink: true,
 	}); err != nil {
 		return fmt.Errorf("load Loyalty_Point_Redemption_Rules: %w", err)
+	} else {
+		log.Printf("%s Redis load: loaded=%d total=%d", "Loyalty_Point_Redemption_Rules", loaded, total)
 	}
-	if _, _, err := redisx.LoadMongoToRedis[Loyalty_Plan](ctx, RedisClient, Mdb_Loyalty_Plan.Coll, redisx.MongoLoadOptions{
-		BatchSize: 2000, FlushBeforeLoad: true, FlushPattern: "Loyalty_Plan:*", UseUnlink: true,
+	if loaded, total, err := redisx.LoadMongoToRedis[Loyalty_Plan](ctx, RedisClient, Mdb_Loyalty_Plan.Coll, redisx.MongoLoadOptions{
+		BatchSize: 2000, TTL: 0, FlushBeforeLoad: FlushBeforeLoad, FlushPattern: "Loyalty_Plan:*", UseUnlink: true,
 	}); err != nil {
 		return fmt.Errorf("load Loyalty_Plan: %w", err)
+	} else {
+		log.Printf("%s Redis load: loaded=%d total=%d", "Loyalty_Plan", loaded, total)
 	}
-	if _, _, err := redisx.LoadMongoToRedis[Customer_Loyalty_Account](ctx, RedisClient, Mdb_Customer_Loyalty_Account.Coll, redisx.MongoLoadOptions{
-		BatchSize: 2000, FlushBeforeLoad: true, FlushPattern: "Customer_Loyalty_Account:*", UseUnlink: true,
+	if loaded, total, err := redisx.LoadMongoToRedis[Customer_Loyalty_Account](ctx, RedisClient, Mdb_Customer_Loyalty_Account.Coll, redisx.MongoLoadOptions{
+		BatchSize: 2000, TTL: 0, FlushBeforeLoad: FlushBeforeLoad, FlushPattern: "Customer_Loyalty_Account:*", UseUnlink: true,
 	}); err != nil {
 		return fmt.Errorf("load Customer_Loyalty_Account: %w", err)
+	} else {
+		log.Printf("%s Redis load: loaded=%d total=%d", "Customer_Loyalty_Account", loaded, total)
 	}
-	if _, _, err := redisx.LoadMongoToRedis[Customer_Loyalty_Account_Points_Detail](ctx, RedisClient, Mdb_Customer_Loyalty_Account_Points_Detail.Coll, redisx.MongoLoadOptions{
-		BatchSize: 2000, FlushBeforeLoad: true, FlushPattern: "Customer_Loyalty_Account_Points_Detail:*", UseUnlink: true,
+	if loaded, total, err := redisx.LoadMongoToRedis[Customer_Loyalty_Account_Points_Detail](ctx, RedisClient, Mdb_Customer_Loyalty_Account_Points_Detail.Coll, redisx.MongoLoadOptions{
+		BatchSize: 2000, TTL: 0, FlushBeforeLoad: FlushBeforeLoad, FlushPattern: "Customer_Loyalty_Account_Points_Detail:*", UseUnlink: true,
 	}); err != nil {
 		return fmt.Errorf("load Customer_Loyalty_Account_Points_Detail: %w", err)
+	} else {
+		log.Printf("%s Redis load: loaded=%d total=%d", "Customer_Loyalty_Account_Points_Detail", loaded, total)
 	}
-	if _, _, err := redisx.LoadMongoToRedis[Customer_DND](ctx, RedisClient, Mdb_Customer_DND.Coll, redisx.MongoLoadOptions{
-		BatchSize: 2000, FlushBeforeLoad: true, FlushPattern: "Customer_DND:*", UseUnlink: true,
+	if loaded, total, err := redisx.LoadMongoToRedis[Customer_DND](ctx, RedisClient, Mdb_Customer_DND.Coll, redisx.MongoLoadOptions{
+		BatchSize: 2000, TTL: 0, FlushBeforeLoad: FlushBeforeLoad, FlushPattern: "Customer_DND:*", UseUnlink: true,
 	}); err != nil {
 		return fmt.Errorf("load Customer_DND: %w", err)
+	} else {
+		log.Printf("%s Redis load: loaded=%d total=%d", "Customer_DND", loaded, total)
 	}
-	if _, _, err := redisx.LoadMongoToRedis[Customer_Exclusion](ctx, RedisClient, Mdb_Customer_Exclusion.Coll, redisx.MongoLoadOptions{
-		BatchSize: 2000, FlushBeforeLoad: true, FlushPattern: "Customer_Exclusion:*", UseUnlink: true,
+	if loaded, total, err := redisx.LoadMongoToRedis[Customer_Exclusion](ctx, RedisClient, Mdb_Customer_Exclusion.Coll, redisx.MongoLoadOptions{
+		BatchSize: 2000, TTL: 0, FlushBeforeLoad: FlushBeforeLoad, FlushPattern: "Customer_Exclusion:*", UseUnlink: true,
 	}); err != nil {
 		return fmt.Errorf("load Customer_Exclusion: %w", err)
+	} else {
+		log.Printf("%s Redis load: loaded=%d total=%d", "Customer_Exclusion", loaded, total)
 	}
-	if _, _, err := redisx.LoadMongoToRedis[Customer_COS_Exclusion](ctx, RedisClient, Mdb_Customer_COS_Exclusion.Coll, redisx.MongoLoadOptions{
-		BatchSize: 2000, FlushBeforeLoad: true, FlushPattern: "Customer_COS_Exclusion:*", UseUnlink: true,
+	if loaded, total, err := redisx.LoadMongoToRedis[Customer_COS_Exclusion](ctx, RedisClient, Mdb_Customer_COS_Exclusion.Coll, redisx.MongoLoadOptions{
+		BatchSize: 2000, TTL: 0, FlushBeforeLoad: FlushBeforeLoad, FlushPattern: "Customer_COS_Exclusion:*", UseUnlink: true,
 	}); err != nil {
 		return fmt.Errorf("load Customer_COS_Exclusion: %w", err)
+	} else {
+		log.Printf("%s Redis load: loaded=%d total=%d", "Customer_COS_Exclusion", loaded, total)
 	}
-	if _, _, err := redisx.LoadMongoToRedis[Customer_UAT](ctx, RedisClient, Mdb_Customer_UAT.Coll, redisx.MongoLoadOptions{
-		BatchSize: 2000, FlushBeforeLoad: true, FlushPattern: "Customer_UAT:*", UseUnlink: true,
+	if loaded, total, err := redisx.LoadMongoToRedis[Customer_UAT](ctx, RedisClient, Mdb_Customer_UAT.Coll, redisx.MongoLoadOptions{
+		BatchSize: 2000, TTL: 0, FlushBeforeLoad: FlushBeforeLoad, FlushPattern: "Customer_UAT:*", UseUnlink: true,
 	}); err != nil {
 		return fmt.Errorf("load Customer_UAT: %w", err)
+	} else {
+		log.Printf("%s Redis load: loaded=%d total=%d", "Customer_UAT", loaded, total)
 	}
-	if _, _, err := redisx.LoadMongoToRedis[Loyalty_Campaign](ctx, RedisClient, Mdb_Loyalty_Campaign.Coll, redisx.MongoLoadOptions{
-		BatchSize: 2000, FlushBeforeLoad: true, FlushPattern: "Loyalty_Campaign:*", UseUnlink: true,
+	if loaded, total, err := redisx.LoadMongoToRedis[Loyalty_Campaign](ctx, RedisClient, Mdb_Loyalty_Campaign.Coll, redisx.MongoLoadOptions{
+		BatchSize: 2000, TTL: 0, FlushBeforeLoad: FlushBeforeLoad, FlushPattern: "Loyalty_Campaign:*", UseUnlink: true,
 	}); err != nil {
 		return fmt.Errorf("load Loyalty_Campaign: %w", err)
+	} else {
+		log.Printf("%s Redis load: loaded=%d total=%d", "Loyalty_Campaign", loaded, total)
 	}
-	if _, _, err := redisx.LoadMongoToRedis[Loyalty_Campaign_Target_List](ctx, RedisClient, Mdb_Loyalty_Campaign_Target_List.Coll, redisx.MongoLoadOptions{
-		BatchSize: 2000, FlushBeforeLoad: true, FlushPattern: "Loyalty_Campaign_Target_List:*", UseUnlink: true,
+	if loaded, total, err := redisx.LoadMongoToRedis[Loyalty_Campaign_Target_List](ctx, RedisClient, Mdb_Loyalty_Campaign_Target_List.Coll, redisx.MongoLoadOptions{
+		BatchSize: 2000, TTL: 0, FlushBeforeLoad: FlushBeforeLoad, FlushPattern: "Loyalty_Campaign_Target_List:*", UseUnlink: true,
 	}); err != nil {
 		return fmt.Errorf("load Loyalty_Campaign_Target_List: %w", err)
+	} else {
+		log.Printf("%s Redis load: loaded=%d total=%d", "Loyalty_Campaign_Target_List", loaded, total)
 	}
-	if _, _, err := redisx.LoadMongoToRedis[Loyalty_Campaign_Account](ctx, RedisClient, Mdb_Loyalty_Campaign_Account.Coll, redisx.MongoLoadOptions{
-		BatchSize: 2000, FlushBeforeLoad: true, FlushPattern: "Loyalty_Campaign_Account:*", UseUnlink: true,
+	if loaded, total, err := redisx.LoadMongoToRedis[Loyalty_Campaign_Account](ctx, RedisClient, Mdb_Loyalty_Campaign_Account.Coll, redisx.MongoLoadOptions{
+		BatchSize: 2000, TTL: 0, FlushBeforeLoad: FlushBeforeLoad, FlushPattern: "Loyalty_Campaign_Account:*", UseUnlink: true,
 	}); err != nil {
 		return fmt.Errorf("load Loyalty_Campaign_Account: %w", err)
+	} else {
+		log.Printf("%s Redis load: loaded=%d total=%d", "Loyalty_Campaign_Account", loaded, total)
 	}
 
 	return nil
@@ -410,11 +420,39 @@ func (uc *UserControl) LoyaltyIndexesMaintenanceProcess() {
 
 	log.Println("Loyalty DB index maintenance process completed")
 }
+
+// resetDailyWeeklyCountersIfNeeded resets daily and weekly counters when the
+// calendar day or ISO week has rolled over since the last reset.
+func resetDailyWeeklyCountersIfNeeded(acc *Customer_Loyalty_Account) {
+	now := time.Now().UTC()
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+
+	// ISO week starts Monday (weekday 1). Sunday maps to 7.
+	weekday := int(now.Weekday())
+	if weekday == 0 {
+		weekday = 7
+	}
+	startOfWeek := today.AddDate(0, 0, -(weekday - 1))
+
+	if acc.Daily_Reset_Date.Before(today) {
+		acc.Daily_Earned_Points = 0
+		acc.Daily_Redeemed_Points = 0
+		acc.Daily_Redemption_Attempts = 0
+		acc.Daily_Reset_Date = today
+	}
+	if acc.Weekly_Reset_Date.Before(startOfWeek) {
+		acc.Weekly_Earned_Points = 0
+		acc.Weekly_Redeemed_Points = 0
+		acc.Weekly_Redemption_Attempts = 0
+		acc.Weekly_Reset_Date = startOfWeek
+	}
+}
+
 func (Uc *UserControl) Write_Loyalty_Event_Log(record Loyalty_Event_Log) {
 	YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.Event_Time)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	col := Uc.MongoClient.Mongo.Database(Configuration.DB_Name_Loyalty + "_" + YYYY + MM).Collection("Col_Loyalty_Event_Log_" + DD)
+	col := Uc.MongoClient.Mongo.Database(Configuration.DB_Name + "_" + YYYY + MM).Collection("Col_Loyalty_Event_Log_" + DD)
 	_, err := col.InsertOne(ctx, record)
 	if err != nil {
 		log.Println("Error in Write_Loyalty_Event_Log:", err, " (", record, ")")
@@ -426,7 +464,7 @@ func (Uc *UserControl) Write_Loyalty_Level_Change_log(record Loyalty_Level_Chang
 	YYYY, MM, _, _, _, _, _ := GetTimeParts(record.Level_Change_Date)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	col := Uc.MongoClient.Mongo.Database(Configuration.DB_Name_Loyalty + "_" + YYYY + MM).Collection("Col_Loyalty_Level_Change_log")
+	col := Uc.MongoClient.Mongo.Database(Configuration.DB_Name + "_" + YYYY + MM).Collection("Col_Loyalty_Level_Change_log")
 	_, err := col.InsertOne(ctx, record)
 	if err != nil {
 		log.Println("Error in Write_Loyalty_Level_Change_log:", err, " (", record, ")")
@@ -477,7 +515,7 @@ func (Uc *UserControl) Write_Loyalty_Level_Change_log(record Loyalty_Level_Chang
 		YYYY, MM, _, _, _, _, _ = GetTimeParts(record.Level_Change_Date)
 		notiCtx, notiCancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer notiCancel()
-		notiCol := Uc.MongoClient.Mongo.Database(Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM).Collection("Col_NotificationLog")
+		notiCol := Uc.MongoClient.Mongo.Database(Configuration.DB_Name + "_Logs_" + YYYY + MM).Collection("Col_NotificationLog")
 		_, err = notiCol.InsertOne(notiCtx, LevelChangeNotiLog)
 		if err != nil {
 			log.Println("Error in Write level change Notification Logs:", err, " (", LevelChangeNotiLog, ")")
@@ -490,7 +528,7 @@ func (Uc *UserControl) Write_Loyalty_AccountCreditPoints_log(record Loyalty_Acco
 	YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.ReceiveDate)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	col := Uc.MongoClient.Mongo.Database(Configuration.DB_Name_Loyalty + "_" + YYYY + MM).Collection("Col_Loyalty_AccountCreditPoints_log_" + DD)
+	col := Uc.MongoClient.Mongo.Database(Configuration.DB_Name + "_" + YYYY + MM).Collection("Col_Loyalty_AccountCreditPoints_log_" + DD)
 	_, err := col.InsertOne(ctx, record)
 	if err != nil {
 		log.Println("Error in Write_Loyalty_AccountCreditPoints_log:", err, " (", record, ")")
@@ -502,7 +540,7 @@ func (Uc *UserControl) Write_Loyalty_Monthly_Expiry_log(record Loyalty_Monthly_E
 	YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.ExpiryTime)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	col := Uc.MongoClient.Mongo.Database(Configuration.DB_Name_Loyalty + "_" + YYYY + MM).Collection("Col_Loyalty_Expiry_log_" + DD)
+	col := Uc.MongoClient.Mongo.Database(Configuration.DB_Name + "_" + YYYY + MM).Collection("Col_Loyalty_Expiry_log_" + DD)
 	_, err := col.InsertOne(ctx, record)
 	if err != nil {
 		log.Println("Error in Write_Loyalty_Monthly_Expiry_log:", err, " (", record, ")")
@@ -514,7 +552,7 @@ func (Uc *UserControl) Write_Loyalty_Full_Expiry_log(record Loyalty_Full_Expiry_
 	YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.ExpiryTime)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	col := Uc.MongoClient.Mongo.Database(Configuration.DB_Name_Loyalty + "_" + YYYY + MM).Collection("Col_Loyalty_Full_Expiry_log_" + DD)
+	col := Uc.MongoClient.Mongo.Database(Configuration.DB_Name + "_" + YYYY + MM).Collection("Col_Loyalty_Full_Expiry_log_" + DD)
 	_, err := col.InsertOne(ctx, record)
 	if err != nil {
 		log.Println("Error in Write_Full_Loyalty_Expiry_log:", err, " (", record, ")")
@@ -526,7 +564,7 @@ func (Uc *UserControl) Write_Loyalty_Redemption_log(record Loyalty_Redemption_lo
 	YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.ReceiveDate)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	col := Uc.MongoClient.Mongo.Database(Configuration.DB_Name_Loyalty + "_" + YYYY + MM).Collection("Col_Loyalty_Redemption_log_" + DD)
+	col := Uc.MongoClient.Mongo.Database(Configuration.DB_Name + "_" + YYYY + MM).Collection("Col_Loyalty_Redemption_log_" + DD)
 	_, err := col.InsertOne(ctx, record)
 	if err != nil {
 		log.Println("Error in Write_Loyalty_Redemption_log:", err, " (", record, ")")
@@ -538,7 +576,7 @@ func (Uc *UserControl) Write_Loyalty_Account_Churned_log(record Customer_Loyalty
 	YYYY, MM, _, DD, _, _, _ := GetTimeParts(time.Now())
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	col := Uc.MongoClient.Mongo.Database(Configuration.DB_Name_Loyalty + "_" + YYYY + MM).Collection("Col_Churned_Customer_Loyalty_Account_" + DD)
+	col := Uc.MongoClient.Mongo.Database(Configuration.DB_Name + "_" + YYYY + MM).Collection("Col_Churned_Customer_Loyalty_Account_" + DD)
 	_, err := col.InsertOne(ctx, record)
 	if err != nil {
 		log.Println("Error in Write_Loyalty_Account_Churned_log:", err, " (", record, ")")
@@ -550,7 +588,7 @@ func (Uc *UserControl) Write_Loyalty_Status_log(record Loyalty_Status_log) {
 	YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.StatusDate)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	col := Uc.MongoClient.Mongo.Database(Configuration.DB_Name_Loyalty + "_" + YYYY + MM).Collection("Col_Loyalty_Status_log_" + DD)
+	col := Uc.MongoClient.Mongo.Database(Configuration.DB_Name + "_" + YYYY + MM).Collection("Col_Loyalty_Status_log_" + DD)
 	_, err := col.InsertOne(ctx, record)
 	if err != nil {
 		log.Println("Error in Write_Loyalty_Status_log:", err, " (", record, ")")
@@ -562,7 +600,7 @@ func (Uc *UserControl) Write_Loyalty_AccountDebitPoints_log(record Loyalty_Accou
 	YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.ReceiveDate)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	col := Uc.MongoClient.Mongo.Database(Configuration.DB_Name_Loyalty + "_" + YYYY + MM).Collection("Col_Loyalty_AccountDebitPoints_log_" + DD)
+	col := Uc.MongoClient.Mongo.Database(Configuration.DB_Name + "_" + YYYY + MM).Collection("Col_Loyalty_AccountDebitPoints_log_" + DD)
 	_, err := col.InsertOne(ctx, record)
 	if err != nil {
 		log.Println("Error in Write_Loyalty_AccountDebitPoints_log:", err, " (", record, ")")
@@ -1234,7 +1272,7 @@ func (Uc *UserControl) Loyalty_Customer_Account_Daily_Snapshot() {
 						log.Println(LOG_ID + " triggered")
 						yesterday := time.Now().AddDate(0, 0, -1)
 						YYYY, MM, _, DD, _, _, _ := GetTimeParts(yesterday)
-						targetDB := Configuration.DB_Name_Loyalty + "_" + YYYY + MM
+						targetDB := Configuration.DB_Name + "_" + YYYY + MM
 						targetColl := "Col_Customer_Loyalty_Account_" + DD
 						pipeline := bson.A{bson.D{{Key: "$out", Value: bson.M{"db": targetDB, "coll": targetColl}}}}
 						snapCtx, snapCancel := context.WithTimeout(context.Background(), 5*time.Minute)
@@ -5272,7 +5310,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_Add(Login string, request Custom
 				WelcomeNotiLog.Error = "Undefined welcome notification for transaction"
 			}
 			YYYY, MM, _, _, _, _, _ := GetTimeParts(time.Now())
-			Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
+			Db := Configuration.DB_Name + "_Logs_" + YYYY + MM
 			{
 				notiCtx, notiCancel := context.WithTimeout(context.Background(), 10*time.Second)
 				_, notiErr := Uc.MongoClient.Mongo.Database(Db).Collection("Col_NotificationLog").InsertOne(notiCtx, WelcomeNotiLog)
@@ -6437,7 +6475,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 				AirtimeNotiLog.Error = "Undefined Airtime notification for transaction, check bundle definition"
 			}
 			YYYY, MM, _, _, _, _, _ := GetTimeParts(response.ReceiveDate)
-			Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
+			Db := Configuration.DB_Name + "_Logs_" + YYYY + MM
 			{
 				notiCtx, notiCancel := context.WithTimeout(context.Background(), 10*time.Second)
 				_, notiErr := Uc.MongoClient.Mongo.Database(Db).Collection("Col_NotificationLog").InsertOne(notiCtx, AirtimeNotiLog)
@@ -6808,7 +6846,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 				BundleNotiLog.Error = "Undefined Bundle notification for transaction"
 			}
 			YYYY, MM, _, _, _, _, _ := GetTimeParts(response.ReceiveDate)
-			Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
+			Db := Configuration.DB_Name + "_Logs_" + YYYY + MM
 			{
 				notiCtx, notiCancel := context.WithTimeout(context.Background(), 10*time.Second)
 				_, notiErr := Uc.MongoClient.Mongo.Database(Db).Collection("Col_NotificationLog").InsertOne(notiCtx, BundleNotiLog)
@@ -7029,7 +7067,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 				MobileMoneyNotiLog.Error = "Undefined Mobile Money notification for transaction"
 			}
 			YYYY, MM, _, _, _, _, _ := GetTimeParts(response.ReceiveDate)
-			Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
+			Db := Configuration.DB_Name + "_Logs_" + YYYY + MM
 			{
 				notiCtx, notiCancel := context.WithTimeout(context.Background(), 10*time.Second)
 				_, notiErr := Uc.MongoClient.Mongo.Database(Db).Collection("Col_NotificationLog").InsertOne(notiCtx, MobileMoneyNotiLog)
@@ -7209,7 +7247,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 				SpinWinNotiLog.Error = "Undefined Mobile Money notification for transaction"
 			}
 			YYYY, MM, _, _, _, _, _ := GetTimeParts(response.ReceiveDate)
-			Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
+			Db := Configuration.DB_Name + "_Logs_" + YYYY + MM
 			{
 				notiCtx, notiCancel := context.WithTimeout(context.Background(), 10*time.Second)
 				_, notiErr := Uc.MongoClient.Mongo.Database(Db).Collection("Col_NotificationLog").InsertOne(notiCtx, SpinWinNotiLog)
@@ -7597,7 +7635,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 				AirtimeNotiLog.Error = "Undefined Airtime notification for transaction, check bundle definition"
 			}
 			YYYY, MM, _, _, _, _, _ := GetTimeParts(response.ReceiveDate)
-			Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
+			Db := Configuration.DB_Name + "_Logs_" + YYYY + MM
 			{
 				notiCtx, notiCancel := context.WithTimeout(context.Background(), 10*time.Second)
 				_, notiErr := Uc.MongoClient.Mongo.Database(Db).Collection("Col_NotificationLog").InsertOne(notiCtx, AirtimeNotiLog)
@@ -7971,7 +8009,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 				BundleNotiLog.Error = "Undefined Bundle notification for transaction"
 			}
 			YYYY, MM, _, _, _, _, _ := GetTimeParts(response.ReceiveDate)
-			Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
+			Db := Configuration.DB_Name + "_Logs_" + YYYY + MM
 			{
 				notiCtx, notiCancel := context.WithTimeout(context.Background(), 10*time.Second)
 				_, notiErr := Uc.MongoClient.Mongo.Database(Db).Collection("Col_NotificationLog").InsertOne(notiCtx, BundleNotiLog)
@@ -8215,7 +8253,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 				MobileMoneyNotiLog.Error = "Undefined Mobile Money notification for transaction"
 			}
 			YYYY, MM, _, _, _, _, _ := GetTimeParts(response.ReceiveDate)
-			Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
+			Db := Configuration.DB_Name + "_Logs_" + YYYY + MM
 			{
 				notiCtx, notiCancel := context.WithTimeout(context.Background(), 10*time.Second)
 				_, notiErr := Uc.MongoClient.Mongo.Database(Db).Collection("Col_NotificationLog").InsertOne(notiCtx, MobileMoneyNotiLog)
@@ -8395,7 +8433,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 				SpinWinNotiLog.Error = "Undefined Mobile Money notification for transaction"
 			}
 			YYYY, MM, _, _, _, _, _ := GetTimeParts(response.ReceiveDate)
-			Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
+			Db := Configuration.DB_Name + "_Logs_" + YYYY + MM
 			{
 				notiCtx, notiCancel := context.WithTimeout(context.Background(), 10*time.Second)
 				_, notiErr := Uc.MongoClient.Mongo.Database(Db).Collection("Col_NotificationLog").InsertOne(notiCtx, SpinWinNotiLog)
@@ -8972,7 +9010,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 			EarnNotiLog.Error = "Undefined earning notification for transaction"
 		}
 		YYYY, MM, _, _, _, _, _ := GetTimeParts(time.Now())
-		Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
+		Db := Configuration.DB_Name + "_Logs_" + YYYY + MM
 		{
 			notiCtx, notiCancel := context.WithTimeout(context.Background(), 10*time.Second)
 			_, notiErr := Uc.MongoClient.Mongo.Database(Db).Collection("Col_NotificationLog").InsertOne(notiCtx, EarnNotiLog)
@@ -9562,7 +9600,7 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 				WelcomeNotiLog.Error = "Undefined welcome notification for transaction"
 			}
 			YYYY, MM, _, _, _, _, _ := GetTimeParts(time.Now())
-			Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
+			Db := Configuration.DB_Name + "_Logs_" + YYYY + MM
 			{
 				notiCtx, notiCancel := context.WithTimeout(context.Background(), 10*time.Second)
 				_, notiErr := Uc.MongoClient.Mongo.Database(Db).Collection("Col_NotificationLog").InsertOne(notiCtx, WelcomeNotiLog)
@@ -9612,7 +9650,7 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 				RejoinerNotiLog.Error = "Undefined rejoiner notification for transaction"
 			}
 			YYYY, MM, _, _, _, _, _ := GetTimeParts(time.Now())
-			Db := Configuration.DB_Name_Loyalty + "_Logs_" + YYYY + MM
+			Db := Configuration.DB_Name + "_Logs_" + YYYY + MM
 			{
 				notiCtx, notiCancel := context.WithTimeout(context.Background(), 10*time.Second)
 				_, notiErr := Uc.MongoClient.Mongo.Database(Db).Collection("Col_NotificationLog").InsertOne(notiCtx, RejoinerNotiLog)

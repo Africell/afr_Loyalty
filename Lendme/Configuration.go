@@ -24,7 +24,8 @@ type ConfigType struct {
 	OKAPIAllowedOrigins          []string
 	Operation                    string
 	HostId                       string
-	DB_Name_Loyalty              string
+	DB_Name                      string
+	IsPrimary                    bool
 
 	IsLoyaltyProduction            bool
 	ISLoyaltyOptIn                 bool // if true customer has to opt in
@@ -231,6 +232,7 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) { //lendme se
 	Configuration.MSISDN_Short_len = 9
 	Configuration.CountryCode = "243"
 
+	Configuration.IsPrimary = true
 	Configuration.IsLoyaltyProduction = true
 	Configuration.ISLoyaltyOptIn = true
 	Configuration.ISLoyaltyOptOutGracePeriodDays = 30
@@ -263,7 +265,7 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) { //lendme se
 	Configuration.Mongo.Password = "B3202T@soSo0612w6"
 	Configuration.Mongo.AuthSource = "admin"
 	Configuration.Mongo.AppName = "afr_Loyalty"
-	Configuration.DB_Name_Loyalty = "Loyalty_DB"
+	Configuration.DB_Name = "Loyalty_DB"
 	Configuration.LoyaltyProgramName = "Loyalty"
 
 	Configuration.IN.IP = "10.95.73.12" //"10.70.1.59"
@@ -360,6 +362,7 @@ func setDefaultConfiguration_DRC_Loyalty_UAT() (Configuration ConfigType) {
 	Configuration.MSISDN_Short_len = 9
 	Configuration.CountryCode = "243"
 
+	Configuration.IsPrimary = true
 	Configuration.IsLoyaltyProduction = false
 	Configuration.ISLoyaltyOptIn = true
 	Configuration.ISLoyaltyOptOutGracePeriodDays = 1
@@ -392,7 +395,7 @@ func setDefaultConfiguration_DRC_Loyalty_UAT() (Configuration ConfigType) {
 	Configuration.Mongo.Password = "P@s54D0Brdara_r@75S"
 	Configuration.Mongo.AuthSource = "admin"
 	Configuration.Mongo.AppName = "afr_Loyalty"
-	Configuration.DB_Name_Loyalty = "Loyalty_DB"
+	Configuration.DB_Name = "Loyalty_DB"
 
 	Configuration.IN.IP = "10.95.73.12" //"10.70.1.59"
 	Configuration.IN.Port = "8444"
@@ -511,6 +514,7 @@ func setDefaultConfiguration_DRC_Loyalty_UAT_K8s() (Configuration ConfigType) { 
 	Configuration.MSISDN_Short_len = 9
 	Configuration.CountryCode = "243"
 
+	Configuration.IsPrimary = true
 	Configuration.IsLoyaltyProduction = false
 	Configuration.ISLoyaltyOptIn = true
 	Configuration.ISLoyaltyOptOutGracePeriodDays = 1
@@ -543,7 +547,7 @@ func setDefaultConfiguration_DRC_Loyalty_UAT_K8s() (Configuration ConfigType) { 
 	Configuration.Mongo.Password = "Speci@LUu@AtM0nG0P@ssw0rd_DRC"
 	Configuration.Mongo.AuthSource = "admin"
 	Configuration.Mongo.AppName = "afr_Loyalty"
-	Configuration.DB_Name_Loyalty = "Loyalty_DB"
+	Configuration.DB_Name = "Loyalty_DB"
 
 	Configuration.IN.IP = "10.95.73.12" //"10.70.1.59"
 	Configuration.IN.Port = "8444"
@@ -658,6 +662,7 @@ func setDefaultConfiguration_GM_Live() (Configuration ConfigType) { //lendme ser
 	Configuration.LoyaltyModule = "Loyalty"
 	Configuration.LoyaltyMMBundleCode = "AFRICELL DATA"
 
+	Configuration.IsPrimary = true
 	Configuration.IsLoyaltyProduction = true
 	Configuration.ISLoyaltyOptIn = false
 	Configuration.ISLoyaltyOptOutGracePeriodDays = 0
@@ -690,7 +695,7 @@ func setDefaultConfiguration_GM_Live() (Configuration ConfigType) { //lendme ser
 	Configuration.Mongo.Password = "Speci@LM0nG0P@ssw0rd_F0r_G@mB!A"
 	Configuration.Mongo.AuthSource = "admin"
 	Configuration.Mongo.AppName = "afr_Loyalty"
-	Configuration.DB_Name_Loyalty = "Loyalty_DB"
+	Configuration.DB_Name = "Loyalty_DB"
 
 	Configuration.IN.IP = "192.168.0.232"
 	Configuration.IN.Port = "8080"
@@ -788,6 +793,7 @@ func setDefaultConfiguration_GM_Loyalty() (Configuration ConfigType) { //lendme 
 	Configuration.MSISDN_Prefix = ""
 	Configuration.MSISDN_Short_len = 7
 	Configuration.CountryCode = "220"
+	Configuration.IsPrimary = true
 	Configuration.IsLoyaltyProduction = true
 	Configuration.ISLoyaltyOptIn = true
 	Configuration.ISLoyaltyOptOutGracePeriodDays = 365
@@ -821,7 +827,7 @@ func setDefaultConfiguration_GM_Loyalty() (Configuration ConfigType) { //lendme 
 	Configuration.Mongo.Password = "P@s54D0Brdara_r@75S"
 	Configuration.Mongo.AuthSource = "admin"
 	Configuration.Mongo.AppName = "afr_Loyalty"
-	Configuration.DB_Name_Loyalty = "Loyalty_DB"
+	Configuration.DB_Name = "Loyalty_DB"
 
 	Configuration.IN.IP = "192.168.0.232"
 	Configuration.IN.Port = "8080"
@@ -942,6 +948,7 @@ func setDefaultConfiguration_GM_Loyalty_Live() (Configuration ConfigType) { //le
 	Configuration.MSISDN_Short_len = 7
 	Configuration.CountryCode = "220"
 
+	Configuration.IsPrimary = true
 	Configuration.IsLoyaltyProduction = true
 	Configuration.ISLoyaltyOptIn = true
 	Configuration.ISLoyaltyOptOutGracePeriodDays = 365
@@ -975,7 +982,7 @@ func setDefaultConfiguration_GM_Loyalty_Live() (Configuration ConfigType) { //le
 	Configuration.Mongo.Password = "Speci@LM0nG0P@ssw0rd_F0r_G@mB!A"
 	Configuration.Mongo.AuthSource = "admin"
 	Configuration.Mongo.AppName = "afr_Loyalty"
-	Configuration.DB_Name_Loyalty = "Loyalty_DB"
+	Configuration.DB_Name = "Loyalty_DB"
 
 	Configuration.IN.IP = "192.168.0.232"
 	Configuration.IN.Port = "8080"
@@ -1096,6 +1103,7 @@ func setDefaultConfiguration_GM_UAT() (Configuration ConfigType) { //lendme serv
 	Configuration.MSISDN_Short_len = 7
 	Configuration.CountryCode = "220"
 
+	Configuration.IsPrimary = true
 	Configuration.IsLoyaltyProduction = false
 	Configuration.ISLoyaltyOptIn = true
 	Configuration.ISLoyaltyOptOutGracePeriodDays = 365
@@ -1148,7 +1156,7 @@ func setDefaultConfiguration_GM_UAT() (Configuration ConfigType) { //lendme serv
 	Configuration.Redis.KeyPrefix = "loyalty:uat:"
 	Configuration.Redis.DefaultTTL = -1
 
-	Configuration.DB_Name_Loyalty = "Loyalty_DB"
+	Configuration.DB_Name = "Loyalty_DB"
 
 	Configuration.IN.IP = "192.168.0.232"
 	Configuration.IN.Port = "8080"
@@ -1270,6 +1278,7 @@ func setDefaultConfiguration_SL_Live() (Configuration ConfigType) { //lendme ser
 	Configuration.MSISDN_Short_len = 8
 	Configuration.CountryCode = "232"
 
+	Configuration.IsPrimary = true
 	Configuration.IsLoyaltyProduction = true
 	Configuration.ISLoyaltyOptIn = true
 	Configuration.ISLoyaltyOptOutGracePeriodDays = 30
@@ -1302,7 +1311,7 @@ func setDefaultConfiguration_SL_Live() (Configuration ConfigType) { //lendme ser
 	Configuration.Mongo.Password = "LendMeApp_@@!!"
 	Configuration.Mongo.AuthSource = "admin"
 	Configuration.Mongo.AppName = "afr_Loyalty"
-	Configuration.DB_Name_Loyalty = "Loyalty_DB"
+	Configuration.DB_Name = "Loyalty_DB"
 
 	Configuration.IN.IP = "10.10.51.51"
 	Configuration.IN.Port = "8080"
@@ -1408,6 +1417,7 @@ func setDefaultConfiguration_SL_Loyalty() (Configuration ConfigType) { //lendme 
 	Configuration.MSISDN_Short_len = 8
 	Configuration.CountryCode = "232"
 
+	Configuration.IsPrimary = true
 	Configuration.IsLoyaltyProduction = true
 	Configuration.ISLoyaltyOptIn = true
 	Configuration.ISLoyaltyOptOutGracePeriodDays = 30
@@ -1447,7 +1457,7 @@ func setDefaultConfiguration_SL_Loyalty() (Configuration ConfigType) { //lendme 
 	Configuration.Mongo.Password = "LendMeApp_@@!!"
 	Configuration.Mongo.AuthSource = "admin"
 	Configuration.Mongo.AppName = "afr_Loyalty"
-	Configuration.DB_Name_Loyalty = "Loyalty_DB"
+	Configuration.DB_Name = "Loyalty_DB"
 
 	Configuration.IN.IP = "10.10.51.51"
 	Configuration.IN.Port = "8080"
@@ -1552,6 +1562,7 @@ func setDefaultConfiguration_SL_Loyalty_UAT() (Configuration ConfigType) { //len
 	Configuration.MSISDN_Short_len = 8
 	Configuration.CountryCode = "232"
 
+	Configuration.IsPrimary = true
 	Configuration.IsLoyaltyProduction = false
 	Configuration.ISLoyaltyOptIn = true
 	Configuration.ARPU_File_Path = "/home/Subs_ARPU/"
@@ -1609,7 +1620,7 @@ func setDefaultConfiguration_SL_Loyalty_UAT() (Configuration ConfigType) { //len
 	Configuration.Mongo.AuthSource = "admin"
 	Configuration.Mongo.AppName = "afr_Loyalty"
 
-	Configuration.DB_Name_Loyalty = "Loyalty_DB"
+	Configuration.DB_Name = "Loyalty_DB"
 
 	Configuration.IN.IP = "10.10.51.51"
 	Configuration.IN.Port = "8080"
@@ -1714,6 +1725,7 @@ func setDefaultConfiguration_AO_Loyalty() (Configuration ConfigType) { //lendme 
 	Configuration.MSISDN_Short_len = 9
 	Configuration.CountryCode = "244"
 
+	Configuration.IsPrimary = true
 	Configuration.IsLoyaltyProduction = false
 	Configuration.ISLoyaltyOptIn = true
 	Configuration.ISLoyaltyOptOutGracePeriodDays = 30
@@ -1747,7 +1759,7 @@ func setDefaultConfiguration_AO_Loyalty() (Configuration ConfigType) { //lendme 
 	Configuration.Mongo.AuthSource = "admin"
 	Configuration.Mongo.AppName = "afr_Loyalty"
 
-	Configuration.DB_Name_Loyalty = "Loyalty_DB"
+	Configuration.DB_Name = "Loyalty_DB"
 
 	Configuration.IN.IP = "" // "10.10.51.51"
 	Configuration.IN.Port = "8080"
@@ -1877,6 +1889,7 @@ func setDefaultConfiguration_AO_Loyalty_UAT() (Configuration ConfigType) { //len
 	Configuration.MSISDN_Short_len = 9
 	Configuration.CountryCode = "244"
 
+	Configuration.IsPrimary = true
 	Configuration.IsLoyaltyProduction = false
 	Configuration.ISLoyaltyOptIn = true
 	Configuration.ISLoyaltyOptOutGracePeriodDays = 30
@@ -1910,7 +1923,7 @@ func setDefaultConfiguration_AO_Loyalty_UAT() (Configuration ConfigType) { //len
 	Configuration.Mongo.AuthSource = "admin"
 	Configuration.Mongo.AppName = "afr_Loyalty"
 
-	Configuration.DB_Name_Loyalty = "Loyalty_DB_UAT"
+	Configuration.DB_Name = "Loyalty_DB_UAT"
 
 	Configuration.IN.IP = "" // "10.10.51.51"
 	Configuration.IN.Port = "8080"
@@ -2162,7 +2175,7 @@ func setDefaultConfiguration_Dev() (Configuration ConfigType) { //lendme service
 	Configuration.Redis.KeyPrefix = "lendme:dev:"
 	Configuration.Redis.DefaultTTL = -1
 
-	Configuration.DB_Name_Loyalty = "Loyalty_DB"
+	Configuration.DB_Name = "Loyalty_DB"
 
 	Configuration.IN.IP = "10.95.73.12" //"10.70.1.59"
 	Configuration.IN.Port = "8444"
