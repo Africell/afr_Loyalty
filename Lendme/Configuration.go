@@ -1155,6 +1155,7 @@ func setDefaultConfiguration_GM_UAT() (Configuration ConfigType) { //lendme serv
 	Configuration.Redis.DB = 0
 	Configuration.Redis.KeyPrefix = "loyalty:uat:"
 	Configuration.Redis.DefaultTTL = -1
+	Configuration.Redis.IndexedCollections = ReferenceCollectionNames
 
 	Configuration.DB_Name = "Loyalty_DB"
 
@@ -2174,6 +2175,7 @@ func setDefaultConfiguration_Dev() (Configuration ConfigType) { //lendme service
 	Configuration.Redis.DB = 0
 	Configuration.Redis.KeyPrefix = "lendme:dev:"
 	Configuration.Redis.DefaultTTL = -1
+	Configuration.Redis.IndexedCollections = ReferenceCollectionNames
 
 	Configuration.DB_Name = "Loyalty_DB"
 

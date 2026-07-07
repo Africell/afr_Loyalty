@@ -95,6 +95,25 @@ func (e Loyalty_Campaign_Target_List) RedisKey() string {
 }
 func (e Loyalty_Campaign_Account) RedisKey() string { return "Loyalty_Campaign_Account:" + e.Key }
 
+// ReferenceCollectionNames lists the small, reference/config-like collections
+// (governance rules, tiers, segments, plans, points rules) that are read in
+// full via GetAllJSONByIndex instead of GetAllJSONByPattern. Set as
+// Configuration.Redis.IndexedCollections so redisx keeps a Set-based
+// membership index for each one, updated automatically by SetJSON/DelJSON/
+// LoadMongoToRedis. Deliberately excludes the Customer_*/subscriber-scale
+// collections — those are per-customer keyed and not "get all" candidates.
+var ReferenceCollectionNames = []string{
+	"Loyalty_Governance",
+	"Loyalty_Level",
+	"Loyalty_Seniority_Level",
+	"Loyalty_Account_Segment",
+	"Loyalty_Point_Earning_Rules",
+	"Loyalty_Point_Earning_Rules_Overwrite",
+	"Loyalty_Point_Expiry_Rules",
+	"Loyalty_Point_Redemption_Rules",
+	"Loyalty_Plan",
+}
+
 var chan_LoyaltyGovernance_Controler = make(chan int, 1)
 
 var chan_PointsExpiry_Controler = make(chan int, 50)
@@ -948,16 +967,12 @@ func (Uc *UserControl) Loyalty_Governance_Edit(Login string, request Loyalty_Gov
 
 func (Uc *UserControl) Loyalty_Governance_Get(Key string) (entries []Loyalty_Governance, err error) {
 	if Key == "" {
-		entries, err = redisx.GetAllJSONByPattern[Loyalty_Governance](context.Background(), RedisClient, redisx.ScanJSONOptions{
-			Pattern: "Loyalty_Governance:*", ScanCount: 500, PipelineSize: 250,
-		})
+		entries, err = redisx.GetAllJSONByIndex[Loyalty_Governance](context.Background(), RedisClient, redisx.IndexedGetOptions{Collection: "Loyalty_Governance", PipelineSize: 250})
 		if err != nil {
 			return entries, err
 		}
 		if Configuration.Operation != "Angola" {
-			redemptions, redemErr := redisx.GetAllJSONByPattern[Loyalty_Point_Redemption_Rules](context.Background(), RedisClient, redisx.ScanJSONOptions{
-				Pattern: "Loyalty_Point_Redemption_Rules:*", ScanCount: 500, PipelineSize: 250,
-			})
+			redemptions, redemErr := redisx.GetAllJSONByIndex[Loyalty_Point_Redemption_Rules](context.Background(), RedisClient, redisx.IndexedGetOptions{Collection: "Loyalty_Point_Redemption_Rules", PipelineSize: 250})
 			if redemErr != nil {
 				return entries, redemErr
 			}
@@ -988,9 +1003,7 @@ func (Uc *UserControl) Loyalty_Governance_Get(Key string) (entries []Loyalty_Gov
 			return entries, entryErr
 		}
 		if Configuration.Operation != "Angola" {
-			redemptions, redemErr := redisx.GetAllJSONByPattern[Loyalty_Point_Redemption_Rules](context.Background(), RedisClient, redisx.ScanJSONOptions{
-				Pattern: "Loyalty_Point_Redemption_Rules:*", ScanCount: 500, PipelineSize: 250,
-			})
+			redemptions, redemErr := redisx.GetAllJSONByIndex[Loyalty_Point_Redemption_Rules](context.Background(), RedisClient, redisx.IndexedGetOptions{Collection: "Loyalty_Point_Redemption_Rules", PipelineSize: 250})
 			if redemErr != nil {
 				return entries, redemErr
 			}
@@ -1222,9 +1235,7 @@ func (Uc *UserControl) Loyalty_Governance_DailyLog_Process() {
 							log_entry.Redeemed_Points_Pool = loyalty_governance.Redeemed_Points_Pool
 							log_entry.Expired_Points_Pool = loyalty_governance.Expired_Points_Pool
 							if Configuration.Operation != "Angola" {
-								redemptions, redemErr := redisx.GetAllJSONByPattern[Loyalty_Point_Redemption_Rules](context.Background(), RedisClient, redisx.ScanJSONOptions{
-									Pattern: "Loyalty_Point_Redemption_Rules:*", ScanCount: 500, PipelineSize: 250,
-								})
+								redemptions, redemErr := redisx.GetAllJSONByIndex[Loyalty_Point_Redemption_Rules](context.Background(), RedisClient, redisx.IndexedGetOptions{Collection: "Loyalty_Point_Redemption_Rules", PipelineSize: 250})
 								if redemErr != nil {
 									fmt.Println("error fetching redemption rules:", redemErr)
 								} else {
@@ -1433,9 +1444,7 @@ func (Uc *UserControl) Loyalty_Status_Expiry_Daily_Process() {
 				putCancel()
 			}
 			var New_Loyalty_Level Loyalty_Level
-			loyaltyLevels, levelsErr := redisx.GetAllJSONByPattern[Loyalty_Level](context.Background(), RedisClient, redisx.ScanJSONOptions{
-				Pattern: "Loyalty_Level:*", ScanCount: 500, PipelineSize: 250,
-			})
+			loyaltyLevels, levelsErr := redisx.GetAllJSONByIndex[Loyalty_Level](context.Background(), RedisClient, redisx.IndexedGetOptions{Collection: "Loyalty_Level", PipelineSize: 250})
 			if levelsErr != nil {
 				fmt.Println("error fetching loyalty levels:", levelsErr)
 			} else {
@@ -1512,9 +1521,7 @@ func (Uc *UserControl) Loyalty_Level_Add(Login string, request Loyalty_Level_Add
 			return Id, err
 		}
 	}
-	loyaltyLevels, levelsErr := redisx.GetAllJSONByPattern[Loyalty_Level](context.Background(), RedisClient, redisx.ScanJSONOptions{
-		Pattern: "Loyalty_Level:*", ScanCount: 500, PipelineSize: 250,
-	})
+	loyaltyLevels, levelsErr := redisx.GetAllJSONByIndex[Loyalty_Level](context.Background(), RedisClient, redisx.IndexedGetOptions{Collection: "Loyalty_Level", PipelineSize: 250})
 	if levelsErr != nil {
 		fmt.Println("error fetching loyalty levels:", levelsErr)
 	} else {
@@ -1589,9 +1596,7 @@ func (Uc *UserControl) Loyalty_Level_Edit(Login string, request Loyalty_Level_Ed
 		return Id, errors.New("id is not matching")
 	}
 	Current_Entry := entry
-	loyaltyLevels, levelsErr := redisx.GetAllJSONByPattern[Loyalty_Level](context.Background(), RedisClient, redisx.ScanJSONOptions{
-		Pattern: "Loyalty_Level:*", ScanCount: 500, PipelineSize: 250,
-	})
+	loyaltyLevels, levelsErr := redisx.GetAllJSONByIndex[Loyalty_Level](context.Background(), RedisClient, redisx.IndexedGetOptions{Collection: "Loyalty_Level", PipelineSize: 250})
 	if levelsErr != nil {
 		fmt.Println("error fetching loyalty levels:", levelsErr)
 	} else {
@@ -1655,9 +1660,7 @@ func (Uc *UserControl) Loyalty_Level_Edit(Login string, request Loyalty_Level_Ed
 
 func (Uc *UserControl) Loyalty_Level_Get(Key string) (entries []Loyalty_Level, err error) {
 	if Key == "" {
-		entries, err = redisx.GetAllJSONByPattern[Loyalty_Level](context.Background(), RedisClient, redisx.ScanJSONOptions{
-			Pattern: "Loyalty_Level:*", ScanCount: 500, PipelineSize: 250,
-		})
+		entries, err = redisx.GetAllJSONByIndex[Loyalty_Level](context.Background(), RedisClient, redisx.IndexedGetOptions{Collection: "Loyalty_Level", PipelineSize: 250})
 		if err != nil {
 			return entries, err
 		}
@@ -1756,9 +1759,7 @@ func (Uc *UserControl) Loyalty_Seniority_Level_Add(Login string, request Loyalty
 		err = errors.New("invalid AON values")
 		return Id, err
 	}
-	seniorityLevels, seniorityErr := redisx.GetAllJSONByPattern[Loyalty_Seniority_Level](context.Background(), RedisClient, redisx.ScanJSONOptions{
-		Pattern: "Loyalty_Seniority_Level:*", ScanCount: 500, PipelineSize: 250,
-	})
+	seniorityLevels, seniorityErr := redisx.GetAllJSONByIndex[Loyalty_Seniority_Level](context.Background(), RedisClient, redisx.IndexedGetOptions{Collection: "Loyalty_Seniority_Level", PipelineSize: 250})
 	if seniorityErr != nil {
 		fmt.Println("error fetching seniority levels:", seniorityErr)
 	} else {
@@ -1837,9 +1838,7 @@ func (Uc *UserControl) Loyalty_Seniority_Level_Edit(Login string, request Loyalt
 		return Id, err
 	}
 	Current_Entry := entry
-	seniorityLevels, seniorityErr := redisx.GetAllJSONByPattern[Loyalty_Seniority_Level](context.Background(), RedisClient, redisx.ScanJSONOptions{
-		Pattern: "Loyalty_Seniority_Level:*", ScanCount: 500, PipelineSize: 250,
-	})
+	seniorityLevels, seniorityErr := redisx.GetAllJSONByIndex[Loyalty_Seniority_Level](context.Background(), RedisClient, redisx.IndexedGetOptions{Collection: "Loyalty_Seniority_Level", PipelineSize: 250})
 	if seniorityErr != nil {
 		fmt.Println("error fetching seniority levels:", seniorityErr)
 	} else {
@@ -1884,9 +1883,7 @@ func (Uc *UserControl) Loyalty_Seniority_Level_Edit(Login string, request Loyalt
 
 func (Uc *UserControl) Loyalty_Seniority_Level_Get(Key string) (entries []Loyalty_Seniority_Level, err error) {
 	if Key == "" {
-		entries, err = redisx.GetAllJSONByPattern[Loyalty_Seniority_Level](context.Background(), RedisClient, redisx.ScanJSONOptions{
-			Pattern: "Loyalty_Seniority_Level:*", ScanCount: 500, PipelineSize: 250,
-		})
+		entries, err = redisx.GetAllJSONByIndex[Loyalty_Seniority_Level](context.Background(), RedisClient, redisx.IndexedGetOptions{Collection: "Loyalty_Seniority_Level", PipelineSize: 250})
 		if err != nil {
 			return entries, err
 		}
@@ -2098,9 +2095,7 @@ func (Uc *UserControl) Loyalty_Account_Segment_Edit(Login string, request Loyalt
 
 func (Uc *UserControl) Loyalty_Account_Segment_Get(Key string) (entries []Loyalty_Account_Segment, err error) {
 	if Key == "" {
-		entries, err = redisx.GetAllJSONByPattern[Loyalty_Account_Segment](context.Background(), RedisClient, redisx.ScanJSONOptions{
-			Pattern: "Loyalty_Account_Segment:*", ScanCount: 500, PipelineSize: 250,
-		})
+		entries, err = redisx.GetAllJSONByIndex[Loyalty_Account_Segment](context.Background(), RedisClient, redisx.IndexedGetOptions{Collection: "Loyalty_Account_Segment", PipelineSize: 250})
 		if err != nil {
 			return entries, err
 		}
@@ -2366,9 +2361,7 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Add(Login string, request Loy
 	// 	request.MM_Bundle_Amount = 0
 	// }
 
-	governanceEntries, governanceErr := redisx.GetAllJSONByPattern[Loyalty_Governance](context.Background(), RedisClient, redisx.ScanJSONOptions{
-		Pattern: "Loyalty_Governance:*", ScanCount: 500, PipelineSize: 250,
-	})
+	governanceEntries, governanceErr := redisx.GetAllJSONByIndex[Loyalty_Governance](context.Background(), RedisClient, redisx.IndexedGetOptions{Collection: "Loyalty_Governance", PipelineSize: 250})
 	if governanceErr != nil {
 		fmt.Println("error fetching loyalty governance:", governanceErr)
 	}
@@ -2724,9 +2717,7 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Edit(Login string, request Lo
 	if entry.Earning_Rules_Id != request.Earning_Rules_Id {
 		return Id, errors.New("id is not matching")
 	}
-	governanceEntries, governanceErr := redisx.GetAllJSONByPattern[Loyalty_Governance](context.Background(), RedisClient, redisx.ScanJSONOptions{
-		Pattern: "Loyalty_Governance:*", ScanCount: 500, PipelineSize: 250,
-	})
+	governanceEntries, governanceErr := redisx.GetAllJSONByIndex[Loyalty_Governance](context.Background(), RedisClient, redisx.IndexedGetOptions{Collection: "Loyalty_Governance", PipelineSize: 250})
 	if governanceErr != nil {
 		fmt.Println("error fetching loyalty governance:", governanceErr)
 	}
@@ -2903,9 +2894,7 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Edit(Login string, request Lo
 
 func (Uc *UserControl) Loyalty_Point_Earning_Rules_Get(Key string) (entries []Loyalty_Point_Earning_Rules, err error) {
 	if Key == "" {
-		entries, err = redisx.GetAllJSONByPattern[Loyalty_Point_Earning_Rules](context.Background(), RedisClient, redisx.ScanJSONOptions{
-			Pattern: "Loyalty_Point_Earning_Rules:*", ScanCount: 500, PipelineSize: 250,
-		})
+		entries, err = redisx.GetAllJSONByIndex[Loyalty_Point_Earning_Rules](context.Background(), RedisClient, redisx.IndexedGetOptions{Collection: "Loyalty_Point_Earning_Rules", PipelineSize: 250})
 		if err != nil {
 			return entries, err
 		}
@@ -3021,9 +3010,7 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Overwrite_Add(Login string, r
 	}
 
 	var entries []Loyalty_Governance
-	entries, redisGovErr := redisx.GetAllJSONByPattern[Loyalty_Governance](context.Background(), RedisClient, redisx.ScanJSONOptions{
-		Pattern: "Loyalty_Governance:*", ScanCount: 500, PipelineSize: 250,
-	})
+	entries, redisGovErr := redisx.GetAllJSONByIndex[Loyalty_Governance](context.Background(), RedisClient, redisx.IndexedGetOptions{Collection: "Loyalty_Governance", PipelineSize: 250})
 	if redisGovErr != nil {
 		err = redisGovErr
 		return Id, err
@@ -3149,9 +3136,7 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Overwrite_Edit(Login string, 
 		return Id, errors.New("id is not matching")
 	}
 	var entries []Loyalty_Governance
-	entries, redisGovErr2 := redisx.GetAllJSONByPattern[Loyalty_Governance](context.Background(), RedisClient, redisx.ScanJSONOptions{
-		Pattern: "Loyalty_Governance:*", ScanCount: 500, PipelineSize: 250,
-	})
+	entries, redisGovErr2 := redisx.GetAllJSONByIndex[Loyalty_Governance](context.Background(), RedisClient, redisx.IndexedGetOptions{Collection: "Loyalty_Governance", PipelineSize: 250})
 	if redisGovErr2 != nil {
 		err = redisGovErr2
 		return Id, err
@@ -3249,9 +3234,7 @@ func (Uc *UserControl) Loyalty_Point_Earning_Rules_Overwrite_Edit(Login string, 
 
 func (Uc *UserControl) Loyalty_Point_Earning_Rules_Overwrite_Get(Key string) (entries []Loyalty_Point_Earning_Rules_Overwrite, err error) {
 	if Key == "" {
-		entries, err = redisx.GetAllJSONByPattern[Loyalty_Point_Earning_Rules_Overwrite](context.Background(), RedisClient, redisx.ScanJSONOptions{
-			Pattern: "Loyalty_Point_Earning_Rules_Overwrite:*", ScanCount: 500, PipelineSize: 250,
-		})
+		entries, err = redisx.GetAllJSONByIndex[Loyalty_Point_Earning_Rules_Overwrite](context.Background(), RedisClient, redisx.IndexedGetOptions{Collection: "Loyalty_Point_Earning_Rules_Overwrite", PipelineSize: 250})
 		if err != nil {
 			return entries, err
 		}
@@ -3528,9 +3511,7 @@ func (Uc *UserControl) Loyalty_Point_Expiry_Rules_Edit(Login string, request Loy
 
 func (Uc *UserControl) Loyalty_Point_Expiry_Rules_Get(Key string) (entries []Loyalty_Point_Expiry_Rules, err error) {
 	if Key == "" {
-		entries, err = redisx.GetAllJSONByPattern[Loyalty_Point_Expiry_Rules](context.Background(), RedisClient, redisx.ScanJSONOptions{
-			Pattern: "Loyalty_Point_Expiry_Rules:*", ScanCount: 500, PipelineSize: 250,
-		})
+		entries, err = redisx.GetAllJSONByIndex[Loyalty_Point_Expiry_Rules](context.Background(), RedisClient, redisx.IndexedGetOptions{Collection: "Loyalty_Point_Expiry_Rules", PipelineSize: 250})
 		if err != nil {
 			return entries, err
 		}
@@ -3875,9 +3856,7 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Edit(Login string, request
 
 func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Get(Key string) (entries []Loyalty_Point_Redemption_Rules, err error) {
 	if Key == "" {
-		entries, err = redisx.GetAllJSONByPattern[Loyalty_Point_Redemption_Rules](context.Background(), RedisClient, redisx.ScanJSONOptions{
-			Pattern: "Loyalty_Point_Redemption_Rules:*", ScanCount: 500, PipelineSize: 250,
-		})
+		entries, err = redisx.GetAllJSONByIndex[Loyalty_Point_Redemption_Rules](context.Background(), RedisClient, redisx.IndexedGetOptions{Collection: "Loyalty_Point_Redemption_Rules", PipelineSize: 250})
 		if err != nil {
 			return entries, err
 		}
@@ -3995,9 +3974,7 @@ func (Uc *UserControl) Loyalty_Plan_Add(Login string, request Loyalty_Plan_AddRe
 		}
 	}
 
-	planEntries, planEntriesErr := redisx.GetAllJSONByPattern[Loyalty_Plan](context.Background(), RedisClient, redisx.ScanJSONOptions{
-		Pattern: "Loyalty_Plan:*", ScanCount: 500, PipelineSize: 250,
-	})
+	planEntries, planEntriesErr := redisx.GetAllJSONByIndex[Loyalty_Plan](context.Background(), RedisClient, redisx.IndexedGetOptions{Collection: "Loyalty_Plan", PipelineSize: 250})
 	if planEntriesErr != nil {
 		err = planEntriesErr
 		return Id, err
@@ -4069,9 +4046,7 @@ func (Uc *UserControl) Loyalty_Plan_Edit(Login string, request Loyalty_Plan_Edit
 	if entry.Plan_Id != request.Plan_Id {
 		return Id, errors.New("id is not matching")
 	}
-	planEntries2, planEntriesErr2 := redisx.GetAllJSONByPattern[Loyalty_Plan](context.Background(), RedisClient, redisx.ScanJSONOptions{
-		Pattern: "Loyalty_Plan:*", ScanCount: 500, PipelineSize: 250,
-	})
+	planEntries2, planEntriesErr2 := redisx.GetAllJSONByIndex[Loyalty_Plan](context.Background(), RedisClient, redisx.IndexedGetOptions{Collection: "Loyalty_Plan", PipelineSize: 250})
 	if planEntriesErr2 != nil {
 		err = planEntriesErr2
 		return Id, err
@@ -4135,9 +4110,7 @@ func (Uc *UserControl) Loyalty_Plan_Edit(Login string, request Loyalty_Plan_Edit
 
 func (Uc *UserControl) Loyalty_Plan_Get(Key string) (entries []Loyalty_Plan, err error) {
 	if Key == "" {
-		entries, err = redisx.GetAllJSONByPattern[Loyalty_Plan](context.Background(), RedisClient, redisx.ScanJSONOptions{
-			Pattern: "Loyalty_Plan:*", ScanCount: 500, PipelineSize: 250,
-		})
+		entries, err = redisx.GetAllJSONByIndex[Loyalty_Plan](context.Background(), RedisClient, redisx.IndexedGetOptions{Collection: "Loyalty_Plan", PipelineSize: 250})
 		if err != nil {
 			return entries, err
 		}
@@ -8468,9 +8441,7 @@ func Loyalty_Account_Segment_Selection(Amount float64, FirstUse_date time.Time) 
 	//AON_Hours := time.Now().Sub(FirstUse_date).Hours()
 	AON_Hours := time.Since(FirstUse_date).Hours()
 	AON_Months := (AON_Hours / 24) / 30
-	Schemes, redisErr := redisx.GetAllJSONByPattern[Loyalty_Account_Segment](context.Background(), RedisClient, redisx.ScanJSONOptions{
-		Pattern: "Loyalty_Account_Segment:*", ScanCount: 500, PipelineSize: 250,
-	})
+	Schemes, redisErr := redisx.GetAllJSONByIndex[Loyalty_Account_Segment](context.Background(), RedisClient, redisx.IndexedGetOptions{Collection: "Loyalty_Account_Segment", PipelineSize: 250})
 	if redisErr != nil {
 		log.Println("error getting Loyalty_Account_Segment from Redis:", redisErr)
 	}
@@ -8492,9 +8463,7 @@ func Loyalty_Account_Segment_Selection(Amount float64, FirstUse_date time.Time) 
 }
 
 func Loyalty_Level_Selection(Accumulated_Points float64) (level_key string) {
-	levels, redisErr := redisx.GetAllJSONByPattern[Loyalty_Level](context.Background(), RedisClient, redisx.ScanJSONOptions{
-		Pattern: "Loyalty_Level:*", ScanCount: 500, PipelineSize: 250,
-	})
+	levels, redisErr := redisx.GetAllJSONByIndex[Loyalty_Level](context.Background(), RedisClient, redisx.IndexedGetOptions{Collection: "Loyalty_Level", PipelineSize: 250})
 	if redisErr != nil {
 		log.Println("error getting Loyalty_Level from Redis:", redisErr)
 	}
@@ -10982,7 +10951,7 @@ func (Uc *UserControl) EvaluateAndUpdate_CustomerLoyaltyLevel(Login string, Acco
 	//evaluate loyalty level
 	var New_Loyalty_Level Loyalty_Level
 	llScanCtx, llScanCancel := context.WithTimeout(context.Background(), 10*time.Second)
-	loyalty_Level_slice, llScanErr := redisx.GetAllJSONByPattern[Loyalty_Level](llScanCtx, RedisClient, redisx.ScanJSONOptions{Pattern: "Loyalty_Level:*"})
+	loyalty_Level_slice, llScanErr := redisx.GetAllJSONByIndex[Loyalty_Level](llScanCtx, RedisClient, redisx.IndexedGetOptions{Collection: "Loyalty_Level"})
 	llScanCancel()
 	if llScanErr != nil {
 		return New_Loyalty_Level_Key, fmt.Errorf("error scanning Loyalty_Level: %w", llScanErr)
