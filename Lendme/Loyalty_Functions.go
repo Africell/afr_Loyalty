@@ -5953,7 +5953,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_Points_Details_Get(Key string) (
 	} else {
 		entry, entryErr := getJSONWithMongoFallback[Customer_Loyalty_Account_Points_Detail](context.Background(), Customer_Loyalty_Account_Points_Detail{Key: Key}.RedisKey(), Mdb_Customer_Loyalty_Account_Points_Detail, bson.M{"Key": Key})
 		if redisx.IsNil(entryErr) {
-			err = errors.New("key does not exist")
+			err = errors.New("point detail key does not exist: " + Key)
 			return entries, err
 		}
 		if entryErr != nil {
