@@ -8,8 +8,9 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"redisx"
 	"time"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func Send_SMS(sender string, target string, text string) (_rErr error) {
@@ -21,14 +22,14 @@ func Send_SMS(sender string, target string, text string) (_rErr error) {
 	// target = Configuration.SMPP.CountryCodePrefix + target[(len(target)-Configuration.SMPP.MSISDN_Short_len):]
 	//check if UAT and if target is in UAT pool
 	if !Configuration.IsLoyaltyProduction {
-		_, uatErr := redisx.GetJSON[Customer_UAT](context.Background(), RedisClient, Customer_UAT{Key: target}.RedisKey())
+		_, uatErr := getJSONWithMongoFallback[Customer_UAT](context.Background(), Customer_UAT{Key: target}.RedisKey(), Mdb_Customer_UAT, bson.M{"Key": target})
 		if uatErr != nil {
 			return
 		}
 	}
 
 	//check if target is in do not disturb list
-	_, dndErr := redisx.GetJSON[Customer_DND](context.Background(), RedisClient, Customer_DND{Key: target}.RedisKey())
+	_, dndErr := getJSONWithMongoFallback[Customer_DND](context.Background(), Customer_DND{Key: target}.RedisKey(), Mdb_Customer_DND, bson.M{"Key": target})
 	if dndErr == nil {
 		err := errors.New("sending SMS blocked by DND: Sender (" + sender + "), Target (" + target + "), text (" + text + ") ")
 		return err

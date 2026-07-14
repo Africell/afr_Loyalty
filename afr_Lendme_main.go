@@ -71,7 +71,7 @@ func (p *program) run() {
 		UserControl.InitializeMongoxRepositories()
 		UserControl.RedisDataLoader()
 		UserControl.LoyaltyIndexesMaintenanceProcess()
-		UserControl.InitializeLoyaltyDefaultUAT()
+		// UserControl.InitializeLoyaltyDefaultUAT()
 		// To be removed in the next deployment
 		UserControl.SeedUATLoyaltyTestPointsExpiry()
 

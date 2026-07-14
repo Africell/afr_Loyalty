@@ -3159,7 +3159,7 @@ func (Uc *UserControl) HTTP_Bulk_Loyalty_Points_Deduction(w http.ResponseWriter,
 
 				if loyalty_AccountDebitPoints_log.Status == "failed" {
 					if loyalty_AccountDebitPoints_log.StatusDescription == "no enough points" {
-						entry, entryErr := redisx.GetJSON[Customer_Loyalty_Account](context.Background(), RedisClient, Customer_Loyalty_Account{Key: loyalty_AccountDebitPoints_log.MSISDN}.RedisKey())
+						entry, entryErr := getJSONWithMongoFallback[Customer_Loyalty_Account](context.Background(), Customer_Loyalty_Account{Key: loyalty_AccountDebitPoints_log.MSISDN}.RedisKey(), Mdb_Customer_Loyalty_Account, bson.M{"Key": loyalty_AccountDebitPoints_log.MSISDN})
 						if redisx.IsNil(entryErr) {
 							jobsMu.Lock()
 							jobs[jobID].Result["Failed"] = append(jobs[jobID].Result["Failed"], loyalty_AccountDebitPoints_log.MSISDN+" key does not exist")

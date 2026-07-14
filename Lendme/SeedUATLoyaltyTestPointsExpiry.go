@@ -110,7 +110,7 @@ func uatSeedMatrix(now time.Time) []accountSpec {
 
 func seedAccount(ctx context.Context, spec accountSpec) error {
 	// 1. read existing account, or build a fresh one (collections may be empty)
-	account, err := redisx.GetJSON[Customer_Loyalty_Account](ctx, RedisClient, Customer_Loyalty_Account{Key: spec.MSISDN}.RedisKey())
+	account, err := getJSONWithMongoFallback[Customer_Loyalty_Account](ctx, Customer_Loyalty_Account{Key: spec.MSISDN}.RedisKey(), Mdb_Customer_Loyalty_Account, bson.M{"Key": spec.MSISDN})
 	if err != nil {
 		if !redisx.IsNil(err) {
 			return fmt.Errorf("read account: %w", err)

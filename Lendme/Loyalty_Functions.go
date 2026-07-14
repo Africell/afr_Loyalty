@@ -4222,7 +4222,7 @@ func (Uc *UserControl) Customer_UAT_Add(Login string, request Customer_UAT_AddRe
 	//check if key already used
 	{
 		chkCtx, chkCancel := context.WithTimeout(context.Background(), 10*time.Second)
-		_, chkErr := redisx.GetJSON[Customer_UAT](chkCtx, RedisClient, Customer_UAT{Key: request.Key}.RedisKey())
+		_, chkErr := getJSONWithMongoFallback[Customer_UAT](chkCtx, Customer_UAT{Key: request.Key}.RedisKey(), Mdb_Customer_UAT, bson.M{"Key": request.Key})
 		chkCancel()
 		if chkErr == nil {
 			err = errors.New("key already exist")
@@ -4275,7 +4275,7 @@ func (Uc *UserControl) Customer_UAT_Edit(Login string, request Customer_UAT_Edit
 		err = errors.New("key cannot be empty")
 		return Id, err
 	}
-	entry, entryErr := redisx.GetJSON[Customer_UAT](context.Background(), RedisClient, Customer_UAT{Key: request.Key}.RedisKey())
+	entry, entryErr := getJSONWithMongoFallback[Customer_UAT](context.Background(), Customer_UAT{Key: request.Key}.RedisKey(), Mdb_Customer_UAT, bson.M{"Key": request.Key})
 	if redisx.IsNil(entryErr) {
 		err = errors.New("key is not created")
 		return Id, err
@@ -4343,7 +4343,7 @@ func (Uc *UserControl) Customer_UAT_Get(Key string) (entries []Customer_UAT, err
 		}
 		return entries, nil
 	} else {
-		entry, entryErr := redisx.GetJSON[Customer_UAT](context.Background(), RedisClient, Customer_UAT{Key: Key}.RedisKey())
+		entry, entryErr := getJSONWithMongoFallback[Customer_UAT](context.Background(), Customer_UAT{Key: Key}.RedisKey(), Mdb_Customer_UAT, bson.M{"Key": Key})
 		if redisx.IsNil(entryErr) {
 			err = errors.New("key does not exist")
 			return entries, err
@@ -4404,7 +4404,7 @@ func (Uc *UserControl) Customer_UAT_Delete(Login, Key string) (err error) {
 		err = errors.New("key cannot be empty")
 		return err
 	}
-	entry, entryErr := redisx.GetJSON[Customer_UAT](context.Background(), RedisClient, Customer_UAT{Key: Key}.RedisKey())
+	entry, entryErr := getJSONWithMongoFallback[Customer_UAT](context.Background(), Customer_UAT{Key: Key}.RedisKey(), Mdb_Customer_UAT, bson.M{"Key": Key})
 	if redisx.IsNil(entryErr) {
 		err = errors.New("entry does not exist")
 		return err
@@ -4448,7 +4448,7 @@ func (Uc *UserControl) Customer_DND_Add(Login string, request Customer_DND_AddRe
 	//check if key already used
 	{
 		chkCtx, chkCancel := context.WithTimeout(context.Background(), 10*time.Second)
-		_, chkErr := redisx.GetJSON[Customer_DND](chkCtx, RedisClient, Customer_DND{Key: request.Key}.RedisKey())
+		_, chkErr := getJSONWithMongoFallback[Customer_DND](chkCtx, Customer_DND{Key: request.Key}.RedisKey(), Mdb_Customer_DND, bson.M{"Key": request.Key})
 		chkCancel()
 		if chkErr == nil {
 			err = errors.New("key already exist")
@@ -4501,7 +4501,7 @@ func (Uc *UserControl) Customer_DND_Edit(Login string, request Customer_DND_Edit
 		err = errors.New("key cannot be empty")
 		return Id, err
 	}
-	entry, entryErr := redisx.GetJSON[Customer_DND](context.Background(), RedisClient, Customer_DND{Key: request.Key}.RedisKey())
+	entry, entryErr := getJSONWithMongoFallback[Customer_DND](context.Background(), Customer_DND{Key: request.Key}.RedisKey(), Mdb_Customer_DND, bson.M{"Key": request.Key})
 	if redisx.IsNil(entryErr) {
 		err = errors.New("key is not created")
 		return Id, err
@@ -4569,7 +4569,7 @@ func (Uc *UserControl) Customer_DND_Get(Key string) (entries []Customer_DND, err
 		}
 		return entries, nil
 	} else {
-		entry, entryErr := redisx.GetJSON[Customer_DND](context.Background(), RedisClient, Customer_DND{Key: Key}.RedisKey())
+		entry, entryErr := getJSONWithMongoFallback[Customer_DND](context.Background(), Customer_DND{Key: Key}.RedisKey(), Mdb_Customer_DND, bson.M{"Key": Key})
 		if redisx.IsNil(entryErr) {
 			err = errors.New("key does not exist")
 			return entries, err
@@ -4630,7 +4630,7 @@ func (Uc *UserControl) Customer_DND_Delete(Login, Key string) (err error) {
 		err = errors.New("key cannot be empty")
 		return err
 	}
-	entry, entryErr := redisx.GetJSON[Customer_DND](context.Background(), RedisClient, Customer_DND{Key: Key}.RedisKey())
+	entry, entryErr := getJSONWithMongoFallback[Customer_DND](context.Background(), Customer_DND{Key: Key}.RedisKey(), Mdb_Customer_DND, bson.M{"Key": Key})
 	if redisx.IsNil(entryErr) {
 		err = errors.New("entry does not exist")
 		return err
@@ -4674,7 +4674,7 @@ func (Uc *UserControl) Customer_Exclusion_Add(Login string, request Customer_Exc
 	//check if key already used
 	{
 		chkCtx, chkCancel := context.WithTimeout(context.Background(), 10*time.Second)
-		_, chkErr := redisx.GetJSON[Customer_Exclusion](chkCtx, RedisClient, Customer_Exclusion{Key: request.Key}.RedisKey())
+		_, chkErr := getJSONWithMongoFallback[Customer_Exclusion](chkCtx, Customer_Exclusion{Key: request.Key}.RedisKey(), Mdb_Customer_Exclusion, bson.M{"Key": request.Key})
 		chkCancel()
 		if chkErr == nil {
 			err = errors.New("key already exist")
@@ -4727,7 +4727,7 @@ func (Uc *UserControl) Customer_Exclusion_Edit(Login string, request Customer_Ex
 		err = errors.New("key cannot be empty")
 		return Id, err
 	}
-	entry, entryErr := redisx.GetJSON[Customer_Exclusion](context.Background(), RedisClient, Customer_Exclusion{Key: request.Key}.RedisKey())
+	entry, entryErr := getJSONWithMongoFallback[Customer_Exclusion](context.Background(), Customer_Exclusion{Key: request.Key}.RedisKey(), Mdb_Customer_Exclusion, bson.M{"Key": request.Key})
 	if redisx.IsNil(entryErr) {
 		err = errors.New("key is not created")
 		return Id, err
@@ -4795,7 +4795,7 @@ func (Uc *UserControl) Customer_Exclusion_Get(Key string) (entries []Customer_Ex
 		}
 		return entries, nil
 	} else {
-		entry, entryErr := redisx.GetJSON[Customer_Exclusion](context.Background(), RedisClient, Customer_Exclusion{Key: Key}.RedisKey())
+		entry, entryErr := getJSONWithMongoFallback[Customer_Exclusion](context.Background(), Customer_Exclusion{Key: Key}.RedisKey(), Mdb_Customer_Exclusion, bson.M{"Key": Key})
 		if redisx.IsNil(entryErr) {
 			err = errors.New("key does not exist")
 			return entries, err
@@ -4856,7 +4856,7 @@ func (Uc *UserControl) Customer_Exclusion_Delete(Login, Key string) (err error) 
 		err = errors.New("key cannot be empty")
 		return err
 	}
-	entry, entryErr := redisx.GetJSON[Customer_Exclusion](context.Background(), RedisClient, Customer_Exclusion{Key: Key}.RedisKey())
+	entry, entryErr := getJSONWithMongoFallback[Customer_Exclusion](context.Background(), Customer_Exclusion{Key: Key}.RedisKey(), Mdb_Customer_Exclusion, bson.M{"Key": Key})
 	if redisx.IsNil(entryErr) {
 		err = errors.New("entry does not exist")
 		return err
@@ -4899,7 +4899,7 @@ func (Uc *UserControl) Customer_COS_Exclusion_Add(Login string, request Customer
 	//check if key already used
 	{
 		chkCtx, chkCancel := context.WithTimeout(context.Background(), 10*time.Second)
-		_, chkErr := redisx.GetJSON[Customer_COS_Exclusion](chkCtx, RedisClient, Customer_COS_Exclusion{Key: request.Key}.RedisKey())
+		_, chkErr := getJSONWithMongoFallback[Customer_COS_Exclusion](chkCtx, Customer_COS_Exclusion{Key: request.Key}.RedisKey(), Mdb_Customer_COS_Exclusion, bson.M{"Key": request.Key})
 		chkCancel()
 		if chkErr == nil {
 			err = errors.New("key already exist")
@@ -4952,7 +4952,7 @@ func (Uc *UserControl) Customer_COS_Exclusion_Edit(Login string, request Custome
 		err = errors.New("key cannot be empty")
 		return Id, err
 	}
-	entry, entryErr := redisx.GetJSON[Customer_COS_Exclusion](context.Background(), RedisClient, Customer_COS_Exclusion{Key: request.Key}.RedisKey())
+	entry, entryErr := getJSONWithMongoFallback[Customer_COS_Exclusion](context.Background(), Customer_COS_Exclusion{Key: request.Key}.RedisKey(), Mdb_Customer_COS_Exclusion, bson.M{"Key": request.Key})
 	if redisx.IsNil(entryErr) {
 		err = errors.New("key is not created")
 		return Id, err
@@ -5020,7 +5020,7 @@ func (Uc *UserControl) Customer_COS_Exclusion_Get(Key string) (entries []Custome
 		}
 		return entries, nil
 	} else {
-		entry, entryErr := redisx.GetJSON[Customer_COS_Exclusion](context.Background(), RedisClient, Customer_COS_Exclusion{Key: Key}.RedisKey())
+		entry, entryErr := getJSONWithMongoFallback[Customer_COS_Exclusion](context.Background(), Customer_COS_Exclusion{Key: Key}.RedisKey(), Mdb_Customer_COS_Exclusion, bson.M{"Key": Key})
 		if redisx.IsNil(entryErr) {
 			err = errors.New("key does not exist")
 			return entries, err
@@ -5081,7 +5081,7 @@ func (Uc *UserControl) Customer_COS_Exclusion_Delete(Login, Key string) (err err
 		err = errors.New("key cannot be empty")
 		return err
 	}
-	entry, entryErr := redisx.GetJSON[Customer_COS_Exclusion](context.Background(), RedisClient, Customer_COS_Exclusion{Key: Key}.RedisKey())
+	entry, entryErr := getJSONWithMongoFallback[Customer_COS_Exclusion](context.Background(), Customer_COS_Exclusion{Key: Key}.RedisKey(), Mdb_Customer_COS_Exclusion, bson.M{"Key": Key})
 	if redisx.IsNil(entryErr) {
 		err = errors.New("entry does not exist")
 		return err
@@ -5125,7 +5125,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_Add(Login string, request Custom
 	//check if key already used
 	{
 		chkCtx, chkCancel := context.WithTimeout(context.Background(), 10*time.Second)
-		_, chkErr := redisx.GetJSON[Customer_Loyalty_Account](chkCtx, RedisClient, Customer_Loyalty_Account{Key: request.Key}.RedisKey())
+		_, chkErr := getJSONWithMongoFallback[Customer_Loyalty_Account](chkCtx, Customer_Loyalty_Account{Key: request.Key}.RedisKey(), Mdb_Customer_Loyalty_Account, bson.M{"Key": request.Key})
 		chkCancel()
 		if chkErr == nil {
 			err = errors.New("key already exist")
@@ -5135,7 +5135,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_Add(Login string, request Custom
 	//check exclusion list
 	{
 		chkCtx, chkCancel := context.WithTimeout(context.Background(), 10*time.Second)
-		_, chkErr := redisx.GetJSON[Customer_Exclusion](chkCtx, RedisClient, Customer_Exclusion{Key: request.Key}.RedisKey())
+		_, chkErr := getJSONWithMongoFallback[Customer_Exclusion](chkCtx, Customer_Exclusion{Key: request.Key}.RedisKey(), Mdb_Customer_Exclusion, bson.M{"Key": request.Key})
 		chkCancel()
 		if chkErr == nil {
 			err = errors.New("customer is included in the exclusion list")
@@ -5145,7 +5145,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_Add(Login string, request Custom
 	//check COS exclusion list
 	{
 		chkCtx, chkCancel := context.WithTimeout(context.Background(), 10*time.Second)
-		_, chkErr := redisx.GetJSON[Customer_COS_Exclusion](chkCtx, RedisClient, Customer_COS_Exclusion{Key: request.COS}.RedisKey())
+		_, chkErr := getJSONWithMongoFallback[Customer_COS_Exclusion](chkCtx, Customer_COS_Exclusion{Key: request.COS}.RedisKey(), Mdb_Customer_COS_Exclusion, bson.M{"Key": request.COS})
 		chkCancel()
 		if chkErr == nil {
 			err = errors.New("customer is included in the cos exclusion list")
@@ -5305,7 +5305,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_Edit(Login string, request Custo
 		err = errors.New("key cannot be empty")
 		return Id, err
 	}
-	entry, entryErr := redisx.GetJSON[Customer_Loyalty_Account](context.Background(), RedisClient, Customer_Loyalty_Account{Key: request.Key}.RedisKey())
+	entry, entryErr := getJSONWithMongoFallback[Customer_Loyalty_Account](context.Background(), Customer_Loyalty_Account{Key: request.Key}.RedisKey(), Mdb_Customer_Loyalty_Account, bson.M{"Key": request.Key})
 	if redisx.IsNil(entryErr) {
 		err = errors.New("key is not created")
 		return Id, err
@@ -5325,7 +5325,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_Edit(Login string, request Custo
 	//check exclusion list
 	{
 		chkCtx, chkCancel := context.WithTimeout(context.Background(), 10*time.Second)
-		_, chkErr := redisx.GetJSON[Customer_Exclusion](chkCtx, RedisClient, Customer_Exclusion{Key: request.Key}.RedisKey())
+		_, chkErr := getJSONWithMongoFallback[Customer_Exclusion](chkCtx, Customer_Exclusion{Key: request.Key}.RedisKey(), Mdb_Customer_Exclusion, bson.M{"Key": request.Key})
 		chkCancel()
 		if chkErr == nil {
 			Uc.Customer_Loyalty_Account_Delete(Login, request.Key)
@@ -5336,7 +5336,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_Edit(Login string, request Custo
 	//check COS exclusion list
 	{
 		chkCtx, chkCancel := context.WithTimeout(context.Background(), 10*time.Second)
-		_, chkErr := redisx.GetJSON[Customer_COS_Exclusion](chkCtx, RedisClient, Customer_COS_Exclusion{Key: request.COS}.RedisKey())
+		_, chkErr := getJSONWithMongoFallback[Customer_COS_Exclusion](chkCtx, Customer_COS_Exclusion{Key: request.COS}.RedisKey(), Mdb_Customer_COS_Exclusion, bson.M{"Key": request.COS})
 		chkCancel()
 		if chkErr == nil {
 			Uc.Customer_Loyalty_Account_Delete(Login, request.Key)
@@ -5546,13 +5546,8 @@ func (Uc *UserControl) Customer_Loyalty_Account_Edit(Login string, request Custo
 	return Id, nil
 }
 
-// getJSONWithMongoFallback is a TESTING/DIAGNOSTIC read-through helper. It tries
-// Redis first and, on a Redis MISS (redis.Nil), falls back to Mongo (the source
-// of truth) and re-populates the cache best-effort. A genuine Redis error is
-// surfaced unchanged. When the document is absent in BOTH stores it returns
-// redis.Nil, so existing redisx.IsNil(...) callers keep treating it as
-// "does not exist". It logs every Mongo-served read so UAT misses are visible.
-// Remove once the Redis preload/consistency issue on UAT is resolved.
+// getJSONWithMongoFallback is a read-through helper. It tries Redis first and, on a Redis MISS (redis.Nil), falls back to Mongo (the source
+// of truth) and re-populates the cache best-effort. 
 func getJSONWithMongoFallback[T any](ctx context.Context, redisKey string, repo *mongox.Repository, filter bson.M) (T, error) {
 	v, err := redisx.GetJSON[T](ctx, RedisClient, redisKey)
 	if err == nil {
@@ -5752,7 +5747,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_Delete(Login, Key string) (err e
 		err = errors.New("key cannot be empty")
 		return err
 	}
-	entry, entryErr := redisx.GetJSON[Customer_Loyalty_Account](context.Background(), RedisClient, Customer_Loyalty_Account{Key: Key}.RedisKey())
+	entry, entryErr := getJSONWithMongoFallback[Customer_Loyalty_Account](context.Background(), Customer_Loyalty_Account{Key: Key}.RedisKey(), Mdb_Customer_Loyalty_Account, bson.M{"Key": Key})
 	if redisx.IsNil(entryErr) {
 		err = errors.New("entry does not exist")
 		return err
@@ -5989,7 +5984,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_GetRedemption_Rules(MSISDN strin
 		return Redemption_Rules, errors.New("msisdn cannot be empty")
 	}
 	//get loyalty account detail
-	loyalty_account, loyaltyAccErr := redisx.GetJSON[Customer_Loyalty_Account](context.Background(), RedisClient, Customer_Loyalty_Account{Key: MSISDN}.RedisKey())
+	loyalty_account, loyaltyAccErr := getJSONWithMongoFallback[Customer_Loyalty_Account](context.Background(), Customer_Loyalty_Account{Key: MSISDN}.RedisKey(), Mdb_Customer_Loyalty_Account, bson.M{"Key": MSISDN})
 	if redisx.IsNil(loyaltyAccErr) {
 		return Redemption_Rules, errors.New("loyalty account does not exist")
 	}
@@ -6035,7 +6030,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_GetEarning_Rule(MSISDN string) (
 		return Earning_Rules, errors.New("msisdn cannot be empty")
 	}
 	//get loyalty account detail
-	loyalty_account, loyaltyAccErr := redisx.GetJSON[Customer_Loyalty_Account](context.Background(), RedisClient, Customer_Loyalty_Account{Key: MSISDN}.RedisKey())
+	loyalty_account, loyaltyAccErr := getJSONWithMongoFallback[Customer_Loyalty_Account](context.Background(), Customer_Loyalty_Account{Key: MSISDN}.RedisKey(), Mdb_Customer_Loyalty_Account, bson.M{"Key": MSISDN})
 	if redisx.IsNil(loyaltyAccErr) {
 		return Earning_Rules, errors.New("loyalty account does not exist")
 	}
@@ -6156,7 +6151,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 	response.Points_To_Redeem = request.Points_To_Redeem
 
 	//get loyalty account detail
-	loyalty_Account, loyaltyAccErr := redisx.GetJSON[Customer_Loyalty_Account](context.Background(), RedisClient, Customer_Loyalty_Account{Key: request.MSISDN}.RedisKey())
+	loyalty_Account, loyaltyAccErr := getJSONWithMongoFallback[Customer_Loyalty_Account](context.Background(), Customer_Loyalty_Account{Key: request.MSISDN}.RedisKey(), Mdb_Customer_Loyalty_Account, bson.M{"Key": request.MSISDN})
 	if redisx.IsNil(loyaltyAccErr) {
 		response.Status = "failed"
 		response.StatusCode = http.StatusBadRequest
@@ -7312,7 +7307,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 	response.Points_To_Redeem = request.Points_To_Redeem
 
 	//get loyalty account detail
-	loyalty_Account, loyaltyAccErr := redisx.GetJSON[Customer_Loyalty_Account](context.Background(), RedisClient, Customer_Loyalty_Account{Key: request.MSISDN}.RedisKey())
+	loyalty_Account, loyaltyAccErr := getJSONWithMongoFallback[Customer_Loyalty_Account](context.Background(), Customer_Loyalty_Account{Key: request.MSISDN}.RedisKey(), Mdb_Customer_Loyalty_Account, bson.M{"Key": request.MSISDN})
 	if redisx.IsNil(loyaltyAccErr) {
 		response.Status = "failed"
 		response.StatusCode = http.StatusBadRequest
@@ -8545,7 +8540,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 	response.EventDetailCode = request.EventDetailCode
 
 	//validate loyalty account
-	loyalty_account, loyaltyAccErr := redisx.GetJSON[Customer_Loyalty_Account](context.Background(), RedisClient, Customer_Loyalty_Account{Key: request.MSISDN}.RedisKey())
+	loyalty_account, loyaltyAccErr := getJSONWithMongoFallback[Customer_Loyalty_Account](context.Background(), Customer_Loyalty_Account{Key: request.MSISDN}.RedisKey(), Mdb_Customer_Loyalty_Account, bson.M{"Key": request.MSISDN})
 	if redisx.IsNil(loyaltyAccErr) {
 		response.Status = "failed"
 		response.StatusCode = http.StatusBadRequest
@@ -8587,7 +8582,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 	//check exclusion list
 	{
 		chkCtx, chkCancel := context.WithTimeout(context.Background(), 10*time.Second)
-		_, chkErr := redisx.GetJSON[Customer_Exclusion](chkCtx, RedisClient, Customer_Exclusion{Key: loyalty_account.Key}.RedisKey())
+		_, chkErr := getJSONWithMongoFallback[Customer_Exclusion](chkCtx, Customer_Exclusion{Key: loyalty_account.Key}.RedisKey(), Mdb_Customer_Exclusion, bson.M{"Key": loyalty_account.Key})
 		chkCancel()
 		if chkErr == nil {
 			response.Status = "failed"
@@ -8603,7 +8598,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 	//check COS exclusion list
 	{
 		chkCtx, chkCancel := context.WithTimeout(context.Background(), 10*time.Second)
-		_, chkErr := redisx.GetJSON[Customer_COS_Exclusion](chkCtx, RedisClient, Customer_COS_Exclusion{Key: loyalty_account.COS}.RedisKey())
+		_, chkErr := getJSONWithMongoFallback[Customer_COS_Exclusion](chkCtx, Customer_COS_Exclusion{Key: loyalty_account.COS}.RedisKey(), Mdb_Customer_COS_Exclusion, bson.M{"Key": loyalty_account.COS})
 		chkCancel()
 		if chkErr == nil {
 			response.Status = "failed"
@@ -8856,7 +8851,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 		YYYY, MM, _, _, _, _, _ := GetTimeParts(time.Now())
 		//prepare the monthly points detail
 		var PointsDetail Customer_Loyalty_Account_Points_Detail
-		PointsDetail, pdErr := redisx.GetJSON[Customer_Loyalty_Account_Points_Detail](context.Background(), RedisClient, Customer_Loyalty_Account_Points_Detail{Key: request.MSISDN + "|" + YYYY + MM}.RedisKey())
+		PointsDetail, pdErr := getJSONWithMongoFallback[Customer_Loyalty_Account_Points_Detail](context.Background(), Customer_Loyalty_Account_Points_Detail{Key: request.MSISDN + "|" + YYYY + MM}.RedisKey(), Mdb_Customer_Loyalty_Account_Points_Detail, bson.M{"Key": request.MSISDN + "|" + YYYY + MM})
 		if redisx.IsNil(pdErr) {
 			PointsDetail.Key = request.MSISDN + "|" + YYYY + MM
 			PointsDetail.Year_Month = YYYY + MM
@@ -9075,7 +9070,7 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 		return
 	}
 	//get loyalty account detail
-	loyalty_Account, loyaltyAccErr := redisx.GetJSON[Customer_Loyalty_Account](context.Background(), RedisClient, Customer_Loyalty_Account{Key: request.MSISDN}.RedisKey())
+	loyalty_Account, loyaltyAccErr := getJSONWithMongoFallback[Customer_Loyalty_Account](context.Background(), Customer_Loyalty_Account{Key: request.MSISDN}.RedisKey(), Mdb_Customer_Loyalty_Account, bson.M{"Key": request.MSISDN})
 	if redisx.IsNil(loyaltyAccErr) {
 		response.Status = "failed"
 		response.StatusCode = http.StatusBadRequest
@@ -9116,7 +9111,7 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 	}
 	{
 		chkCtx, chkCancel := context.WithTimeout(context.Background(), 10*time.Second)
-		_, chkErr := redisx.GetJSON[Customer_Exclusion](chkCtx, RedisClient, Customer_Exclusion{Key: loyalty_Account.Key}.RedisKey())
+		_, chkErr := getJSONWithMongoFallback[Customer_Exclusion](chkCtx, Customer_Exclusion{Key: loyalty_Account.Key}.RedisKey(), Mdb_Customer_Exclusion, bson.M{"Key": loyalty_Account.Key})
 		chkCancel()
 		if chkErr == nil {
 			response.Status = "failed"
@@ -9132,7 +9127,7 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 	//check COS exclusion list
 	{
 		chkCtx, chkCancel := context.WithTimeout(context.Background(), 10*time.Second)
-		_, chkErr := redisx.GetJSON[Customer_COS_Exclusion](chkCtx, RedisClient, Customer_COS_Exclusion{Key: loyalty_Account.COS}.RedisKey())
+		_, chkErr := getJSONWithMongoFallback[Customer_COS_Exclusion](chkCtx, Customer_COS_Exclusion{Key: loyalty_Account.COS}.RedisKey(), Mdb_Customer_COS_Exclusion, bson.M{"Key": loyalty_Account.COS})
 		chkCancel()
 		if chkErr == nil {
 			response.Status = "failed"
@@ -9241,7 +9236,7 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 			//fmt.Println(d.Format("2006-01-02"))
 			YYYY, MM, _, _, _, _, _ := GetTimeParts(d)
 			//prepare the monthly points detail
-			PointsDetail, pdErr := redisx.GetJSON[Customer_Loyalty_Account_Points_Detail](context.Background(), RedisClient, Customer_Loyalty_Account_Points_Detail{Key: request.MSISDN + "|" + YYYY + MM}.RedisKey())
+			PointsDetail, pdErr := getJSONWithMongoFallback[Customer_Loyalty_Account_Points_Detail](context.Background(), Customer_Loyalty_Account_Points_Detail{Key: request.MSISDN + "|" + YYYY + MM}.RedisKey(), Mdb_Customer_Loyalty_Account_Points_Detail, bson.M{"Key": request.MSISDN + "|" + YYYY + MM})
 			if pdErr != nil && !redisx.IsNil(pdErr) {
 				response.Status = "failed"
 				response.StatusCode = http.StatusBadRequest
@@ -9366,7 +9361,7 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 	response.Opt_Status = request.Opt_Status
 
 	//validate loyalty account
-	loyalty_account, loyaltyAccErr := redisx.GetJSON[Customer_Loyalty_Account](context.Background(), RedisClient, Customer_Loyalty_Account{Key: request.MSISDN}.RedisKey())
+	loyalty_account, loyaltyAccErr := getJSONWithMongoFallback[Customer_Loyalty_Account](context.Background(), Customer_Loyalty_Account{Key: request.MSISDN}.RedisKey(), Mdb_Customer_Loyalty_Account, bson.M{"Key": request.MSISDN})
 	if redisx.IsNil(loyaltyAccErr) {
 		response.Request_Status = "failed"
 		response.Request_StatusCode = http.StatusBadRequest
@@ -9405,7 +9400,7 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 	//check exclusion list
 	{
 		chkCtx, chkCancel := context.WithTimeout(context.Background(), 10*time.Second)
-		_, chkErr := redisx.GetJSON[Customer_Exclusion](chkCtx, RedisClient, Customer_Exclusion{Key: loyalty_account.Key}.RedisKey())
+		_, chkErr := getJSONWithMongoFallback[Customer_Exclusion](chkCtx, Customer_Exclusion{Key: loyalty_account.Key}.RedisKey(), Mdb_Customer_Exclusion, bson.M{"Key": loyalty_account.Key})
 		chkCancel()
 		if chkErr == nil {
 			response.Request_Status = "failed"
@@ -9421,7 +9416,7 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 	//check COS exclusion list
 	{
 		chkCtx, chkCancel := context.WithTimeout(context.Background(), 10*time.Second)
-		_, chkErr := redisx.GetJSON[Customer_COS_Exclusion](chkCtx, RedisClient, Customer_COS_Exclusion{Key: loyalty_account.COS}.RedisKey())
+		_, chkErr := getJSONWithMongoFallback[Customer_COS_Exclusion](chkCtx, Customer_COS_Exclusion{Key: loyalty_account.COS}.RedisKey(), Mdb_Customer_COS_Exclusion, bson.M{"Key": loyalty_account.COS})
 		chkCancel()
 		if chkErr == nil {
 			response.Request_Status = "failed"
@@ -9545,7 +9540,7 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 			log.Println("failed to get data")
 			return
 		}
-		loyalty_account, loyaltyAccErr2 := redisx.GetJSON[Customer_Loyalty_Account](context.Background(), RedisClient, Customer_Loyalty_Account{Key: request.MSISDN}.RedisKey())
+		loyalty_account, loyaltyAccErr2 := getJSONWithMongoFallback[Customer_Loyalty_Account](context.Background(), Customer_Loyalty_Account{Key: request.MSISDN}.RedisKey(), Mdb_Customer_Loyalty_Account, bson.M{"Key": request.MSISDN})
 		if redisx.IsNil(loyaltyAccErr2) {
 			response.Request_Status = "failed"
 			response.Request_StatusCode = http.StatusBadRequest
@@ -10765,7 +10760,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_GetAwardedPoints(startDate, endD
 				continue
 			}
 			existing := results[doc.MSISDN]
-			cusAccount, caErr := redisx.GetJSON[Customer_Loyalty_Account](context.Background(), RedisClient, Customer_Loyalty_Account{Key: doc.MSISDN}.RedisKey())
+			cusAccount, caErr := getJSONWithMongoFallback[Customer_Loyalty_Account](context.Background(), Customer_Loyalty_Account{Key: doc.MSISDN}.RedisKey(), Mdb_Customer_Loyalty_Account, bson.M{"Key": doc.MSISDN})
 			if redisx.IsNil(caErr) {
 				fmt.Println("key does not exist")
 			} else if caErr != nil {
@@ -10974,7 +10969,7 @@ func (Uc *UserControl) ReadAccountLogsDetailsFromMongoDB(Type string, startDate,
 }
 
 func (Uc *UserControl) EvaluateAndUpdate_CustomerLoyaltyLevel(Login string, Account_Key string) (New_Loyalty_Level_Key string, err error) {
-	loyalty_account, laErr := redisx.GetJSON[Customer_Loyalty_Account](context.Background(), RedisClient, Customer_Loyalty_Account{Key: Account_Key}.RedisKey())
+	loyalty_account, laErr := getJSONWithMongoFallback[Customer_Loyalty_Account](context.Background(), Customer_Loyalty_Account{Key: Account_Key}.RedisKey(), Mdb_Customer_Loyalty_Account, bson.M{"Key": Account_Key})
 	if redisx.IsNil(laErr) {
 		return New_Loyalty_Level_Key, errors.New("loyalty account does not exist")
 	}
@@ -11332,7 +11327,7 @@ func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account
 			}
 
 		}
-		entry, entryErr := redisx.GetJSON[Customer_Loyalty_Account](context.Background(), RedisClient, Customer_Loyalty_Account{Key: account.Key}.RedisKey())
+		entry, entryErr := getJSONWithMongoFallback[Customer_Loyalty_Account](context.Background(), Customer_Loyalty_Account{Key: account.Key}.RedisKey(), Mdb_Customer_Loyalty_Account, bson.M{"Key": account.Key})
 		if redisx.IsNil(entryErr) {
 			err = errors.New("key does not exist")
 		} else if entryErr != nil {
