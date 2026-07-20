@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-func (GWClient *Lendme_Client) generic_http_call(request Generic_http_call_Request) (response Generic_http_call_Response, err error) {
+func (GWClient *Loyalty_Client) generic_http_call(request Generic_http_call_Request) (response Generic_http_call_Response, err error) {
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	if len(request.Load) > 0 {
 		request.Req, err = http.NewRequest(request.Method, request.Url, bytes.NewBuffer(request.Load))
@@ -67,7 +67,7 @@ type Customer_Loyalty_Account_Data struct {
 	Data []Customer_Loyalty_Account `bson:"Data" json:"Data"`
 }
 
-func (GWClient *Lendme_Client) Loyalty_Account_Get(MSISDN string) (response Customer_Loyalty_Account, err error) {
+func (GWClient *Loyalty_Client) Loyalty_Account_Get(MSISDN string) (response Customer_Loyalty_Account, err error) {
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	http_req := Generic_http_call_Request{
 		Url:             GWClient.Protocol + "://" + GWClient.Hostname + ":" + GWClient.LoyaltyPort + "/" + GWClient.LoyaltyModule + "/" + GWClient.LoyaltyVersion + "/HTTP_Customer_Loyalty_Account/",
@@ -130,7 +130,7 @@ func (GWClient *Lendme_Client) Loyalty_Account_Get(MSISDN string) (response Cust
 	return
 }
 
-func (GWClient *Lendme_Client) Loyalty_Account_DebitPoints(request Loyalty_AccountDebitPoints_Request) (response Loyalty_AccountDebitPoints_log, err error) {
+func (GWClient *Loyalty_Client) Loyalty_Account_DebitPoints(request Loyalty_AccountDebitPoints_Request) (response Loyalty_AccountDebitPoints_log, err error) {
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	request_byte, err := json.Marshal(request)
 	if err != nil {
@@ -184,7 +184,7 @@ func (GWClient *Lendme_Client) Loyalty_Account_DebitPoints(request Loyalty_Accou
 	return
 }
 
-func (GWClient *Lendme_Client) Loyalty_Products_Catalogue(MSISDN string) (response lendme.API_Standard_response, err error) {
+func (GWClient *Loyalty_Client) Loyalty_Products_Catalogue(MSISDN string) (response lendme.API_Standard_response, err error) {
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	http_req := Generic_http_call_Request{
 		Url:             GWClient.Protocol + "://" + GWClient.Hostname + ":" + GWClient.LoyaltyPort + "/" + GWClient.LoyaltyModule + "/" + GWClient.LoyaltyVersion + "/HTTP_Loyalty_Products_Catalogue/",
@@ -234,7 +234,7 @@ func (GWClient *Lendme_Client) Loyalty_Products_Catalogue(MSISDN string) (respon
 	return response, nil
 }
 
-func (GWClient *Lendme_Client) Loyalty_RedeemRequest(request lendme.Loyalty_Redemption_Request) (response lendme.Loyalty_Redemption_log, err error) {
+func (GWClient *Loyalty_Client) Loyalty_RedeemRequest(request lendme.Loyalty_Redemption_Request) (response lendme.Loyalty_Redemption_log, err error) {
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	request_byte, err := json.Marshal(request)
 	if err != nil {
@@ -288,7 +288,7 @@ func (GWClient *Lendme_Client) Loyalty_RedeemRequest(request lendme.Loyalty_Rede
 	return response, nil
 }
 
-func (GWClient *Lendme_Client) Loyalty_Level_Get() (response lendme.API_Standard_response, err error) {
+func (GWClient *Loyalty_Client) Loyalty_Level_Get() (response lendme.API_Standard_response, err error) {
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	http_req := Generic_http_call_Request{
 		Url:    GWClient.Protocol + "://" + GWClient.Hostname + ":" + GWClient.LoyaltyPort + "/" + GWClient.LoyaltyModule + "/" + GWClient.LoyaltyVersion + "/HTTP_Loyalty_Level/",
@@ -337,7 +337,7 @@ func (GWClient *Lendme_Client) Loyalty_Level_Get() (response lendme.API_Standard
 	return response, nil
 }
 
-func (GWClient *Lendme_Client) Loyalty_Account_OptRequest(request lendme.Loyalty_Opt_Request) (response lendme.Loyalty_Status_log, err error) {
+func (GWClient *Loyalty_Client) Loyalty_Account_OptRequest(request lendme.Loyalty_Opt_Request) (response lendme.Loyalty_Status_log, err error) {
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	request_byte, err := json.Marshal(request)
 	if err != nil {

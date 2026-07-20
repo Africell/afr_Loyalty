@@ -6,13 +6,10 @@ import (
 	"time"
 )
 
-type Lendme_Client struct {
+type Loyalty_Client struct {
 	Protocol        string //http or https
 	Hostname        string //name or IP
-	LendmePort      string
 	LoyaltyPort     string
-	LendMeModule    string
-	LendMeVersion   string
 	LoyaltyModule   string
 	LoyaltyVersion  string
 	S2S_AccessToken string        //system to system access token
@@ -21,25 +18,19 @@ type Lendme_Client struct {
 }
 
 type LendMe struct {
-	LendmeClient *Lendme_Client
+	LoyaltyClient *Loyalty_Client
 }
 
 func InitHostConfig(Protocol,
 	Hostname,
-	LendmePort,
 	LoyaltyPort,
-	LendMeModule,
-	LendMeVersion,
 	LoyaltyModule,
 	LoyaltyVersion,
 	S2S_AccessToken string,
-	Timeout time.Duration) (HostConfig Lendme_Client) {
+	Timeout time.Duration) (HostConfig Loyalty_Client) {
 	HostConfig.Protocol = Protocol
 	HostConfig.Hostname = Hostname
-	HostConfig.LendmePort = LendmePort
 	HostConfig.LoyaltyPort = LoyaltyPort
-	HostConfig.LendMeModule = LendMeModule
-	HostConfig.LendMeVersion = LendMeVersion
 	HostConfig.LoyaltyModule = LoyaltyModule
 	HostConfig.LoyaltyVersion = LoyaltyVersion
 	HostConfig.S2S_AccessToken = S2S_AccessToken
@@ -47,30 +38,27 @@ func InitHostConfig(Protocol,
 	return
 }
 
-func NewLendmeClient(Config Lendme_Client) (conn *LendMe) {
-	if Config.Hostname != "" && Config.LendmePort != "" {
+func NewLoyaltyClient(Config Loyalty_Client) (conn *LendMe) {
+	if Config.Hostname != "" && Config.LoyaltyPort != "" {
 		conn = new(LendMe)
-		conn.createLendmeClient(Config)
+		conn.createLoyaltyClient(Config)
 		auc := AuthCenterClient.NewAUCClient(*Config.AUC_client)
-		conn.LendmeClient.AUC_client = auc.AUCClient
-		conn.LendmeClient.S2S_AccessToken = auc.AUCClient.S2S_AccessToken
+		conn.LoyaltyClient.AUC_client = auc.AUCClient
+		conn.LoyaltyClient.S2S_AccessToken = auc.AUCClient.S2S_AccessToken
 	}
 	return
 }
 
-func (conn *LendMe) createLendmeClient(Config Lendme_Client) (err error) {
-	if conn.LendmeClient == nil {
-		conn.LendmeClient = new(Lendme_Client)
-		conn.LendmeClient.Protocol = Config.Protocol
-		conn.LendmeClient.Hostname = Config.Hostname
-		conn.LendmeClient.LendmePort = Config.LendmePort
-		conn.LendmeClient.LoyaltyPort = Config.LoyaltyPort
-		conn.LendmeClient.LendMeModule = Config.LendMeModule
-		conn.LendmeClient.LendMeVersion = Config.LendMeVersion
-		conn.LendmeClient.LoyaltyModule = Config.LoyaltyModule
-		conn.LendmeClient.LoyaltyVersion = Config.LoyaltyVersion
-		conn.LendmeClient.S2S_AccessToken = Config.S2S_AccessToken
-		conn.LendmeClient.Timeout = Config.Timeout
+func (conn *LendMe) createLoyaltyClient(Config Loyalty_Client) (err error) {
+	if conn.LoyaltyClient == nil {
+		conn.LoyaltyClient = new(Loyalty_Client)
+		conn.LoyaltyClient.Protocol = Config.Protocol
+		conn.LoyaltyClient.Hostname = Config.Hostname
+		conn.LoyaltyClient.LoyaltyPort = Config.LoyaltyPort
+		conn.LoyaltyClient.LoyaltyModule = Config.LoyaltyModule
+		conn.LoyaltyClient.LoyaltyVersion = Config.LoyaltyVersion
+		conn.LoyaltyClient.S2S_AccessToken = Config.S2S_AccessToken
+		conn.LoyaltyClient.Timeout = Config.Timeout
 	}
 	return nil
 }
