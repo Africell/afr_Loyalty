@@ -30,6 +30,8 @@ type UserControl struct {
 	SpinAndWin  *SpinAndWin_client.SpinAndWin
 	APGW        *APGW.APGW
 	Lendme      *LendmeClient.LendMe
+
+	KafkaEventClient *KafkaClient
 }
 
 func NewUserControl() *UserControl {
@@ -50,6 +52,12 @@ func NewUserControl() *UserControl {
 		log.Fatal("redisx.New:", err)
 	}
 	log.Println("Redis connected")
+
+	// Kafka producer for loyalty transaction logs. Non-fatal
+	kafkaClient, err := NewKafkaClient()
+	if err != nil {
+		log.Println("Kafka client failed:", err)
+	}
 
 	App_AUCHostConfig := AuthCenterClient.InitHostConfig(Configuration.App_AUC.Protocol,
 		Configuration.App_AUC.Hostname,
@@ -181,6 +189,8 @@ func NewUserControl() *UserControl {
 		SpinAndWin:  SpinAndWin_client.NewSpinAndWinClient(SpinAndWinHostConfig),
 		APGW:        APGW.NewAPGWClient(APGW_config),
 		Lendme:      LendmeClient.NewLendmeClient(LendmeHostConfig),
+
+		KafkaEventClient: kafkaClient,
 	}
 	return UC
 }

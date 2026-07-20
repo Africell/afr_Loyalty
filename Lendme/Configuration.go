@@ -189,6 +189,12 @@ type ConfigType struct {
 		Version  string
 		Timeout  time.Duration
 	}
+	Kafka_Events struct {
+		KafkaBrokerUrls       string
+		KafkaClientId         string
+		CreateTopicsOnStartup bool
+		ReplicationFactor     int
+	}
 }
 
 func GetDefaultConfiguration() (err error) {
@@ -266,6 +272,12 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) { //lendme se
 	Configuration.Mongo.AuthSource = "admin"
 	Configuration.Mongo.AppName = "afr_Loyalty"
 	Configuration.DB_Name = "Loyalty_DB"
+
+	// Kafka producer (loyalty transaction logs). Brokers reused from MyAfricell (DRC live).
+	Configuration.Kafka_Events.KafkaBrokerUrls = "10.30.9.58:9094,10.30.9.59:9094,10.30.9.60:9094"
+	Configuration.Kafka_Events.KafkaClientId = "Loyalty_01"
+	Configuration.Kafka_Events.CreateTopicsOnStartup = true
+	Configuration.Kafka_Events.ReplicationFactor = 2
 	Configuration.LoyaltyProgramName = "Loyalty"
 
 	Configuration.IN.IP = "10.95.73.12" //"10.70.1.59"
@@ -396,6 +408,12 @@ func setDefaultConfiguration_DRC_Loyalty_UAT() (Configuration ConfigType) {
 	Configuration.Mongo.AuthSource = "admin"
 	Configuration.Mongo.AppName = "afr_Loyalty"
 	Configuration.DB_Name = "Loyalty_DB"
+
+	// Kafka producer (loyalty transaction logs). Brokers reused from MyAfricell (DRC UAT).
+	Configuration.Kafka_Events.KafkaBrokerUrls = "10.80.0.100:9096,10.80.0.101:9196,10.80.0.102:9296"
+	Configuration.Kafka_Events.KafkaClientId = "Loyalty_UAT_01"
+	Configuration.Kafka_Events.CreateTopicsOnStartup = true
+	Configuration.Kafka_Events.ReplicationFactor = 1
 
 	Configuration.IN.IP = "10.95.73.12" //"10.70.1.59"
 	Configuration.IN.Port = "8444"
@@ -2251,9 +2269,12 @@ func setDefaultConfiguration_Dev() (Configuration ConfigType) { //lendme service
 	Configuration.SMPP.Encoding = 1
 
 	Configuration.ISLoyaltyOptOutGracePeriodDays = 30
-	// Configuration.KafkaBrokerUrls = "kafka1:9092,kafka2:9092,kafka3:9092"
-	// Configuration.KafkaBrokerUrls = "kafka3:9092,kafka2:9092,kafka1:9092"
-	// Configuration.KafkaClientId = "LoyaltyLiveFeed"
+
+	// Kafka producer (loyalty transaction logs). Local dev broker via docker-compose.kafka.yml.
+	Configuration.Kafka_Events.KafkaBrokerUrls = "localhost:9092"
+	Configuration.Kafka_Events.KafkaClientId = "Loyalty_01"
+	Configuration.Kafka_Events.CreateTopicsOnStartup = true
+	Configuration.Kafka_Events.ReplicationFactor = 1
 
 	Configuration.Lendme_AUC.Protocol = "http"
 	Configuration.Lendme_AUC.Hostname = "localhost"
