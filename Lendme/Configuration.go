@@ -1281,7 +1281,7 @@ func setDefaultConfiguration_GM_UAT() (Configuration ConfigType) { //lendme serv
 	Configuration.Kafka_Events.KafkaClientId = "LoyaltyUAT"
 	Configuration.Kafka_Events.CreateTopicsOnStartup = true
 	Configuration.Kafka_Events.ReplicationFactor = 2
-	Configuration.Kafka_Events.KafkaOnlyLogging = false // Kafka-only: consumer owns the log DB write
+	Configuration.Kafka_Events.KafkaOnlyLogging = true // false: direct DB write/ dual-write if consumer is up; true: only the consumer write to the DB
 
 	return
 }
@@ -2287,6 +2287,7 @@ func setDefaultConfiguration_Dev() (Configuration ConfigType) { //lendme service
 	Configuration.Kafka_Events.KafkaClientId = "Loyalty_01"
 	Configuration.Kafka_Events.CreateTopicsOnStartup = true
 	Configuration.Kafka_Events.ReplicationFactor = 1
+	Configuration.Kafka_Events.KafkaOnlyLogging = false
 
 	Configuration.Lendme_AUC.Protocol = "http"
 	Configuration.Lendme_AUC.Hostname = "localhost"
