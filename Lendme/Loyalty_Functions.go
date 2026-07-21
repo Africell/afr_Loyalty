@@ -1,4 +1,4 @@
-﻿package Lendme
+package Lendme
 
 import (
 	"afr_ao_apgw_v2/APGWClientV2"
@@ -545,6 +545,9 @@ func (Uc *UserControl) Write_Loyalty_Level_Change_log(record Loyalty_Level_Chang
 }
 
 func (Uc *UserControl) Write_Loyalty_AccountCreditPoints_log(record Loyalty_AccountCreditPoints_log) {
+	if Configuration.Kafka_Events.KafkaOnlyLogging {
+		return
+	}
 	YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.ReceiveDate)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -581,6 +584,9 @@ func (Uc *UserControl) Write_Loyalty_Full_Expiry_log(record Loyalty_Full_Expiry_
 }
 
 func (Uc *UserControl) Write_Loyalty_Redemption_log(record Loyalty_Redemption_log) {
+	if Configuration.Kafka_Events.KafkaOnlyLogging {
+		return
+	}
 	YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.ReceiveDate)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -605,6 +611,9 @@ func (Uc *UserControl) Write_Loyalty_Account_Churned_log(record Customer_Loyalty
 }
 
 func (Uc *UserControl) Write_Loyalty_Status_log(record Loyalty_Status_log) {
+	if Configuration.Kafka_Events.KafkaOnlyLogging {
+		return
+	}
 	YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.StatusDate)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -617,6 +626,9 @@ func (Uc *UserControl) Write_Loyalty_Status_log(record Loyalty_Status_log) {
 }
 
 func (Uc *UserControl) Write_Loyalty_AccountDebitPoints_log(record Loyalty_AccountDebitPoints_log) {
+	if Configuration.Kafka_Events.KafkaOnlyLogging {
+		return
+	}
 	YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.ReceiveDate)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -6145,7 +6157,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_Redemption_log(*response)
-		chan_Loyalty_Redemption_log <- *response
+		enqueue_Loyalty_Redemption_log(*response)
 		return
 	}
 	//fill the request info
@@ -6166,7 +6178,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_Redemption_log(*response)
-		chan_Loyalty_Redemption_log <- *response
+		enqueue_Loyalty_Redemption_log(*response)
 		return
 	}
 	if loyaltyAccErr != nil {
@@ -6177,7 +6189,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_Redemption_log(*response)
-		chan_Loyalty_Redemption_log <- *response
+		enqueue_Loyalty_Redemption_log(*response)
 		return
 	}
 	response.Customer_Id = loyalty_Account.Customer_Id
@@ -6198,7 +6210,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_Redemption_log(*response)
-		chan_Loyalty_Redemption_log <- *response
+		enqueue_Loyalty_Redemption_log(*response)
 		return
 	}
 	if response.Opening_Available_Points < redemption_Rules.Min_Accumulated_Points {
@@ -6209,7 +6221,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_Redemption_log(*response)
-		chan_Loyalty_Redemption_log <- *response
+		enqueue_Loyalty_Redemption_log(*response)
 		return
 	}
 	response.Allow_Negative_Balance_ToRedeem = redemption_Rules.Allow_Negative_Balance_ToRedeem
@@ -6235,7 +6247,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		if IN_Response.Data.Balance < 0 {
@@ -6246,7 +6258,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 	}
@@ -6261,7 +6273,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 	}
@@ -6277,7 +6289,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		response.MinAvailableRequiredPoints = redemption_Rules.Available_MinPoints_for_Airtime
@@ -6289,7 +6301,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		if redemption_Rules.Bundles_Product_Catalogue_Channel == "" {
@@ -6300,7 +6312,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		if redemption_Rules.Airtime_EVC_Account == "" {
@@ -6311,7 +6323,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		//debit loyalty points
@@ -6323,7 +6335,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		//do the calculation
@@ -6343,7 +6355,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 				response.StatusDate = time.Now()
 				response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 				Uc.Write_Loyalty_Redemption_log(*response)
-				chan_Loyalty_Redemption_log <- *response
+				enqueue_Loyalty_Redemption_log(*response)
 				return
 			}
 		}
@@ -6356,7 +6368,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		//check if subscriber have enough points
@@ -6368,7 +6380,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 
@@ -6390,7 +6402,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		response.Closure_Awarded_Points = debit_Log.Closure_Awarded_Points
@@ -6420,7 +6432,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			//refund points
 			var refund_response Loyalty_AccountCreditPoints_log
 			var refundRequest Loyalty_AccountCreditPoints_Request
@@ -6442,7 +6454,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			//refund points
 			var refund_response Loyalty_AccountCreditPoints_log
 			var refundRequest Loyalty_AccountCreditPoints_Request
@@ -6520,7 +6532,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		response.MinRequiredPoints = redemption_Rules.Bundles_MinPoints
@@ -6532,7 +6544,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		//get bundles detail
@@ -6547,7 +6559,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		if len(bundle_response.Data) < 1 {
@@ -6558,7 +6570,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 
@@ -6574,7 +6586,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		//debit the loyalty points
@@ -6596,7 +6608,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		response.Closure_Awarded_Points = debit_Log.Closure_Awarded_Points
@@ -6626,7 +6638,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			//refund points
 			var refund_response Loyalty_AccountCreditPoints_log
 			var refundRequest Loyalty_AccountCreditPoints_Request
@@ -6648,7 +6660,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			//refund points
 			var refund_response Loyalty_AccountCreditPoints_log
 			var refundRequest Loyalty_AccountCreditPoints_Request
@@ -6898,7 +6910,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		response.MinAvailableRequiredPoints = redemption_Rules.Available_MinPoints_for_MobileMoney
@@ -6910,7 +6922,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		if redemption_Rules.MobileMoney_MerchantAccount == "" {
@@ -6921,7 +6933,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		//debit loyalty points
@@ -6933,7 +6945,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		//do the calculation
@@ -6953,7 +6965,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 				response.StatusDate = time.Now()
 				response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 				Uc.Write_Loyalty_Redemption_log(*response)
-				chan_Loyalty_Redemption_log <- *response
+				enqueue_Loyalty_Redemption_log(*response)
 				return
 			}
 		}
@@ -6966,7 +6978,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		//check if subscriber have enough points
@@ -6978,7 +6990,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		var Debit_Request Loyalty_AccountDebitPoints_Request
@@ -6999,7 +7011,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		response.Closure_Awarded_Points = debit_Log.Closure_Awarded_Points
@@ -7028,7 +7040,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			//refund points
 			var refund_response Loyalty_AccountCreditPoints_log
 			var refundRequest Loyalty_AccountCreditPoints_Request
@@ -7052,7 +7064,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			//refund points
 			var refund_response Loyalty_AccountCreditPoints_log
 			var refundRequest Loyalty_AccountCreditPoints_Request
@@ -7129,7 +7141,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		response.MinAvailableRequiredPoints = redemption_Rules.Available_MinPoints_for_SpinAndWin
@@ -7141,7 +7153,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		//debit loyalty points
@@ -7153,7 +7165,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		//do the calculation
@@ -7167,7 +7179,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		//check if subscriber have enough points
@@ -7179,7 +7191,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 
@@ -7201,7 +7213,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		response.Closure_Awarded_Points = debit_Log.Closure_Awarded_Points
@@ -7221,7 +7233,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			//refund points
 			var refund_response Loyalty_AccountCreditPoints_log
 			var refundRequest Loyalty_AccountCreditPoints_Request
@@ -7243,7 +7255,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			//refund points
 			var refund_response Loyalty_AccountCreditPoints_log
 			var refundRequest Loyalty_AccountCreditPoints_Request
@@ -7317,7 +7329,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_Redemption_log(*response)
-		chan_Loyalty_Redemption_log <- *response
+		enqueue_Loyalty_Redemption_log(*response)
 		return
 	}
 	//successful reply
@@ -7328,7 +7340,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 	response.StatusDate = time.Now()
 	response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 	Uc.Write_Loyalty_Redemption_log(*response)
-	chan_Loyalty_Redemption_log <- *response
+	enqueue_Loyalty_Redemption_log(*response)
 }
 func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Request_Header, request Loyalty_Redemption_Request, response *Loyalty_Redemption_log) {
 	response.ReceiveDate = time.Now()
@@ -7348,7 +7360,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_Redemption_log(*response)
-		chan_Loyalty_Redemption_log <- *response
+		enqueue_Loyalty_Redemption_log(*response)
 		return
 	}
 	//fill the request info
@@ -7369,7 +7381,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_Redemption_log(*response)
-		chan_Loyalty_Redemption_log <- *response
+		enqueue_Loyalty_Redemption_log(*response)
 		return
 	}
 	if loyaltyAccErr != nil {
@@ -7380,7 +7392,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_Redemption_log(*response)
-		chan_Loyalty_Redemption_log <- *response
+		enqueue_Loyalty_Redemption_log(*response)
 		return
 	}
 	response.Customer_Id = loyalty_Account.Customer_Id
@@ -7401,7 +7413,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_Redemption_log(*response)
-		chan_Loyalty_Redemption_log <- *response
+		enqueue_Loyalty_Redemption_log(*response)
 		return
 	}
 	if response.Opening_Available_Points < redemption_Rules.Min_Accumulated_Points {
@@ -7412,7 +7424,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_Redemption_log(*response)
-		chan_Loyalty_Redemption_log <- *response
+		enqueue_Loyalty_Redemption_log(*response)
 		return
 	}
 	response.Allow_Negative_Balance_ToRedeem = redemption_Rules.Allow_Negative_Balance_ToRedeem
@@ -7433,7 +7445,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		if !success {
@@ -7444,7 +7456,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 	}
@@ -7459,7 +7471,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 	}
@@ -7475,7 +7487,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		response.MinAvailableRequiredPoints = redemption_Rules.Available_MinPoints_for_Airtime
@@ -7487,7 +7499,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		if redemption_Rules.Bundles_Product_Catalogue_Channel == "" {
@@ -7498,7 +7510,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		if redemption_Rules.Airtime_EVC_Account == "" {
@@ -7509,7 +7521,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		//debit loyalty points
@@ -7521,7 +7533,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		//do the calculation
@@ -7541,7 +7553,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 				response.StatusDate = time.Now()
 				response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 				Uc.Write_Loyalty_Redemption_log(*response)
-				chan_Loyalty_Redemption_log <- *response
+				enqueue_Loyalty_Redemption_log(*response)
 				return
 			}
 		}
@@ -7554,7 +7566,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		//check if subscriber have enough points
@@ -7566,7 +7578,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 
@@ -7588,7 +7600,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		response.Closure_Awarded_Points = debit_Log.Closure_Awarded_Points
@@ -7627,7 +7639,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			//refund points
 			var refund_response Loyalty_AccountCreditPoints_log
 			var refundRequest Loyalty_AccountCreditPoints_Request
@@ -7649,7 +7661,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			//refund points
 			var refund_response Loyalty_AccountCreditPoints_log
 			var refundRequest Loyalty_AccountCreditPoints_Request
@@ -7727,7 +7739,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		response.MinRequiredPoints = redemption_Rules.Bundles_MinPoints
@@ -7739,7 +7751,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		//get bundles detail
@@ -7754,7 +7766,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		if len(bundle_response.Data) < 1 {
@@ -7765,7 +7777,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 
@@ -7781,7 +7793,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		//debit the loyalty points
@@ -7803,7 +7815,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		response.Closure_Awarded_Points = debit_Log.Closure_Awarded_Points
@@ -7835,7 +7847,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			//refund points
 			var refund_response Loyalty_AccountCreditPoints_log
 			var refundRequest Loyalty_AccountCreditPoints_Request
@@ -7857,7 +7869,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			//refund points
 			var refund_response Loyalty_AccountCreditPoints_log
 			var refundRequest Loyalty_AccountCreditPoints_Request
@@ -8108,7 +8120,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		response.MinAvailableRequiredPoints = redemption_Rules.Available_MinPoints_for_MobileMoney
@@ -8120,7 +8132,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		if redemption_Rules.MobileMoney_MerchantAccount == "" {
@@ -8131,7 +8143,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		//debit loyalty points
@@ -8143,7 +8155,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		//do the calculation
@@ -8163,7 +8175,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 				response.StatusDate = time.Now()
 				response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 				Uc.Write_Loyalty_Redemption_log(*response)
-				chan_Loyalty_Redemption_log <- *response
+				enqueue_Loyalty_Redemption_log(*response)
 				return
 			}
 		}
@@ -8176,7 +8188,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		//check if subscriber have enough points
@@ -8188,7 +8200,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		var Debit_Request Loyalty_AccountDebitPoints_Request
@@ -8209,7 +8221,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		response.Closure_Awarded_Points = debit_Log.Closure_Awarded_Points
@@ -8263,7 +8275,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			//refund points
 			var refund_response Loyalty_AccountCreditPoints_log
 			var refundRequest Loyalty_AccountCreditPoints_Request
@@ -8285,7 +8297,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			//refund points
 			var refund_response Loyalty_AccountCreditPoints_log
 			var refundRequest Loyalty_AccountCreditPoints_Request
@@ -8362,7 +8374,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		response.MinAvailableRequiredPoints = redemption_Rules.Available_MinPoints_for_SpinAndWin
@@ -8374,7 +8386,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		//debit loyalty points
@@ -8386,7 +8398,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		//do the calculation
@@ -8400,7 +8412,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		//check if subscriber have enough points
@@ -8412,7 +8424,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 
@@ -8434,7 +8446,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			return
 		}
 		response.Closure_Awarded_Points = debit_Log.Closure_Awarded_Points
@@ -8454,7 +8466,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			//refund points
 			var refund_response Loyalty_AccountCreditPoints_log
 			var refundRequest Loyalty_AccountCreditPoints_Request
@@ -8476,7 +8488,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Redemption_log(*response)
-			chan_Loyalty_Redemption_log <- *response
+			enqueue_Loyalty_Redemption_log(*response)
 			//refund points
 			var refund_response Loyalty_AccountCreditPoints_log
 			var refundRequest Loyalty_AccountCreditPoints_Request
@@ -8550,7 +8562,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_Redemption_log(*response)
-		chan_Loyalty_Redemption_log <- *response
+		enqueue_Loyalty_Redemption_log(*response)
 		return
 	}
 	//successful reply
@@ -8561,7 +8573,7 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 	response.StatusDate = time.Now()
 	response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 	Uc.Write_Loyalty_Redemption_log(*response)
-	chan_Loyalty_Redemption_log <- *response
+	enqueue_Loyalty_Redemption_log(*response)
 }
 
 func Loyalty_Account_Segment_Selection(Amount float64, FirstUse_date time.Time) (scheme_name string) {
@@ -8625,7 +8637,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 		response.ErrorDescription = "invalid msisdn"
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
-		//Uc.Write_Loyalty_AccountCreditPoints_log(*response); chan_Loyalty_AccountCreditPoints_log <- *response
+		//Uc.Write_Loyalty_AccountCreditPoints_log(*response); enqueue_Loyalty_AccountCreditPoints_log(*response)
 		return
 	}
 	//fill the request info
@@ -8648,7 +8660,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_AccountCreditPoints_log(*response)
-		chan_Loyalty_AccountCreditPoints_log <- *response
+		enqueue_Loyalty_AccountCreditPoints_log(*response)
 		return
 	}
 	if loyaltyAccErr != nil {
@@ -8659,7 +8671,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_AccountCreditPoints_log(*response)
-		chan_Loyalty_AccountCreditPoints_log <- *response
+		enqueue_Loyalty_AccountCreditPoints_log(*response)
 		return
 	}
 	response.Opening_Loyalty_Level_Key = loyalty_account.Loyalty_Level_Key
@@ -8678,7 +8690,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_AccountCreditPoints_log(*response)
-		chan_Loyalty_AccountCreditPoints_log <- *response
+		enqueue_Loyalty_AccountCreditPoints_log(*response)
 		return
 	}
 	//check exclusion list
@@ -8694,7 +8706,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_AccountCreditPoints_log(*response)
-			chan_Loyalty_AccountCreditPoints_log <- *response
+			enqueue_Loyalty_AccountCreditPoints_log(*response)
 			return
 		}
 	}
@@ -8711,7 +8723,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_AccountCreditPoints_log(*response)
-			chan_Loyalty_AccountCreditPoints_log <- *response
+			enqueue_Loyalty_AccountCreditPoints_log(*response)
 			return
 		}
 	}
@@ -8726,7 +8738,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_AccountCreditPoints_log(*response)
-			chan_Loyalty_AccountCreditPoints_log <- *response
+			enqueue_Loyalty_AccountCreditPoints_log(*response)
 			return
 		}
 		response.EventDetail = Normalize_International_MSISDN(response.EventDetail)
@@ -8746,7 +8758,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 				response.StatusDate = time.Now()
 				response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 				Uc.Write_Loyalty_AccountCreditPoints_log(*response)
-				chan_Loyalty_AccountCreditPoints_log <- *response
+				enqueue_Loyalty_AccountCreditPoints_log(*response)
 				return
 			}
 		}
@@ -8759,7 +8771,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_AccountCreditPoints_log(*response)
-		chan_Loyalty_AccountCreditPoints_log <- *response
+		enqueue_Loyalty_AccountCreditPoints_log(*response)
 		return
 	}
 	if loyalty_account.Loyalty_Level_Key == "" {
@@ -8770,7 +8782,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_AccountCreditPoints_log(*response)
-		chan_Loyalty_AccountCreditPoints_log <- *response
+		enqueue_Loyalty_AccountCreditPoints_log(*response)
 		return
 	}
 	//validate loyalty level
@@ -8783,7 +8795,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_AccountCreditPoints_log(*response)
-		chan_Loyalty_AccountCreditPoints_log <- *response
+		enqueue_Loyalty_AccountCreditPoints_log(*response)
 		return
 	}
 	if loyaltyLevelErr != nil {
@@ -8794,7 +8806,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_AccountCreditPoints_log(*response)
-		chan_Loyalty_AccountCreditPoints_log <- *response
+		enqueue_Loyalty_AccountCreditPoints_log(*response)
 		return
 	}
 	if !loyalty_Level.EnableRedeem {
@@ -8805,7 +8817,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_AccountCreditPoints_log(*response)
-		chan_Loyalty_AccountCreditPoints_log <- *response
+		enqueue_Loyalty_AccountCreditPoints_log(*response)
 		return
 	}
 	//validate the loyalty plan
@@ -8818,7 +8830,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_AccountCreditPoints_log(*response)
-		chan_Loyalty_AccountCreditPoints_log <- *response
+		enqueue_Loyalty_AccountCreditPoints_log(*response)
 		return
 	}
 	if planErr != nil {
@@ -8829,7 +8841,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_AccountCreditPoints_log(*response)
-		chan_Loyalty_AccountCreditPoints_log <- *response
+		enqueue_Loyalty_AccountCreditPoints_log(*response)
 		return
 	}
 	//validate earning rules
@@ -8841,7 +8853,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_AccountCreditPoints_log(*response)
-		chan_Loyalty_AccountCreditPoints_log <- *response
+		enqueue_Loyalty_AccountCreditPoints_log(*response)
 		return
 	}
 	point_earning_rules, earningErr := redisx.GetJSON[Loyalty_Point_Earning_Rules](context.Background(), RedisClient, Loyalty_Point_Earning_Rules{Key: plan.Earning_Rules_Key}.RedisKey())
@@ -8853,7 +8865,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_AccountCreditPoints_log(*response)
-		chan_Loyalty_AccountCreditPoints_log <- *response
+		enqueue_Loyalty_AccountCreditPoints_log(*response)
 		return
 	}
 	if earningErr != nil {
@@ -8864,7 +8876,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_AccountCreditPoints_log(*response)
-		chan_Loyalty_AccountCreditPoints_log <- *response
+		enqueue_Loyalty_AccountCreditPoints_log(*response)
 		return
 	}
 	//calucate points
@@ -8919,7 +8931,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_AccountCreditPoints_log(*response)
-			chan_Loyalty_AccountCreditPoints_log <- *response
+			enqueue_Loyalty_AccountCreditPoints_log(*response)
 			return
 		}
 		if lgErr != nil {
@@ -8930,7 +8942,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_AccountCreditPoints_log(*response)
-			chan_Loyalty_AccountCreditPoints_log <- *response
+			enqueue_Loyalty_AccountCreditPoints_log(*response)
 			return
 		}
 		if points > loyalty_governance.MaxAllowedPoints_PerTransaction {
@@ -8941,7 +8953,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_AccountCreditPoints_log(*response)
-			chan_Loyalty_AccountCreditPoints_log <- *response
+			enqueue_Loyalty_AccountCreditPoints_log(*response)
 			return
 		}
 		if (loyalty_account.Awarded_Points + points) > loyalty_governance.MaxSubsAwardedPoints {
@@ -8952,7 +8964,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_AccountCreditPoints_log(*response)
-			chan_Loyalty_AccountCreditPoints_log <- *response
+			enqueue_Loyalty_AccountCreditPoints_log(*response)
 			return
 		}
 		//credit loyalty account
@@ -8988,7 +9000,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_AccountCreditPoints_log(*response)
-			chan_Loyalty_AccountCreditPoints_log <- *response
+			enqueue_Loyalty_AccountCreditPoints_log(*response)
 			return
 		} else {
 			if !refundValue {
@@ -9007,7 +9019,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_AccountCreditPoints_log(*response)
-			chan_Loyalty_AccountCreditPoints_log <- *response
+			enqueue_Loyalty_AccountCreditPoints_log(*response)
 			return
 		}
 		resetDailyWeeklyCountersIfNeeded(&loyalty_account)
@@ -9019,7 +9031,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_AccountCreditPoints_log(*response)
-			chan_Loyalty_AccountCreditPoints_log <- *response
+			enqueue_Loyalty_AccountCreditPoints_log(*response)
 			return
 		}
 		if loyalty_governance.WeeklyEarningLimit > 0 && (loyalty_account.Weekly_Earned_Points+points) > loyalty_governance.WeeklyEarningLimit {
@@ -9030,7 +9042,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_AccountCreditPoints_log(*response)
-			chan_Loyalty_AccountCreditPoints_log <- *response
+			enqueue_Loyalty_AccountCreditPoints_log(*response)
 			return
 		}
 		err := Uc.Loyalty_Governance_Available_Points_Debit(points, refundValue)
@@ -9085,7 +9097,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_AccountCreditPoints_log(*response)
-			chan_Loyalty_AccountCreditPoints_log <- *response
+			enqueue_Loyalty_AccountCreditPoints_log(*response)
 			return
 		}
 	}
@@ -9150,7 +9162,7 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 	response.StatusDate = time.Now()
 	response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 	Uc.Write_Loyalty_AccountCreditPoints_log(*response)
-	chan_Loyalty_AccountCreditPoints_log <- *response
+	enqueue_Loyalty_AccountCreditPoints_log(*response)
 
 	PointsCreditedCount.With(prometheus.Labels{"EventSource": request.EventSource, "EventType": request.EventType, "Level": loyalty_account.Loyalty_Level_Key}).Inc()
 	PointsCredited.With(prometheus.Labels{"EventSource": request.EventSource, "EventType": request.EventType, "Level": loyalty_account.Loyalty_Level_Key}).Add(points)
@@ -9175,7 +9187,7 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_AccountDebitPoints_log(*response)
-		chan_Loyalty_AccountDebitPoints_log <- *response
+		enqueue_Loyalty_AccountDebitPoints_log(*response)
 		return
 	}
 	//fill the request info
@@ -9194,7 +9206,7 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_AccountDebitPoints_log(*response)
-		chan_Loyalty_AccountDebitPoints_log <- *response
+		enqueue_Loyalty_AccountDebitPoints_log(*response)
 		return
 	}
 	//get loyalty account detail
@@ -9207,7 +9219,7 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_AccountDebitPoints_log(*response)
-		chan_Loyalty_AccountDebitPoints_log <- *response
+		enqueue_Loyalty_AccountDebitPoints_log(*response)
 		return
 	}
 	if loyaltyAccErr != nil {
@@ -9218,7 +9230,7 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_AccountDebitPoints_log(*response)
-		chan_Loyalty_AccountDebitPoints_log <- *response
+		enqueue_Loyalty_AccountDebitPoints_log(*response)
 		return
 	}
 	response.Customer_Id = loyalty_Account.Customer_Id
@@ -9237,7 +9249,7 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_AccountDebitPoints_log(*response)
-		chan_Loyalty_AccountDebitPoints_log <- *response
+		enqueue_Loyalty_AccountDebitPoints_log(*response)
 		return
 	}
 	{
@@ -9252,7 +9264,7 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_AccountDebitPoints_log(*response)
-			chan_Loyalty_AccountDebitPoints_log <- *response
+			enqueue_Loyalty_AccountDebitPoints_log(*response)
 			return
 		}
 	}
@@ -9269,7 +9281,7 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_AccountDebitPoints_log(*response)
-			chan_Loyalty_AccountDebitPoints_log <- *response
+			enqueue_Loyalty_AccountDebitPoints_log(*response)
 			return
 		}
 	}
@@ -9282,7 +9294,7 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_AccountDebitPoints_log(*response)
-		chan_Loyalty_AccountDebitPoints_log <- *response
+		enqueue_Loyalty_AccountDebitPoints_log(*response)
 		return
 	}
 	notRedemptionValue := false
@@ -9300,7 +9312,7 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_AccountDebitPoints_log(*response)
-			chan_Loyalty_AccountDebitPoints_log <- *response
+			enqueue_Loyalty_AccountDebitPoints_log(*response)
 			return
 		}
 		if lgErr != nil {
@@ -9311,7 +9323,7 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_AccountDebitPoints_log(*response)
-			chan_Loyalty_AccountDebitPoints_log <- *response
+			enqueue_Loyalty_AccountDebitPoints_log(*response)
 			return
 		}
 		if loyalty_governance.DailyPointsRedemptionLimit > 0 && (loyalty_Account.Daily_Redeemed_Points+request.Debit_Amount) > loyalty_governance.DailyPointsRedemptionLimit {
@@ -9322,7 +9334,7 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_AccountDebitPoints_log(*response)
-			chan_Loyalty_AccountDebitPoints_log <- *response
+			enqueue_Loyalty_AccountDebitPoints_log(*response)
 			return
 		}
 		if loyalty_governance.WeeklyPointsRedemptionLimit > 0 && (loyalty_Account.Weekly_Redeemed_Points+request.Debit_Amount) > loyalty_governance.WeeklyPointsRedemptionLimit {
@@ -9333,7 +9345,7 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_AccountDebitPoints_log(*response)
-			chan_Loyalty_AccountDebitPoints_log <- *response
+			enqueue_Loyalty_AccountDebitPoints_log(*response)
 			return
 		}
 		if loyalty_governance.DailyRedemptionAttemptLimit > 0 && (loyalty_Account.Daily_Redemption_Attempts+1) > loyalty_governance.DailyRedemptionAttemptLimit {
@@ -9344,7 +9356,7 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_AccountDebitPoints_log(*response)
-			chan_Loyalty_AccountDebitPoints_log <- *response
+			enqueue_Loyalty_AccountDebitPoints_log(*response)
 			return
 		}
 		if loyalty_governance.WeeklyRedemptionAttemptLimit > 0 && (loyalty_Account.Weekly_Redemption_Attempts+1) > loyalty_governance.WeeklyRedemptionAttemptLimit {
@@ -9355,7 +9367,7 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_AccountDebitPoints_log(*response)
-			chan_Loyalty_AccountDebitPoints_log <- *response
+			enqueue_Loyalty_AccountDebitPoints_log(*response)
 			return
 		}
 	}
@@ -9385,7 +9397,7 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 				response.StatusDate = time.Now()
 				response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 				Uc.Write_Loyalty_AccountDebitPoints_log(*response)
-				chan_Loyalty_AccountDebitPoints_log <- *response
+				enqueue_Loyalty_AccountDebitPoints_log(*response)
 				return
 			}
 			if pdErr == nil {
@@ -9462,7 +9474,7 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 	response.StatusDate = time.Now()
 	response.E2E_Elapsedtime = (time.Since(response.ReceiveDate).Nanoseconds()) / 1000000
 	Uc.Write_Loyalty_AccountDebitPoints_log(*response)
-	chan_Loyalty_AccountDebitPoints_log <- *response
+	enqueue_Loyalty_AccountDebitPoints_log(*response)
 	PointsDebitedCount.With(prometheus.Labels{"EventSource": response.SourceApp, "DebitType": response.Redemption_Type, "Level": loyalty_Account.Loyalty_Level_Key}).Inc()
 	PointsDebited.With(prometheus.Labels{"EventSource": response.SourceApp, "DebitType": response.Redemption_Type, "Level": loyalty_Account.Loyalty_Level_Key}).Add(request.Debit_Amount)
 
@@ -9478,7 +9490,7 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.StatusDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_Status_log(*response)
-		chan_Loyalty_Status_log <- *response
+		enqueue_Loyalty_Status_log(*response)
 		return
 	}
 	response.StatusDate = time.Now()
@@ -9497,7 +9509,7 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.StatusDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_Status_log(*response)
-		chan_Loyalty_Status_log <- *response
+		enqueue_Loyalty_Status_log(*response)
 		return
 	}
 	//fill the request info
@@ -9514,7 +9526,7 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.StatusDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_Status_log(*response)
-		chan_Loyalty_Status_log <- *response
+		enqueue_Loyalty_Status_log(*response)
 		return
 	}
 	if loyaltyAccErr != nil {
@@ -9525,7 +9537,7 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.StatusDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_Status_log(*response)
-		chan_Loyalty_Status_log <- *response
+		enqueue_Loyalty_Status_log(*response)
 		return
 	}
 
@@ -9541,7 +9553,7 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.StatusDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_Status_log(*response)
-		chan_Loyalty_Status_log <- *response
+		enqueue_Loyalty_Status_log(*response)
 		return
 	}
 	//check exclusion list
@@ -9557,7 +9569,7 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.StatusDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Status_log(*response)
-			chan_Loyalty_Status_log <- *response
+			enqueue_Loyalty_Status_log(*response)
 			return
 		}
 	}
@@ -9574,7 +9586,7 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.StatusDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Status_log(*response)
-			chan_Loyalty_Status_log <- *response
+			enqueue_Loyalty_Status_log(*response)
 			return
 		}
 	}
@@ -9587,7 +9599,7 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.StatusDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_Status_log(*response)
-		chan_Loyalty_Status_log <- *response
+		enqueue_Loyalty_Status_log(*response)
 		return
 	}
 	if loyalty_account.Loyalty_Level_Key == "" {
@@ -9598,7 +9610,7 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.StatusDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_Status_log(*response)
-		chan_Loyalty_Status_log <- *response
+		enqueue_Loyalty_Status_log(*response)
 		return
 	}
 	//validate loyalty level
@@ -9611,7 +9623,7 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.StatusDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_Status_log(*response)
-		chan_Loyalty_Status_log <- *response
+		enqueue_Loyalty_Status_log(*response)
 		return
 	}
 
@@ -9625,7 +9637,7 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.StatusDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_Status_log(*response)
-		chan_Loyalty_Status_log <- *response
+		enqueue_Loyalty_Status_log(*response)
 		return
 	}
 	if planErr != nil {
@@ -9636,7 +9648,7 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.StatusDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_Status_log(*response)
-		chan_Loyalty_Status_log <- *response
+		enqueue_Loyalty_Status_log(*response)
 		return
 	}
 	//validate earning rules
@@ -9648,7 +9660,7 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 		response.StatusDate = time.Now()
 		response.E2E_Elapsedtime = (time.Since(response.StatusDate).Nanoseconds()) / 1000000
 		Uc.Write_Loyalty_Status_log(*response)
-		chan_Loyalty_Status_log <- *response
+		enqueue_Loyalty_Status_log(*response)
 		return
 	}
 	loyalty_account.Opt_Status = request.Opt_Status
@@ -9704,7 +9716,7 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.StatusDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Status_log(*response)
-			chan_Loyalty_Status_log <- *response
+			enqueue_Loyalty_Status_log(*response)
 			return
 		}
 		if loyaltyAccErr2 != nil {
@@ -9715,7 +9727,7 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 			response.StatusDate = time.Now()
 			response.E2E_Elapsedtime = (time.Since(response.StatusDate).Nanoseconds()) / 1000000
 			Uc.Write_Loyalty_Status_log(*response)
-			chan_Loyalty_Status_log <- *response
+			enqueue_Loyalty_Status_log(*response)
 			return
 		}
 		if Earningrecord.Welcome_Notification {
@@ -9825,7 +9837,7 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 	response.StatusDate = time.Now()
 	response.E2E_Elapsedtime = (time.Since(response.StatusDate).Nanoseconds()) / 1000000
 	Uc.Write_Loyalty_Status_log(*response)
-	chan_Loyalty_Status_log <- *response
+	enqueue_Loyalty_Status_log(*response)
 }
 
 func Calculate_Loyalty_Points(rules Loyalty_Point_Earning_Rules, award_request Loyalty_AccountCreditPoints_Request, current_outstanding_points float64) (points, outstanding_points float64, sms_notificatoin bool, notification_sender string, notification_text string) {

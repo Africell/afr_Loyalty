@@ -146,7 +146,10 @@ func ensureTopics(brokersCSV string) error {
 			nil, // use default options
 		)
 		if err != nil {
-			log.Fatalf("failed to ensure %s topic exists: %v", topic, err)
+			// Non-fatal: a broker/topic hiccup must not crash the loyalty service.
+			// If brokers are truly down, per-message pushes will fail and be logged.
+			log.Printf("failed to ensure %s topic exists (continuing): %v", topic, err)
+			continue
 		}
 		log.Printf("topic %s ensured successfully", topic)
 	}

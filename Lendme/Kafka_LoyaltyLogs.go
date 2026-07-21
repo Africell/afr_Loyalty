@@ -38,6 +38,42 @@ var chan_Loyalty_AccountDebitPoints_log_controler = make(chan int, 50)
 var chan_Loyalty_Status_log = make(chan Loyalty_Status_log, 500)
 var chan_Loyalty_Status_log_controler = make(chan int, 50)
 
+// enqueue_* perform a NON-BLOCKING hand-off to the Kafka channel. If the buffer
+// is full (e.g. the broker is down and backing up), the record is dropped with a
+// log line rather than blocking the calling request handler. Used by the five
+// target functions and the HTTP failure handlers.
+func enqueue_Loyalty_Redemption_log(rec Loyalty_Redemption_log) {
+	select {
+	case chan_Loyalty_Redemption_log <- rec:
+	default:
+		log.Println("kafka enqueue dropped (buffer full): Loyalty_Redemption_log MSISDN=" + rec.MSISDN)
+	}
+}
+
+func enqueue_Loyalty_AccountCreditPoints_log(rec Loyalty_AccountCreditPoints_log) {
+	select {
+	case chan_Loyalty_AccountCreditPoints_log <- rec:
+	default:
+		log.Println("kafka enqueue dropped (buffer full): Loyalty_AccountCreditPoints_log MSISDN=" + rec.MSISDN)
+	}
+}
+
+func enqueue_Loyalty_AccountDebitPoints_log(rec Loyalty_AccountDebitPoints_log) {
+	select {
+	case chan_Loyalty_AccountDebitPoints_log <- rec:
+	default:
+		log.Println("kafka enqueue dropped (buffer full): Loyalty_AccountDebitPoints_log MSISDN=" + rec.MSISDN)
+	}
+}
+
+func enqueue_Loyalty_Status_log(rec Loyalty_Status_log) {
+	select {
+	case chan_Loyalty_Status_log <- rec:
+	default:
+		log.Println("kafka enqueue dropped (buffer full): Loyalty_Status_log MSISDN=" + rec.MSISDN)
+	}
+}
+
 // loyaltyKafkaPushOptions matches the tuning used by KafkaPush_EventMetrics in the reference.
 func loyaltyKafkaPushOptions() *PushOptions {
 	return &PushOptions{

@@ -194,6 +194,12 @@ type ConfigType struct {
 		KafkaClientId         string
 		CreateTopicsOnStartup bool
 		ReplicationFactor     int
+		// KafkaOnlyLogging, when true, skips the direct Mongo write for the loyalty
+		// transaction logs (Redemption/Credit/Debit/Status) so the log DB write is
+		// handled solely by the Kafka consumer. Default (false) keeps the existing
+		// dual-write (Mongo + Kafka), preserving current behavior in every env that
+		// doesn't explicitly opt in.
+		KafkaOnlyLogging bool
 	}
 }
 
@@ -1270,6 +1276,12 @@ func setDefaultConfiguration_GM_UAT() (Configuration ConfigType) { //lendme serv
 	Configuration.Lendme.Module = "Lendme"
 	Configuration.Lendme.Version = "V1"
 	Configuration.Lendme.Timeout = 15 * time.Second
+
+	Configuration.Kafka_Events.KafkaBrokerUrls = "10.110.10.71:9092,10.110.10.72:9092,10.110.10.79:9092"
+	Configuration.Kafka_Events.KafkaClientId = "AfrLoyaltyUAT"
+	Configuration.Kafka_Events.CreateTopicsOnStartup = true
+	Configuration.Kafka_Events.ReplicationFactor = 2
+	Configuration.Kafka_Events.KafkaOnlyLogging = false // Kafka-only: consumer owns the log DB write
 
 	return
 }

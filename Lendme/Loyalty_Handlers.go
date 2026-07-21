@@ -2565,6 +2565,7 @@ func (Uc *UserControl) HTTP_Customer_Loyalty_Account_DebitPoints_Response(w http
 	transaction.E2E_Elapsedtime = (time.Since(transaction.ReceiveDate).Nanoseconds()) / 1000000
 	if DB_Write {
 		Uc.Write_Loyalty_AccountDebitPoints_log(*transaction)
+		enqueue_Loyalty_AccountDebitPoints_log(*transaction)
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(transaction.StatusCode)
@@ -2662,6 +2663,7 @@ func (Uc *UserControl) HTTP_Customer_Loyalty_RedeemRequest_Response(w http.Respo
 	transaction.E2E_Elapsedtime = (time.Since(transaction.ReceiveDate).Nanoseconds()) / 1000000
 	if DB_Write {
 		Uc.Write_Loyalty_Redemption_log(*transaction)
+		enqueue_Loyalty_Redemption_log(*transaction)
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(transaction.StatusCode)
@@ -2678,6 +2680,7 @@ func (Uc *UserControl) HTTP_Customer_Loyalty_OptRequest_Response(w http.Response
 	transaction.E2E_Elapsedtime = (time.Since(transaction.StatusDate).Nanoseconds()) / 1000000
 	if DB_Write {
 		Uc.Write_Loyalty_Status_log(*transaction)
+		enqueue_Loyalty_Status_log(*transaction)
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(transaction.Request_StatusCode)
@@ -2788,6 +2791,7 @@ func (Uc *UserControl) HTTP_Customer_Loyalty_Account_CreditPoints_Response(w htt
 	transaction.E2E_Elapsedtime = (time.Since(transaction.ReceiveDate).Nanoseconds()) / 1000000
 	if DB_Write {
 		Uc.Write_Loyalty_AccountCreditPoints_log(*transaction)
+		enqueue_Loyalty_AccountCreditPoints_log(*transaction)
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(transaction.StatusCode)
