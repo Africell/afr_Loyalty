@@ -1277,8 +1277,8 @@ func setDefaultConfiguration_GM_UAT() (Configuration ConfigType) { //lendme serv
 	Configuration.Lendme.Version = "V1"
 	Configuration.Lendme.Timeout = 15 * time.Second
 
-	Configuration.Kafka_Events.KafkaBrokerUrls = "10.110.10.71:9092,10.110.10.72:9092,10.110.10.79:9092"
-	Configuration.Kafka_Events.KafkaClientId = "AfrLoyaltyUAT"
+	Configuration.Kafka_Events.KafkaBrokerUrls = "10.30.9.58:9094,10.30.9.59:9094,10.30.9.60:9094"
+	Configuration.Kafka_Events.KafkaClientId = "LoyaltyUAT"
 	Configuration.Kafka_Events.CreateTopicsOnStartup = true
 	Configuration.Kafka_Events.ReplicationFactor = 2
 	Configuration.Kafka_Events.KafkaOnlyLogging = false // Kafka-only: consumer owns the log DB write
