@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 var chan_SubQueueExecution_controler = make(chan int, 10)
@@ -181,7 +182,7 @@ func (Uc *UserControl) Subscriber_Update(request Sub_Update_Request) {
 		<-chan_SubQueueExecution_controler
 		return
 	}
-	loyalty_account, cl_err := redisx.GetJSON[Customer_Loyalty_Account](context.Background(), RedisClient, Customer_Loyalty_Account{Key: Key}.RedisKey())
+	loyalty_account, cl_err := getJSONWithMongoFallback[Customer_Loyalty_Account](context.Background(), Customer_Loyalty_Account{Key: Key}.RedisKey(), Mdb_Customer_Loyalty_Account, bson.M{"Key": Key})
 	if redisx.IsNil(cl_err) {
 		_, errAdd := Uc.Customer_Loyalty_Account_Add("DWH_Import", Customer_Loyalty_Account_AddRequest{
 			Key:          Key,
