@@ -45,6 +45,7 @@ require (
 	github.com/prometheus/client_golang v1.23.2
 	github.com/redis/go-redis/v9 v9.17.2
 	github.com/rs/cors v1.11.1
+	github.com/segmentio/kafka-go v0.4.51
 	go.mongodb.org/mongo-driver v1.17.9
 	go.mongodb.org/mongo-driver/v2 v2.5.0
 	mongox v0.0.0-00010101000000-000000000000
@@ -90,8 +91,6 @@ require (
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.67.5 // indirect
 	github.com/prometheus/procfs v0.19.2 // indirect
-	github.com/redis/go-redis/v9 v9.17.2 // indirect
-	github.com/segmentio/kafka-go v0.4.51 // indirect
 	github.com/std-uritemplate/std-uritemplate/go/v2 v2.0.8 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.2.0 // indirect
