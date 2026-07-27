@@ -57,53 +57,53 @@ var (
 	} // OptedIn/legacy: 52 expire (202401+202412+202509) / 70 keep
 )
 
-// uatSeedMatrix builds the 16 account specs (8 segments x opted-in/opted-out) for
-// the given run time. The opt-out date is now-13d (inside the 30-day grace) so the
-// opted-out edge cases behave consistently regardless of when the seeder runs.
-func uatSeedMatrix(now time.Time) []accountSpec {
-	recentOpt := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC).AddDate(0, 0, -13)
+// uatSeedMatrix builds the 16 account specs (8 segments x opted-in/opted-out) for the
+// given fixed opt-out date. With optOut = 2026-04-25 the Fixed opted-out accounts resolve
+// a Coming_Expiry of 2026-07-24 (opt-out + 90 days) / 2026-07-25 (opt-out + 3 months);
+// once those dates pass, all of the account's points expire rather than being held.
+func uatSeedMatrix(optOut time.Time) []accountSpec {
 	return []accountSpec{
 		// ── Monthly (Validity 6mo) ──
 		{MSISDN: "2201700005", Level: "SILVER", Segment: "TEST_MONTHLY_FOLLOW", OptStatus: "OptedIn", FirstOptIn: firstOptIn,
 			Batches: monthlyBatches, Note: "Monthly 6mo, OptedIn: 202412 expire / 202601 keep"},
-		{MSISDN: "2201700001", Level: "SILVER", Segment: "TEST_MONTHLY_FOLLOW", OptStatus: "OptedOut", LastOpt: recentOpt, FirstOptIn: firstOptIn,
+		{MSISDN: "2201700001", Level: "SILVER", Segment: "TEST_MONTHLY_FOLLOW", OptStatus: "OptedOut", LastOpt: optOut, FirstOptIn: firstOptIn,
 			Batches: monthlyBatches, Note: "Monthly+FollowOptedIn, recent opt-out (Phase3 skips): follows monthly -> 202412 expire"},
 
 		{MSISDN: "2201000000", Level: "SILVER", Segment: "TEST_MONTHLY_FIXED_DAY", OptStatus: "OptedIn", FirstOptIn: firstOptIn,
 			Batches: monthlyBatches, Note: "Monthly 6mo, OptedIn: 202412 expire / 202601 keep"},
-		{MSISDN: "2201000101", Level: "SILVER", Segment: "TEST_MONTHLY_FIXED_DAY", OptStatus: "OptedOut", LastOpt: recentOpt, FirstOptIn: firstOptIn,
-			Batches: monthlyBatches, Note: "OptedOut+Fixed 90d -> Coming = opt-out + 90d (future): all held"},
+		{MSISDN: "2201000101", Level: "SILVER", Segment: "TEST_MONTHLY_FIXED_DAY", OptStatus: "OptedOut", LastOpt: optOut, FirstOptIn: firstOptIn,
+			Batches: monthlyBatches, Note: "OptedOut+Fixed 90d -> Coming = opt-out + 90d = 2026-07-24: all 50 expire once past"},
 
 		{MSISDN: "2201700002", Level: "SILVER", Segment: "TEST_MONTHLY_FIXED_MONTH", OptStatus: "OptedIn", FirstOptIn: firstOptIn,
 			Batches: monthlyBatches, Note: "Monthly 6mo, OptedIn: 202412 expire / 202601 keep"},
-		{MSISDN: "2200090392", Level: "SILVER", Segment: "TEST_MONTHLY_FIXED_MONTH", OptStatus: "OptedOut", LastOpt: recentOpt, FirstOptIn: firstOptIn,
-			Batches: monthlyBatches, Note: "OptedOut+Fixed 3mo -> Coming = opt-out + 3mo (future): all held"},
+		{MSISDN: "2200090392", Level: "SILVER", Segment: "TEST_MONTHLY_FIXED_MONTH", OptStatus: "OptedOut", LastOpt: optOut, FirstOptIn: firstOptIn,
+			Batches: monthlyBatches, Note: "OptedOut+Fixed 3mo -> Coming = opt-out + 3mo = 2026-07-25: all 50 expire once past"},
 
 		// ── Quarterly ──
 		{MSISDN: "2201700006", Level: "SILVER", Segment: "TEST_QUARTERLY_FIXED_DAY", OptStatus: "OptedIn", FirstOptIn: firstOptIn,
 			Batches: quarterlyBatches, Note: "Quarterly, OptedIn: 202412 expire (2025-12-31) / 202601 keep (2027-03-31)"},
-		{MSISDN: "2201700004", Level: "SILVER", Segment: "TEST_QUARTERLY_FIXED_DAY", OptStatus: "OptedOut", LastOpt: recentOpt, FirstOptIn: firstOptIn,
-			Batches: quarterlyBatches, Note: "OptedOut+Fixed 90d -> Coming = opt-out + 90d (future): all held"},
+		{MSISDN: "2201700004", Level: "SILVER", Segment: "TEST_QUARTERLY_FIXED_DAY", OptStatus: "OptedOut", LastOpt: optOut, FirstOptIn: firstOptIn,
+			Batches: quarterlyBatches, Note: "OptedOut+Fixed 90d -> Coming = opt-out + 90d = 2026-07-24: all 50 expire once past"},
 
 		{MSISDN: "2201700000", Level: "SILVER", Segment: "TEST_QUARTERLY_FIXED_MONTH", OptStatus: "OptedIn", FirstOptIn: firstOptIn,
 			Batches: quarterlyBatches, Note: "Quarterly, OptedIn: 202412 expire / 202601 keep"},
-		{MSISDN: "2201700007", Level: "SILVER", Segment: "TEST_QUARTERLY_FIXED_MONTH", OptStatus: "OptedOut", LastOpt: recentOpt, FirstOptIn: firstOptIn,
-			Batches: quarterlyBatches, Note: "OptedOut+Fixed 3mo -> Coming = opt-out + 3mo (future): all held"},
+		{MSISDN: "2201700007", Level: "SILVER", Segment: "TEST_QUARTERLY_FIXED_MONTH", OptStatus: "OptedOut", LastOpt: optOut, FirstOptIn: firstOptIn,
+			Batches: quarterlyBatches, Note: "OptedOut+Fixed 3mo -> Coming = opt-out + 3mo = 2026-07-25: all 50 expire once past"},
 
 		// ── Yearly / legacy (Opted_In_Rule_Type == "", Validity 12mo + Grace 3mo) ──
 		{MSISDN: "2201700016", Level: "SILVER", Segment: "TEST_YEARLY_FIXED_DAY", OptStatus: "OptedIn", FirstOptIn: firstOptIn,
 			Batches: legacyBatches, Note: "Legacy 12mo+3, Initial=2025-09: 52 expire (<=202509) / 70 keep, Coming 2025-12-15"},
-		{MSISDN: "2201700011", Level: "SILVER", Segment: "TEST_YEARLY_FIXED_DAY", OptStatus: "OptedOut", LastOpt: recentOpt, FirstOptIn: firstOptIn,
-			Batches: legacyBatches, Note: "OptedOut+Fixed (Day window) -> Coming = opt-out + 90d; all-or-nothing"},
+		{MSISDN: "2201700011", Level: "SILVER", Segment: "TEST_YEARLY_FIXED_DAY", OptStatus: "OptedOut", LastOpt: optOut, FirstOptIn: firstOptIn,
+			Batches: legacyBatches, Note: "OptedOut+Fixed (Day window) -> Coming = opt-out + 90d = 2026-07-24: all 122 expire once past"},
 
 		{MSISDN: "2201700012", Level: "SILVER", Segment: "TEST_YEARLY_FIXED_MONTH", OptStatus: "OptedIn", FirstOptIn: firstOptIn,
 			Batches: legacyBatches, Note: "Legacy 12mo+3, Initial=2025-09: 52 expire (<=202509) / 70 keep"},
-		{MSISDN: "2201700019", Level: "SILVER", Segment: "TEST_YEARLY_FIXED_MONTH", OptStatus: "OptedOut", LastOpt: recentOpt, FirstOptIn: firstOptIn,
-			Batches: legacyBatches, Note: "OptedOut+Fixed (Month window) -> Coming = opt-out + 3mo; all-or-nothing"},
+		{MSISDN: "2201700019", Level: "SILVER", Segment: "TEST_YEARLY_FIXED_MONTH", OptStatus: "OptedOut", LastOpt: optOut, FirstOptIn: firstOptIn,
+			Batches: legacyBatches, Note: "OptedOut+Fixed (Month window) -> Coming = opt-out + 3mo = 2026-07-25: all 122 expire once past"},
 
 		{MSISDN: "2201700010", Level: "SILVER", Segment: "TEST_YEARLY_FOLLOW", OptStatus: "OptedIn", FirstOptIn: firstOptIn,
 			Batches: legacyBatches, Note: "Legacy 12mo+3, Initial=2025-09: 52 expire (<=202509) / 70 keep"},
-		{MSISDN: "2201700009", Level: "SILVER", Segment: "TEST_YEARLY_FOLLOW", OptStatus: "OptedOut", LastOpt: recentOpt, FirstOptIn: firstOptIn,
+		{MSISDN: "2201700009", Level: "SILVER", Segment: "TEST_YEARLY_FOLLOW", OptStatus: "OptedOut", LastOpt: optOut, FirstOptIn: firstOptIn,
 			Batches: legacyBatches, Note: "Legacy+FollowOptedIn, recent opt-out (Phase3 skips): follows legacy -> 52 expire / 70 keep"},
 	}
 }
@@ -304,12 +304,19 @@ func fmtDate(t time.Time) string {
 // observed without a restart. Assumes Mongo repos + RedisClient are already
 // initialized (true in main). Best-effort throughout; errors are logged, not fatal.
 func (Uc *UserControl) SeedUATLoyaltyTestPointsExpiry() {
+	if !Configuration.IsLoyaltyProduction {
+		return
+	}
+
 	log.Println("<<SeedUATLoyaltyTestPointsExpiry>> started")
 	Uc.resetGovernancePools()
 	Uc.seedUATTestConfig()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
-	for _, spec := range uatSeedMatrix(time.Now().UTC()) {
+	// Fixed opt-out date (not derived from time.Now) so the seeded opt-out date — and
+	// therefore the expected outcomes documented for the commercial team — stay identical
+	// on every deployment.
+	for _, spec := range uatSeedMatrix(d(2026, 4, 25)) {
 		if err := seedAccount(ctx, spec); err != nil {
 			log.Printf("<<SeedUATLoyaltyTestPointsExpiry>> MSISDN %s: %v", spec.MSISDN, err)
 		}
