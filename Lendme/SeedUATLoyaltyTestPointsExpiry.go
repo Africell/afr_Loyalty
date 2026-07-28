@@ -304,7 +304,7 @@ func fmtDate(t time.Time) string {
 // observed without a restart. Assumes Mongo repos + RedisClient are already
 // initialized (true in main). Best-effort throughout; errors are logged, not fatal.
 func (Uc *UserControl) SeedUATLoyaltyTestPointsExpiry() {
-	if !Configuration.IsLoyaltyProduction {
+	if Configuration.IsLoyaltyProduction {
 		return
 	}
 
