@@ -43,6 +43,9 @@ var chan_Loyalty_Status_log_controler = make(chan int, 50)
 // log line rather than blocking the calling request handler. Used by the five
 // target functions and the HTTP failure handlers.
 func enqueue_Loyalty_Redemption_log(rec Loyalty_Redemption_log) {
+	if !Configuration.Kafka_Events.KafkaLogEnabled {
+		return
+	}
 	select {
 	case chan_Loyalty_Redemption_log <- rec:
 	default:
@@ -51,6 +54,9 @@ func enqueue_Loyalty_Redemption_log(rec Loyalty_Redemption_log) {
 }
 
 func enqueue_Loyalty_AccountCreditPoints_log(rec Loyalty_AccountCreditPoints_log) {
+	if !Configuration.Kafka_Events.KafkaLogEnabled {
+		return
+	}
 	select {
 	case chan_Loyalty_AccountCreditPoints_log <- rec:
 	default:
@@ -59,6 +65,9 @@ func enqueue_Loyalty_AccountCreditPoints_log(rec Loyalty_AccountCreditPoints_log
 }
 
 func enqueue_Loyalty_AccountDebitPoints_log(rec Loyalty_AccountDebitPoints_log) {
+	if !Configuration.Kafka_Events.KafkaLogEnabled {
+		return
+	}
 	select {
 	case chan_Loyalty_AccountDebitPoints_log <- rec:
 	default:
@@ -67,6 +76,9 @@ func enqueue_Loyalty_AccountDebitPoints_log(rec Loyalty_AccountDebitPoints_log) 
 }
 
 func enqueue_Loyalty_Status_log(rec Loyalty_Status_log) {
+	if !Configuration.Kafka_Events.KafkaLogEnabled {
+		return
+	}
 	select {
 	case chan_Loyalty_Status_log <- rec:
 	default:

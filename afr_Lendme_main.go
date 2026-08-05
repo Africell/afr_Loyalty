@@ -73,7 +73,7 @@ func (p *program) run() {
 		UserControl.LoyaltyIndexesMaintenanceProcess()
 		// UserControl.InitializeLoyaltyDefaultUAT()
 		// To be removed in the next deployment
-		UserControl.SeedUATLoyaltyTestPointsExpiry()
+		// UserControl.SeedUATLoyaltyTestPointsExpiry()
 
 		//Loyalty service
 		log.Println("Add Loyalty service routers to the web service")
@@ -99,7 +99,9 @@ func (p *program) run() {
 		log.Println("Loyalty Feed WS listen and serve on port: " + HttpLoyaltyFeedPort) //auc.Configuration.HttpServicePort
 		go http.ListenAndServe(":"+HttpLoyaltyFeedPort, corsOpts.Handler(Loyalty_Feed_router))
 
-		go UserControl.Loyalty_Kafka_Process()
+		if lendme.Configuration.Kafka_Events.KafkaLogEnabled {
+			go UserControl.Loyalty_Kafka_Process()
+		}
 		go UserControl.PointsExpiry_Process()
 		go UserControl.Loyalty_Governance_DailyLog_Process()
 		go UserControl.Loyalty_Status_Expiry_Daily_Process()

@@ -53,10 +53,16 @@ func NewUserControl() *UserControl {
 	}
 	log.Println("Redis connected")
 
-	// Kafka producer for loyalty transaction logs. Non-fatal
-	kafkaClient, err := NewKafkaClient()
-	if err != nil {
-		log.Println("Kafka client failed:", err)
+	// Kafka producer for loyalty transaction logs. Only created when enabled;
+	// non-fatal if it fails (client stays nil, senders skip).
+	var kafkaClient *KafkaClient
+	if Configuration.Kafka_Events.KafkaLogEnabled {
+		kafkaClient, err = NewKafkaClient()
+		if err != nil {
+			log.Println("Kafka client failed:", err)
+		}
+	} else {
+		log.Println("KafkaLogEnabled=false: logging directly to Mongo (Kafka off)")
 	}
 
 	App_AUCHostConfig := AuthCenterClient.InitHostConfig(Configuration.App_AUC.Protocol,

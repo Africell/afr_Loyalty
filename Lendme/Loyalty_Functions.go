@@ -545,7 +545,7 @@ func (Uc *UserControl) Write_Loyalty_Level_Change_log(record Loyalty_Level_Chang
 }
 
 func (Uc *UserControl) Write_Loyalty_AccountCreditPoints_log(record Loyalty_AccountCreditPoints_log) {
-	if Configuration.Kafka_Events.KafkaOnlyLogging {
+	if Configuration.Kafka_Events.KafkaLogEnabled {
 		return
 	}
 	YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.ReceiveDate)
@@ -584,7 +584,7 @@ func (Uc *UserControl) Write_Loyalty_Full_Expiry_log(record Loyalty_Full_Expiry_
 }
 
 func (Uc *UserControl) Write_Loyalty_Redemption_log(record Loyalty_Redemption_log) {
-	if Configuration.Kafka_Events.KafkaOnlyLogging {
+	if Configuration.Kafka_Events.KafkaLogEnabled {
 		return
 	}
 	YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.ReceiveDate)
@@ -611,7 +611,7 @@ func (Uc *UserControl) Write_Loyalty_Account_Churned_log(record Customer_Loyalty
 }
 
 func (Uc *UserControl) Write_Loyalty_Status_log(record Loyalty_Status_log) {
-	if Configuration.Kafka_Events.KafkaOnlyLogging {
+	if Configuration.Kafka_Events.KafkaLogEnabled {
 		return
 	}
 	YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.StatusDate)
@@ -626,7 +626,7 @@ func (Uc *UserControl) Write_Loyalty_Status_log(record Loyalty_Status_log) {
 }
 
 func (Uc *UserControl) Write_Loyalty_AccountDebitPoints_log(record Loyalty_AccountDebitPoints_log) {
-	if Configuration.Kafka_Events.KafkaOnlyLogging {
+	if Configuration.Kafka_Events.KafkaLogEnabled {
 		return
 	}
 	YYYY, MM, _, DD, _, _, _ := GetTimeParts(record.ReceiveDate)

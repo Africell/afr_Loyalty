@@ -194,12 +194,13 @@ type ConfigType struct {
 		KafkaClientId         string
 		CreateTopicsOnStartup bool
 		ReplicationFactor     int
-		// KafkaOnlyLogging, when true, skips the direct Mongo write for the loyalty
-		// transaction logs (Redemption/Credit/Debit/Status) so the log DB write is
-		// handled solely by the Kafka consumer. Default (false) keeps the existing
-		// dual-write (Mongo + Kafka), preserving current behavior in every env that
-		// doesn't explicitly opt in.
-		KafkaOnlyLogging bool
+		// KafkaLogEnabled selects the logging path for the loyalty transaction logs
+		// (Redemption/Credit/Debit/Status):
+		//   true  = Kafka-only: skip the direct Mongo write, start the producer
+		//           process, and publish to Kafka (the consumer owns the DB write).
+		//   false = Mongo-only: write directly to Mongo; the producer process is
+		//           not started and nothing is sent to Kafka.
+		KafkaLogEnabled bool
 	}
 }
 
@@ -284,6 +285,7 @@ func setDefaultConfiguration_DRC_Live() (Configuration ConfigType) { //lendme se
 	Configuration.Kafka_Events.KafkaClientId = "Loyalty_01"
 	Configuration.Kafka_Events.CreateTopicsOnStartup = true
 	Configuration.Kafka_Events.ReplicationFactor = 2
+	Configuration.Kafka_Events.KafkaLogEnabled = false // set true to enable Kafka-only logging
 	Configuration.LoyaltyProgramName = "Loyalty"
 
 	Configuration.IN.IP = "10.95.73.12" //"10.70.1.59"
@@ -420,6 +422,7 @@ func setDefaultConfiguration_DRC_Loyalty_UAT() (Configuration ConfigType) {
 	Configuration.Kafka_Events.KafkaClientId = "Loyalty_UAT_01"
 	Configuration.Kafka_Events.CreateTopicsOnStartup = true
 	Configuration.Kafka_Events.ReplicationFactor = 1
+	Configuration.Kafka_Events.KafkaLogEnabled = false // set true to enable Kafka-only logging
 
 	Configuration.IN.IP = "10.95.73.12" //"10.70.1.59"
 	Configuration.IN.Port = "8444"
@@ -664,6 +667,13 @@ func setDefaultConfiguration_DRC_Loyalty_UAT_K8s() (Configuration ConfigType) { 
 	Configuration.Lendme.Version = "V1"
 	Configuration.Lendme.Timeout = 15 * time.Second
 
+	// Kafka producer config — reuses the DRC cluster as a default. KafkaLogEnabled
+	// false = Mongo-only; set true (and adjust brokers) to enable Kafka for this op.
+	Configuration.Kafka_Events.KafkaBrokerUrls = "10.30.9.58:9094,10.30.9.59:9094,10.30.9.60:9094"
+	Configuration.Kafka_Events.KafkaClientId = "Loyalty_01"
+	Configuration.Kafka_Events.CreateTopicsOnStartup = true
+	Configuration.Kafka_Events.ReplicationFactor = 2
+	Configuration.Kafka_Events.KafkaLogEnabled = false
 	return
 }
 
@@ -793,6 +803,13 @@ func setDefaultConfiguration_GM_Live() (Configuration ConfigType) { //lendme ser
 	Configuration.Lendme.Version = "V1"
 	Configuration.Lendme.Timeout = 15 * time.Second
 
+	// Kafka producer config — reuses the DRC cluster as a default. KafkaLogEnabled
+	// false = Mongo-only; set true (and adjust brokers) to enable Kafka for this op.
+	Configuration.Kafka_Events.KafkaBrokerUrls = "10.30.9.58:9094,10.30.9.59:9094,10.30.9.60:9094"
+	Configuration.Kafka_Events.KafkaClientId = "Loyalty_01"
+	Configuration.Kafka_Events.CreateTopicsOnStartup = true
+	Configuration.Kafka_Events.ReplicationFactor = 2
+	Configuration.Kafka_Events.KafkaLogEnabled = false
 	return
 }
 
@@ -946,6 +963,13 @@ func setDefaultConfiguration_GM_Loyalty() (Configuration ConfigType) { //lendme 
 	Configuration.Lendme.Version = "V1"
 	Configuration.Lendme.Timeout = 15 * time.Second
 
+	// Kafka producer config — reuses the DRC cluster as a default. KafkaLogEnabled
+	// false = Mongo-only; set true (and adjust brokers) to enable Kafka for this op.
+	Configuration.Kafka_Events.KafkaBrokerUrls = "10.30.9.58:9094,10.30.9.59:9094,10.30.9.60:9094"
+	Configuration.Kafka_Events.KafkaClientId = "Loyalty_01"
+	Configuration.Kafka_Events.CreateTopicsOnStartup = true
+	Configuration.Kafka_Events.ReplicationFactor = 2
+	Configuration.Kafka_Events.KafkaLogEnabled = false
 	return
 }
 
@@ -1101,6 +1125,13 @@ func setDefaultConfiguration_GM_Loyalty_Live() (Configuration ConfigType) { //le
 	Configuration.Lendme.Version = "V1"
 	Configuration.Lendme.Timeout = 15 * time.Second
 
+	// Kafka producer config — reuses the DRC cluster as a default. KafkaLogEnabled
+	// false = Mongo-only; set true (and adjust brokers) to enable Kafka for this op.
+	Configuration.Kafka_Events.KafkaBrokerUrls = "10.30.9.58:9094,10.30.9.59:9094,10.30.9.60:9094"
+	Configuration.Kafka_Events.KafkaClientId = "Loyalty_01"
+	Configuration.Kafka_Events.CreateTopicsOnStartup = true
+	Configuration.Kafka_Events.ReplicationFactor = 2
+	Configuration.Kafka_Events.KafkaLogEnabled = false
 	return
 }
 
@@ -1281,7 +1312,7 @@ func setDefaultConfiguration_GM_UAT() (Configuration ConfigType) { //lendme serv
 	Configuration.Kafka_Events.KafkaClientId = "LoyaltyUAT"
 	Configuration.Kafka_Events.CreateTopicsOnStartup = true
 	Configuration.Kafka_Events.ReplicationFactor = 2
-	Configuration.Kafka_Events.KafkaOnlyLogging = true // false: direct DB write/ dual-write if consumer is up; true: only the consumer write to the DB
+	Configuration.Kafka_Events.KafkaLogEnabled = false // set true to enable Kafka-only logging (consumer owns the DB write)
 
 	return
 }
@@ -1418,6 +1449,13 @@ func setDefaultConfiguration_SL_Live() (Configuration ConfigType) { //lendme ser
 	Configuration.Lendme.Version = "V1"
 	Configuration.Lendme.Timeout = 15 * time.Second
 
+	// Kafka producer config — reuses the DRC cluster as a default. KafkaLogEnabled
+	// false = Mongo-only; set true (and adjust brokers) to enable Kafka for this op.
+	Configuration.Kafka_Events.KafkaBrokerUrls = "10.30.9.58:9094,10.30.9.59:9094,10.30.9.60:9094"
+	Configuration.Kafka_Events.KafkaClientId = "Loyalty_01"
+	Configuration.Kafka_Events.CreateTopicsOnStartup = true
+	Configuration.Kafka_Events.ReplicationFactor = 2
+	Configuration.Kafka_Events.KafkaLogEnabled = false
 	return
 }
 
@@ -1567,6 +1605,13 @@ func setDefaultConfiguration_SL_Loyalty() (Configuration ConfigType) { //lendme 
 	Configuration.Lendme.Version = "V1"
 	Configuration.Lendme.Timeout = 15 * time.Second
 
+	// Kafka producer config — reuses the DRC cluster as a default. KafkaLogEnabled
+	// false = Mongo-only; set true (and adjust brokers) to enable Kafka for this op.
+	Configuration.Kafka_Events.KafkaBrokerUrls = "10.30.9.58:9094,10.30.9.59:9094,10.30.9.60:9094"
+	Configuration.Kafka_Events.KafkaClientId = "Loyalty_01"
+	Configuration.Kafka_Events.CreateTopicsOnStartup = true
+	Configuration.Kafka_Events.ReplicationFactor = 2
+	Configuration.Kafka_Events.KafkaLogEnabled = false
 	return
 }
 
@@ -1730,6 +1775,13 @@ func setDefaultConfiguration_SL_Loyalty_UAT() (Configuration ConfigType) { //len
 	Configuration.Lendme.Version = "V1"
 	Configuration.Lendme.Timeout = 15 * time.Second
 
+	// Kafka producer config — reuses the DRC cluster as a default. KafkaLogEnabled
+	// false = Mongo-only; set true (and adjust brokers) to enable Kafka for this op.
+	Configuration.Kafka_Events.KafkaBrokerUrls = "10.30.9.58:9094,10.30.9.59:9094,10.30.9.60:9094"
+	Configuration.Kafka_Events.KafkaClientId = "Loyalty_01"
+	Configuration.Kafka_Events.CreateTopicsOnStartup = true
+	Configuration.Kafka_Events.ReplicationFactor = 2
+	Configuration.Kafka_Events.KafkaLogEnabled = false
 	return
 }
 
@@ -1894,6 +1946,13 @@ func setDefaultConfiguration_AO_Loyalty() (Configuration ConfigType) { //lendme 
 	Configuration.Lendme.Version = "V1"
 	Configuration.Lendme.Timeout = 15 * time.Second
 
+	// Kafka producer config — reuses the DRC cluster as a default. KafkaLogEnabled
+	// false = Mongo-only; set true (and adjust brokers) to enable Kafka for this op.
+	Configuration.Kafka_Events.KafkaBrokerUrls = "10.30.9.58:9094,10.30.9.59:9094,10.30.9.60:9094"
+	Configuration.Kafka_Events.KafkaClientId = "Loyalty_01"
+	Configuration.Kafka_Events.CreateTopicsOnStartup = true
+	Configuration.Kafka_Events.ReplicationFactor = 2
+	Configuration.Kafka_Events.KafkaLogEnabled = false
 	return
 }
 
@@ -2058,6 +2117,13 @@ func setDefaultConfiguration_AO_Loyalty_UAT() (Configuration ConfigType) { //len
 	Configuration.Lendme.Version = "V1"
 	Configuration.Lendme.Timeout = 15 * time.Second
 
+	// Kafka producer config — reuses the DRC cluster as a default. KafkaLogEnabled
+	// false = Mongo-only; set true (and adjust brokers) to enable Kafka for this op.
+	Configuration.Kafka_Events.KafkaBrokerUrls = "10.30.9.58:9094,10.30.9.59:9094,10.30.9.60:9094"
+	Configuration.Kafka_Events.KafkaClientId = "Loyalty_01"
+	Configuration.Kafka_Events.CreateTopicsOnStartup = true
+	Configuration.Kafka_Events.ReplicationFactor = 2
+	Configuration.Kafka_Events.KafkaLogEnabled = false
 	return
 }
 
@@ -2287,7 +2353,7 @@ func setDefaultConfiguration_Dev() (Configuration ConfigType) { //lendme service
 	Configuration.Kafka_Events.KafkaClientId = "Loyalty_01"
 	Configuration.Kafka_Events.CreateTopicsOnStartup = true
 	Configuration.Kafka_Events.ReplicationFactor = 1
-	Configuration.Kafka_Events.KafkaOnlyLogging = false
+	Configuration.Kafka_Events.KafkaLogEnabled = false // set true to test Kafka-only logging locally (needs docker Kafka + consumer)
 
 	Configuration.Lendme_AUC.Protocol = "http"
 	Configuration.Lendme_AUC.Hostname = "localhost"
