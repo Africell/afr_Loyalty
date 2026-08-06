@@ -5556,8 +5556,8 @@ func (Uc *UserControl) Customer_Loyalty_Account_Edit(Login string, request Custo
 // Mongo (the source of truth): keys expire so evicted/stale entries don't linger, and the
 // Mongo fallback re-populates them on demand.
 const (
-	LoyaltyAccountTTL = 7 * 24 * time.Hour // Customer_Loyalty_Account
-	PointsDetailTTL   = 7 * 24 * time.Hour // Customer_Loyalty_Account_Points_Detail
+	LoyaltyAccountTTL = 1* time.Hour // Customer_Loyalty_Account
+	PointsDetailTTL   = 1* time.Hour // Customer_Loyalty_Account_Points_Detail
 )
 
 // getJSONWithMongoFallback is a read-through helper. It tries Redis first and, on a Redis MISS (redis.Nil), falls back to Mongo (the source
