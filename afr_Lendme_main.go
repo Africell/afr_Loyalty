@@ -72,8 +72,6 @@ func (p *program) run() {
 		UserControl.RedisDataLoader()
 		UserControl.LoyaltyIndexesMaintenanceProcess()
 		// UserControl.InitializeLoyaltyDefaultUAT()
-		// To be removed in the next deployment
-		// UserControl.SeedUATLoyaltyTestPointsExpiry()
 
 		//Loyalty service
 		log.Println("Add Loyalty service routers to the web service")
