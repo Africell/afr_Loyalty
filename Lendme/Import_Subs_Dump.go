@@ -182,7 +182,7 @@ func (Uc *UserControl) Subscriber_Update(request Sub_Update_Request) {
 		<-chan_SubQueueExecution_controler
 		return
 	}
-	loyalty_account, cl_err := getJSONWithMongoFallback[Customer_Loyalty_Account](context.Background(), Customer_Loyalty_Account{Key: Key}.RedisKey(), Mdb_Customer_Loyalty_Account, bson.M{"Key": Key})
+	loyalty_account, cl_err := getJSONWithMongoFallbackTTL[Customer_Loyalty_Account](context.Background(), Customer_Loyalty_Account{Key: Key}.RedisKey(), Mdb_Customer_Loyalty_Account, bson.M{"Key": Key}, LoyaltyAccountTTL)
 	if redisx.IsNil(cl_err) {
 		_, errAdd := Uc.Customer_Loyalty_Account_Add("DWH_Import", Customer_Loyalty_Account_AddRequest{
 			Key:          Key,
