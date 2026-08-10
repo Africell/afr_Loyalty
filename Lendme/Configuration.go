@@ -71,6 +71,12 @@ type ConfigType struct {
 
 	Redis redisx.Config
 
+	// TTLs for the per-customer, subscriber-scale Redis collections (cache over Mongo).
+	// Reference/config collections stay persistent via Redis.DefaultTTL; these expire so
+	// evicted/stale entries don't linger and the Mongo fallback re-populates on demand.
+	LoyaltyAccountTTL time.Duration // Customer_Loyalty_Account
+	PointsDetailTTL   time.Duration // Customer_Loyalty_Account_Points_Detail
+
 	IN struct {
 		IP                    string
 		Port                  string
@@ -1211,6 +1217,8 @@ func setDefaultConfiguration_GM_UAT() (Configuration ConfigType) { //lendme serv
 	Configuration.Redis.KeyPrefix = "loyalty:uat:"
 	Configuration.Redis.DefaultTTL = -1
 	Configuration.Redis.IndexedCollections = ReferenceCollectionNames
+	Configuration.LoyaltyAccountTTL = 1 * time.Hour // Customer_Loyalty_Account
+	Configuration.PointsDetailTTL = 1 * time.Hour   // Customer_Loyalty_Account_Points_Detail
 
 	Configuration.DB_Name = "Loyalty_DB"
 
@@ -2269,9 +2277,11 @@ func setDefaultConfiguration_Dev() (Configuration ConfigType) { //lendme service
 	Configuration.Redis.Username = ""
 	Configuration.Redis.Password = ""
 	Configuration.Redis.DB = 0
-	Configuration.Redis.KeyPrefix = "lendme:dev:"
+	Configuration.Redis.KeyPrefix = "loyalty:dev:"
 	Configuration.Redis.DefaultTTL = -1
 	Configuration.Redis.IndexedCollections = ReferenceCollectionNames
+	Configuration.LoyaltyAccountTTL = 1 * time.Hour // Customer_Loyalty_Account
+	Configuration.PointsDetailTTL = 1 * time.Hour   // Customer_Loyalty_Account_Points_Detail
 
 	Configuration.DB_Name = "Loyalty_DB"
 

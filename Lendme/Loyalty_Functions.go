@@ -227,6 +227,8 @@ func (UC *UserControl) InitializeMongoxRepositories() error {
 	}
 
 	RedisClient = UC.Redis
+	LoyaltyAccountTTL = Configuration.LoyaltyAccountTTL
+	PointsDetailTTL = Configuration.PointsDetailTTL
 	return nil
 }
 
@@ -5555,9 +5557,14 @@ func (Uc *UserControl) Customer_Loyalty_Account_Edit(Login string, request Custo
 // collections (persistent mirror, DefaultTTL = -1), these are treated as a cache over
 // Mongo (the source of truth): keys expire so evicted/stale entries don't linger, and the
 // Mongo fallback re-populates them on demand.
-const (
-	LoyaltyAccountTTL = 1* time.Hour // Customer_Loyalty_Account
-	PointsDetailTTL   = 1* time.Hour // Customer_Loyalty_Account_Points_Detail
+//
+// These are set per operation in Configuration (Configuration.LoyaltyAccountTTL /
+// Configuration.PointsDetailTTL) and copied into these package vars once at startup in
+// InitializeMongoxRepositories. They are vars rather than consts because Go consts must be
+// compile-time values and these are sourced from runtime configuration.
+var (
+	LoyaltyAccountTTL time.Duration // Customer_Loyalty_Account
+	PointsDetailTTL   time.Duration // Customer_Loyalty_Account_Points_Detail
 )
 
 // getJSONWithMongoFallback is a read-through helper. It tries Redis first and, on a Redis MISS (redis.Nil), falls back to Mongo (the source
