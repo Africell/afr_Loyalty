@@ -10594,14 +10594,23 @@ func (Uc *UserControl) ReadAccountLevelChangeDetailsFromMongoDB(startDate, endDa
 	if page < 1 {
 		page = 1 // Default to first page if invalid page number
 	}
+	endInclusive := time.Date(endDate.Year(), endDate.Month(), endDate.Day(), 23, 59, 59, 999999999, endDate.Location())
+
+	seenDatabases := make(map[string]bool)
+	skip := (page - 1) * limit
 
 	// Iterate over the range of dates
-	for currentDate := startDate; !currentDate.After(endDate); currentDate = currentDate.AddDate(0, 0, 1) {
+	for currentDate := startDate; !currentDate.After(endInclusive); currentDate = currentDate.AddDate(0, 0, 1) {
 		monthStr := strconv.Itoa(int(currentDate.Month()))
 		if len(monthStr) < 2 {
 			monthStr = "0" + monthStr
 		}
 		MongoDB_DB_Name := "Loyalty_DB_" + strconv.Itoa(currentDate.Year()) + monthStr
+
+		if seenDatabases[MongoDB_DB_Name] {
+			continue // monthly collection already queried for this database
+		}
+		seenDatabases[MongoDB_DB_Name] = true
 
 		collName := "Col_Loyalty_Level_Change_log"
 
@@ -10612,10 +10621,9 @@ func (Uc *UserControl) ReadAccountLevelChangeDetailsFromMongoDB(startDate, endDa
 			{Key: "MSISDN", Value: MSISDN},
 			{Key: "Level_Change_Date", Value: bson.D{
 				{Key: "$gte", Value: startDate},
-				{Key: "$lte", Value: endDate},
+				{Key: "$lte", Value: endInclusive},
 			}},
 		}
-		skip := (page - 1) * limit
 
 		// Fetch a paginated list of documents using limit and skip
 		cursor, err := collection.Find(
