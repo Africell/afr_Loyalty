@@ -11243,6 +11243,27 @@ func (Uc *UserControl) EvaluateAndUpdate_CustomerLoyaltyLevel(Login string, Acco
 					}
 					putCancel()
 				}
+			} else if New_Loyalty_Level.Key != "" {
+				// No configured downgrade level: fall back to the level the
+				// customer's points currently evaluate to (the previously
+				// evaluated level).
+				New_Loyalty_Level_Key = New_Loyalty_Level.Key
+				loyalty_account.Previous_Loyalty_Level_Key = loyalty_account.Loyalty_Level_Key
+				loyalty_account.Previous_Loyalty_Level_Date = loyalty_account.Loyalty_Level_Date
+				loyalty_account.Loyalty_Level_Key = New_Loyalty_Level_Key
+				loyalty_account.Loyalty_Level_Date = time.Now()
+				loyalty_account.Loyalty_Level_Direction = "Downgrade"
+				loyalty_account.Loyalty_Level_SetBy = Login
+				{
+					putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
+					if _, putErr := Mdb_Customer_Loyalty_Account.Coll.UpdateOne(putCtx, bson.M{"Key": loyalty_account.Key}, bson.M{"$set": loyalty_account}, options.UpdateOne().SetUpsert(true)); putErr != nil {
+						log.Println("Mdb_Customer_Loyalty_Account upsert error:", putErr)
+					}
+					if putSetErr := redisx.SetJSONWithTTL(putCtx, RedisClient, loyalty_account.RedisKey(), loyalty_account, LoyaltyAccountTTL); putSetErr != nil {
+						log.Println("redisx.SetJSON Customer_Loyalty_Account error:", putSetErr)
+					}
+					putCancel()
+				}
 			} else {
 				return loyalty_account.Loyalty_Level_Key, errors.New("downgrade level is not defined")
 			}
@@ -11403,6 +11424,17 @@ func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account
 		<-chan_PointsExpiry_Controler
 		return
 	}
+	// Evaluate the loyalty level BEFORE any points are expired this run. 
+	if _, preEvalErr := Uc.EvaluateAndUpdate_CustomerLoyaltyLevel("Points_Expiry", account.Key); preEvalErr != nil {
+		fmt.Println("error", preEvalErr)
+	}
+	// Re-sync the local account with any level change the evaluation persisted;
+	// otherwise the expiry loop's $set writes below (which still carry the old
+	// level) would clobber it.
+	if refreshed, refErr := getJSONWithMongoFallbackTTL[Customer_Loyalty_Account](context.Background(), Customer_Loyalty_Account{Key: account.Key}.RedisKey(), Mdb_Customer_Loyalty_Account, bson.M{"Key": account.Key}, LoyaltyAccountTTL); refErr == nil {
+		account = refreshed
+	}
+
 	// Iterate a snapshot: removeStringFromArray below mutates account.Points_Detail_Keys
 	// in place, which would otherwise shift elements and skip batches mid-range.
 	pointKeysSnapshot := append([]string(nil), account.Points_Detail_Keys...)
@@ -11491,14 +11523,9 @@ func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account
 			monthly_expiry_log.End_Redeemed_Points = 0
 			monthly_expiry_log.End_Available_Points = 0
 			monthly_expiry_log.End_Expired_Points = expired_Points
-			//check level downgrade
-			new_Loyalty_level_key, errNL := Uc.EvaluateAndUpdate_CustomerLoyaltyLevel("Points_Expiry", account.Key)
-			if errNL != nil {
-				fmt.Println("error", errNL)
-			}
-			if errNL == nil {
-				monthly_expiry_log.EndLoyaltyLevel = new_Loyalty_level_key
-			}
+			// Level is evaluated once before the loop (see above); record the
+			// resulting level for this batch's expiry log.
+			monthly_expiry_log.EndLoyaltyLevel = account.Loyalty_Level_Key
 
 			monthly_expiry_log.ExpiryStatus = "successful"
 			monthly_expiry_log.ExpiryStatusDescription = "Cycle expiry"
