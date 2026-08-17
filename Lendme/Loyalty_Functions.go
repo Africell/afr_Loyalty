@@ -3653,6 +3653,7 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Add(Login string, request 
 	NewEntry.Key = request.Key
 	NewEntry.Description = request.Description
 	NewEntry.Min_Accumulated_Points = request.Min_Accumulated_Points
+	NewEntry.First_Redemption_Min_Accumulated_Points = request.First_Redemption_Min_Accumulated_Points
 	NewEntry.Allow_Negative_Balance_ToRedeem = request.Allow_Negative_Balance_ToRedeem
 	NewEntry.Allow_PendingLendme_ToRedeem = request.Allow_PendingLendme_ToRedeem
 	NewEntry.Airtime_Notification = request.Airtime_Notification
@@ -3761,6 +3762,7 @@ func (Uc *UserControl) Loyalty_Point_Redemption_Rules_Edit(Login string, request
 	entry.Key = request.Key
 	entry.Description = request.Description
 	entry.Min_Accumulated_Points = request.Min_Accumulated_Points
+	entry.First_Redemption_Min_Accumulated_Points = request.First_Redemption_Min_Accumulated_Points
 	entry.Allow_Negative_Balance_ToRedeem = request.Allow_Negative_Balance_ToRedeem
 	entry.Allow_PendingLendme_ToRedeem = request.Allow_PendingLendme_ToRedeem
 	entry.Airtime_Notification = request.Airtime_Notification
@@ -6231,7 +6233,12 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 		enqueue_Loyalty_Redemption_log(*response)
 		return
 	}
-	if response.Opening_Available_Points < redemption_Rules.Min_Accumulated_Points {
+	requiredMinPoints := redemption_Rules.Min_Accumulated_Points
+	if loyalty_Account.Last_Redeem_Date.IsZero() && redemption_Rules.First_Redemption_Min_Accumulated_Points > 0 {
+		//first redemption for this account (never redeemed before): use the dedicated first-redemption minimum
+		requiredMinPoints = redemption_Rules.First_Redemption_Min_Accumulated_Points
+	}
+	if response.Opening_Available_Points < requiredMinPoints {
 		response.Status = "failed"
 		response.StatusCode = http.StatusBadRequest
 		response.StatusDescription = "no enough points"
@@ -7434,7 +7441,12 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest_Angola(request_header *Req
 		enqueue_Loyalty_Redemption_log(*response)
 		return
 	}
-	if response.Opening_Available_Points < redemption_Rules.Min_Accumulated_Points {
+	requiredMinPoints := redemption_Rules.Min_Accumulated_Points
+	if loyalty_Account.Last_Redeem_Date.IsZero() && redemption_Rules.First_Redemption_Min_Accumulated_Points > 0 {
+		//first redemption for this account (never redeemed before): use the dedicated first-redemption minimum
+		requiredMinPoints = redemption_Rules.First_Redemption_Min_Accumulated_Points
+	}
+	if response.Opening_Available_Points < requiredMinPoints {
 		response.Status = "failed"
 		response.StatusCode = http.StatusBadRequest
 		response.StatusDescription = "no enough points"
