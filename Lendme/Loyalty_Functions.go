@@ -6061,6 +6061,70 @@ func (Uc *UserControl) Customer_Loyalty_Account_GetRedemption_Rules(MSISDN strin
 	return cleanRedemptionRule, nil
 }
 
+// Customer_Loyalty_Account_GetNextLevel returns the customer's accumulated
+// points, their current level, and the next level up (name + minimum points to reach it).
+func (Uc *UserControl) Customer_Loyalty_Account_GetNextLevel(MSISDN string) (NextLevel Loyalty_NextLevel_Response, err error) {
+	MSISDN = Normalize_International_MSISDN(MSISDN)
+	if MSISDN == "" {
+		return NextLevel, errors.New("msisdn cannot be empty")
+	}
+	//get loyalty account detail
+	loyalty_account, loyaltyAccErr := getJSONWithMongoFallbackTTL[Customer_Loyalty_Account](context.Background(), Customer_Loyalty_Account{Key: MSISDN}.RedisKey(), Mdb_Customer_Loyalty_Account, bson.M{"Key": MSISDN}, LoyaltyAccountTTL)
+	if redisx.IsNil(loyaltyAccErr) {
+		return NextLevel, errors.New("loyalty account does not exist")
+	}
+	if loyaltyAccErr != nil {
+		return NextLevel, loyaltyAccErr
+	}
+	if loyalty_account.Loyalty_Level_Key == "" {
+		return NextLevel, errors.New("loyalty account level is not assigned")
+	}
+	//load all levels
+	llScanCtx, llScanCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	loyalty_Level_slice, llScanErr := redisx.GetAllJSONByIndex[Loyalty_Level](llScanCtx, RedisClient, redisx.IndexedGetOptions{Collection: "Loyalty_Level"})
+	llScanCancel()
+	if llScanErr != nil {
+		return NextLevel, fmt.Errorf("error scanning Loyalty_Level: %w", llScanErr)
+	}
+	//find the customer's current level
+	var current_level Loyalty_Level
+	currentFound := false
+	for _, lvl := range loyalty_Level_slice {
+		if lvl.Key == loyalty_account.Loyalty_Level_Key {
+			current_level = lvl
+			currentFound = true
+			break
+		}
+	}
+	if !currentFound {
+		return NextLevel, errors.New("current level not found")
+	}
+	//find the next level: the smallest Min_Accumulated_Points strictly greater than the current level's
+	var next_level Loyalty_Level
+	hasNext := false
+	for _, lvl := range loyalty_Level_slice {
+		if lvl.Min_Accumulated_Points > current_level.Min_Accumulated_Points {
+			if !hasNext || lvl.Min_Accumulated_Points < next_level.Min_Accumulated_Points {
+				next_level = lvl
+				hasNext = true
+			}
+		}
+	}
+	NextLevel.Current_Points = loyalty_account.Awarded_Points
+	// Current level name is the account's stored level (loyalty_account.Loyalty_Level_Key),
+	// NOT re-evaluated from the points.
+	NextLevel.Current_Level_Name = loyalty_account.Loyalty_Level_Key
+	if hasNext {
+		NextLevel.Next_Level_Name = next_level.Key
+		NextLevel.Next_Level_Min_Points = next_level.Min_Accumulated_Points
+	} else {
+		//already at the highest level: echo the current level as the next level
+		NextLevel.Next_Level_Name = current_level.Key
+		NextLevel.Next_Level_Min_Points = current_level.Min_Accumulated_Points
+	}
+	return NextLevel, nil
+}
+
 func (Uc *UserControl) Customer_Loyalty_Account_GetEarning_Rule(MSISDN string) (Earning_Rules Loyalty_Point_Earning_Rules, err error) {
 	MSISDN = Normalize_International_MSISDN(MSISDN)
 	if MSISDN == "" {
@@ -11323,8 +11387,8 @@ func (Uc *UserControl) PointsExpiry_Process() {
 	for range time.Tick(time.Second * 1) {
 		_CurrentDateTime := time.Now()
 		_hr, _mi, _se := _CurrentDateTime.Clock()
-		if _hr == 00 {
-			if _mi == 00 {
+		if _hr == 16 {
+			if _mi == 32 {
 				if _se < 60 {
 					if exec == 0 {
 						exec = 1

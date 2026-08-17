@@ -173,6 +173,13 @@ type Loyalty_Level_EditRequest struct {
 	Seniority_Levels       []Seniority_Level `bson:"Seniority_Levels" json:"Seniority_Levels"`
 }
 
+type Loyalty_NextLevel_Response struct {
+	Current_Points        float64 `json:"Current_Points"`        // account's Awarded_Points (accumulated)
+	Current_Level_Name    string  `json:"Current_Level_Name"`    // current level Key
+	Next_Level_Name       string  `json:"Next_Level_Name"`       // next level Key (echoes current level when already at the top)
+	Next_Level_Min_Points float64 `json:"Next_Level_Min_Points"` // next level's Min_Accumulated_Points
+}
+
 type Loyalty_Seniority_Level struct {
 	Key          string  `bson:"Key" json:"Key"`
 	Seniority_Id int64   `bson:"Seniority_Id" json:"Seniority_Id"`

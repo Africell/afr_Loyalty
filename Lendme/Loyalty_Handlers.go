@@ -2515,6 +2515,42 @@ func (Uc *UserControl) HTTP_Customer_Loyalty_Account_GetRedemption_Rules(w http.
 	Uc.HTTP_API_Standard_response(w, r, sr, true)
 }
 
+func (Uc *UserControl) HTTP_Customer_Loyalty_Account_GetNextLevel(w http.ResponseWriter, r *http.Request) {
+	var sr API_Standard_response
+	//**fill response source detail
+	SourceIp, _ := GetRequestIP(r)
+	sr.SourceIP = SourceIp
+	sr.Login = r.Header.Get("Login")
+	sr.SourceApp = r.Header.Get("SourceApp")
+	sr.AccessKey = r.URL.Path
+	sr.AccessMethod = r.Method
+	sr.HostId = Configuration.HostId
+	sr.ReceiveDate = time.Now()
+	sr.TransactionType = "Customer Loyalty Get Next Level"
+
+	method := r.Method
+	switch method {
+	case "GET":
+		MSISDN := r.URL.Query().Get("MSISDN")
+		response, err := Uc.Customer_Loyalty_Account_GetNextLevel(MSISDN)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to get data"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		sr.Data = response
+	}
+	//successful response
+	sr.Status = "successful"
+	sr.StatusCode = http.StatusOK
+	sr.StatusDescription = ""
+	sr.ErrorDescription = ""
+	Uc.HTTP_API_Standard_response(w, r, sr, true)
+}
+
 func (Uc *UserControl) HTTP_Customer_Loyalty_Account_DebitPoints(w http.ResponseWriter, r *http.Request) {
 	var transaction Loyalty_AccountDebitPoints_log
 	transaction.ReceiveDate = time.Now()
