@@ -3163,7 +3163,7 @@ func (Uc *UserControl) HTTP_Bulk_Loyalty_Points_Deduction(w http.ResponseWriter,
 
 				if loyalty_AccountDebitPoints_log.Status == "failed" {
 					if loyalty_AccountDebitPoints_log.StatusDescription == "no enough points" {
-						entry, entryErr := getJSONWithMongoFallback[Customer_Loyalty_Account](context.Background(), Customer_Loyalty_Account{Key: loyalty_AccountDebitPoints_log.MSISDN}.RedisKey(), Mdb_Customer_Loyalty_Account, bson.M{"Key": loyalty_AccountDebitPoints_log.MSISDN})
+						entry, entryErr := getJSONWithMongoFallbackTTL[Customer_Loyalty_Account](context.Background(), Customer_Loyalty_Account{Key: loyalty_AccountDebitPoints_log.MSISDN}.RedisKey(), Mdb_Customer_Loyalty_Account, bson.M{"Key": loyalty_AccountDebitPoints_log.MSISDN}, LoyaltyAccountTTL)
 						if redisx.IsNil(entryErr) {
 							jobsMu.Lock()
 							jobs[jobID].Result["Failed"] = append(jobs[jobID].Result["Failed"], loyalty_AccountDebitPoints_log.MSISDN+" key does not exist")
@@ -3184,7 +3184,7 @@ func (Uc *UserControl) HTTP_Bulk_Loyalty_Points_Deduction(w http.ResponseWriter,
 									if _, putErr := Mdb_Customer_Loyalty_Account.Coll.UpdateOne(putCtx, bson.M{"Key": entry.Key}, bson.M{"$set": entry}, options.UpdateOne().SetUpsert(true)); putErr != nil {
 										log.Println("Mdb_Customer_Loyalty_Account upsert error:", putErr)
 									}
-									if putSetErr := redisx.SetJSON(putCtx, RedisClient, entry.RedisKey(), entry); putSetErr != nil {
+									if putSetErr := redisx.SetJSONWithTTL(putCtx, RedisClient, entry.RedisKey(), entry, LoyaltyAccountTTL); putSetErr != nil {
 										log.Println("redisx.SetJSON Customer_Loyalty_Account error:", putSetErr)
 									}
 									putCancel()
