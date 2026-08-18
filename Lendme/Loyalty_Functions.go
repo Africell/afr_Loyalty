@@ -11387,8 +11387,8 @@ func (Uc *UserControl) PointsExpiry_Process() {
 	for range time.Tick(time.Second * 1) {
 		_CurrentDateTime := time.Now()
 		_hr, _mi, _se := _CurrentDateTime.Clock()
-		if _hr == 16 {
-			if _mi == 32 {
+		if _hr == 00 {
+			if _mi == 00 {
 				if _se < 60 {
 					if exec == 0 {
 						exec = 1
