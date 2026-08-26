@@ -396,6 +396,12 @@ func (uc *UserControl) LoyaltyIndexesMaintenanceProcess() {
 	if _, err := mongox.CreateIndex(ctx, Mdb_Customer_Loyalty_Account.Coll, keyIdx, keyOpt); err != nil {
 		log.Println("CreateIndex Customer_Loyalty_Account/Key:", err)
 	}
+	// Supports the one-time expiry backfill and a future due-only nightly query
+	// (Find Coming_Expiry_Date <= now) instead of scanning every account.
+	comingExpiryIdx, comingExpiryOpt := mongox.NonUniqueIndex("Coming_Expiry_Date", true)
+	if _, err := mongox.CreateIndex(ctx, Mdb_Customer_Loyalty_Account.Coll, comingExpiryIdx, comingExpiryOpt); err != nil {
+		log.Println("CreateIndex Customer_Loyalty_Account/Coming_Expiry_Date:", err)
+	}
 	if _, err := mongox.CreateIndex(ctx, Mdb_Customer_Loyalty_Account_Points_Detail.Coll, keyIdx, keyOpt); err != nil {
 		log.Println("CreateIndex Customer_Loyalty_Account_Points_Detail/Key:", err)
 	}
@@ -643,6 +649,16 @@ func (Uc *UserControl) Write_Loyalty_Governance_log(record Loyalty_Governance_lo
 		log.Println("Error in Write_Loyalty_Governance_log:", err, " (", record, ")")
 		return
 	}
+}
+
+func (Uc *UserControl) InitializeLoyaltyDefault() {
+	Uc.Loyalty_Point_Expiry_Rules_Edit("Default", Loyalty_Point_Expiry_Rules_EditRequest{
+		Key: "Default_Expiry_Rules",
+		Opted_In_Rule_Type: "Monthly",
+		Validity_Unit: "Month",
+		Validity_Duration: 12,
+		Opted_Out_Validity_Unit: "FollowOptedIn",
+	})
 }
 
 func (Uc *UserControl) InitializeLoyaltyDefaultUAT() {
@@ -5468,32 +5484,6 @@ func (Uc *UserControl) Customer_Loyalty_Account_Edit(Login string, request Custo
 			entry.Coming_Expiry_Date = comingExpiry
 			entry.Initial_Date = resolvedInitial
 			entry.Points_To_Expire = resolvedPoints
-		} else if expiry_Rule.Opted_In_Rule_Type != "Monthly" && expiry_Rule.Opted_In_Rule_Type != "Quarterly" {
-			// legacy path: all points earned from initialDate to initialDate + validity duration will expire on initialDate + validity duration + grace period
-			var initialDate time.Time
-			if !entry.Expiry_Date.IsZero() {
-				initialDate = entry.Expiry_Date
-			} else if !entry.First_Opt_In_Status_Date.IsZero() {
-				initialDate = entry.First_Opt_In_Status_Date
-			} else {
-				initialDate = entry.Creation_date
-			}
-			initialexpiryDate := addValidity(initialDate, expiry_Rule.Validity_Unit, expiry_Rule.Validity_Duration)
-			finalexpiryDate := addValidity(initialexpiryDate, expiry_Rule.Grace_Validity_Unit, expiry_Rule.Grace_Validity_Duration)
-			entry.Coming_Expiry_Date = finalexpiryDate
-			entry.Initial_Date = initialexpiryDate
-			var expiryPoints float64 = 0
-			for _, b := range batches {
-				year, err := strconv.Atoi(b.Year_Month[:4])
-				if err != nil {
-					return Id, err
-				}
-				month, err := strconv.Atoi(b.Year_Month[4:])
-				if err == nil && year < int(entry.Initial_Date.Year()) || (year == entry.Initial_Date.Year() && month < int(entry.Initial_Date.Month())) {
-					expiryPoints += b.Available_Points
-				}
-				entry.Points_To_Expire = expiryPoints
-			}
 		}
 	} else {
 		subscriber, err := Uc.Lendme.LendmeClient.Lendme_Subscriber_Get(request.Key)
@@ -5634,6 +5624,12 @@ func (Uc *UserControl) Customer_Loyalty_Account_Get(Key string) (entries []Custo
 			return entries, entryErr
 		}
 
+		// Stored expiry fields, captured before the recompute below so ExpiryTransitionMode
+		// can detect drift and persist the corrected values.
+		storedComingExpiry := entry.Coming_Expiry_Date
+		storedInitialDate := entry.Initial_Date
+		storedPointsToExpire := entry.Points_To_Expire
+
 		plan, planErr := getJSONWithMongoFallback[Loyalty_Plan](context.Background(), Loyalty_Plan{Key: entry.Loyalty_Level_Key + "|" + entry.Loyalty_Account_Segment_Key}.RedisKey(), Mdb_Loyalty_Plan, bson.M{"Key": entry.Loyalty_Level_Key + "|" + entry.Loyalty_Account_Segment_Key})
 		if redisx.IsNil(planErr) {
 			err = errors.New("loyalty plan does not exist")
@@ -5670,33 +5666,10 @@ func (Uc *UserControl) Customer_Loyalty_Account_Get(Key string) (entries []Custo
 			entry.Coming_Expiry_Date = comingExpiry
 			entry.Initial_Date = resolvedInitial
 			entry.Points_To_Expire = resolvedPoints
-		} else if expiry_Rule.Opted_In_Rule_Type != "Monthly" && expiry_Rule.Opted_In_Rule_Type != "Quarterly" {
-			// legacy path: all points earned from initialDate to initialDate + validity duration will expire on initialDate + validity duration + grace period
-			var initialDate time.Time
-			if !entry.Expiry_Date.IsZero() {
-				initialDate = entry.Expiry_Date
-			} else if !entry.First_Opt_In_Status_Date.IsZero() {
-				initialDate = entry.First_Opt_In_Status_Date
-			} else {
-				initialDate = entry.Creation_date
-			}
-			initialexpiryDate := addValidity(initialDate, expiry_Rule.Validity_Unit, expiry_Rule.Validity_Duration)
-			finalexpiryDate := addValidity(initialexpiryDate, expiry_Rule.Grace_Validity_Unit, expiry_Rule.Grace_Validity_Duration)
-			entry.Coming_Expiry_Date = finalexpiryDate
-			entry.Initial_Date = initialexpiryDate
-			var expiryPoints float64 = 0
-			for _, b := range batches {
-				year, err := strconv.Atoi(b.Year_Month[:4])
-				if err != nil {
-					return entries, err
-				}
-				month, err := strconv.Atoi(b.Year_Month[4:])
-				if err == nil && year < int(entry.Initial_Date.Year()) || (year == entry.Initial_Date.Year() && month < int(entry.Initial_Date.Month())) {
-					expiryPoints += b.Available_Points
-				}
-				entry.Points_To_Expire = expiryPoints
-			}
 		}
+		// Persist the recomputed coming-expiry if it drifted from what was stored, so the
+		// stored Coming_Expiry_Date stays correct (the nightly expiry process relies on it).
+		Uc.persistComingExpiryIfChanged(entry, storedComingExpiry, storedInitialDate, storedPointsToExpire)
 		if !entry.Joining_Date.IsZero() && entry.Joining_Date.Year() != 1 {
 			now := time.Now()
 
@@ -5946,10 +5919,6 @@ func resolveAccountExpiryDates(account Customer_Loyalty_Account, rule Loyalty_Po
 		return
 	}
 
-	if rule.Opted_In_Rule_Type == "" {
-		return // zero values signal caller to use legacy path
-	}
-
 	switch rule.Opted_In_Rule_Type {
 	case "Monthly", "Quarterly":
 		var nearestExpiry time.Time
@@ -5969,6 +5938,39 @@ func resolveAccountExpiryDates(account Customer_Loyalty_Account, rule Loyalty_Po
 		comingExpiry = nearestExpiry
 		initialDate = nearestExpiry
 		pointsToExpire = nearestPoints
+		return
+	}
+
+	// Legacy fixed-date path (empty/unknown Opted_In_Rule_Type): all points earned up to
+	// (anchor + validity) expire at (anchor + validity + grace). Folded in here so every
+	// caller gets an authoritative Coming_Expiry_Date from one place.
+	var anchor time.Time
+	if !account.Expiry_Date.IsZero() {
+		anchor = account.Expiry_Date
+	} else if !account.First_Opt_In_Status_Date.IsZero() {
+		anchor = account.First_Opt_In_Status_Date
+	} else {
+		anchor = account.Creation_date
+	}
+	initialExpiry := addValidity(anchor, rule.Validity_Unit, rule.Validity_Duration)
+	finalExpiry := addValidity(initialExpiry, rule.Grace_Validity_Unit, rule.Grace_Validity_Duration)
+	comingExpiry = finalExpiry
+	initialDate = initialExpiry
+	for _, b := range batches {
+		if len(b.Year_Month) < 6 {
+			continue
+		}
+		year, yErr := strconv.Atoi(b.Year_Month[:4])
+		if yErr != nil {
+			continue
+		}
+		month, mErr := strconv.Atoi(b.Year_Month[4:])
+		if mErr != nil {
+			continue
+		}
+		if year < initialDate.Year() || (year == initialDate.Year() && month < int(initialDate.Month())) {
+			pointsToExpire += b.Available_Points
+		}
 	}
 	return
 }
@@ -11349,7 +11351,7 @@ func (Uc *UserControl) EvaluateAndUpdate_CustomerLoyaltyLevel(Login string, Acco
 					putCancel()
 				}
 			} else {
-				return loyalty_account.Loyalty_Level_Key, errors.New("downgrade level is not defined")
+				return loyalty_account.Loyalty_Level_Key, fmt.Errorf("downgrade level is not defined: new=%s current=%s msisdn=%s", New_Loyalty_Level.Key, loyalty_account.Loyalty_Level_Key, loyalty_account.Key)
 			}
 		}
 		//write change log
@@ -11393,6 +11395,8 @@ func (Uc *UserControl) PointsExpiry_Process() {
 					if exec == 0 {
 						exec = 1
 						log.Println(LOG_ID + " triggered")
+						// Full scan: Customer_Loyalty_Account_Get recomputes and persists each
+						// account's coming date (if it drifted) while we expire the due ones.
 						countCtx, countCancel := context.WithTimeout(context.Background(), 10*time.Second)
 						count, err := Mdb_Customer_Loyalty_Account.Coll.CountDocuments(countCtx, bson.D{})
 						countCancel()
@@ -11413,15 +11417,20 @@ func (Uc *UserControl) PointsExpiry_Process() {
 										} else {
 											endReached = true
 										}
-										// do the work here
+										// Transition scan: Customer_Loyalty_Account_Get recomputes the coming
+										// date from the account's batches and (in transition mode) persists it
+										// if it drifted, so this one scan corrects every stored Coming_Expiry_Date.
+										// It also drives the due-check for this run; ProcessExec re-reads the account.
 										for _, loyalty_Account := range loyalty_Accounts {
-											finalAccount, err := Uc.Customer_Loyalty_Account_Get(loyalty_Account.Key)
-											if err != nil || len(finalAccount) == 0 {
-												// break
-												// one bad account kills the whole loop, we should use continue instead of break
+											finalAccount, gErr := Uc.Customer_Loyalty_Account_Get(loyalty_Account.Key)
+											if gErr != nil || len(finalAccount) == 0 {
 												continue
 											}
-											if finalAccount[0].Coming_Expiry_Date.Before(time.Now()) {
+											if !finalAccount[0].Coming_Expiry_Date.IsZero() && finalAccount[0].Coming_Expiry_Date.Before(time.Now()) {
+												// Acquire the worker slot BEFORE spawning so a month-end with many
+												// due accounts can't spawn an unbounded pile of goroutines all
+												// blocked on the semaphore. ProcessExec releases the slot.
+												chan_PointsExpiry_Controler <- 1
 												go Uc.PointsExpiry_ProcessExec(finalAccount[0])
 											}
 										}
@@ -11445,7 +11454,9 @@ func (Uc *UserControl) PointsExpiry_Process() {
 }
 
 func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account) {
-	chan_PointsExpiry_Controler <- 1
+	// The worker slot on chan_PointsExpiry_Controler is acquired by the caller
+	// (PointsExpiry_Process) BEFORE spawning this goroutine, to bound how many can be in
+	// flight. Every return path below releases it exactly once.
 	var expiry_log Loyalty_Full_Expiry_Log
 	expiry_log.ExpiryTime = time.Now()
 	expiry_log.MSISDN = account.Key
@@ -11508,7 +11519,7 @@ func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account
 		<-chan_PointsExpiry_Controler
 		return
 	}
-	// Evaluate the loyalty level BEFORE any points are expired this run. 
+	// Evaluate the loyalty level BEFORE any points are expired this run.
 	if _, preEvalErr := Uc.EvaluateAndUpdate_CustomerLoyaltyLevel("Points_Expiry", account.Key); preEvalErr != nil {
 		fmt.Println("error", preEvalErr)
 	}
@@ -11522,6 +11533,8 @@ func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account
 	// Iterate a snapshot: removeStringFromArray below mutates account.Points_Detail_Keys
 	// in place, which would otherwise shift elements and skip batches mid-range.
 	pointKeysSnapshot := append([]string(nil), account.Points_Detail_Keys...)
+	// Batches that survive this run; used to recompute the next Coming_Expiry_Date.
+	var remainingBatches []Customer_Loyalty_Account_Points_Detail
 	for _, pointKey := range pointKeysSnapshot {
 		pointsDetail, err := Uc.Customer_Loyalty_Account_Points_Details_Get(pointKey)
 		if err != nil {
@@ -11625,6 +11638,9 @@ func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account
 				delCancel()
 			}
 
+		} else {
+			// Batch survives this run; keep it to recompute the next Coming_Expiry_Date.
+			remainingBatches = append(remainingBatches, pointsDetail[0])
 		}
 		entry, entryErr := getJSONWithMongoFallbackTTL[Customer_Loyalty_Account](context.Background(), Customer_Loyalty_Account{Key: account.Key}.RedisKey(), Mdb_Customer_Loyalty_Account, bson.M{"Key": account.Key}, LoyaltyAccountTTL)
 		if redisx.IsNil(entryErr) {
@@ -11645,8 +11661,74 @@ func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account
 		Uc.Write_Loyalty_Full_Expiry_log(expiry_log)
 
 	}
+
+	// Recompute and persist the account's NEXT coming-expiry from the batches that
+	// survived this run. This is what keeps the nightly due-gate cheap: without it, an
+	// expired account keeps its now-past date and gets re-selected every night forever.
+	// It also correctly pushes the date into the future for a "stale-late" selection
+	// where nothing actually expired this run.
+	Uc.recomputeAndPersistComingExpiry(account, expiry_Rule, remainingBatches)
+
 	<-chan_PointsExpiry_Controler
 }
+
+
+// recomputeAndPersistComingExpiry recomputes entry's next coming-expiry from the given
+// (remaining) batches and persists it to Mongo (source of truth) and Redis (cache). It
+// writes the whole entry, matching the last-writer-wins pattern used elsewhere in this
+// package; the caller (PointsExpiry_ProcessExec) holds the authoritative post-expiry
+// account. Errors are logged, not returned.
+func (Uc *UserControl) recomputeAndPersistComingExpiry(entry Customer_Loyalty_Account, rule Loyalty_Point_Expiry_Rules, batches []Customer_Loyalty_Account_Points_Detail) {
+	var coming, initial time.Time
+	var pts float64
+	// No batches -> nothing to expire, whatever the rule. Leave the dates zero so the
+	// nightly due-gate skips this account instead of re-selecting a drained opted-out/
+	// legacy account (whose date is anchored on a fixed past event) every night.
+	if len(batches) > 0 {
+		coming, initial, pts = resolveAccountExpiryDates(entry, rule, batches)
+	}
+	entry.Coming_Expiry_Date = coming
+	entry.Initial_Date = initial
+	entry.Points_To_Expire = pts
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if _, err := Mdb_Customer_Loyalty_Account.Coll.UpdateOne(ctx, bson.M{"Key": entry.Key}, bson.M{"$set": entry}, options.UpdateOne().SetUpsert(true)); err != nil {
+		log.Println("recomputeAndPersistComingExpiry mongo update error:", entry.Key, err)
+	}
+	if err := redisx.SetJSONWithTTL(ctx, RedisClient, entry.RedisKey(), entry, LoyaltyAccountTTL); err != nil {
+		log.Println("recomputeAndPersistComingExpiry redis set error:", entry.Key, err)
+	}
+}
+
+// persistComingExpiryIfChanged writes the freshly recomputed coming-expiry fields back to
+// Mongo via a targeted $set (never a whole-document write, so it can't clobber concurrent
+// point changes) and invalidates the Redis cache, but only if the values actually drifted
+// from what was stored. Called by Customer_Loyalty_Account_Get so a full account scan brings
+// every stored Coming_Expiry_Date up to date. Best-effort: errors are logged, not returned.
+func (Uc *UserControl) persistComingExpiryIfChanged(entry Customer_Loyalty_Account, oldComing, oldInitial time.Time, oldPoints float64) {
+	if entry.Coming_Expiry_Date.Equal(oldComing) && entry.Initial_Date.Equal(oldInitial) && entry.Points_To_Expire == oldPoints {
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	set := bson.M{
+		"Coming_Expiry_Date": entry.Coming_Expiry_Date,
+		"Initial_Date":       entry.Initial_Date,
+		"Points_To_Expire":   entry.Points_To_Expire,
+	}
+	if _, err := Mdb_Customer_Loyalty_Account.Coll.UpdateOne(ctx, bson.M{"Key": entry.Key}, bson.M{"$set": set}); err != nil {
+		log.Println("persistComingExpiryIfChanged mongo update error:", entry.Key, err)
+		return
+	}
+	// Invalidate the cache so the next read repopulates the corrected fields from Mongo
+	// (the source of truth) rather than us writing a whole-entry blob that could clobber a
+	// concurrent point change.
+	if _, err := redisx.DelJSON(ctx, RedisClient, entry.RedisKey()); err != nil {
+		log.Println("persistComingExpiryIfChanged redis del error:", entry.Key, err)
+	}
+}
+
 
 func removeStringFromArray(s []string, r string) []string {
 	for i, v := range s {
