@@ -1218,7 +1218,6 @@ func setDefaultConfiguration_GM_UAT() (Configuration ConfigType) { //lendme serv
 	Configuration.Redis.DefaultTTL = -1
 	Configuration.Redis.IndexedCollections = ReferenceCollectionNames
 	Configuration.LoyaltyAccountTTL = 7 * 24 * time.Hour // Customer_Loyalty_Account
-	Configuration.PointsDetailTTL = 7 * 24 * time.Hour   // Customer_Loyalty_Account_Points_Detail
 
 	Configuration.DB_Name = "Loyalty_DB"
 

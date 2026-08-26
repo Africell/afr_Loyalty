@@ -228,7 +228,6 @@ func (UC *UserControl) InitializeMongoxRepositories() error {
 
 	RedisClient = UC.Redis
 	LoyaltyAccountTTL = Configuration.LoyaltyAccountTTL
-	PointsDetailTTL = Configuration.PointsDetailTTL
 	return nil
 }
 
@@ -1421,9 +1420,6 @@ func (Uc *UserControl) Loyalty_Status_Expiry_Daily_Process() {
 					putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
 					if _, putErr := Mdb_Customer_Loyalty_Account_Points_Detail.Coll.UpdateOne(putCtx, bson.M{"Key": pointsDetail[0].Key}, bson.M{"$set": pointsDetail[0]}, options.UpdateOne().SetUpsert(true)); putErr != nil {
 						log.Println("Mdb_Customer_Loyalty_Account_Points_Detail upsert error:", putErr)
-					}
-					if putSetErr := redisx.SetJSONWithTTL(putCtx, RedisClient, pointsDetail[0].RedisKey(), pointsDetail[0], PointsDetailTTL); putSetErr != nil {
-						log.Println("redisx.SetJSON Customer_Loyalty_Account_Points_Detail error:", putSetErr)
 					}
 					putCancel()
 				}
@@ -5556,7 +5552,6 @@ func (Uc *UserControl) Customer_Loyalty_Account_Edit(Login string, request Custo
 // compile-time values and these are sourced from runtime configuration.
 var (
 	LoyaltyAccountTTL time.Duration // Customer_Loyalty_Account
-	PointsDetailTTL   time.Duration // Customer_Loyalty_Account_Points_Detail
 )
 
 // getJSONWithMongoFallback is a read-through helper. It tries Redis first and, on a Redis MISS (redis.Nil), falls back to Mongo (the source
@@ -5977,16 +5972,17 @@ func resolveAccountExpiryDates(account Customer_Loyalty_Account, rule Loyalty_Po
 
 func (Uc *UserControl) Customer_Loyalty_Account_Points_Details_Get(Key string) (entries []Customer_Loyalty_Account_Points_Detail, err error) {
 	if Key == "" {
-		entries, err = redisx.GetAllJSONByPattern[Customer_Loyalty_Account_Points_Detail](context.Background(), RedisClient, redisx.ScanJSONOptions{
-			Pattern: "Customer_Loyalty_Account_Points_Detail:*", ScanCount: 500, PipelineSize: 250,
-		})
+		// Point details live only in Mongo (no Redis cache) — read them all straight from Mongo.
+		allCtx, allCancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer allCancel()
+		entries, err = mongox.FindMany[Customer_Loyalty_Account_Points_Detail](allCtx, Mdb_Customer_Loyalty_Account_Points_Detail.Coll, bson.M{})
 		if err != nil {
 			return entries, err
 		}
 		return entries, nil
 	} else {
-		entry, entryErr := getJSONWithMongoFallbackTTL[Customer_Loyalty_Account_Points_Detail](context.Background(), Customer_Loyalty_Account_Points_Detail{Key: Key}.RedisKey(), Mdb_Customer_Loyalty_Account_Points_Detail, bson.M{"Key": Key}, PointsDetailTTL)
-		if redisx.IsNil(entryErr) {
+		entry, entryErr := mongox.FindOne[Customer_Loyalty_Account_Points_Detail](context.Background(), Mdb_Customer_Loyalty_Account_Points_Detail.Coll, bson.M{"Key": Key})
+		if mongox.IsNotFound(entryErr) {
 			err = errors.New("point detail key does not exist: " + Key)
 			return entries, err
 		}
@@ -9079,8 +9075,8 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 		YYYY, MM, _, _, _, _, _ := GetTimeParts(time.Now())
 		//prepare the monthly points detail
 		var PointsDetail Customer_Loyalty_Account_Points_Detail
-		PointsDetail, pdErr := getJSONWithMongoFallbackTTL[Customer_Loyalty_Account_Points_Detail](context.Background(), Customer_Loyalty_Account_Points_Detail{Key: request.MSISDN + "|" + YYYY + MM}.RedisKey(), Mdb_Customer_Loyalty_Account_Points_Detail, bson.M{"Key": request.MSISDN + "|" + YYYY + MM}, PointsDetailTTL)
-		if redisx.IsNil(pdErr) {
+		PointsDetail, pdErr := mongox.FindOne[Customer_Loyalty_Account_Points_Detail](context.Background(), Mdb_Customer_Loyalty_Account_Points_Detail.Coll, bson.M{"Key": request.MSISDN + "|" + YYYY + MM})
+		if mongox.IsNotFound(pdErr) {
 			PointsDetail.Key = request.MSISDN + "|" + YYYY + MM
 			PointsDetail.Year_Month = YYYY + MM
 			PointsDetail.Creation_date = time.Now()
@@ -9161,9 +9157,6 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 				putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
 				if _, putErr := Mdb_Customer_Loyalty_Account_Points_Detail.Coll.UpdateOne(putCtx, bson.M{"Key": PointsDetail.Key}, bson.M{"$set": PointsDetail}, options.UpdateOne().SetUpsert(true)); putErr != nil {
 					log.Println("Mdb_Customer_Loyalty_Account_Points_Detail upsert error:", putErr)
-				}
-				if putSetErr := redisx.SetJSONWithTTL(putCtx, RedisClient, PointsDetail.RedisKey(), PointsDetail, PointsDetailTTL); putSetErr != nil {
-					log.Println("redisx.SetJSON Customer_Loyalty_Account_Points_Detail error:", putSetErr)
 				}
 				putCancel()
 			}
@@ -9484,8 +9477,8 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 			//fmt.Println(d.Format("2006-01-02"))
 			YYYY, MM, _, _, _, _, _ := GetTimeParts(d)
 			//prepare the monthly points detail
-			PointsDetail, pdErr := getJSONWithMongoFallbackTTL[Customer_Loyalty_Account_Points_Detail](context.Background(), Customer_Loyalty_Account_Points_Detail{Key: request.MSISDN + "|" + YYYY + MM}.RedisKey(), Mdb_Customer_Loyalty_Account_Points_Detail, bson.M{"Key": request.MSISDN + "|" + YYYY + MM}, PointsDetailTTL)
-			if pdErr != nil && !redisx.IsNil(pdErr) {
+			PointsDetail, pdErr := mongox.FindOne[Customer_Loyalty_Account_Points_Detail](context.Background(), Mdb_Customer_Loyalty_Account_Points_Detail.Coll, bson.M{"Key": request.MSISDN + "|" + YYYY + MM})
+			if pdErr != nil && !mongox.IsNotFound(pdErr) {
 				response.Status = "failed"
 				response.StatusCode = http.StatusBadRequest
 				response.StatusDescription = "failed to credit loyalty account"
@@ -9524,9 +9517,6 @@ func (Uc *UserControl) Loyalty_AccountDebitPoints(request_header *Request_Header
 						putCtx, putCancel := context.WithTimeout(context.Background(), 10*time.Second)
 						if _, putErr := Mdb_Customer_Loyalty_Account_Points_Detail.Coll.UpdateOne(putCtx, bson.M{"Key": PointsDetail.Key}, bson.M{"$set": PointsDetail}, options.UpdateOne().SetUpsert(true)); putErr != nil {
 							log.Println("Mdb_Customer_Loyalty_Account_Points_Detail upsert error:", putErr)
-						}
-						if putSetErr := redisx.SetJSONWithTTL(putCtx, RedisClient, PointsDetail.RedisKey(), PointsDetail, PointsDetailTTL); putSetErr != nil {
-							log.Println("redisx.SetJSON Customer_Loyalty_Account_Points_Detail error:", putSetErr)
 						}
 						putCancel()
 					}
@@ -11631,9 +11621,6 @@ func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account
 				delCtx, delCancel := context.WithTimeout(context.Background(), 10*time.Second)
 				if _, delErr := Mdb_Customer_Loyalty_Account_Points_Detail.Coll.DeleteOne(delCtx, bson.M{"Key": pointsDetail[0].Key}); delErr != nil {
 					log.Println("Mdb_Customer_Loyalty_Account_Points_Detail DeleteOne error:", delErr)
-				}
-				if _, delRedisErr := redisx.DelJSON(delCtx, RedisClient, Customer_Loyalty_Account_Points_Detail{Key: pointsDetail[0].Key}.RedisKey()); delRedisErr != nil {
-					log.Println("redisx.DelJSON Customer_Loyalty_Account_Points_Detail error:", delRedisErr)
 				}
 				delCancel()
 			}
