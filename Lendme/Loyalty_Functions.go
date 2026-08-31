@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	SpinAndWin "afr_SpinAndWin_be/SpinAndWinClient"
@@ -652,10 +653,10 @@ func (Uc *UserControl) Write_Loyalty_Governance_log(record Loyalty_Governance_lo
 
 func (Uc *UserControl) InitializeLoyaltyDefault() {
 	Uc.Loyalty_Point_Expiry_Rules_Edit("Default", Loyalty_Point_Expiry_Rules_EditRequest{
-		Key: "Default_Expiry_Rules",
-		Opted_In_Rule_Type: "Monthly",
-		Validity_Unit: "Month",
-		Validity_Duration: 12,
+		Key:                     "Default_Expiry_Rules",
+		Opted_In_Rule_Type:      "Monthly",
+		Validity_Unit:           "Month",
+		Validity_Duration:       12,
 		Opted_Out_Validity_Unit: "FollowOptedIn",
 	})
 }
@@ -11385,6 +11386,8 @@ func (Uc *UserControl) PointsExpiry_Process() {
 					if exec == 0 {
 						exec = 1
 						log.Println(LOG_ID + " triggered")
+						runStart := time.Now()
+						var dueCount int64
 						// Full scan: Customer_Loyalty_Account_Get recomputes and persists each
 						// account's coming date (if it drifted) while we expire the due ones.
 						countCtx, countCancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -11392,45 +11395,57 @@ func (Uc *UserControl) PointsExpiry_Process() {
 						countCancel()
 						if err != nil {
 							log.Println(LOG_ID + " count get error: " + err.Error())
-						} else {
-							if count > 0 {
-								var QueryLimit int64 = 1000
-								var QueryPage int64 = 1
-								var endReached bool = false
-								var QueryIdx int64 = 0
-								for !endReached {
-									loyalty_Accounts, err := Uc.Customer_Loyalty_Account_GetPaginated(QueryPage, QueryLimit)
-									if err == nil {
-										if QueryIdx < count {
-											QueryPage = QueryPage + 1
-											QueryIdx = QueryIdx + QueryLimit
-										} else {
-											endReached = true
-										}
-										// Transition scan: Customer_Loyalty_Account_Get recomputes the coming
-										// date from the account's batches and (in transition mode) persists it
-										// if it drifted, so this one scan corrects every stored Coming_Expiry_Date.
-										// It also drives the due-check for this run; ProcessExec re-reads the account.
-										for _, loyalty_Account := range loyalty_Accounts {
-											finalAccount, gErr := Uc.Customer_Loyalty_Account_Get(loyalty_Account.Key)
-											if gErr != nil || len(finalAccount) == 0 {
-												continue
-											}
-											if !finalAccount[0].Coming_Expiry_Date.IsZero() && finalAccount[0].Coming_Expiry_Date.Before(time.Now()) {
-												// Acquire the worker slot BEFORE spawning so a month-end with many
-												// due accounts can't spawn an unbounded pile of goroutines all
-												// blocked on the semaphore. ProcessExec releases the slot.
-												chan_PointsExpiry_Controler <- 1
-												go Uc.PointsExpiry_ProcessExec(finalAccount[0])
-											}
-										}
-									}
+						} else if count > 0 {
+							// Fan the per-account Get across a bounded pool. The scan is I/O-bound
+							// (serial Mongo batch reads per account), so concurrency cuts wall-clock
+							// while still recomputing+persisting EVERY account (stays self-healing).
+							const scanWorkers = 10
+							scanSem := make(chan struct{}, scanWorkers)
+							var wg sync.WaitGroup
 
+							var QueryLimit int64 = 1000
+							var QueryPage int64 = 1
+							var endReached bool = false
+							var QueryIdx int64 = 0
+							for !endReached {
+								loyalty_Accounts, pErr := Uc.Customer_Loyalty_Account_GetPaginated(QueryPage, QueryLimit)
+								if pErr != nil {
+									log.Println(LOG_ID+" pagination error on page", QueryPage, ":", pErr)
+									break
 								}
-
+								if QueryIdx < count {
+									QueryPage = QueryPage + 1
+									QueryIdx = QueryIdx + QueryLimit
+								} else {
+									endReached = true
+								}
+								for _, loyalty_Account := range loyalty_Accounts {
+									scanSem <- struct{}{}
+									wg.Add(1)
+									go func(key string) {
+										defer wg.Done()
+										defer func() { <-scanSem }()
+										finalAccount, gErr := Uc.Customer_Loyalty_Account_Get(key)
+										if gErr != nil || len(finalAccount) == 0 {
+											return
+										}
+										if !finalAccount[0].Coming_Expiry_Date.IsZero() && finalAccount[0].Coming_Expiry_Date.Before(time.Now()) {
+											atomic.AddInt64(&dueCount, 1)
+											// Acquire the ProcessExec slot BEFORE spawning so a month-end
+											// with many due accounts can't pile up unbounded goroutines.
+											chan_PointsExpiry_Controler <- 1
+											wg.Add(1)
+											go func(acc Customer_Loyalty_Account) {
+												defer wg.Done()
+												Uc.PointsExpiry_ProcessExec(acc)
+											}(finalAccount[0])
+										}
+									}(loyalty_Account.Key)
+								}
 							}
+							wg.Wait()
 						}
-						log.Println(LOG_ID + " finished")
+						log.Printf("%s finished in %s (accounts=%d due=%d)", LOG_ID, time.Since(runStart), count, atomic.LoadInt64(&dueCount))
 					}
 				}
 			} else {
@@ -11439,6 +11454,12 @@ func (Uc *UserControl) PointsExpiry_Process() {
 				}
 			}
 
+		} else if exec == 1 {
+			// The nightly run blocks this goroutine for hours, so by the time it returns
+			// the hour is past 00 and the _mi!=0 reset above is never reached. Without this
+			// exec would stay 1 forever and the process would never trigger again until a
+			// restart — which is why it ran on 30/8 (first midnight after restart) but not 31/8.
+			exec = 0
 		}
 	}
 }
@@ -11659,7 +11680,6 @@ func (Uc *UserControl) PointsExpiry_ProcessExec(account Customer_Loyalty_Account
 	<-chan_PointsExpiry_Controler
 }
 
-
 // recomputeAndPersistComingExpiry recomputes entry's next coming-expiry from the given
 // (remaining) batches and persists it to Mongo (source of truth) and Redis (cache). It
 // writes the whole entry, matching the last-writer-wins pattern used elsewhere in this
@@ -11715,7 +11735,6 @@ func (Uc *UserControl) persistComingExpiryIfChanged(entry Customer_Loyalty_Accou
 		log.Println("persistComingExpiryIfChanged redis del error:", entry.Key, err)
 	}
 }
-
 
 func removeStringFromArray(s []string, r string) []string {
 	for i, v := range s {
