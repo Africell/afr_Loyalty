@@ -15,11 +15,12 @@ import (
 
 func Send_SMS(sender string, target string, text string) (_rErr error) {
 	//check target
-	if len(target) < Configuration.SMPP.MSISDN_Short_len {
+	target_len := SMPP_MSISDN_len(target)
+	if len(target) < target_len {
 		err := errors.New("error sending SMS: target is short ")
 		return err
 	}
-	// target = Configuration.SMPP.CountryCodePrefix + target[(len(target)-Configuration.SMPP.MSISDN_Short_len):]
+	target = Configuration.SMPP.CountryCodePrefix + target[(len(target)-target_len):]
 	//check if UAT and if target is in UAT pool
 	if !Configuration.IsLoyaltyProduction {
 		_, uatErr := getJSONWithMongoFallback[Customer_UAT](context.Background(), Customer_UAT{Key: target}.RedisKey(), Mdb_Customer_UAT, bson.M{"Key": target})

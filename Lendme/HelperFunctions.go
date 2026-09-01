@@ -370,3 +370,56 @@ func RoundDown(val float64, precision int) float64 {
 func RoundToNearest(val float64, precision int) float64 {
 	return math.Round(val*(math.Pow10(precision))) / math.Pow10(precision)
 }
+
+func lastnASCII(s string, n int) string {
+	if len(s) <= n {
+		return s
+	}
+	return s[len(s)-n:]
+}
+
+// MSISDN_NSN_len resolves the national significant number length that applies to
+// MSISDN. Operations whose numbering plan was extended with a national destination
+// code (Gambia's new plan: NDC "87" followed by 7 digits, living next to the legacy
+// 7 digit numbers) carry two lengths, so the length has to be read from the number
+// instead of being fixed. An ndcLen not longer than shortLen or an empty ndcList
+// keeps the single plan behaviour used by every other operation.
+func MSISDN_NSN_len(MSISDN string, shortLen int, ndcLen int, ndcList []string) int {
+	if ndcLen <= shortLen || len(ndcList) == 0 || len(MSISDN) < ndcLen {
+		return shortLen
+	}
+	if hasAnyPrefix(MSISDN[len(MSISDN)-ndcLen:], ndcList) {
+		return ndcLen
+	}
+	return shortLen
+}
+
+// MSISDN_len resolves the national significant number length of MSISDN against the
+// operation wide numbering plan.
+func MSISDN_len(MSISDN string) int {
+	return MSISDN_NSN_len(MSISDN, Configuration.MSISDN_Short_len, Configuration.MSISDN_NDC_len, Configuration.MSISDN_NDC_List)
+}
+
+// SMPP_MSISDN_len resolves the national significant number length of MSISDN against
+// the SMPP numbering plan.
+func SMPP_MSISDN_len(MSISDN string) int {
+	return MSISDN_NSN_len(MSISDN, Configuration.SMPP.MSISDN_Short_len, Configuration.SMPP.MSISDN_NDC_len, Configuration.SMPP.MSISDN_NDC_List)
+}
+
+func GetInternational(MSISDN string) (formatted_MSISDN string) {
+	return Configuration.CountryCode + lastnASCII(MSISDN, MSISDN_len(MSISDN))
+}
+
+func GetNational(MSISDN string) (formatted_MSISDN string) {
+	return Configuration.MSISDN_Prefix + lastnASCII(MSISDN, MSISDN_len(MSISDN))
+}
+
+func hasAnyPrefix(s string, prefixes []string) bool {
+	sLower := strings.ToLower(s)
+	for _, p := range prefixes {
+		if strings.HasPrefix(sLower, strings.ToLower(p)) {
+			return true
+		}
+	}
+	return false
+}

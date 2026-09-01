@@ -6317,8 +6317,9 @@ func (Uc *UserControl) Customer_Loyalty_RedeemRequest(request_header *Request_He
 	if !redemption_Rules.Allow_Negative_Balance_ToRedeem {
 		IN_MSISDN := response.MSISDN
 		if Configuration.Operation == "Gambia" {
-			if len(response.MSISDN) > 7 {
-				IN_MSISDN = IN_MSISDN[len(response.MSISDN)-7 : len(response.MSISDN)]
+			msisdn_len := MSISDN_len(response.MSISDN)
+			if len(response.MSISDN) > msisdn_len {
+				IN_MSISDN = IN_MSISDN[len(response.MSISDN)-msisdn_len:]
 			}
 		} else if Configuration.Operation == "SierraLeone" { //077928014
 			if len(response.MSISDN) > 8 {
@@ -8836,11 +8837,11 @@ func (Uc *UserControl) Loyalty_AccountCreditPoints(request_header *Request_Heade
 		}
 		response.EventDetail = Normalize_International_MSISDN(response.EventDetail)
 		var transactionAgent, loyaltyAgent string
-		if len(response.EventDetail) >= Configuration.MSISDN_Short_len {
-			transactionAgent = response.EventDetail[len(response.EventDetail)-Configuration.MSISDN_Short_len:]
+		if msisdn_len := MSISDN_len(response.EventDetail); len(response.EventDetail) >= msisdn_len {
+			transactionAgent = response.EventDetail[len(response.EventDetail)-msisdn_len:]
 		}
-		if len(redemption_Rules.MobileMoney_MerchantAccount) >= Configuration.MSISDN_Short_len {
-			loyaltyAgent = redemption_Rules.MobileMoney_MerchantAccount[len(redemption_Rules.MobileMoney_MerchantAccount)-Configuration.MSISDN_Short_len:]
+		if msisdn_len := MSISDN_len(redemption_Rules.MobileMoney_MerchantAccount); len(redemption_Rules.MobileMoney_MerchantAccount) >= msisdn_len {
+			loyaltyAgent = redemption_Rules.MobileMoney_MerchantAccount[len(redemption_Rules.MobileMoney_MerchantAccount)-msisdn_len:]
 		}
 		if transactionAgent != "" && loyaltyAgent != "" {
 			if transactionAgent == loyaltyAgent {
@@ -11772,7 +11773,8 @@ func (Uc *UserControl) LoyaltyGovernancePools_Metrics_Process() {
 }
 
 func Normalize_International_MSISDN(MSISDN string) (N_MSISDN string) {
-	if len(MSISDN) < Configuration.MSISDN_Short_len {
+	msisdn_len := MSISDN_len(MSISDN)
+	if len(MSISDN) < msisdn_len {
 		return ""
 	} else {
 		//check if msisdn contain character
@@ -11781,12 +11783,12 @@ func Normalize_International_MSISDN(MSISDN string) (N_MSISDN string) {
 			return ""
 		}
 		//normalize
-		if len(MSISDN) == len(Configuration.CountryCode)+Configuration.MSISDN_Short_len {
+		if len(MSISDN) == len(Configuration.CountryCode)+msisdn_len {
 			return MSISDN
-		} else if len(MSISDN) == Configuration.MSISDN_Short_len {
+		} else if len(MSISDN) == msisdn_len {
 			return Configuration.CountryCode + MSISDN
 		} else {
-			return Configuration.CountryCode + MSISDN[len(MSISDN)-Configuration.MSISDN_Short_len:]
+			return Configuration.CountryCode + MSISDN[len(MSISDN)-msisdn_len:]
 		}
 	}
 }

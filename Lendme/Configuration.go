@@ -37,6 +37,8 @@ type ConfigType struct {
 
 	MSISDN_Prefix    string
 	MSISDN_Short_len int
+	MSISDN_NDC_len   int      //national significant number length of the numbers carrying one of MSISDN_NDC_List, 0 when the operation has a single plan
+	MSISDN_NDC_List  []string //national destination codes added on top of the legacy plan, ex: Gambia "87"
 	CountryCode      string
 
 	ARPU_File_Path             string
@@ -103,6 +105,8 @@ type ConfigType struct {
 		TimeOut           time.Duration
 		PrintLogs         bool
 		MSISDN_Short_len  int //length without country code and without 0 prefix
+		MSISDN_NDC_len    int      //length without country code of the numbers carrying one of MSISDN_NDC_List, 0 when the operation has a single plan
+		MSISDN_NDC_List   []string //national destination codes added on top of the legacy plan, ex: Gambia "87"
 		CountryCodePrefix string
 		DefaultSender     string
 		Encoding          int
@@ -839,6 +843,8 @@ func setDefaultConfiguration_GM_Loyalty() (Configuration ConfigType) { //lendme 
 
 	Configuration.MSISDN_Prefix = ""
 	Configuration.MSISDN_Short_len = 7
+	Configuration.MSISDN_NDC_len = 9 //new plan: NDC "87" followed by 7 digits, next to the legacy 7 digit numbers
+	Configuration.MSISDN_NDC_List = []string{"87"}
 	Configuration.CountryCode = "220"
 	Configuration.IsPrimary = true
 	Configuration.IsLoyaltyProduction = true
@@ -901,7 +907,9 @@ func setDefaultConfiguration_GM_Loyalty() (Configuration ConfigType) { //lendme 
 	Configuration.SMPP.Password = "Loyalty123"
 	Configuration.SMPP.TimeOut = 5 //in seconds
 	Configuration.SMPP.PrintLogs = true
-	Configuration.SMPP.MSISDN_Short_len = 8
+	Configuration.SMPP.MSISDN_Short_len = 7
+	Configuration.SMPP.MSISDN_NDC_len = 9
+	Configuration.SMPP.MSISDN_NDC_List = []string{"87"}
 	Configuration.SMPP.CountryCodePrefix = "220"
 	Configuration.SMPP.DefaultSender = "Africell" //"Africell"
 	Configuration.SMPP.Encoding = 0
@@ -1000,6 +1008,8 @@ func setDefaultConfiguration_GM_Loyalty_Live() (Configuration ConfigType) { //le
 
 	Configuration.MSISDN_Prefix = ""
 	Configuration.MSISDN_Short_len = 7
+	Configuration.MSISDN_NDC_len = 9 //new plan: NDC "87" followed by 7 digits, next to the legacy 7 digit numbers
+	Configuration.MSISDN_NDC_List = []string{"87"}
 	Configuration.CountryCode = "220"
 
 	Configuration.IsPrimary = true
@@ -1063,7 +1073,9 @@ func setDefaultConfiguration_GM_Loyalty_Live() (Configuration ConfigType) { //le
 	Configuration.SMPP.Password = "Loyalty123"
 	Configuration.SMPP.TimeOut = 5 //in seconds
 	Configuration.SMPP.PrintLogs = true
-	Configuration.SMPP.MSISDN_Short_len = 8
+	Configuration.SMPP.MSISDN_Short_len = 7
+	Configuration.SMPP.MSISDN_NDC_len = 9
+	Configuration.SMPP.MSISDN_NDC_List = []string{"87"}
 	Configuration.SMPP.CountryCodePrefix = "220"
 	Configuration.SMPP.DefaultSender = "Africell" //"Africell"
 	Configuration.SMPP.Encoding = 0
@@ -1162,6 +1174,8 @@ func setDefaultConfiguration_GM_UAT() (Configuration ConfigType) { //lendme serv
 
 	Configuration.MSISDN_Prefix = ""
 	Configuration.MSISDN_Short_len = 7
+	Configuration.MSISDN_NDC_len = 9 //new plan: NDC "87" followed by 7 digits, next to the legacy 7 digit numbers
+	Configuration.MSISDN_NDC_List = []string{"87"}
 	Configuration.CountryCode = "220"
 
 	Configuration.IsPrimary = true
@@ -1247,7 +1261,9 @@ func setDefaultConfiguration_GM_UAT() (Configuration ConfigType) { //lendme serv
 	Configuration.SMPP.Password = "Loyalty123"
 	Configuration.SMPP.TimeOut = 5 //in seconds
 	Configuration.SMPP.PrintLogs = true
-	Configuration.SMPP.MSISDN_Short_len = 8
+	Configuration.SMPP.MSISDN_Short_len = 7
+	Configuration.SMPP.MSISDN_NDC_len = 9
+	Configuration.SMPP.MSISDN_NDC_List = []string{"87"}
 	Configuration.SMPP.CountryCodePrefix = "220"
 	Configuration.SMPP.DefaultSender = "Africell" //"Africell"
 	Configuration.SMPP.Encoding = 0
@@ -2217,6 +2233,8 @@ func setDefaultConfiguration_Dev() (Configuration ConfigType) { //lendme service
 
 	Configuration.MSISDN_Prefix = "0"
 	Configuration.MSISDN_Short_len = 7
+	Configuration.MSISDN_NDC_len = 9 //new plan: NDC "87" followed by 7 digits, next to the legacy 7 digit numbers
+	Configuration.MSISDN_NDC_List = []string{"87"}
 	Configuration.CountryCode = "220"
 
 	Configuration.IsLoyaltyProduction = false
@@ -2350,7 +2368,9 @@ func setDefaultConfiguration_Dev() (Configuration ConfigType) { //lendme service
 	Configuration.SMPP.Password = "OKAPIP@ssw0rd"
 	Configuration.SMPP.TimeOut = 5 //in seconds
 	Configuration.SMPP.PrintLogs = true
-	Configuration.SMPP.MSISDN_Short_len = 9
+	Configuration.SMPP.MSISDN_Short_len = 7
+	Configuration.SMPP.MSISDN_NDC_len = 9
+	Configuration.SMPP.MSISDN_NDC_List = []string{"87"}
 	Configuration.SMPP.CountryCodePrefix = "243"
 	Configuration.SMPP.DefaultSender = "Africell" //"Africell"
 	Configuration.SMPP.Encoding = 1
