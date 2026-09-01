@@ -494,7 +494,7 @@ func (Uc *UserControl) Write_Loyalty_Level_Change_log(record Loyalty_Level_Chang
 
 	Earningrecord, err := Uc.Customer_Loyalty_Account_GetEarning_Rule(record.MSISDN)
 	if err != nil {
-		log.Println("failed to get data")
+		log.Println("failed to get data:", err, "msisdn=", record.MSISDN)
 		return
 	}
 	if Earningrecord.Level_Change_Notification {
@@ -1471,7 +1471,7 @@ func (Uc *UserControl) Loyalty_Status_Expiry_Daily_Process() {
 			} else {
 				for _, loyalty_Level := range loyaltyLevels {
 					//evaluate
-					if doc.Awarded_Points >= loyalty_Level.Min_Accumulated_Points && doc.Awarded_Points < loyalty_Level.Max_Accumulated_Points {
+					if doc.Awarded_Points >= loyalty_Level.Min_Accumulated_Points && doc.Awarded_Points <= loyalty_Level.Max_Accumulated_Points {
 						New_Loyalty_Level = loyalty_Level
 						if New_Loyalty_Level.Key == doc.Loyalty_Level_Key {
 							//===>> no level change
@@ -5267,7 +5267,7 @@ func (Uc *UserControl) Customer_Loyalty_Account_Add(Login string, request Custom
 
 		Earningrecord, rule_err := Uc.Customer_Loyalty_Account_GetEarning_Rule(request.Key)
 		if rule_err != nil {
-			log.Println("failed to get data")
+			log.Println("failed to get data:", rule_err, "msisdn=", request.Key)
 			return
 		}
 		if Earningrecord.Welcome_Notification {
@@ -8701,7 +8701,7 @@ func Loyalty_Level_Selection(Accumulated_Points float64) (level_key string) {
 	}
 	if len(levels) > 0 {
 		for _, level := range levels {
-			if Accumulated_Points >= level.Min_Accumulated_Points && Accumulated_Points < level.Max_Accumulated_Points {
+			if Accumulated_Points >= level.Min_Accumulated_Points && Accumulated_Points <= level.Max_Accumulated_Points {
 				return level.Key
 			}
 		}
@@ -9791,7 +9791,7 @@ func (Uc *UserControl) Customer_Loyalty_OptRequest(request_header *Request_Heade
 
 		Earningrecord, err := Uc.Customer_Loyalty_Account_GetEarning_Rule(loyalty_account.Key)
 		if err != nil {
-			log.Println("failed to get data")
+			log.Println("failed to get data:", err, "msisdn=", loyalty_account.Key)
 			return
 		}
 		loyalty_account, loyaltyAccErr2 := getJSONWithMongoFallbackTTL[Customer_Loyalty_Account](context.Background(), Customer_Loyalty_Account{Key: request.MSISDN}.RedisKey(), Mdb_Customer_Loyalty_Account, bson.M{"Key": request.MSISDN}, LoyaltyAccountTTL)
@@ -11252,7 +11252,7 @@ func (Uc *UserControl) EvaluateAndUpdate_CustomerLoyaltyLevel(Login string, Acco
 	if len(loyalty_Level_slice) > 0 {
 		for _, loyalty_Level := range loyalty_Level_slice {
 			//evaluate
-			if loyalty_account.Awarded_Points >= loyalty_Level.Min_Accumulated_Points && loyalty_account.Awarded_Points < loyalty_Level.Max_Accumulated_Points {
+			if loyalty_account.Awarded_Points >= loyalty_Level.Min_Accumulated_Points && loyalty_account.Awarded_Points <= loyalty_Level.Max_Accumulated_Points {
 				New_Loyalty_Level = loyalty_Level
 				New_Loyalty_Level_Key = New_Loyalty_Level.Key
 				if New_Loyalty_Level.Key == loyalty_account.Loyalty_Level_Key {
