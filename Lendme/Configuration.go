@@ -104,7 +104,7 @@ type ConfigType struct {
 		Password          string
 		TimeOut           time.Duration
 		PrintLogs         bool
-		MSISDN_Short_len  int //length without country code and without 0 prefix
+		MSISDN_Short_len  int      //length without country code and without 0 prefix
 		MSISDN_NDC_len    int      //length without country code of the numbers carrying one of MSISDN_NDC_List, 0 when the operation has a single plan
 		MSISDN_NDC_List   []string //national destination codes added on top of the legacy plan, ex: Gambia "87"
 		CountryCodePrefix string
@@ -1979,7 +1979,7 @@ func setDefaultConfiguration_AO_Loyalty() (Configuration ConfigType) { //lendme 
 	return
 }
 
-func setDefaultConfiguration_AO_Loyalty_UAT() (Configuration ConfigType) { //lendme services
+func setDefaultConfiguration_AO_UAT() (Configuration ConfigType) { //lendme services
 	Configuration.HttpAppLoyaltyServicePort = "9280"    //for USSD and Mobile App
 	Configuration.HttpAppLoyaltyManagementPort = "9281" //for OKAPI
 	Configuration.HttpAppLoyaltyFeedPort = "9282"       //for IN & MM live feed
@@ -2012,11 +2012,11 @@ func setDefaultConfiguration_AO_Loyalty_UAT() (Configuration ConfigType) { //len
 
 	Configuration.App_AUC.Description = "App AUC service"
 	Configuration.App_AUC.Protocol = "http"
-	Configuration.App_AUC.Hostname = "Lendme_auc"
+	Configuration.App_AUC.Hostname = "Loyalty_auc"
 	Configuration.App_AUC.Port = "9293"
 	Configuration.App_AUC.Module = "AUC"
 	Configuration.App_AUC.Version = "V1"
-	Configuration.App_AUC.S2S_Username = "Lendme_Admin"
+	Configuration.App_AUC.S2S_Username = "Loyalty_Admin"
 	Configuration.App_AUC.S2S_Password = "s@l$e$IrSW0$4"
 	Configuration.App_AUC.Timeout_After = 5 * time.Second
 
@@ -2030,11 +2030,21 @@ func setDefaultConfiguration_AO_Loyalty_UAT() (Configuration ConfigType) { //len
 	Configuration.OKAPI_AUC.S2S_Password = "]W8#x3D1USKUyH@p]s&D_"
 	Configuration.OKAPI_AUC.Timeout_After = 5 * time.Second
 
-	Configuration.Mongo.URI = "mongodb://10.250.1.198:9001,10.250.1.199:9002,10.250.1.197:9003/?replicaSet=reps0"
+	Configuration.Mongo.URI = "mongodb://10.250.3.149:9510"
 	Configuration.Mongo.Username = "mongo-root"
 	Configuration.Mongo.Password = "Speci@LM0nG0P@ssw0rd_F0r_@ng0l@LenMeRepl##$$"
 	Configuration.Mongo.AuthSource = "admin"
 	Configuration.Mongo.AppName = "afr_Loyalty"
+
+	Configuration.Redis.Mode = redisx.ModeSingle
+	Configuration.Redis.Addr = "10.250.161.4:7011"
+	Configuration.Redis.Username = "admin"
+	Configuration.Redis.Password = "P@ssw0rd12345" // your ACL password
+	Configuration.Redis.DB = 0
+	Configuration.Redis.KeyPrefix = "loyalty:uat:"
+	Configuration.Redis.DefaultTTL = -1
+	Configuration.Redis.IndexedCollections = ReferenceCollectionNames
+	Configuration.LoyaltyAccountTTL = 7 * 24 * time.Hour // Customer_Loyalty_Account
 
 	Configuration.DB_Name = "Loyalty_DB_UAT"
 
@@ -2125,7 +2135,7 @@ func setDefaultConfiguration_AO_Loyalty_UAT() (Configuration ConfigType) { //len
 	Configuration.SpinAndWin.Timeout = 5 * time.Second
 
 	Configuration.Lendme_AUC.Protocol = "http"
-	Configuration.Lendme_AUC.Hostname = "Lendme_auc"
+	Configuration.Lendme_AUC.Hostname = "Lendme_auc_v2"
 	Configuration.Lendme_AUC.Port = "9293"
 	Configuration.Lendme_AUC.Module = "AUC"
 	Configuration.Lendme_AUC.Version = "V1"
@@ -2134,7 +2144,7 @@ func setDefaultConfiguration_AO_Loyalty_UAT() (Configuration ConfigType) { //len
 	Configuration.Lendme_AUC.Timeout_After = 5 * time.Second
 
 	Configuration.Lendme.Protocol = "http"
-	Configuration.Lendme.Hostname = "Lendme_service"
+	Configuration.Lendme.Hostname = "Lendme_v2"
 	Configuration.Lendme.Port = "9290"
 	Configuration.Lendme.Module = "Lendme"
 	Configuration.Lendme.Version = "V1"
@@ -2142,8 +2152,8 @@ func setDefaultConfiguration_AO_Loyalty_UAT() (Configuration ConfigType) { //len
 
 	// Kafka producer config — reuses the DRC cluster as a default. KafkaLogEnabled
 	// false = Mongo-only; set true (and adjust brokers) to enable Kafka for this op.
-	Configuration.Kafka_Events.KafkaBrokerUrls = "10.30.9.58:9094,10.30.9.59:9094,10.30.9.60:9094"
-	Configuration.Kafka_Events.KafkaClientId = "Loyalty_01"
+	Configuration.Kafka_Events.KafkaBrokerUrls = "10.250.1.180:9096,10.250.1.181:9196,10.250.1.182:9296"
+	Configuration.Kafka_Events.KafkaClientId = "Loyalty_UAT_01"
 	Configuration.Kafka_Events.CreateTopicsOnStartup = true
 	Configuration.Kafka_Events.ReplicationFactor = 2
 	Configuration.Kafka_Events.KafkaLogEnabled = false
