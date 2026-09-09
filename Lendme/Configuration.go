@@ -2031,8 +2031,8 @@ func setDefaultConfiguration_AO_UAT() (Configuration ConfigType) { //lendme serv
 	Configuration.OKAPI_AUC.Timeout_After = 5 * time.Second
 
 	Configuration.Mongo.URI = "mongodb://10.250.3.149:9510"
-	Configuration.Mongo.Username = "mongo-root"
-	Configuration.Mongo.Password = "Speci@LM0nG0P@ssw0rd_F0r_@ng0l@LenMeRepl##$$"
+	Configuration.Mongo.Username = "db_root"
+	Configuration.Mongo.Password = "P@s54D0Brdara_r@75S"
 	Configuration.Mongo.AuthSource = "admin"
 	Configuration.Mongo.AppName = "afr_Loyalty"
 
