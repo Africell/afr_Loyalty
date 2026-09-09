@@ -2037,7 +2037,7 @@ func setDefaultConfiguration_AO_UAT() (Configuration ConfigType) { //lendme serv
 	Configuration.Mongo.AppName = "afr_Loyalty"
 
 	Configuration.Redis.Mode = redisx.ModeSingle
-	Configuration.Redis.Addr = "10.250.161.4:7011"
+	Configuration.Redis.Addr = "10.250.161.4:7010"
 	Configuration.Redis.Username = "admin"
 	Configuration.Redis.Password = "P@ssw0rd12345" // your ACL password
 	Configuration.Redis.DB = 0
