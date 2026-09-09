@@ -1992,7 +1992,7 @@ func setDefaultConfiguration_AO_UAT() (Configuration ConfigType) { //lendme serv
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "https://okapihruat.africell.ao")
 
 	Configuration.Operation = "Angola"
-	Configuration.HostId = "Lendme-01"
+	Configuration.HostId = "Loyalty-01"
 
 	Configuration.LoyaltyVersion = "V1"
 	Configuration.LoyaltyModule = "Loyalty"
@@ -2046,7 +2046,7 @@ func setDefaultConfiguration_AO_UAT() (Configuration ConfigType) { //lendme serv
 	Configuration.Redis.IndexedCollections = ReferenceCollectionNames
 	Configuration.LoyaltyAccountTTL = 7 * 24 * time.Hour // Customer_Loyalty_Account
 
-	Configuration.DB_Name = "Loyalty_DB_UAT"
+	Configuration.DB_Name = "Loyalty_DB"
 
 	Configuration.IN.IP = "" // "10.10.51.51"
 	Configuration.IN.Port = "8080"
@@ -2120,7 +2120,7 @@ func setDefaultConfiguration_AO_UAT() (Configuration ConfigType) { //lendme serv
 	Configuration.SpinAndWin_AUC.Description = "App AUC service"
 	Configuration.SpinAndWin_AUC.Protocol = "http"
 	Configuration.SpinAndWin_AUC.Hostname = "10.250.3.149"
-	Configuration.SpinAndWin_AUC.Port = "9001"
+	Configuration.SpinAndWin_AUC.Port = "9102"
 	Configuration.SpinAndWin_AUC.Module = "AUC"
 	Configuration.SpinAndWin_AUC.Version = "V1"
 	Configuration.SpinAndWin_AUC.S2S_Username = "OKAPI_SYSTEM"
