@@ -2123,8 +2123,8 @@ func setDefaultConfiguration_AO_UAT() (Configuration ConfigType) { //lendme serv
 	Configuration.SpinAndWin_AUC.Port = "9102"
 	Configuration.SpinAndWin_AUC.Module = "AUC"
 	Configuration.SpinAndWin_AUC.Version = "V1"
-	Configuration.SpinAndWin_AUC.S2S_Username = "OKAPI_SYSTEM"
-	Configuration.SpinAndWin_AUC.S2S_Password = "g9W&GdK8T6@O6VZx"
+	Configuration.SpinAndWin_AUC.S2S_Username = "SAW_Admin"
+	Configuration.SpinAndWin_AUC.S2S_Password = "LQaDUp388UNKhz0Ap"
 	Configuration.SpinAndWin_AUC.Timeout_After = 5 * time.Second
 
 	Configuration.SpinAndWin.Protocol = "http"
