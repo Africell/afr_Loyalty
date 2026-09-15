@@ -5586,7 +5586,6 @@ func getJSONWithMongoFallbackTTL[T any](ctx context.Context, redisKey string, re
 		}
 		return v, mErr
 	}
-	log.Println("[MongoFallback] served from Mongo (redis miss):", redisKey)
 	var setErr error
 	if ttl < 0 {
 		setErr = redisx.SetJSON(ctx, RedisClient, redisKey, v)
@@ -5619,7 +5618,6 @@ func getLoyaltyAccountByKey(ctx context.Context, key string) (Customer_Loyalty_A
 		}
 		return v, mErr
 	}
-	log.Println("[MongoFallback] served from Mongo (redis miss):", redisKey)
 	if v.Opt_Status == "OptedIn" {
 		if setErr := redisx.SetJSONWithTTL(ctx, RedisClient, redisKey, v, LoyaltyAccountTTL); setErr != nil {
 			log.Println("[MongoFallback] re-cache failed for", redisKey, ":", setErr)
