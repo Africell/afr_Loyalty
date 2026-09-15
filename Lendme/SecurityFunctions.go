@@ -94,26 +94,20 @@ func (Uc *UserControl) ValidateJWEToken(h http.HandlerFunc) http.HandlerFunc {
 }
 
 func GetDestinationPortFromRequest(r *http.Request) (port string, err error) {
-	//Get IP from the X-Original-Host header -- Behind our API Gateway
-	host := r.Header.Get("X-Original-Host")
-	if host != "" {
-		_, port, err = net.SplitHostPort(host)
-		if err == nil {
-			return
-		} else {
-			fmt.Println(err)
-			return "", fmt.Errorf("no valid destination port")
-		}
+	//Derive the port from the actual listener that accepted the connection
+	//(9280/9281/9282, each its own http.ListenAndServe) instead of a client-supplied
+	//header, since X-Original-Host/Host can be spoofed by any client that reaches
+	//this service directly.
+	localAddr, ok := r.Context().Value(http.LocalAddrContextKey).(net.Addr)
+	if !ok {
+		return "", fmt.Errorf("no valid destination port")
 	}
-
-	//Get IP from host -- Running locally
-	_, port, err = net.SplitHostPort(r.Host)
-	if err == nil {
-		return
-	} else {
+	_, port, err = net.SplitHostPort(localAddr.String())
+	if err != nil {
 		fmt.Println(err)
 		return "", fmt.Errorf("no valid destination port")
 	}
+	return port, nil
 }
 
 func (Uc *UserControl) ValidateAccess_AUC(h http.HandlerFunc) http.HandlerFunc {
