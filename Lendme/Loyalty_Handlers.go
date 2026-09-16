@@ -4012,23 +4012,25 @@ func (Uc *UserControl) HTTP_INLiveFeed_Churn(w http.ResponseWriter, r *http.Requ
 			key = Configuration.CountryCode + Configuration.MSISDN_NDC_List[0] + lastnASCII(key, Configuration.MSISDN_Short_len)
 		}
 		// Check existence
-		loyaltyEntries, err:= Uc.Customer_Loyalty_Account_Get(key)
-		if err != nil {
+		loyaltyEntries, _ := Uc.Customer_Loyalty_Account_Get(key)
+		_, lendmeErr := Uc.Lendme.LendmeClient.Lendme_Subscriber_Get(key)
+		lendmeExists := lendmeErr == nil
+		if len(loyaltyEntries) == 0 && !lendmeExists {
 			sr.Status = "failed"
 			sr.StatusCode = http.StatusBadRequest
-			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": user does not exist in loyalty"
-			sr.ErrorDescription = " user does not exist in loyalty"
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": user does not exist in lendme or loyalty"
+			sr.ErrorDescription = " user does not exist in lendme or loyalty"
 			Uc.HTTP_API_Standard_response(w, r, sr, false)
 			return
 		}
-		if  len(loyaltyEntries) == 0{
-			sr.Status = "failed"
-			sr.StatusCode = http.StatusBadRequest
-			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": user does not exist in loyalty"
-			sr.ErrorDescription = " user does not exist in loyalty"
-			Uc.HTTP_API_Standard_response(w, r, sr, false)
-			return
-		} else {
+		// Delete from lendme if exists
+		if lendmeExists {
+			if err := Uc.Lendme.LendmeClient.Lendme_Subscriber_Delete(key); err != nil {
+				log.Println("Lendme_Subscriber_Delete error:", err)
+			}
+		}
+		// Delete from loyalty if exists
+		if len(loyaltyEntries) > 0 {
 			entry := loyaltyEntries[0]
 			// Add his points to the available points pool
 			Uc.Loyalty_Governance_Redeem_Points_Debit(entry.Available_Points, true)
