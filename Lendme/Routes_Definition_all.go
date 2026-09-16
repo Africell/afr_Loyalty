@@ -1921,6 +1921,28 @@ func (UC *UserControl) Add_LoyaltyFeedRoutes(R *Routes) {
 	DisplayOrder = DisplayOrder + 1
 
 	r = Route{
+		"HTTP_INLiveFeed_Churn",
+		"DELETE",
+		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_INLiveFeed_Churn/",
+		UC.HTTP_INLiveFeed_Churn,
+		true,
+		Level1 + " - Churn", // DisplayName
+		DisplayOrder,             // DisplayOrder
+		Module,                   // Module
+		ModuleDisplayOrder,       //ModuleDisplayOrder
+		Level1,                   // Level1
+		Level1DisplayOrder,       // Level1DisplayOrder
+		"",                       // Level2
+		0,                        // Level2DisplayOrder
+		"",                       // Level3
+		0,                        // Level3DisplayOrder
+		true,                     //AllowedFor_OKAPI
+		true,                     //AllowedFor_App
+	}
+	*R = append(*R, r)
+	DisplayOrder = DisplayOrder + 1
+
+	r = Route{
 		"HTTP_INLiveFeed_Consuption",
 		"POST",
 		"/" + Configuration.LoyaltyModule + "/" + Configuration.LoyaltyVersion + "/HTTP_INLiveFeed_Consuption/",

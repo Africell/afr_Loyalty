@@ -3970,6 +3970,101 @@ func (Uc *UserControl) HTTP_INLiveFeed_NewJoining(w http.ResponseWriter, r *http
 	w.WriteHeader(200)
 }
 
+func (Uc *UserControl) HTTP_INLiveFeed_Churn(w http.ResponseWriter, r *http.Request) {
+	var sr API_Standard_response
+	//**fill response source detail
+	SourceIp, _ := GetRequestIP(r)
+	sr.SourceIP = SourceIp
+	sr.Login = r.Header.Get("Login")
+	sr.SourceApp = r.Header.Get("SourceApp")
+	sr.AccessKey = r.URL.Path
+	sr.AccessMethod = r.Method
+	sr.HostId = Configuration.HostId
+	sr.ReceiveDate = time.Now()
+
+	method := r.Method
+	switch method {
+
+	case "DELETE":
+		sr.TransactionType = "INLiveFeed Churn"
+		//parse body
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to read request body"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		var request Customer_Loyalty_Account_DeleteRequest
+		err = json.Unmarshal(body, &request)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to Unmarshal body"
+			sr.ErrorDescription = err.Error()
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		key := request.Key
+		if len(Configuration.MSISDN_NDC_List) > 0 && Configuration.Operation == "Gambia" {
+			key = Configuration.CountryCode + Configuration.MSISDN_NDC_List[0] + lastnASCII(key, Configuration.MSISDN_Short_len)
+		}
+		// Check existence
+		loyaltyEntries, err:= Uc.Customer_Loyalty_Account_Get(key)
+		if err != nil {
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": user does not exist in loyalty"
+			sr.ErrorDescription = " user does not exist in loyalty"
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		}
+		if  len(loyaltyEntries) == 0{
+			sr.Status = "failed"
+			sr.StatusCode = http.StatusBadRequest
+			sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": user does not exist in loyalty"
+			sr.ErrorDescription = " user does not exist in loyalty"
+			Uc.HTTP_API_Standard_response(w, r, sr, false)
+			return
+		} else {
+			entry := loyaltyEntries[0]
+			// Add his points to the available points pool
+			Uc.Loyalty_Governance_Redeem_Points_Debit(entry.Available_Points, true)
+			//delete loyalty points monthly wallets
+			for _, pointDetailKey := range entry.Points_Detail_Keys {
+				delCtx, delCancel := context.WithTimeout(context.Background(), 10*time.Second)
+				if _, delErr := Mdb_Customer_Loyalty_Account_Points_Detail.Coll.DeleteOne(delCtx, bson.M{"Key": pointDetailKey}); delErr != nil {
+					log.Println("Mdb_Customer_Loyalty_Account_Points_Detail DeleteOne error:", delErr)
+				}
+				delCancel()
+			}
+			err = Uc.Customer_Loyalty_Account_Delete(sr.Login, key)
+			if err != nil {
+				sr.Status = "failed"
+				sr.StatusCode = http.StatusBadRequest
+				sr.StatusDescription = http.StatusText(http.StatusBadRequest) + ": failed to delete"
+				sr.ErrorDescription = err.Error()
+				Uc.HTTP_API_Standard_response(w, r, sr, false)
+				return
+			}
+			exclusionEntries, _ := Uc.Customer_COS_Exclusion_Get(key)
+			if len(exclusionEntries) > 0 {
+				Uc.Customer_COS_Exclusion_Delete(sr.Login, key)
+			}
+			Uc.Write_Loyalty_Account_Churned_log(entry)
+		}
+		LiveFeedCounters.With(prometheus.Labels{"Stream": request.EventSource, "Type": "Chrun", "Description": "Chrun"}).Inc()
+	}
+	//successful response
+	sr.Status = "successful"
+	sr.StatusCode = http.StatusOK
+	sr.StatusDescription = ""
+	sr.ErrorDescription = ""
+	Uc.HTTP_API_Standard_response(w, r, sr, true)
+}
+
 func (Uc *UserControl) HTTP_INLiveFeed_Consuption(w http.ResponseWriter, r *http.Request) {
 	var sr API_Standard_response
 	//**fill response source detail
