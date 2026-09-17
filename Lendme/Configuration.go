@@ -227,8 +227,6 @@ func GetDefaultConfiguration() (err error) {
 	// Configuration = setDefaultConfiguration_AO_Loyalty()
 	// Configuration = setDefaultConfiguration_AO_Loyalty_UAT()
 
-	// Configuration = setDefaultConfiguration_GM_Loyalty_Live()
-	// Configuration = setDefaultConfiguration_GM_Loyalty_UAT()
 	return nil
 }
 
@@ -696,306 +694,6 @@ func setDefaultConfiguration_GM_Live() (Configuration ConfigType) { //lendme ser
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:5173")
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:4173")
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:4414")
-	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "https://okpaihr.africell.ao")
-	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "https://outlet.africell.ao")
-
-	Configuration.Operation = "Gambia"
-	Configuration.HostId = "Lendme-01"
-
-	Configuration.LoyaltyVersion = "V1"
-	Configuration.LoyaltyModule = "Loyalty"
-	Configuration.LoyaltyMMBundleCode = "AFRICELL DATA"
-
-	Configuration.IsPrimary = true
-	Configuration.IsLoyaltyProduction = true
-	Configuration.ISLoyaltyOptIn = false
-	Configuration.ISLoyaltyOptOutGracePeriodDays = 0
-	Configuration.ARPU_File_Path = "/home/Subs_ARPU/"
-	Configuration.ARPU_File_Prefix = "Rgs_"
-	Configuration.ARPU_File_Column_Separator = ","
-
-	Configuration.App_AUC.Description = "App AUC service"
-	Configuration.App_AUC.Protocol = "http"
-	Configuration.App_AUC.Hostname = "Lendme_auc"
-	Configuration.App_AUC.Port = "9293"
-	Configuration.App_AUC.Module = "AUC"
-	Configuration.App_AUC.Version = "V1"
-	Configuration.App_AUC.S2S_Username = "Lendme_Admin"
-	Configuration.App_AUC.S2S_Password = "s@l$e$IrSW0$4"
-	Configuration.App_AUC.Timeout_After = 5 * time.Second
-
-	Configuration.OKAPI_AUC.Description = "OKAPI AUC service"
-	Configuration.OKAPI_AUC.Protocol = "https"
-	Configuration.OKAPI_AUC.Hostname = "auc"
-	Configuration.OKAPI_AUC.Port = "9001"
-	Configuration.OKAPI_AUC.Module = "AUC"
-	Configuration.OKAPI_AUC.Version = "V1"
-	Configuration.OKAPI_AUC.S2S_Username = "SalesMonitoring_OKAPI"
-	Configuration.OKAPI_AUC.S2S_Password = "s@le$P@s$W0$3"
-	Configuration.OKAPI_AUC.Timeout_After = 5 * time.Second
-
-	Configuration.Mongo.URI = "mongodb://10.64.33.49:9001,10.64.33.48:9002,10.64.33.101:9003/?replicaSet=reps01"
-	Configuration.Mongo.Username = "mongo-root"
-	Configuration.Mongo.Password = "Speci@LM0nG0P@ssw0rd_F0r_G@mB!A"
-	Configuration.Mongo.AuthSource = "admin"
-	Configuration.Mongo.AppName = "afr_Loyalty"
-	Configuration.DB_Name = "Loyalty_DB"
-
-	Configuration.IN.IP = "192.168.0.232"
-	Configuration.IN.Port = "8080"
-	Configuration.IN.WS_SOAP_Endpoint = "/axis2/services/WebService.WebServiceHttpSoap12Endpoint/"
-	Configuration.IN.WS_XMLNS_SOAP_Env = "http://schemas.xmlsoap.org/soap/envelope/"
-	Configuration.IN.WS_XMLNS_Web = "http://webservice.CSI.omvia.convergys.com"
-
-	Configuration.IN.WS_EVC_SOAP_Endpoint = "/axis2/services/ERechargeWebService.ERechargeWebServiceHttpSoap11Endpoint/"
-	Configuration.IN.WS_EVC_XMLNS_SOAP_Env = "http://schemas.xmlsoap.org/soap/envelope/"
-	Configuration.IN.WS_EVC_XMLNS_Web = "http://webservice.CSI.omvia.convergys.com"
-
-	Configuration.IN.Default_OpId = "lendme"
-	Configuration.IN.Default_OpPwd = "lenmeP@sw0rd"
-	Configuration.IN.AutoRenew_OpId = "lendme"
-	Configuration.IN.AutoRenew_OpPwd = "lenmeP@sw0rd"
-	Configuration.IN.Is_OpPwd_Required = true
-	Configuration.IN.Timeout = 5
-	Configuration.IN.PrintLogs = true
-
-	//http://10.95.64.6:15403/?systemid=lendme&password=lendmeP@ssw0rd&Originator=setest&dest_addr=243900100606&msg_text=test&registered_delivery=0&ston=5&snpi=0&dton=1&dnpi=1&encoding=1
-
-	//SMPP
-	Configuration.SMPP.IP = "10.30.8.10"
-	Configuration.SMPP.Port = "15403"
-	Configuration.SMPP.Login = "LendME2"
-	Configuration.SMPP.Password = "LendMEP@ssw0rd"
-
-	Configuration.CGW_AUC.Description = "UCGW AUC service"
-	Configuration.CGW_AUC.Protocol = "http"
-	Configuration.CGW_AUC.Hostname = "?.?.?.?"
-	Configuration.CGW_AUC.Port = "9994"
-	Configuration.CGW_AUC.Module = "AUC"
-	Configuration.CGW_AUC.Version = "V1"
-	Configuration.CGW_AUC.S2S_Username = "SAW_UCGW"
-	Configuration.CGW_AUC.S2S_Password = "uC@g$ASDKJH66&&&RiS6$2"
-	Configuration.CGW_AUC.Timeout_After = 5 * time.Second
-
-	Configuration.CGW.Protocol = "http"
-	Configuration.CGW.Hostname = "?.?.?.?"
-	Configuration.CGW.Port = "9991"
-	Configuration.CGW.Module = "UCGW"
-	Configuration.CGW.Version = "V1"
-	Configuration.CGW.Timeout = 15 * time.Second
-
-	Configuration.Propylaea.Description = "Product Design Center - Propylaea"
-	Configuration.Propylaea.Protocol = "https"
-	Configuration.Propylaea.Port = "443"
-	Configuration.Propylaea.Hostname = "sapp.africell.cd"
-	Configuration.Propylaea.Module = "Propylaea"
-	Configuration.Propylaea.Version = "V1"
-	Configuration.Propylaea.S2S_Username = "Propylaea_Admin"
-	Configuration.Propylaea.S2S_Password = "uC@g$W$iRiS6$2@333dd"
-	Configuration.Propylaea.Timeout_After = 5 * time.Second
-	Configuration.Propylaea.ChannelName = "Spin And Win"
-	Configuration.Propylaea.ChannelPlan = "Normal SIM"
-	Configuration.Propylaea.ChannelVersion = "1"
-
-	Configuration.Lendme_AUC.Protocol = "http"
-	Configuration.Lendme_AUC.Hostname = "Lendme_auc"
-	Configuration.Lendme_AUC.Port = "9293"
-	Configuration.Lendme_AUC.Module = "AUC"
-	Configuration.Lendme_AUC.Version = "V1"
-	Configuration.Lendme_AUC.S2S_Username = "Lendme_Admin"
-	Configuration.Lendme_AUC.S2S_Password = "s@l$e$IrSW0$4"
-	Configuration.Lendme_AUC.Timeout_After = 5 * time.Second
-
-	Configuration.Lendme.Protocol = "http"
-	Configuration.Lendme.Hostname = "Lendme_service"
-	Configuration.Lendme.Port = "9290"
-	Configuration.Lendme.Module = "Lendme"
-	Configuration.Lendme.Version = "V1"
-	Configuration.Lendme.Timeout = 15 * time.Second
-
-	// Kafka producer config — reuses the DRC cluster as a default. KafkaLogEnabled
-	// false = Mongo-only; set true (and adjust brokers) to enable Kafka for this op.
-	Configuration.Kafka_Events.KafkaBrokerUrls = "10.30.9.58:9094,10.30.9.59:9094,10.30.9.60:9094"
-	Configuration.Kafka_Events.KafkaClientId = "Loyalty_01"
-	Configuration.Kafka_Events.CreateTopicsOnStartup = true
-	Configuration.Kafka_Events.ReplicationFactor = 2
-	Configuration.Kafka_Events.KafkaLogEnabled = false
-	return
-}
-
-func setDefaultConfiguration_GM_Loyalty() (Configuration ConfigType) { //lendme services
-	Configuration.HttpAppLoyaltyServicePort = "9280"    //for USSD and Mobile App
-	Configuration.HttpAppLoyaltyManagementPort = "9281" //for OKAPI
-	Configuration.HttpAppLoyaltyFeedPort = "9282"       //for IN & MM live feed
-
-	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:3000")
-	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:5173")
-	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:4173")
-	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:4414")
-	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "https://okpaihr.africell.ao")
-	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "https://outlet.africell.ao")
-
-	Configuration.Operation = "Gambia"
-	Configuration.HostId = "Lendme-01"
-	Configuration.LoyaltyVersion = "V1"
-	Configuration.LoyaltyModule = "Loyalty"
-	Configuration.LoyaltyMMBundleCode = "AFRICELL DATA"
-
-	Configuration.MSISDN_Prefix = ""
-	Configuration.MSISDN_Short_len = 7
-	Configuration.MSISDN_NDC_len = 9 //new plan: NDC "87" followed by 7 digits, next to the legacy 7 digit numbers
-	Configuration.MSISDN_NDC_List = []string{"87"}
-	Configuration.CountryCode = "220"
-	Configuration.IsPrimary = true
-	Configuration.IsLoyaltyProduction = true
-	Configuration.ISLoyaltyOptIn = true
-	Configuration.ISLoyaltyOptOutGracePeriodDays = 365
-	Configuration.ARPU_File_Path = "/home/Subs_ARPU/"
-	Configuration.ARPU_File_Prefix = "Rgs_"
-	Configuration.ARPU_File_Column_Separator = ","
-
-	Configuration.App_AUC.Description = "App AUC service"
-	Configuration.App_AUC.Protocol = "http"
-	Configuration.App_AUC.Hostname = "Lendme_auc"
-	Configuration.App_AUC.Port = "9293"
-	Configuration.App_AUC.Module = "AUC"
-	Configuration.App_AUC.Version = "V1"
-	Configuration.App_AUC.S2S_Username = "Lendme_Admin"
-	Configuration.App_AUC.S2S_Password = "s@l$e$IrSW0$4"
-	Configuration.App_AUC.Timeout_After = 5 * time.Second
-
-	Configuration.OKAPI_AUC.Description = "OKAPI AUC service"
-	Configuration.OKAPI_AUC.Protocol = "http"
-	//Configuration.OKAPI_AUC.Hostname = "auc"
-	Configuration.OKAPI_AUC.Hostname = "10.30.0.120"
-	Configuration.OKAPI_AUC.Port = "9001"
-	Configuration.OKAPI_AUC.Module = "AUC"
-	Configuration.OKAPI_AUC.Version = "V1"
-	Configuration.OKAPI_AUC.S2S_Username = "SalesMonitoring_OKAPI"
-	Configuration.OKAPI_AUC.S2S_Password = "s@le$P@s$W0$3"
-	Configuration.OKAPI_AUC.Timeout_After = 5 * time.Second
-
-	Configuration.Mongo.URI = "mongodb://10.30.0.151:9510"
-	Configuration.Mongo.Username = "db_root"
-	Configuration.Mongo.Password = "P@s54D0Brdara_r@75S"
-	Configuration.Mongo.AuthSource = "admin"
-	Configuration.Mongo.AppName = "afr_Loyalty"
-	Configuration.DB_Name = "Loyalty_DB"
-
-	Configuration.IN.IP = "192.168.0.232"
-	Configuration.IN.Port = "8080"
-	Configuration.IN.WS_SOAP_Endpoint = "/axis2/services/WebService.WebServiceHttpSoap12Endpoint/"
-	Configuration.IN.WS_XMLNS_SOAP_Env = "http://schemas.xmlsoap.org/soap/envelope/"
-	Configuration.IN.WS_XMLNS_Web = "http://webservice.CSI.omvia.convergys.com"
-
-	Configuration.IN.WS_EVC_SOAP_Endpoint = "/axis2/services/ERechargeWebService.ERechargeWebServiceHttpSoap11Endpoint/"
-	Configuration.IN.WS_EVC_XMLNS_SOAP_Env = "http://schemas.xmlsoap.org/soap/envelope/"
-	Configuration.IN.WS_EVC_XMLNS_Web = "http://webservice.CSI.omvia.convergys.com"
-
-	Configuration.IN.Default_OpId = "lendme"
-	Configuration.IN.Default_OpPwd = "lenmeP@sw0rd"
-	Configuration.IN.Is_OpPwd_Required = true
-	Configuration.IN.Timeout = 5
-	Configuration.IN.PrintLogs = true
-
-	//http://10.95.64.6:15403/?systemid=lendme&password=lendmeP@ssw0rd&Originator=setest&dest_addr=243900100606&msg_text=test&registered_delivery=0&ston=5&snpi=0&dton=1&dnpi=1&encoding=1
-
-	//SMPP
-	Configuration.SMPP.IP = "10.30.8.10"
-	Configuration.SMPP.Port = "15403"
-	Configuration.SMPP.Login = "Loyalty"
-	Configuration.SMPP.Password = "Loyalty123"
-	Configuration.SMPP.TimeOut = 5 //in seconds
-	Configuration.SMPP.PrintLogs = true
-	Configuration.SMPP.MSISDN_Short_len = 7
-	Configuration.SMPP.MSISDN_NDC_len = 9
-	Configuration.SMPP.MSISDN_NDC_List = []string{"87"}
-	Configuration.SMPP.CountryCodePrefix = "220"
-	Configuration.SMPP.DefaultSender = "Africell" //"Africell"
-	Configuration.SMPP.Encoding = 0
-
-	Configuration.CGW_AUC.Description = "UCGW AUC service"
-	Configuration.CGW_AUC.Protocol = "http"
-	Configuration.CGW_AUC.Hostname = "10.30.0.140"
-	Configuration.CGW_AUC.Port = "9994"
-	Configuration.CGW_AUC.Module = "AUC"
-	Configuration.CGW_AUC.Version = "V1"
-	Configuration.CGW_AUC.S2S_Username = "UCGW_Admin"
-	Configuration.CGW_AUC.S2S_Password = "uC@g$W$iRiS6$2"
-	Configuration.CGW_AUC.Timeout_After = 5 * time.Second
-
-	Configuration.CGW.Protocol = "http"
-	Configuration.CGW.Hostname = "10.30.0.140"
-	Configuration.CGW.Port = "9991"
-	Configuration.CGW.Module = "UCGW"
-	Configuration.CGW.Version = "V1"
-	Configuration.CGW.Timeout = 15 * time.Second
-
-	Configuration.Propylaea.Description = "Product Design Center - Propylaea"
-	Configuration.Propylaea.Protocol = "http"
-	Configuration.Propylaea.Port = "9900"
-	Configuration.Propylaea.Hostname = "10.30.0.140"
-	Configuration.Propylaea.Module = "Propylaea"
-	Configuration.Propylaea.Version = "V1"
-	Configuration.Propylaea.S2S_Username = "Propylaea_Admin"
-	Configuration.Propylaea.S2S_Password = "uC@g$W$iRiS6$2@333dd"
-	Configuration.Propylaea.Timeout_After = 5 * time.Second
-	Configuration.Propylaea.ChannelName = "Spin And Win"
-	Configuration.Propylaea.ChannelPlan = "Normal SIM"
-	Configuration.Propylaea.ChannelVersion = "1"
-
-	Configuration.SpinAndWin_AUC.Description = "SAW AUC"
-	Configuration.SpinAndWin_AUC.Protocol = "http"
-	Configuration.SpinAndWin_AUC.Hostname = "10.30.0.120"
-	Configuration.SpinAndWin_AUC.Port = "9102"
-	Configuration.SpinAndWin_AUC.Module = "AUC"
-	Configuration.SpinAndWin_AUC.Version = "V1"
-	Configuration.SpinAndWin_AUC.S2S_Username = "SAW_Admin"
-	Configuration.SpinAndWin_AUC.S2S_Password = "LQaDUp388UNKhz0Ap"
-	Configuration.SpinAndWin_AUC.Timeout_After = 30 * time.Second
-
-	Configuration.SpinAndWin.Protocol = "http"
-	Configuration.SpinAndWin.Hostname = "10.30.0.120"
-	Configuration.SpinAndWin.Port = "9112"
-	Configuration.SpinAndWin.Module = "SpinAndWin"
-	Configuration.SpinAndWin.Version = "V1"
-	Configuration.SpinAndWin.Timeout = 30 * time.Second
-
-	Configuration.Lendme_AUC.Protocol = "http"
-	Configuration.Lendme_AUC.Hostname = "Lendme_auc"
-	Configuration.Lendme_AUC.Port = "9293"
-	Configuration.Lendme_AUC.Module = "AUC"
-	Configuration.Lendme_AUC.Version = "V1"
-	Configuration.Lendme_AUC.S2S_Username = "Lendme_Admin"
-	Configuration.Lendme_AUC.S2S_Password = "s@l$e$IrSW0$4"
-	Configuration.Lendme_AUC.Timeout_After = 5 * time.Second
-
-	Configuration.Lendme.Protocol = "http"
-	Configuration.Lendme.Hostname = "Lendme_service"
-	Configuration.Lendme.Port = "9290"
-	Configuration.Lendme.Module = "Lendme"
-	Configuration.Lendme.Version = "V1"
-	Configuration.Lendme.Timeout = 15 * time.Second
-
-	// Kafka producer config — reuses the DRC cluster as a default. KafkaLogEnabled
-	// false = Mongo-only; set true (and adjust brokers) to enable Kafka for this op.
-	Configuration.Kafka_Events.KafkaBrokerUrls = "10.30.9.58:9094,10.30.9.59:9094,10.30.9.60:9094"
-	Configuration.Kafka_Events.KafkaClientId = "Loyalty_01"
-	Configuration.Kafka_Events.CreateTopicsOnStartup = true
-	Configuration.Kafka_Events.ReplicationFactor = 2
-	Configuration.Kafka_Events.KafkaLogEnabled = false
-	return
-}
-
-func setDefaultConfiguration_GM_Loyalty_Live() (Configuration ConfigType) { //lendme services
-	Configuration.HttpAppLoyaltyServicePort = "9280"    //for USSD and Mobile App
-	Configuration.HttpAppLoyaltyManagementPort = "9281" //for OKAPI
-	Configuration.HttpAppLoyaltyFeedPort = "9282"       //for IN & MM live feed
-
-	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:3000")
-	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:5173")
-	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:4173")
-	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "http://localhost:4414")
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "https://okpaihr.africell.gm")
 	Configuration.OKAPIAllowedOrigins = append(Configuration.OKAPIAllowedOrigins, "https://outlet.africell.gm")
 
@@ -1270,8 +968,8 @@ func setDefaultConfiguration_GM_UAT() (Configuration ConfigType) { //lendme serv
 
 	Configuration.CGW_AUC.Description = "UCGW AUC service"
 	Configuration.CGW_AUC.Protocol = "http"
-	Configuration.CGW_AUC.Hostname = "10.30.8.119"
-	Configuration.CGW_AUC.Port = "9994"
+	Configuration.CGW_AUC.Hostname = "afr-ucgw-auc-service.uat"
+	Configuration.CGW_AUC.Port = "9001"
 	Configuration.CGW_AUC.Module = "AUC"
 	Configuration.CGW_AUC.Version = "V1"
 	Configuration.CGW_AUC.S2S_Username = "UCGW_Admin"
@@ -1279,7 +977,7 @@ func setDefaultConfiguration_GM_UAT() (Configuration ConfigType) { //lendme serv
 	Configuration.CGW_AUC.Timeout_After = 5 * time.Second
 
 	Configuration.CGW.Protocol = "http"
-	Configuration.CGW.Hostname = "10.30.8.119"
+	Configuration.CGW.Hostname = "10.30.9.66"
 	Configuration.CGW.Port = "9991"
 	Configuration.CGW.Module = "UCGW"
 	Configuration.CGW.Version = "V1"
@@ -1288,7 +986,7 @@ func setDefaultConfiguration_GM_UAT() (Configuration ConfigType) { //lendme serv
 	Configuration.Propylaea.Description = "Product Design Center - Propylaea"
 	Configuration.Propylaea.Protocol = "http"
 	Configuration.Propylaea.Port = "9900"
-	Configuration.Propylaea.Hostname = "10.30.8.119"
+	Configuration.Propylaea.Hostname = "10.30.9.65"
 	Configuration.Propylaea.Module = "Propylaea"
 	Configuration.Propylaea.Version = "V1"
 	Configuration.Propylaea.S2S_Username = "Propylaea_Admin"
