@@ -2,7 +2,7 @@ module afr_Loyalty
 
 go 1.25.3
 
-replace afr_lendme => ../afr_lendme/
+replace afr_lendme_v2 => ../afr_lendme_v2/
 
 replace afr_auth_center => ../afr_auth_center/
 
@@ -32,7 +32,7 @@ require (
 	afr_SpinAndWin_be v0.0.0-00010101000000-000000000000
 	afr_ao_apgw_v2 v0.0.0-00010101000000-000000000000
 	afr_auth_center v0.0.0-00010101000000-000000000000
-	afr_lendme v0.0.0-00010101000000-000000000000
+	afr_lendme_v2 v0.0.0-00010101000000-000000000000
 	afr_propylaea v0.0.0-00010101000000-000000000000
 	afr_sb_in v0.0.0-00010101000000-000000000000
 	afr_sb_mm v0.0.0-00010101000000-000000000000

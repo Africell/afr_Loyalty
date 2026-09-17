@@ -4,7 +4,7 @@ import (
 	SpinAndWin_client "afr_SpinAndWin_be/SpinAndWinClient"
 	APGW "afr_ao_apgw_v2/APGWClientV2"
 	AuthCenterClient "afr_auth_center/AuthCenterClient"
-	LendmeClient "afr_lendme/LendmeClient"
+	LendmeClient "afr_lendme_v2/LendmeClient"
 	Prop "afr_propylaea/PropylaeaClient"
 	INClient "afr_sb_in"
 	UCGW_client "afr_unified_charging_gateway/Unified_charging_gateway_Client"
