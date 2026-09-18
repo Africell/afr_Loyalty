@@ -12,6 +12,8 @@ replace afr_sb_in => ../afr_sb_in/
 
 replace afr_unified_charging_gateway => ../afr_unified_charging_gateway/
 
+replace afr_ucgw => ../afr_ucgw/
+
 replace afr_SpinAndWin_be => ../afr_SpinAndWin_be/
 
 replace afr_propylaea => ../afr_propylaea/
@@ -36,7 +38,7 @@ require (
 	afr_propylaea v0.0.0-00010101000000-000000000000
 	afr_sb_in v0.0.0-00010101000000-000000000000
 	afr_sb_mm v0.0.0-00010101000000-000000000000
-	afr_unified_charging_gateway v0.0.0-00010101000000-000000000000
+	afr_ucgw v0.0.0-00010101000000-000000000000
 	github.com/gocarina/gocsv v0.0.0-20240520201108-78e41c74b4b1
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
@@ -55,6 +57,7 @@ require (
 require (
 	afr_sb_MM_KD v0.0.0-00010101000000-000000000000 // indirect
 	afr_sb_mm_jigsaw v0.0.0-00010101000000-000000000000 // indirect
+	afr_unified_charging_gateway v0.0.0-00010101000000-000000000000 // indirect
 	daoc v0.0.0-00010101000000-000000000000 // indirect
 	github.com/360EntSecGroup-Skylar/excelize v1.4.1 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.21.0 // indirect

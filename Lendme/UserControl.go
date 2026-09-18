@@ -7,7 +7,7 @@ import (
 	LendmeClient "afr_lendme_v2/LendmeClient"
 	Prop "afr_propylaea/PropylaeaClient"
 	INClient "afr_sb_in"
-	UCGW_client "afr_unified_charging_gateway/Unified_charging_gateway_Client"
+	UCGW_client "afr_ucgw/Unified_charging_gateway_Client"
 	"context"
 	"log"
 	"mongox"

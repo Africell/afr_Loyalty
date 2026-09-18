@@ -22,7 +22,7 @@ import (
 	SpinAndWin "afr_SpinAndWin_be/SpinAndWinClient"
 	PropC "afr_propylaea/PropylaeaClient"
 	"afr_propylaea/propylaea"
-	"afr_unified_charging_gateway/Unified_charging_gateway_Client"
+	"afr_ucgw/Unified_charging_gateway_Client"
 
 	MM "afr_sb_mm"
 
